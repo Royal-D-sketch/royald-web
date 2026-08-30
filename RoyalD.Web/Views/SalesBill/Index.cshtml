@@ -175,12 +175,13 @@
         <table class="table table-hover table-sm align-middle">
             <thead class="table-light">
                 <tr>
-                    <th>เลขที่บิล</th>
+                    <th>เลขที่บิล / สถานะ</th>
                     <th>วันที่</th>
-                    <th>รหัสลูกค้า</th>
-                    <th>ชื่อลูกค้า</th>
-                    <th>จังหวัด</th>
+                    <th>ลูกค้า</th>
+                    <th>จังหวัด / เขต</th>
                     <th>ผู้แทนขาย</th>
+                    <th class="text-center">เครดิต</th>
+                    <th class="text-center">อายุหนี้</th>
                     <th class="text-end">ยอดสุทธิ</th>
                     <th>PO Number</th>
                     <th class="text-center actions-col">ดูรายละเอียด</th>
@@ -243,10 +244,36 @@
                             }
                         </td>
                         <td>@b.BillDate.ToString("dd/MM/yyyy")</td>
-                        <td><code>@b.CustomerCode</code></td>
-                        <td class="text-wrap" style="max-width:200px;">@b.CustomerName</td>
-                        <td>@b.Province</td>
+                        <td>
+                            <div class="fw-bold">@b.CustomerName</div>
+                            <small class="text-muted"><code>@b.CustomerCode</code></small>
+                        </td>
+                        <td>
+                            <div>@b.Province</div>
+                            @if (!string.IsNullOrEmpty(b.District))
+                            {
+                                <small class="text-muted">@b.District</small>
+                            }
+                        </td>
                         <td><span class="badge bg-light text-dark border">@b.SalesRep</span></td>
+                        <td class="text-center">
+                            <span class="badge bg-info text-dark">@b.Credit วัน</span>
+                        </td>
+                        @{
+                            var dueDate = b.BillDate.AddDays(b.Credit);
+                            var aging = (int)(DateTime.Today - b.BillDate).TotalDays;
+                            var agingColor = b.IsFullyPaid ? "success" : (aging > 120 ? "danger" : (aging > 60 ? "warning" : "secondary"));
+                        }
+                        <td class="text-center">
+                            @if (b.IsFullyPaid)
+                            {
+                                <span class="badge bg-success">ชำระแล้ว</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-@agingColor text-@(agingColor == "warning" ? "dark" : "white")">@aging วัน</span>
+                            }
+                        </td>
                         <td class="text-end fw-bold text-success">@b.TotalAmount.ToString("N2")</td>
                         <td>@b.PoNumber</td>
                         <td class="text-center actions-col">
