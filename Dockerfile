@@ -7,7 +7,7 @@
 FROM node:20-alpine AS frontend
 WORKDIR /frontend
 COPY royald-frontend/package*.json ./
-RUN npm ci
+RUN npm install
 COPY royald-frontend/ ./
 # Build static export (out folder)
 RUN npm run build && npm run export
