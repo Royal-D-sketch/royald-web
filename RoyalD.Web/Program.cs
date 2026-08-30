@@ -298,6 +298,32 @@ using (var scope = app.Services.CreateScope())
         }
         catch { }
     }
+
+    // Auto-fix / sync Credit from OutstandingDebt to SalesBills if SalesBills has 0 or shifted credit
+    try
+    {
+        var billsToFix = db.SalesBills.Where(b => b.Credit == 0 || (b.Phone != null && b.Phone.Length <= 3)).ToList();
+        if (billsToFix.Any())
+        {
+            var debtCredits = db.OutstandingDebts.Where(d => d.Credit > 0)
+                                                 .GroupBy(d => d.BillNo)
+                                                 .ToDictionary(g => g.Key, g => g.First().Credit);
+            foreach (var b in billsToFix)
+            {
+                if (debtCredits.TryGetValue(b.BillNo, out int cred) && cred > 0)
+                {
+                    b.Credit = cred;
+                }
+                if (!string.IsNullOrEmpty(b.Phone) && int.TryParse(b.Phone, out int fakePh) && fakePh <= 365 && b.Phone.Length <= 3)
+                {
+                    if (b.Credit == 0) b.Credit = fakePh;
+                    b.Phone = "";
+                }
+            }
+            db.SaveChanges();
+        }
+    }
+    catch { }
 }
 
 app.Run();

@@ -69,6 +69,11 @@ namespace RoyalD.Web.Services
                 if (existingBills.TryGetValue(b.BillNo, out var ex))
                 {
                     ex.CustomerName = b.CustomerName != null && b.CustomerName.Length > 100 ? b.CustomerName.Substring(0, 100) : (b.CustomerName ?? "");
+                    ex.District = b.District != null && b.District.Length > 100 ? b.District.Substring(0, 100) : (b.District ?? "");
+                    ex.Province = b.Province != null && b.Province.Length > 100 ? b.Province.Substring(0, 100) : (b.Province ?? "");
+                    ex.SalesRep = b.SalesRep != null && b.SalesRep.Length > 100 ? b.SalesRep.Substring(0, 100) : (b.SalesRep ?? "");
+                    ex.Phone = b.Phone != null && b.Phone.Length > 50 ? b.Phone.Substring(0, 50) : (b.Phone ?? "");
+                    ex.Credit = b.Credit;
                     ex.TotalAmount = b.TotalAmount;
                     
                     ex.SourceMonth = sourceMonth != null && sourceMonth.Length > 10 ? sourceMonth.Substring(0, 10) : (sourceMonth ?? "");
@@ -127,6 +132,7 @@ namespace RoyalD.Web.Services
                         ex.Province = b.Province != null && b.Province.Length > 100 ? b.Province.Substring(0, 100) : (b.Province ?? "");
                         ex.SalesRep = b.SalesRep != null && b.SalesRep.Length > 100 ? b.SalesRep.Substring(0, 100) : (b.SalesRep ?? "");
                         ex.Phone = b.Phone != null && b.Phone.Length > 50 ? b.Phone.Substring(0, 50) : (b.Phone ?? "");
+                        ex.Credit = b.Credit;
                         ex.TotalAmount = b.TotalAmount;
                         
                         ex.SourceMonth = p.FileType != null && p.FileType.Length > 10 ? p.FileType.Substring(0, 10) : (p.FileType ?? "");
@@ -457,8 +463,39 @@ namespace RoyalD.Web.Services
                     currentDistrict = cDistrict >= 0 && cDistrict < tbl.Columns.Count && !string.IsNullOrWhiteSpace(row[cDistrict]?.ToString()) ? row[cDistrict].ToString().Trim() : dynDist;
                     currentProvince = cProvince >= 0 && cProvince < tbl.Columns.Count && !string.IsNullOrWhiteSpace(row[cProvince]?.ToString()) ? row[cProvince].ToString().Trim() : dynProv;
 
-                    currentPhone = cPhone >= 0 && cPhone < tbl.Columns.Count ? row[cPhone]?.ToString()?.Trim() ?? "" : "";
-                    currentCredit = ParseInt(cCredit >= 0 && cCredit < tbl.Columns.Count && !string.IsNullOrEmpty(row[cCredit]?.ToString()) ? row[cCredit]?.ToString() : (tbl.Columns.Count > 11 ? row[11]?.ToString() : ""));
+                    string dynPhone = "";
+                    int dynCredit = -1;
+                    for (int i = 4; i < tbl.Columns.Count; i++)
+                    {
+                        var cell = row[i]?.ToString()?.Trim() ?? "";
+                        if (string.IsNullOrEmpty(cell)) continue;
+                        if (cell.StartsWith("โทร", StringComparison.OrdinalIgnoreCase) || (cell.StartsWith("0") && cell.Contains("-")))
+                        {
+                            var cleanPhone = cell.Replace("โทร.", "").Replace("โทร", "").Trim();
+                            if (cleanPhone.Length >= 7) dynPhone = cleanPhone;
+                        }
+                        else if (int.TryParse(cell, out int credVal) && credVal >= 0 && credVal <= 365)
+                        {
+                            if (dynCredit < 0 || (i >= 7 && i <= 11))
+                            {
+                                dynCredit = credVal;
+                            }
+                        }
+                    }
+
+                    currentPhone = !string.IsNullOrEmpty(dynPhone) ? dynPhone : (cPhone >= 0 && cPhone < tbl.Columns.Count ? (row[cPhone]?.ToString()?.Trim() ?? "") : "");
+                    if (currentPhone.StartsWith("โทร.", StringComparison.OrdinalIgnoreCase) || currentPhone.StartsWith("โทร", StringComparison.OrdinalIgnoreCase))
+                    {
+                        currentPhone = currentPhone.Replace("โทร.", "").Replace("โทร", "").Trim();
+                    }
+                    if (int.TryParse(currentPhone, out int fakePhoneAsCredit) && fakePhoneAsCredit < 365 && currentPhone.Length < 4)
+                    {
+                        // If phone was accidentally a small number like 7 or 30
+                        if (dynCredit <= 0) dynCredit = fakePhoneAsCredit;
+                        currentPhone = "";
+                    }
+
+                    currentCredit = dynCredit >= 0 ? dynCredit : ParseInt(cCredit >= 0 && cCredit < tbl.Columns.Count && !string.IsNullOrEmpty(row[cCredit]?.ToString()) ? row[cCredit]?.ToString() : (tbl.Columns.Count > 11 ? row[11]?.ToString() : ""));
                     
                     currentSalesRep = cSalesRep >= 0 && cSalesRep < tbl.Columns.Count && !string.IsNullOrWhiteSpace(row[cSalesRep]?.ToString()) ? row[cSalesRep].ToString().Trim() : dynRep;
                     
