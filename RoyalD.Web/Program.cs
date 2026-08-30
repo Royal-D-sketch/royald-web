@@ -117,6 +117,13 @@ var app = builder.Build();
 // ========== Middleware ==========
 app.UseDeveloperExceptionPage();
 
+// Force Thai locale dd/MM/yyyy globally
+var thCulture = new System.Globalization.CultureInfo("th-TH");
+thCulture.DateTimeFormat.ShortDatePattern = "dd/MM/yyyy";
+thCulture.DateTimeFormat.LongDatePattern = "dd MMMM yyyy";
+System.Globalization.CultureInfo.DefaultThreadCurrentCulture = thCulture;
+System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = thCulture;
+
 app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
