@@ -19,7 +19,8 @@
     "@supabase/supabase-js": "^2.38.0",
     "next-auth": "^4.24.5",
     "formidable": "^3.5.1",
-    "csv-parse": "^5.5.2"
+    "csv-parse": "^5.5.2",
+    "date-fns": "^3.0.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.14",
