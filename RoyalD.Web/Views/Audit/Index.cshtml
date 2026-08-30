@@ -1,0 +1,161 @@
+@using RoyalD.Web.Models
+@using RoyalD.Web.Services
+@model List<RoyalD.Web.Models.AuditLog>
+@{
+    ViewData["Title"] = "ประวัติการใช้งานระบบ";
+    var userDict = ViewBag.UserDict as Dictionary<string, AppUser> ?? new();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0 fw-bold" style="color:#0f766e;">
+            <i class="bi bi-journal-check text-primary me-2"></i> ประวัติการใช้งานระบบ (Audit Logs)
+        </h4>
+        <small class="text-muted">ตรวจสอบความปลอดภัย เวลาเข้า-ออก จำนวนนาทีใช้งาน และพิกัดตำแหน่งพื้นที่การใช้งานทุกครั้ง</small>
+    </div>
+    <span class="badge bg-primary fs-6" style="background:#0d9488 !important;">รวม @ViewBag.TotalCount รายการ</span>
+</div>
+
+<!-- Search Filter -->
+<div class="card mb-3 shadow-sm border-0" style="background:#f0fdfa; border-radius:12px;">
+    <div class="card-body py-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-search"></i> ค้นหาประวัติการใช้งาน</label>
+                <input type="text" name="search" class="form-control form-control-sm"
+                       placeholder="ชื่อพนักงาน / ชื่อผู้ใช้ / Action / พิกัด / จังหวัด..." value="@ViewBag.SearchTerm"/>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold" style="background:#0d9488; border-color:#0d9488;">
+                    <i class="bi bi-search"></i> ค้นหา
+                </button>
+            </div>
+            @if (!string.IsNullOrEmpty(ViewBag.SearchTerm))
+            {
+                <div class="col-md-2">
+                    <a href="/Audit" class="btn btn-outline-secondary btn-sm w-100">
+                        <i class="bi bi-x-circle"></i> ล้างการค้นหา
+                    </a>
+                </div>
+            }
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0" style="border-radius:12px; overflow:hidden;">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" style="font-size: 0.88rem;">
+                <thead class="table-light" style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
+                    <tr>
+                        <th class="text-center" style="width: 150px;">วัน-เวลาที่ทำรายการ</th>
+                        <th style="min-width: 150px;">ชื่อ-นามสกุล / บัญชี</th>
+                        <th class="text-center" style="width: 110px;">ตำแหน่งงาน</th>
+                        <th class="text-center" style="width: 130px;">กิจกรรม (Action)</th>
+                        <th class="text-center" style="width: 100px;">เวลาใช้งาน</th>
+                        <th style="min-width: 220px;">📍 ตำแหน่งโลเคชั่น (Location)</th>
+                        <th style="min-width: 200px;">รายละเอียด</th>
+                        <th style="width: 110px;">IP Address</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                ไม่พบข้อมูลประวัติการใช้งาน
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var log in Model)
+                    {
+                        userDict.TryGetValue(log.Username, out var usr);
+                        string fullName = usr != null && !string.IsNullOrEmpty(usr.FullName) ? usr.FullName : (log.Username == "admin" ? "ผู้ดูแลระบบ (Admin)" : "-");
+                        string posDisplay = usr != null && !string.IsNullOrEmpty(usr.Position) ? usr.Position : (log.Username == "admin" ? "ผู้ดูแลระบบ" : "ผู้แทนขาย");
+
+                        string badgeClass = log.Action switch {
+                            "LOGIN" => "bg-success",
+                            "LOGOUT" => "bg-secondary",
+                            "LOGIN_FAILED" or "LOGIN_BLOCKED_NOLOCATION" or "SCREEN_CAPTURE" or "SECURITY_VIOLATION_LOGOUT" => "bg-danger",
+                            "CREATE_USER" or "EDIT_USER" or "DELETE_USER" => "bg-primary",
+                            "PAYMENT" or "UPDATE_STATUS" => "bg-warning text-dark",
+                            _ => "bg-info text-dark"
+                        };
+
+                        string locationText = GeoLocationHelper.ReverseGeocode(log.Latitude, log.Longitude, log.Area);
+
+                        <tr>
+                            <!-- 1. วันเวลา -->
+                            <td class="text-center text-muted fw-semibold text-nowrap">
+                                @log.CreatedAt.ToString("dd/MM/yyyy HH:mm:ss")
+                            </td>
+
+                            <!-- 2. ชื่อ-นามสกุล และ บัญชีผู้ใช้ -->
+                            <td>
+                                <div class="fw-bold text-dark">@fullName</div>
+                                <code class="small text-muted">@log.Username</code>
+                            </td>
+
+                            <!-- 3. ตำแหน่งงาน -->
+                            <td class="text-center">
+                                <span class="badge bg-light text-dark border px-2 py-1">@posDisplay</span>
+                            </td>
+
+                            <!-- 4. กิจกรรม -->
+                            <td class="text-center">
+                                <span class="badge @badgeClass px-2 py-1">@log.Action</span>
+                            </td>
+
+                            <!-- 5. ระยะเวลาใช้งาน -->
+                            <td class="text-center">
+                                @if (log.DurationMinutes.HasValue && log.DurationMinutes > 0)
+                                {
+                                    <span class="badge bg-light text-primary border fw-bold">
+                                        <i class="bi bi-stopwatch"></i> @log.DurationMinutes น.
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">-</span>
+                                }
+                            </td>
+
+                            <!-- 6. พิกัดและพื้นที่ใช้งาน (โลเคชั่น) -->
+                            <td>
+                                @if (!string.IsNullOrEmpty(locationText) && locationText != "ไม่ระบุตำแหน่ง" && locationText != "-")
+                                {
+                                    <div class="fw-bold text-dark mb-1">
+                                        <i class="bi bi-geo-alt-fill text-danger me-1"></i> @locationText
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(log.Latitude) && !string.IsNullOrEmpty(log.Longitude))
+                                    {
+                                        <small class="text-muted" style="font-size:0.75rem;">GPS: @log.Latitude, @log.Longitude</small>
+                                    }
+                                }
+                                else if (!string.IsNullOrEmpty(log.Area))
+                                {
+                                    <div class="fw-bold text-dark"><i class="bi bi-geo-alt-fill text-danger me-1"></i> @log.Area</div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">-</span>
+                                }
+                            </td>
+
+                            <!-- 7. รายละเอียด -->
+                            <td>
+                                <small class="text-muted" style="line-height:1.3; display:block;">@log.Detail</small>
+                            </td>
+
+                            <!-- 8. IP Address -->
+                            <td>
+                                <code class="small text-muted">@(!string.IsNullOrEmpty(log.IPAddress) ? log.IPAddress : "-")</code>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

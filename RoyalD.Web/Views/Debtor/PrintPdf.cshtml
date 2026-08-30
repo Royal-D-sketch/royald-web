@@ -1,0 +1,150 @@
+﻿@model List<RoyalD.Web.Models.OutstandingDebt>
+@using RoyalD.Web.Models
+@{
+    Layout = null;
+    var today = DateTime.Today;
+    decimal totalDebt = Model.Sum(d => d.RemainingAmount);
+    decimal totalBill = Model.Sum(d => d.OriginalAmount);
+}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>รายงานการ์ดลูกหนี้คงค้าง — บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background: #ffffff;
+            color: #0f172a;
+            font-size: 0.82rem;
+            padding: 20px;
+        }
+        .header-box {
+            border-bottom: 2px solid #0f766e;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+        .table-pdf th {
+            background-color: #0f766e !important;
+            color: #ffffff !important;
+            font-weight: 700;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 0.80rem;
+            padding: 6px 4px;
+        }
+        .table-pdf td {
+            vertical-align: middle;
+            padding: 5px 4px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .row-overdue-120 {
+            background-color: #fff1f2 !important;
+            font-weight: bold;
+        }
+        @@media print {
+            body { padding: 0; }
+            .no-print { display: none !important; }
+            .table-pdf th { background-color: #0f766e !important; -webkit-print-color-adjust: exact; }
+            .row-overdue-120 { background-color: #fff1f2 !important; -webkit-print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded border">
+        <div>
+            <h5 class="mb-0 fw-bold" style="color:#0f766e;"><i class="bi bi-file-earmark-pdf-fill text-danger me-2"></i> เอกสารการ์ดลูกหนี้คงค้าง (PDF)</h5>
+            <small class="text-muted">สามารถกดปุ่ม "พิมพ์ / บันทึกเป็น PDF" เพื่อบันทึกไฟล์หรือสั่งพิมพ์ได้ทันที</small>
+        </div>
+        <div class="d-flex gap-2">
+            <button onclick="window.print()" class="btn btn-primary btn-sm fw-bold px-3" style="background:#0f766e; border-color:#0f766e;">
+                <i class="bi bi-printer-fill me-1"></i> พิมพ์ / บันทึกเป็น PDF
+            </button>
+            <button onclick="window.close()" class="btn btn-outline-secondary btn-sm">ปิดหน้านี้</button>
+        </div>
+    </div>
+
+    <div class="header-box text-center">
+        <h4 class="fw-bold mb-1" style="color:#0f766e;">บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด</h4>
+        <h5 class="fw-bold text-dark mb-1">รายงานการ์ดลูกหนี้คงค้างและการติดตามการชำระเงิน</h5>
+        <div class="small text-muted d-flex justify-content-between mt-2">
+            <span>พิมพ์โดย: <strong>@ViewBag.PrintedBy</strong></span>
+            <span>วันที่พิมพ์: <strong>@DateTime.Now.ToString("dd/MM/yyyy HH:mm")</strong></span>
+            <span>รวมทั้งหมด: <strong>@Model.Count.ToString("N0")</strong> รายการ | ยอดค้างรวม: <strong>@totalDebt.ToString("N2")</strong> บาท</span>
+        </div>
+    </div>
+
+    <table class="table table-bordered table-pdf table-sm mb-0">
+        <thead>
+            <tr>
+                <th style="width: 35px;">#</th>
+                <th style="width: 85px;">เลขที่บิล</th>
+                <th style="width: 75px;">วันที่บิล</th>
+                <th style="width: 75px;">ครบกำหนด</th>
+                <th style="width: 45px;">เครดิต</th>
+                <th style="width: 70px;">รหัสลูกค้า</th>
+                <th>ชื่อลูกค้า</th>
+                <th style="width: 75px;">จังหวัด</th>
+                <th style="width: 85px;">ผู้แทนขาย</th>
+                <th style="width: 90px;" class="text-end">ยอดบิลรวม</th>
+                <th style="width: 95px;" class="text-end">ยอดค้างชำระ</th>
+                <th style="width: 90px;">สถานะ</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{ int idx = 1; }
+            @foreach (var d in Model)
+            {
+                bool is120 = d.Status == DebtStatus.Outstanding && (today - d.DueDate).TotalDays > 120;
+                string statusTh = d.Status switch
+                {
+                    DebtStatus.Outstanding => is120 ? "เกิน 120 วัน" : (d.DueDate < today ? "เกินกำหนด" : "ยังไม่ถึงกำหนด"),
+                    DebtStatus.Installment => "ผ่อนชำระ",
+                    DebtStatus.Postponed => "เลื่อนนัด",
+                    DebtStatus.BadDebt => "หนี้สูญ",
+                    DebtStatus.CheckReturned => "เช็คคืน",
+                    DebtStatus.Consignment => "ฝากขาย",
+                    DebtStatus.ReturnIssued => "รับคืน",
+                    DebtStatus.ChangeProduct => "เปลี่ยนสินค้า",
+                    DebtStatus.Delivering => "อยู่จัดส่ง",
+                    DebtStatus.WaitingGoods => "รอสินค้า",
+                    DebtStatus.PaidCash => "จ่ายสดครบ",
+                    DebtStatus.PaidTransfer => "โอนครบ",
+                    DebtStatus.PaidCheck => "เช็คครบ",
+                    DebtStatus.Cancelled => "ยกเลิก",
+                    _ => d.Status.ToString()
+                };
+
+                <tr class="@(is120 ? "row-overdue-120 text-danger" : "")">
+                    <td class="text-center">@idx</td>
+                    <td class="text-center fw-bold">@d.BillNo</td>
+                    <td class="text-center">@d.BillDate.ToString("dd/MM/yy")</td>
+                    <td class="text-center">@d.DueDate.ToString("dd/MM/yy")</td>
+                    <td class="text-center">@d.Credit</td>
+                    <td class="text-center">@d.CustomerCode</td>
+                    <td class="fw-semibold">@d.CustomerName</td>
+                    <td class="text-center">@(d.Province ?? "-")</td>
+                    <td class="text-center">@(d.SalesRep ?? "-")</td>
+                    <td class="text-end">@d.OriginalAmount.ToString("N2")</td>
+                    <td class="text-end fw-bold @(is120 ? "text-danger" : "")">@d.RemainingAmount.ToString("N2")</td>
+                    <td class="text-center"><span class="badge @(is120 ? "bg-danger" : "bg-light text-dark border")">@statusTh</span></td>
+                </tr>
+                idx++;
+            }
+        </tbody>
+        <tfoot>
+            <tr class="fw-bold bg-light">
+                <td colspan="9" class="text-end">รวมยอดทั้งหมด (@Model.Count รายการ):</td>
+                <td class="text-end">@totalBill.ToString("N2")</td>
+                <td class="text-end text-danger fs-6">@totalDebt.ToString("N2")</td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+</body>
+</html>

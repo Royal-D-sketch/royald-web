@@ -1,0 +1,747 @@
+@model RoyalD.Web.Models.AppUser
+@using System.Text.Json
+@{
+    ViewData["Title"] = "แก้ไขข้อมูลผู้ใช้: " + Model.FullName;
+    var regions = ViewBag.Regions as List<string> ?? new();
+    var allProvincesMap = ViewBag.Provinces as Dictionary<string, List<string>> ?? new();
+    var allThailandProvinces = ViewBag.AllThailandProvinces as List<string> ?? new();
+    var provinceDistricts = ViewBag.ProvinceDistricts as Dictionary<string, List<string>> ?? new();
+    var dbSalesReps = ViewBag.DbSalesReps as List<string> ?? new();
+    var userPages = (Model.AllowedPages ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim().ToLower()).ToList();
+    var userRegions = (Model.AllowedRegion ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).Select(r => r.Trim()).ToList();
+}
+
+<style>
+.perm-card {
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+.perm-card:hover {
+    border-color: #0d9488;
+    background: #f0fdfa;
+}
+.form-check-label {
+    cursor: pointer;
+}
+.tag-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: 0.85rem;
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.tag-badge .btn-close-tag {
+    cursor: pointer;
+    color: #0284c7;
+    font-weight: bold;
+    font-size: 1.1rem;
+    line-height: 1;
+}
+.tag-badge .btn-close-tag:hover {
+    color: #ef4444;
+}
+.picker-container {
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 10px;
+    background: #ffffff;
+}
+.item-chip {
+    display: inline-block;
+    padding: 4px 10px;
+    margin: 3px;
+    border-radius: 20px;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+.item-chip:hover {
+    background: #ccfbf1;
+    border-color: #0d9488;
+    color: #0f766e;
+    transform: translateY(-1px);
+}
+.item-chip.selected {
+    background: #0d9488;
+    border-color: #0d9488;
+    color: #ffffff;
+}
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0 fw-bold" style="color:#0f766e;"><i class="bi bi-person-gear text-primary"></i> แก้ไขข้อมูลและสิทธิ์ผู้ใช้</h4>
+        <small class="text-muted">ผู้ใช้: <strong>@Model.Username</strong> (@Model.FullName)</small>
+    </div>
+    <a href="/Account/Users" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> กลับหน้ารายการ
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-11">
+        <div class="card shadow-sm border-0" style="border-radius:14px; overflow:hidden;">
+            <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);">
+                <i class="bi bi-shield-lock me-1"></i> ปรับปรุงข้อมูลบัญชีผู้ใช้และกำหนดสิทธิ์ความปลอดภัย
+            </div>
+            <div class="card-body p-4">
+                <form asp-controller="Account" asp-action="EditUser" method="post" id="userForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+
+                    <!-- 1. ข้อมูลพื้นฐานบัญชี และตำแหน่งงาน -->
+                    <h5 class="fw-bold mb-3" style="color:#0f766e; border-bottom:2px solid #ccfbf1; padding-bottom:8px;">
+                        <i class="bi bi-person-vcard me-1"></i> 1. ข้อมูลพื้นฐานและตำแหน่งงาน
+                    </h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted">Username</label>
+                            <input type="text" class="form-control bg-light" value="@Model.Username" readonly />
+                            <small class="text-muted" style="font-size:0.75rem;">* ไม่สามารถเปลี่ยน Username ได้</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted">รหัสผ่านใหม่ (เว้นว่างหากไม่เปลี่ยน)</label>
+                            <input type="password" name="newPassword" class="form-control" minlength="6" placeholder="กรอกเฉพาะเมื่อต้องการเปลี่ยนรหัสผ่าน" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted">ชื่อ-นามสกุล <span class="text-danger">*</span></label>
+                            <input type="text" name="fullName" class="form-control" required value="@Model.FullName" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small text-muted">ตำแหน่งงาน (Position) <span class="text-danger">*</span></label>
+                            <select name="position" class="form-select fw-bold" id="positionSelect">
+                                <option value="ผู้แทนขาย" selected="@(Model.Position == "ผู้แทนขาย")">👔 ผู้แทนขาย</option>
+                                <option value="พนักงาน" selected="@(Model.Position == "พนักงาน")">💼 พนักงาน</option>
+                                <option value="หัวหน้างาน" selected="@(Model.Position == "หัวหน้างาน")">🎖️ หัวหน้างาน</option>
+                                <option value="ผู้บริหาร" selected="@(Model.Position == "ผู้บริหาร")">👑 ผู้บริหาร</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small text-muted">บทบาทระบบ (Role)</label>
+                            <select name="role" class="form-select" id="roleSelect" onchange="onRoleChange()">
+                                <option value="user" selected="@(Model.Role == "user")">User (ผู้ใช้ทั่วไป)</option>
+                                <option value="admin" selected="@(Model.Role == "admin")">Admin (ผู้ดูแลระบบ)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-muted">สถานะบัญชี</label>
+                            <select name="isActive" class="form-select fw-bold">
+                                <option value="true" selected="@Model.IsActive">🟢 เปิดใช้งานปกติ</option>
+                                <option value="false" selected="@(!Model.IsActive)">🔴 ปิดระงับการใช้งาน</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 2. สิทธิ์การเข้าดูหน้าจอ (Page Access Permissions) -->
+                    <h5 class="fw-bold mb-3" style="color:#0f766e; border-bottom:2px solid #ccfbf1; padding-bottom:8px;">
+                        <i class="bi bi-layout-sidebar-inset me-1"></i> 2. สิทธิ์การเข้าดูหน้าจอ (เมนูที่อนุญาตให้เปิดดู)
+                    </h5>
+                    <div class="row g-2 mb-4" id="pagePermissionsBlock">
+                        <div class="col-md-3">
+                            <div class="p-3 perm-card">
+                                <div class="form-check">
+                                    <input class="form-check-input page-check" type="checkbox" name="pages" value="Dashboard" id="p_dash"
+                                           checked="@(Model.Role == "admin" || userPages.Contains("dashboard"))">
+                                    <label class="form-check-label fw-bold" for="p_dash">
+                                        <i class="bi bi-speedometer2 text-primary me-1"></i> Dashboard
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block ms-4" style="font-size:0.78rem;">แดชบอร์ดลูกหนี้</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 perm-card">
+                                <div class="form-check">
+                                    <input class="form-check-input page-check" type="checkbox" name="pages" value="SalesBill" id="p_bill"
+                                           checked="@(Model.Role == "admin" || userPages.Contains("salesbill"))">
+                                    <label class="form-check-label fw-bold" for="p_bill">
+                                        <i class="bi bi-receipt text-info me-1"></i> รายการบิลขาย
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block ms-4" style="font-size:0.78rem;">ค้นหาและดูบิล</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 perm-card">
+                                <div class="form-check">
+                                    <input class="form-check-input page-check" type="checkbox" name="pages" value="Debtor" id="p_debt"
+                                           checked="@(Model.Role == "admin" || userPages.Contains("debtor"))">
+                                    <label class="form-check-label fw-bold" for="p_debt">
+                                        <i class="bi bi-credit-card-2-front text-warning me-1"></i> การ์ดลูกหนี้
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block ms-4" style="font-size:0.78rem;">ติดตามสถานะหนี้</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 perm-card">
+                                <div class="form-check">
+                                    <input class="form-check-input page-check" type="checkbox" name="pages" value="DebtorHistory" id="p_hist"
+                                           checked="@(Model.Role == "admin" || userPages.Contains("debtorhistory") || userPages.Contains("history"))">
+                                    <label class="form-check-label fw-bold" for="p_hist">
+                                        <i class="bi bi-clock-history text-secondary me-1"></i> ประวัติชำระครบ
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block ms-4" style="font-size:0.78rem;">ประวัติบิลปิดยอด</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 perm-card">
+                                <div class="form-check">
+                                    <input class="form-check-input page-check" type="checkbox" name="pages" value="Cancelled" id="p_cancel"
+                                           checked="@(Model.Role == "admin" || userPages.Contains("cancelled") || userPages.Contains("debtorcancelled"))">
+                                    <label class="form-check-label fw-bold text-danger" for="p_cancel">
+                                        <i class="bi bi-trash3-fill text-danger me-1"></i> บิลยกเลิก (40 วัน)
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block ms-4" style="font-size:0.78rem;">สิทธิ์ดูและกู้คืนบิลยกเลิก</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 perm-card">
+                                <div class="form-check">
+                                    <input class="form-check-input page-check" type="checkbox" name="pages" value="WaitingGoods" id="p_wait"
+                                           checked="@(Model.Role == "admin" || userPages.Contains("waitinggoods"))">
+                                    <label class="form-check-label fw-bold" for="p_wait" style="color:#d97706;">
+                                        <i class="bi bi-hourglass-split text-warning me-1"></i> บิลรอสินค้า/ส่ง
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block ms-4" style="font-size:0.78rem;">บิลรอสินค้า, บิลอยู่จัดส่ง</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 perm-card">
+                                <div class="form-check">
+                                    <input class="form-check-input page-check" type="checkbox" name="pages" value="SalesReport" id="p_rep"
+                                           checked="@(Model.Role == "admin" || userPages.Contains("salesreport") || userPages.Contains("report"))">
+                                    <label class="form-check-label fw-bold text-success" for="p_rep">
+                                        <i class="bi bi-bar-chart-line-fill text-success me-1"></i> รายงานยอดขาย
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block ms-4" style="font-size:0.78rem;">รายงานยอดขายผู้แทน</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 perm-card">
+                                <div class="form-check">
+                                    <input class="form-check-input page-check" type="checkbox" name="pages" value="Audit" id="p_audit"
+                                           checked="@(Model.Role == "admin" || userPages.Contains("audit"))">
+                                    <label class="form-check-label fw-bold text-danger" for="p_audit">
+                                        <i class="bi bi-journal-text text-danger me-1"></i> ประวัติใช้งาน (Audit)
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block ms-4" style="font-size:0.78rem;">Audit Logs ผู้เข้าใช้</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 perm-card">
+                                <div class="form-check">
+                                    <input class="form-check-input page-check" type="checkbox" name="pages" value="Users" id="p_users"
+                                           checked="@(Model.Role == "admin" || userPages.Contains("users"))">
+                                    <label class="form-check-label fw-bold" for="p_users">
+                                        <i class="bi bi-people text-warning me-1"></i> จัดการผู้ใช้
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block ms-4" style="font-size:0.78rem;">เพิ่ม/แก้ไขผู้ใช้งานระบบ</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 perm-card">
+                                <div class="form-check">
+                                    <input class="form-check-input page-check" type="checkbox" name="pages" value="Upload" id="p_up"
+                                           checked="@(Model.Role == "admin" || userPages.Contains("upload"))">
+                                    <label class="form-check-label fw-bold" for="p_up">
+                                        <i class="bi bi-cloud-upload text-dark me-1"></i> อัปโหลดบิลขาย
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block ms-4" style="font-size:0.78rem;">นำเข้าไฟล์ Excel สู่ระบบ</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. ขอบเขตพื้นที่และข้อมูลที่รับผิดชอบ -->
+                    <h5 class="fw-bold mb-3" style="color:#0f766e; border-bottom:2px solid #ccfbf1; padding-bottom:8px;">
+                        <i class="bi bi-geo-alt me-1"></i> 3. ขอบเขตพื้นที่และข้อมูลที่รับผิดชอบ
+                    </h5>
+
+                    <div class="alert alert-info py-2 px-3 mb-3 small d-flex align-items-center gap-2" style="border-radius:10px; background:#f0fdfa; border:1.5px solid #99f6e4; color:#0f766e;">
+                        <i class="bi bi-info-circle-fill fs-5"></i>
+                        <div>
+                            <strong>💡 คำแนะนำการกำหนดสิทธิ์:</strong> 
+                            สามารถเลือก <strong>ภาค</strong> (ระบบจะรวมทุกจังหวัดในภาคนั้นอัตโนมัติ), หรือเลือก <strong>จังหวัด</strong> เฉพาะเจาะจง หรือเลือกผสมกันได้ (เช่น วิ่ง 2 ภาค หรือวิ่ง 1 ภาคพร้อมจังหวัดข้ามภาค) และสามารถเลือก <strong>ผู้แทนขาย</strong> เพื่อจำกัดเฉพาะบิลของตนเองได้ (เลือกได้หลายผู้แทน)
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <!-- 1. เลือกภาค (Regions) -->
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded border h-100">
+                                <label class="form-label fw-bold text-primary mb-2">
+                                    🗺️ 1. เลือกภาค/ภูมิภาค (เลือกได้มากกว่า 1 ภาค)
+                                </label>
+                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                    @foreach (var reg in regions)
+                                    {
+                                        bool isRegChecked = userRegions.Contains(reg);
+                                        <div class="form-check form-check-inline bg-white px-3 py-1 rounded border shadow-sm">
+                                            <input class="form-check-input region-checkbox" type="checkbox" value="@reg" id="reg_@reg" checked="@isRegChecked" onchange="onRegionCheckboxChange()">
+                                            <label class="form-check-label fw-bold text-dark" for="reg_@reg">@reg</label>
+                                        </div>
+                                    }
+                                </div>
+                                <input type="hidden" name="allowedRegion" id="allowedRegionHidden" value="@Model.AllowedRegion" />
+                                <small class="text-muted d-block" style="font-size:0.75rem;">* หากเลือกภาค ระบบจะแสดงข้อมูลทุกจังหวัดในภาคนั้นให้อัตโนมัติ</small>
+                            </div>
+                        </div>
+
+                        <!-- 2. เลือกผู้แทนขาย (Sales Representatives) -->
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded border h-100">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label fw-bold text-primary mb-0">
+                                        👔 2. เลือกผู้แทนขาย (เลือกได้มากกว่า 1 ผู้แทน)
+                                    </label>
+                                    <span class="badge bg-secondary" id="salesRepCountBadge">0 ผู้แทน</span>
+                                </div>
+                                <div class="input-group input-group-sm mb-2">
+                                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                                    <input type="text" id="salesRepSearchInput" class="form-control" placeholder="พิมพ์ค้นหาชื่อผู้แทน..." oninput="filterSalesRepChips()" />
+                                </div>
+                                <div class="picker-container mb-2" id="salesRepChipContainer">
+                                    @foreach (var rep in dbSalesReps)
+                                    {
+                                        <span class="item-chip sales-rep-chip" data-name="@rep" onclick="toggleSalesRepChip('@rep')">
+                                            <i class="bi bi-plus-circle"></i> @rep
+                                        </span>
+                                    }
+                                </div>
+                                <input type="hidden" name="salesRepCode" id="salesRepCodeHidden" value="@Model.SalesRepCode" />
+                                <div id="salesRepTagsContainer" class="d-flex flex-wrap gap-1"></div>
+                            </div>
+                        </div>
+
+                        <!-- 3. เลือกจังหวัด (Provinces) ครบ 77 จังหวัดทั่วประเทศ พร้อมค้นหา -->
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded border h-100">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label fw-bold text-primary mb-0">
+                                        📍 3. เลือกจังหวัด (ครบ 77 จังหวัดทั่วประเทศ)
+                                    </label>
+                                    <span class="badge bg-secondary" id="provCountBadge">0 จังหวัด</span>
+                                </div>
+                                <div class="input-group input-group-sm mb-2">
+                                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                                    <input type="text" id="provinceSearchInput" class="form-control" placeholder="พิมพ์ค้นหา เช่น ส, เชียงใหม่, ตาก..." oninput="filterProvinceChips()" />
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="selectAllFilteredProvinces()" title="เลือกทุกจังหวัดที่กำลังแสดง">
+                                        เลือกทั้งหมดที่ค้นหา
+                                    </button>
+                                </div>
+                                <div class="picker-container mb-2" id="provinceChipContainer">
+                                    <!-- Populated dynamically with all 77 provinces -->
+                                </div>
+                                <input type="hidden" name="allowedProvinces" id="allowedProvincesHidden" value="@Model.AllowedProvinces" />
+                                <div id="provinceTagsContainer" class="d-flex flex-wrap gap-1"></div>
+                            </div>
+                        </div>
+
+                        <!-- 4. เลือกเขต/อำเภอ (Districts) -->
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded border h-100">
+                                <label class="form-label fw-bold text-primary mb-2">
+                                    📌 4. เลือกเขต/อำเภอ (District)
+                                </label>
+                                <div class="input-group input-group-sm mb-2">
+                                    <select class="form-select" id="districtDropdown">
+                                        <option value="">-- เลือกเขต/อำเภอ --</option>
+                                    </select>
+                                    <button type="button" class="btn btn-outline-primary" onclick="addSelectedDistrict()" title="เพิ่มเขต/อำเภอ">
+                                        <i class="bi bi-plus-circle"></i> เพิ่ม
+                                    </button>
+                                </div>
+                                <input type="hidden" name="allowedDistricts" id="allowedDistrictsHidden" value="@Model.AllowedDistricts" />
+                                <div id="districtTagsContainer" class="d-flex flex-wrap gap-1 mt-2"></div>
+                                <small class="text-muted d-block mt-2" style="font-size:0.75rem;">* หากเว้นว่างไว้ ระบบจะแสดงข้อมูลทุกอำเภอในจังหวัดที่เลือก</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. สิทธิ์ความปลอดภัย และการจัดการข้อมูล -->
+                    <h5 class="fw-bold mb-3" style="color:#0f766e; border-bottom:2px solid #ccfbf1; padding-bottom:8px;">
+                        <i class="bi bi-shield-check me-1"></i> 4. สิทธิ์ความปลอดภัย และการจัดการข้อมูล
+                    </h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="p-3" style="background:#f0fdf4; border:1.5px solid #bbf7d0; border-radius:12px; height:100%;">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" name="canViewPaymentDetails" id="canViewPaymentDetails" value="true"
+                                           checked="@Model.CanViewPaymentDetails">
+                                    <label class="form-check-label fw-bold text-success" for="canViewPaymentDetails">
+                                        💳 สิทธิ์ดูรายละเอียดการรับชำระเงิน
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block" style="font-size:0.80rem;">
+                                    อนุญาตให้ดูประวัติการชำระเงิน, สลิปโอนเงิน, รูปหน้าเช็ค และบันทึกการรับชำระ
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="p-3" style="background:#f0fdf4; border:1.5px solid #bbf7d0; border-radius:12px; height:100%;">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" name="canChangeDebtStatus" id="canChangeDebtStatus" value="true"
+                                           checked="@Model.CanChangeDebtStatus">
+                                    <label class="form-check-label fw-bold text-success" for="canChangeDebtStatus">
+                                        🔄 สิทธิ์เปลี่ยนสถานะหนี้
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block" style="font-size:0.80rem;">
+                                    อนุญาตให้เปลี่ยนสถานะหนี้ (เลื่อนนัด, หนี้สูญ, รับคืน, ยกเลิก)
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="p-3" style="background:#fff7ed; border:1.5px solid #fed7aa; border-radius:12px; height:100%;">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" name="canDeleteSalesBill" id="canDeleteSalesBill" value="true"
+                                           checked="@Model.CanDeleteSalesBill">
+                                    <label class="form-check-label fw-bold text-danger" for="canDeleteSalesBill">
+                                        🗑️ สิทธิ์ลบรายงานบิลขาย
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block" style="font-size:0.80rem;">
+                                    อนุญาตให้กดลบบิลขายออกจากระบบได้
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="p-3" style="background:#fff7ed; border:1.5px solid #fed7aa; border-radius:12px; height:100%;">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" name="canDeleteDebtor" id="canDeleteDebtor" value="true"
+                                           checked="@Model.CanDeleteDebtor">
+                                    <label class="form-check-label fw-bold text-danger" for="canDeleteDebtor">
+                                        🗑️ สิทธิ์ลบการ์ดลูกหนี้
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block" style="font-size:0.80rem;">
+                                    อนุญาตให้กดลบรายการการ์ดลูกหนี้ออกจากระบบได้
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="p-3" style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; height:100%;">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" name="canDownload" id="canDownload" value="true"
+                                           checked="@Model.CanDownload">
+                                    <label class="form-check-label fw-bold" for="canDownload">
+                                        📥 สิทธิ์ดาวน์โหลดไฟล์ (Export)
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block" style="font-size:0.80rem;">
+                                    อนุญาตให้ Export Excel (.xlsx), Export PDF หรือดาวน์โหลดรายงาน
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="p-3" style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; height:100%;">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" name="canScreenCapture" id="canScreenCapture" value="true"
+                                           checked="@Model.CanScreenCapture">
+                                    <label class="form-check-label fw-bold" for="canScreenCapture">
+                                        📸 สิทธิ์จับภาพหน้าจอ (Screen Capture)
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block" style="font-size:0.80rem;">
+                                    อนุญาตให้บันทึกภาพหน้าจอได้ หากปิดระบบจะป้องกันการ Capture
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="p-3" style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; height:100%;">
+                                <label class="form-label fw-bold small text-muted mb-1">
+                                    ⏱️ ระยะเวลาเข้าใช้งานระบบ
+                                </label>
+                                <select name="sessionTimeoutMinutes" class="form-select form-select-sm fw-bold">
+                                    <option value="" selected="@(Model.SessionTimeoutMinutes == null)">♾️ ไม่จำกัดเวลา</option>
+                                    <option value="10" selected="@(Model.SessionTimeoutMinutes == 10)">⏳ 10 นาที</option>
+                                    <option value="15" selected="@(Model.SessionTimeoutMinutes == 15)">⏳ 15 นาที</option>
+                                    <option value="20" selected="@(Model.SessionTimeoutMinutes == 20)">⏳ 20 นาที</option>
+                                    <option value="30" selected="@(Model.SessionTimeoutMinutes == 30)">⏳ 30 นาที</option>
+                                    <option value="60" selected="@(Model.SessionTimeoutMinutes == 60)">⏳ 60 นาที (1 ชั่วโมง)</option>
+                                </select>
+                                <small class="text-muted d-block mt-1" style="font-size:0.75rem;">
+                                    เมื่อครบกำหนด ระบบจะบังคับออกจากระบบอัตโนมัติ
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                        <a href="/Account/Users" class="btn btn-light px-4">ยกเลิก</a>
+                        <button type="submit" class="btn btn-primary px-5 fw-bold">
+                            <i class="bi bi-save me-1"></i> บันทึกการเปลี่ยนแปลง
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const allThailandProvinces = @Html.Raw(JsonSerializer.Serialize(allThailandProvinces));
+    const dbSalesReps = @Html.Raw(JsonSerializer.Serialize(dbSalesReps));
+    const provinceDistrictsMap = @Html.Raw(JsonSerializer.Serialize(provinceDistricts));
+
+    let selectedRegions = [];
+    let selectedProvinces = [];
+    let selectedDistricts = [];
+    let selectedSalesReps = [];
+
+    const initialProvsStr = "@Html.Raw(Model.AllowedProvinces ?? "")";
+    if (initialProvsStr) {
+        selectedProvinces = initialProvsStr.Split ? initialProvsStr.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
+    }
+
+    const initialDistsStr = "@Html.Raw(Model.AllowedDistricts ?? "")";
+    if (initialDistsStr) {
+        selectedDistricts = initialDistsStr.Split ? initialDistsStr.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
+    }
+
+    const initialSalesRepsStr = "@Html.Raw(Model.SalesRepCode ?? "")";
+    if (initialSalesRepsStr) {
+        selectedSalesReps = initialSalesRepsStr.Split ? initialSalesRepsStr.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
+    }
+
+    function onRoleChange() {
+        const role = document.getElementById('roleSelect').value;
+        const pageChecks = document.querySelectorAll('.page-check');
+        if (role === 'admin') {
+            pageChecks.forEach(c => { c.checked = true; c.disabled = true; });
+            document.getElementById('canViewPaymentDetails').checked = true;
+            document.getElementById('canDeleteSalesBill').checked = true;
+            document.getElementById('canDeleteDebtor').checked = true;
+            document.getElementById('canDownload').checked = true;
+            document.getElementById('canScreenCapture').checked = true;
+        } else {
+            pageChecks.forEach(c => { c.disabled = false; });
+        }
+    }
+
+    function onRegionCheckboxChange() {
+        selectedRegions = [];
+        document.querySelectorAll('.region-checkbox:checked').forEach(cb => {
+            selectedRegions.push(cb.value);
+        });
+        document.getElementById('allowedRegionHidden').value = selectedRegions.join(', ');
+    }
+
+    // --- PROVINCE CHIP BROWSER ---
+    function renderProvinceChips() {
+        const query = (document.getElementById('provinceSearchInput').value || '').trim().toLowerCase();
+        const container = document.getElementById('provinceChipContainer');
+        container.innerHTML = '';
+
+        let count = 0;
+        allThailandProvinces.forEach(p => {
+            if (!query || p.toLowerCase().includes(query)) {
+                count++;
+                const chip = document.createElement('span');
+                chip.className = 'item-chip prov-chip ' + (selectedProvinces.includes(p) ? 'selected' : '');
+                chip.innerHTML = (selectedProvinces.includes(p) ? '<i class="bi bi-check-circle-fill"></i> ' : '<i class="bi bi-plus-circle"></i> ') + p;
+                chip.onclick = () => toggleProvinceChip(p);
+                container.appendChild(chip);
+            }
+        });
+        if (count === 0) {
+            container.innerHTML = '<span class="text-muted small p-2">ไม่พบจังหวัดที่ค้นหา</span>';
+        }
+    }
+
+    function filterProvinceChips() {
+        renderProvinceChips();
+    }
+
+    function toggleProvinceChip(prov) {
+        if (selectedProvinces.includes(prov)) {
+            selectedProvinces = selectedProvinces.filter(p => p !== prov);
+        } else {
+            selectedProvinces.push(prov);
+        }
+        renderProvinceChips();
+        renderProvinceTags();
+        updateDistrictDropdown();
+    }
+
+    function selectAllFilteredProvinces() {
+        const query = (document.getElementById('provinceSearchInput').value || '').trim().toLowerCase();
+        allThailandProvinces.forEach(p => {
+            if (!query || p.toLowerCase().includes(query)) {
+                if (!selectedProvinces.includes(p)) selectedProvinces.push(p);
+            }
+        });
+        renderProvinceChips();
+        renderProvinceTags();
+        updateDistrictDropdown();
+    }
+
+    function removeProvince(prov) {
+        selectedProvinces = selectedProvinces.filter(p => p !== prov);
+        renderProvinceChips();
+        renderProvinceTags();
+        updateDistrictDropdown();
+    }
+
+    function renderProvinceTags() {
+        const container = document.getElementById('provinceTagsContainer');
+        container.innerHTML = '';
+        selectedProvinces.forEach(p => {
+            const span = document.createElement('span');
+            span.className = 'tag-badge';
+            span.innerHTML = `<i class="bi bi-geo-alt-fill"></i> ${p} <span class="btn-close-tag" onclick="removeProvince('${p}')">&times;</span>`;
+            container.appendChild(span);
+        });
+        document.getElementById('allowedProvincesHidden').value = selectedProvinces.join(', ');
+        document.getElementById('provCountBadge').textContent = selectedProvinces.length + ' จังหวัด';
+    }
+
+    function updateDistrictDropdown() {
+        const districtDropdown = document.getElementById('districtDropdown');
+        districtDropdown.innerHTML = '<option value="">-- เลือกเขต/อำเภอ --</option>';
+
+        const availableDistricts = new Set();
+        selectedProvinces.forEach(prov => {
+            if (provinceDistrictsMap[prov]) {
+                provinceDistrictsMap[prov].forEach(d => availableDistricts.add(`${d} (${prov})`));
+            }
+        });
+
+        Array.from(availableDistricts).sort().forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d;
+            opt.textContent = d;
+            districtDropdown.appendChild(opt);
+        });
+    }
+
+    function addSelectedDistrict() {
+        const dist = document.getElementById('districtDropdown').value;
+        if (dist && !selectedDistricts.includes(dist)) {
+            selectedDistricts.push(dist);
+            renderDistrictTags();
+        }
+    }
+
+    function removeDistrict(dist) {
+        selectedDistricts = selectedDistricts.filter(d => d !== dist);
+        renderDistrictTags();
+    }
+
+    function renderDistrictTags() {
+        const container = document.getElementById('districtTagsContainer');
+        container.innerHTML = '';
+        selectedDistricts.forEach(d => {
+            const span = document.createElement('span');
+            span.className = 'tag-badge';
+            span.style.background = '#fef3c7';
+            span.style.color = '#92400e';
+            span.innerHTML = `<i class="bi bi-pin-map-fill"></i> ${d} <span class="btn-close-tag" onclick="removeDistrict('${d}')">&times;</span>`;
+            container.appendChild(span);
+        });
+        document.getElementById('allowedDistrictsHidden').value = selectedDistricts.join(', ');
+    }
+
+    // --- SALES REP CHIP BROWSER ---
+    function renderSalesRepChips() {
+        const query = (document.getElementById('salesRepSearchInput').value || '').trim().toLowerCase();
+        const container = document.getElementById('salesRepChipContainer');
+        container.innerHTML = '';
+
+        let count = 0;
+        dbSalesReps.forEach(rep => {
+            if (!query || rep.toLowerCase().includes(query)) {
+                count++;
+                const chip = document.createElement('span');
+                chip.className = 'item-chip sales-rep-chip ' + (selectedSalesReps.includes(rep) ? 'selected' : '');
+                chip.innerHTML = (selectedSalesReps.includes(rep) ? '<i class="bi bi-check-circle-fill"></i> ' : '<i class="bi bi-plus-circle"></i> ') + rep;
+                chip.onclick = () => toggleSalesRepChip(rep);
+                container.appendChild(chip);
+            }
+        });
+        if (count === 0) {
+            container.innerHTML = '<span class="text-muted small p-2">ไม่พบผู้แทนที่ค้นหา</span>';
+        }
+    }
+
+    function filterSalesRepChips() {
+        renderSalesRepChips();
+    }
+
+    function toggleSalesRepChip(rep) {
+        if (selectedSalesReps.includes(rep)) {
+            selectedSalesReps = selectedSalesReps.filter(r => r !== rep);
+        } else {
+            selectedSalesReps.push(rep);
+        }
+        renderSalesRepChips();
+        renderSalesRepTags();
+    }
+
+    function removeSalesRep(rep) {
+        selectedSalesReps = selectedSalesReps.filter(s => s !== rep);
+        renderSalesRepChips();
+        renderSalesRepTags();
+    }
+
+    function renderSalesRepTags() {
+        const container = document.getElementById('salesRepTagsContainer');
+        if (!container) return;
+        container.innerHTML = '';
+        selectedSalesReps.forEach(s => {
+            const span = document.createElement('span');
+            span.className = 'tag-badge';
+            span.style.background = '#dbeafe';
+            span.style.color = '#1e40af';
+            span.innerHTML = `<i class="bi bi-person-fill"></i> ${s} <span class="btn-close-tag" onclick="removeSalesRep('${s}')">&times;</span>`;
+            container.appendChild(span);
+        });
+        document.getElementById('salesRepCodeHidden').value = selectedSalesReps.join(', ');
+        document.getElementById('salesRepCountBadge').textContent = selectedSalesReps.length + ' ผู้แทน';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (initialProvsStr) {
+            selectedProvinces = initialProvsStr.split(',').map(s => s.trim()).filter(s => s.length > 0);
+        }
+        if (initialDistsStr) {
+            selectedDistricts = initialDistsStr.split(',').map(s => s.trim()).filter(s => s.length > 0);
+        }
+        if (initialSalesRepsStr) {
+            selectedSalesReps = initialSalesRepsStr.split(',').map(s => s.trim()).filter(s => s.length > 0);
+        }
+
+        renderProvinceChips();
+        renderProvinceTags();
+        renderDistrictTags();
+        renderSalesRepChips();
+        renderSalesRepTags();
+        onRegionCheckboxChange();
+    });
+</script>

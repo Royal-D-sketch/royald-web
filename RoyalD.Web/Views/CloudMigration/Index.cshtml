@@ -1,0 +1,121 @@
+﻿@{
+    ViewData["Title"] = "ขึ้นระบบ Cloud PostgreSQL";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-1 fw-bold" style="color:#0f766e;">
+            <i class="bi bi-cloud-arrow-up-fill text-primary"></i> ขึ้นระบบฐานข้อมูลกลาง Cloud Production (PostgreSQL)
+        </h4>
+        <span class="text-muted small fw-semibold">เชื่อมต่อฐานข้อมูล Cloud ความเร็วสูง รองรับพนักงานเข้าใช้งานพร้อมกันจากทุกสาขาทั่วประเทศ</span>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <!-- Local Stats -->
+    <div class="col-md-3">
+        <div class="card p-3 shadow-sm border-0" style="border-radius:12px; background:#f0fdfa;">
+            <div class="small fw-bold text-muted">บิลขายในระบบปัจจุบัน</div>
+            <div class="fs-4 fw-black" style="color:#0d9488;">@ViewBag.TotalBills.ToString("N0") <small class="fs-6 fw-normal">รายการ</small></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 shadow-sm border-0" style="border-radius:12px; background:#eff6ff;">
+            <div class="small fw-bold text-muted">ลูกหนี้คงค้าง</div>
+            <div class="fs-4 fw-black" style="color:#2563eb;">@ViewBag.TotalDebts.ToString("N0") <small class="fs-6 fw-normal">รายการ</small></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 shadow-sm border-0" style="border-radius:12px; background:#fdf2f8;">
+            <div class="small fw-bold text-muted">ลูกค้าทั้งหมด</div>
+            <div class="fs-4 fw-black" style="color:#db2777;">@ViewBag.TotalCustomers.ToString("N0") <small class="fs-6 fw-normal">ราย</small></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 shadow-sm border-0" style="border-radius:12px; background:#faf5ff;">
+            <div class="small fw-bold text-muted">บัญชีผู้ใช้งาน</div>
+            <div class="fs-4 fw-black" style="color:#9333ea;">@ViewBag.TotalUsers.ToString("N0") <small class="fs-6 fw-normal">บัญชี</small></div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4" style="border-radius:14px; overflow:hidden;">
+    <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);">
+        <i class="bi bi-database-check me-1"></i> โอนย้ายข้อมูลจากเครื่องนี้ขึ้น Cloud PostgreSQL ทันที (1-Click Sync)
+    </div>
+    <div class="card-body p-4">
+        <form asp-controller="CloudMigration" asp-action="MigrateToPostgres" method="post" id="migration-form">
+            @Html.AntiForgeryToken()
+
+            <!-- Nav Tabs -->
+            <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active fw-bold" id="tab-url-tab" data-bs-toggle="pill" data-bs-target="#tab-url" type="button">
+                        <i class="bi bi-link-45deg"></i> วิธีที่ 1: วาง Connection String (URI)
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-bold" id="tab-fields-tab" data-bs-toggle="pill" data-bs-target="#tab-fields" type="button">
+                        <i class="bi bi-input-cursor-text"></i> วิธีที่ 2: กรอกแยกช่อง (Host, User, Password)
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content border p-3 rounded-3 bg-light mb-3" id="pills-tabContent">
+                <!-- Tab 1: Single URL -->
+                <div class="tab-pane fade show active" id="tab-url" role="tabpanel">
+                    <label class="form-label fw-bold">
+                        วาง Connection String (URI จาก Supabase หรือ Neon):
+                    </label>
+                    <input type="text" name="connectionString" id="conn-input" class="form-control form-control-lg font-monospace fs-6" 
+                           placeholder="postgresql://postgres.xxxx:รหัสผ่าน@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres" />
+                    <small class="text-muted d-block mt-2">
+                        💡 <strong>ข้อสังเกต:</strong> หากคัดลอกจาก Supabase อย่าลืมแทนที่ <code>[YOUR-PASSWORD]</code> ด้วยรหัสผ่านจริง
+                    </small>
+                </div>
+
+                <!-- Tab 2: Individual Fields -->
+                <div class="tab-pane fade" id="tab-fields" role="tabpanel">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold">Host / เซิร์ฟเวอร์</label>
+                            <input type="text" name="dbHost" class="form-control" placeholder="เช่น db.xxxx.supabase.co หรือ aws-0-ap-southeast-1.pooler.supabase.com" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Port</label>
+                            <input type="number" name="dbPort" class="form-control" value="5432" placeholder="5432 หรือ 6543" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Username</label>
+                            <input type="text" name="dbUser" class="form-control" value="postgres" placeholder="postgres หรือ postgres.xxxx" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Database Password (รหัสผ่าน)</label>
+                            <input type="password" name="dbPassword" class="form-control" placeholder="กรอกรหัสผ่าน Supabase ของท่าน" />
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Database Name</label>
+                            <input type="text" name="dbName" class="form-control" value="postgres" placeholder="postgres" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary px-4 py-2 fw-bold" style="background:#0d9488; border-color:#0d9488;" onclick="return confirm('ยืนยันการเริ่มโอนย้ายข้อมูลทั้งหมดขึ้นสู่ Cloud PostgreSQL?');">
+                    <i class="bi bi-cloud-upload-fill me-1"></i> เริ่มโอนย้ายข้อมูลขึ้น Cloud เดี๋ยวนี้
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0" style="border-radius:14px;">
+    <div class="card-body p-4">
+        <h5 class="fw-bold" style="color:#0f766e;"><i class="bi bi-info-circle me-1"></i> จุดสังเกตรหัสผ่าน Supabase:</h5>
+        <p class="small text-muted mb-0">
+            หากขึ้น <code>password authentication failed</code> แสดงว่ารหัสผ่านที่กรอกไม่ตรงกับที่ตั้งไว้ใน Supabase<br>
+            สามารถกดรีเซ็ตรหัสผ่านใหม่ได้ทันทีที่ Supabase -> <strong>Project Settings ⚙️ -> Database -> Reset database password</strong> แล้วนำรหัสผ่านที่ตั้งใหม่มากรอกได้เลยครับ
+        </p>
+    </div>
+</div>

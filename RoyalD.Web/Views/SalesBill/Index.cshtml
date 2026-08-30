@@ -1,0 +1,313 @@
+@using RoyalD.Web.Models
+@model List<RoyalD.Web.Models.SalesBill>
+@{
+    ViewData["Title"] = "รายการบิลขาย";
+    var today = DateTime.Today;
+    var allProvincesMap = ViewBag.AllProvincesMap as Dictionary<string, List<string>> ?? new();
+    var regions = ViewBag.Regions as List<string> ?? new();
+    var provinces = ViewBag.Provinces as List<string> ?? new();
+    bool isLockedRegion = ViewBag.IsLockedRegion == true;
+    bool isLockedProvince = ViewBag.IsLockedProvince == true;
+    bool canDelete = ViewBag.CanDeleteSalesBill == true;
+    bool isAdmin = User.IsInRole("admin");
+    var canDownloadClaim = ViewContext.HttpContext.User.FindFirst("CanDownload")?.Value;
+    bool canDownload = isAdmin || canDownloadClaim == "true";
+}
+
+<style>
+.filter-card { background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%); border-radius: 14px; border: 1.5px solid #99f6e4; box-shadow: 0 2px 10px rgba(13,148,136,0.07); }
+@@media print {
+    .filter-card, .stats-bar, nav, .btn-card, .no-print, .actions-col { display: none !important; }
+    body { font-size: 10pt !important; }
+    table { width: 100% !important; }
+    @@page { size: A4 landscape; margin: 15mm; }
+}
+</style>
+
+@{
+    var debtDict = ViewBag.DebtDict as Dictionary<string, OutstandingDebt> ?? new();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3 no-print">
+    <div>
+        <h4 class="mb-0 fw-bold" style="color:#0f766e;">
+            <i class="bi bi-receipt text-primary me-2"></i> รายการบิลขาย (Sales Bills)
+        </h4>
+    </div>
+    <div class="d-flex gap-2">
+        @if (canDownload)
+        {
+            <a href="/SalesBill/ExportExcel?search=@ViewBag.Search&region=@ViewBag.SelectedRegion&province=@ViewBag.SelectedProvince&salesRep=@ViewBag.SalesRep&month=@ViewBag.Month&poSearch=@ViewBag.PoSearch&status=@ViewBag.Status&startDate=@ViewBag.StartDate&endDate=@ViewBag.EndDate" class="btn btn-success btn-sm no-print shadow-sm">
+                <i class="bi bi-file-earmark-excel"></i> Export Excel
+            </a>
+            <a href="/SalesBill/ExportCsv?search=@ViewBag.Search&region=@ViewBag.SelectedRegion&province=@ViewBag.SelectedProvince&salesRep=@ViewBag.SalesRep&month=@ViewBag.Month&poSearch=@ViewBag.PoSearch&status=@ViewBag.Status&startDate=@ViewBag.StartDate&endDate=@ViewBag.EndDate" class="btn btn-outline-success btn-sm no-print shadow-sm">
+                <i class="bi bi-filetype-csv"></i> Export CSV
+            </a>
+            <button onclick="window.print()" class="btn btn-outline-danger btn-sm no-print shadow-sm">
+                <i class="bi bi-file-earmark-pdf"></i> พิมพ์ / PDF
+            </button>
+        }
+        <span class="badge bg-primary fs-6 align-self-center">@ViewBag.TotalCount?.ToString("N0") รายการ</span>
+    </div>
+</div>
+
+<!-- Filter -->
+<div class="filter-card p-3 mb-4 no-print">
+    <form method="get" class="row g-2 align-items-end" id="filter-form">
+        
+        <div class="col-md-2">
+            <label class="form-label small fw-bold text-primary mb-1">🏷️ สถานะบิล</label>
+            <select name="status" class="form-select form-select-sm">
+                <option value="">-- ทุกสถานะบิล --</option>
+                <option value="paid" selected="@(ViewBag.Status == "paid")">✅ ชำระครบแล้ว</option>
+                <option value="unpaid" selected="@(ViewBag.Status == "unpaid")">⏳ ค้างชำระทั้งหมด</option>
+                <option value="overdue120" selected="@(ViewBag.Status == "overdue120")">🚨 ค้างเกิน 120 วัน</option>
+                <option value="installment" selected="@(ViewBag.Status == "installment")">💳 ผ่อนชำระ</option>
+                <option value="postponed" selected="@(ViewBag.Status == "postponed")">📅 เลื่อนนัดชำระ</option>
+                <option value="waiting_goods" selected="@(ViewBag.Status == "waiting_goods")">📦 รอสินค้า / ของขาด</option>
+                <option value="delivering" selected="@(ViewBag.Status == "delivering")">🚚 บิลอยู่จัดส่ง</option>
+                <option value="return_pending" selected="@(ViewBag.Status == "return_pending")">🔄 รอออกใบลดหนี้</option>
+                <option value="return_issued" selected="@(ViewBag.Status == "return_issued")">📝 ออกใบลดหนี้แล้ว</option>
+                <option value="bad_debt" selected="@(ViewBag.Status == "bad_debt")">⚠️ หนี้สูญ</option>
+                <option value="cancelled" selected="@(ViewBag.Status == "cancelled")">❌ ยกเลิกบิล</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-bold text-primary mb-1">🔍 ค้นหาบิล/ลูกค้า</label>
+            <input type="text" name="search" class="form-control form-control-sm" placeholder="รหัสลูกค้า / เลขที่บิล / ชื่อ..." value="@ViewBag.Search"/>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-bold text-primary mb-1">🛒 ค้นหา PO Number</label>
+            <input type="text" name="poSearch" class="form-control form-control-sm" placeholder="PO Number..." value="@ViewBag.PoSearch"/>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-bold text-primary mb-1">📅 วันที่เริ่มต้น</label>
+            <input type="date" name="startDate" class="form-control form-control-sm" value="@ViewBag.StartDate" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-bold text-primary mb-1">📅 วันที่สิ้นสุด</label>
+            <input type="date" name="endDate" class="form-control form-control-sm" value="@ViewBag.EndDate" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-bold text-primary mb-1">🗺️ ภาค/ภูมิภาค</label>
+            <select name="region" id="region-select" class="form-select form-select-sm" onchange="onRegionChange()" @(isLockedRegion ? "disabled" : "")>
+                @if (!isLockedRegion) {
+                    <option value="">-- ทุกภาค --</option>
+                }
+                @foreach (var reg in regions) {
+                    if (reg == ViewBag.SelectedRegion) { <option value="@reg" selected>@reg</option> }
+                    else { <option value="@reg">@reg</option> }
+                }
+            </select>
+            @if (isLockedRegion) { <input type="hidden" name="region" value="@ViewBag.SelectedRegion" /> }
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-bold text-primary mb-1">📍 จังหวัด</label>
+            @if (isLockedProvince && provinces.Count == 1)
+            {
+                <input type="text" class="form-control form-control-sm bg-light fw-bold text-primary" value="@ViewBag.SelectedProvince" readonly />
+                <input type="hidden" name="province" value="@ViewBag.SelectedProvince" />
+            }
+            else
+            {
+                <input type="text" list="salesBillProvinceList" name="province" id="province-select" class="form-control form-control-sm"
+                       placeholder="ทุกจังหวัด" value="@ViewBag.SelectedProvince" />
+                <datalist id="salesBillProvinceList">
+                    <option value="">-- ทุกจังหวัด --</option>
+                    @foreach (var p in provinces) {
+                        <option value="@p">@p</option>
+                    }
+                </datalist>
+            }
+        </div>
+        @if (ViewBag.IsRestricted == true)
+        {
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-primary mb-1">👔 ผู้แทนขาย</label>
+                <input type="text" class="form-control form-control-sm bg-light fw-bold text-primary" value="@ViewBag.AssignedSalesRep" readonly />
+                <input type="hidden" name="salesRep" value="@ViewBag.AssignedSalesRep" />
+            </div>
+        }
+        else
+        {
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-primary mb-1">👔 ผู้แทนขาย</label>
+                <input type="text" list="salesBillRepList" name="salesRep" class="form-control form-control-sm"
+                       placeholder="ทุกผู้แทน" value="@ViewBag.SalesRep" />
+                <datalist id="salesBillRepList">
+                    <option value="">-- ทุกผู้แทน --</option>
+                    @foreach (var s in (ViewBag.SalesReps as List<string> ?? new())) {
+                        <option value="@s">@s</option>
+                    }
+                </datalist>
+            </div>
+        }
+        <div class="col-md-2">
+            <label class="form-label small fw-bold text-primary mb-1">📅 แฟ้มเดือน</label>
+            <select name="month" class="form-select form-select-sm">
+                <option value="">-- ทุกเดือน --</option>
+                @foreach (var m in (ViewBag.Months as List<string> ?? new())) {
+                    if (m == ViewBag.Month) { <option value="@m" selected>@m</option> }
+                    else { <option value="@m">@m</option> }
+                }
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-1">
+            <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">
+                <i class="bi bi-search"></i> ค้นหา
+            </button>
+            <a href="/SalesBill" class="btn btn-outline-secondary btn-sm" title="ล้างตัวกรอง">
+                <i class="bi bi-x-circle"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Table Grid -->
+@if (!Model.Any()) {
+    <div class="card p-5 text-center text-muted">
+        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+        <h5>ไม่พบบิลขายที่ตรงกับเงื่อนไข</h5>
+        <small>ลองเปลี่ยนตัวกรอง หรือค้นหาด้วยคำใหม่อีกครั้ง</small>
+    </div>
+} else {
+    <div class="card shadow-sm p-3 mb-4 table-responsive">
+        <table class="table table-hover table-sm align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>เลขที่บิล</th>
+                    <th>วันที่</th>
+                    <th>รหัสลูกค้า</th>
+                    <th>ชื่อลูกค้า</th>
+                    <th>จังหวัด</th>
+                    <th>ผู้แทนขาย</th>
+                    <th class="text-end">ยอดสุทธิ</th>
+                    <th>PO Number</th>
+                    <th class="text-center actions-col">ดูรายละเอียด</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model) {
+                    bool isOverdue = !b.IsFullyPaid && (DateTime.Today - b.BillDate.AddDays(b.Credit)).TotalDays > 0;
+                    bool isOverdue120 = !b.IsFullyPaid && (DateTime.Today - b.BillDate.AddDays(b.Credit)).TotalDays > 120;
+                    debtDict.TryGetValue(b.BillNo, out var debt);
+                    var debtStatus = debt?.Status;
+
+                    var rowClass = b.IsFullyPaid ? "table-success" : (debtStatus == DebtStatus.BadDebt || isOverdue120 ? "table-danger" : "");
+                    <tr class="@rowClass">
+                        <td class="fw-bold">
+                            @b.BillNo
+                            @if (b.IsFullyPaid)
+                            {
+                                <span class="badge bg-success ms-1" style="font-size:0.75em;">ชำระครบแล้ว</span>
+                            }
+                            else if (debtStatus == DebtStatus.BadDebt)
+                            {
+                                <span class="badge bg-danger ms-1" style="font-size:0.75em;">หนี้สูญ</span>
+                            }
+                            else if (debtStatus == DebtStatus.Cancelled)
+                            {
+                                <span class="badge bg-dark ms-1" style="font-size:0.75em;">ยกเลิกบิล</span>
+                            }
+                            else if (debtStatus == DebtStatus.Installment)
+                            {
+                                <span class="badge bg-primary ms-1" style="font-size:0.75em;">ผ่อนชำระ</span>
+                            }
+                            else if (debtStatus == DebtStatus.Postponed)
+                            {
+                                <span class="badge bg-warning text-dark ms-1" style="font-size:0.75em;">เลื่อนนัดชำระ</span>
+                            }
+                            else if (debtStatus == DebtStatus.WaitingGoods)
+                            {
+                                <span class="badge bg-info text-dark ms-1" style="font-size:0.75em;">รอสินค้า / ของขาด</span>
+                            }
+                            else if (debtStatus == DebtStatus.Delivering)
+                            {
+                                <span class="badge bg-secondary ms-1" style="font-size:0.75em;">บิลอยู่จัดส่ง</span>
+                            }
+                            else if (debtStatus == DebtStatus.ReturnPending)
+                            {
+                                <span class="badge bg-danger bg-opacity-75 ms-1" style="font-size:0.75em;">รอออกใบลดหนี้</span>
+                            }
+                            else if (debtStatus == DebtStatus.ReturnIssued)
+                            {
+                                <span class="badge bg-success bg-opacity-75 ms-1" style="font-size:0.75em;">ออกใบลดหนี้แล้ว</span>
+                            }
+                            else if (isOverdue120)
+                            {
+                                <span class="badge bg-danger ms-1" style="font-size:0.75em;">ค้างชำระเกิน 120 วัน</span>
+                            }
+                            else if (isOverdue)
+                            {
+                                <span class="badge bg-warning text-dark ms-1" style="font-size:0.75em;">เกินกำหนดชำระ</span>
+                            }
+                        </td>
+                        <td>@b.BillDate.ToString("dd/MM/yyyy")</td>
+                        <td><code>@b.CustomerCode</code></td>
+                        <td class="text-wrap" style="max-width:200px;">@b.CustomerName</td>
+                        <td>@b.Province</td>
+                        <td><span class="badge bg-light text-dark border">@b.SalesRep</span></td>
+                        <td class="text-end fw-bold text-success">@b.TotalAmount.ToString("N2")</td>
+                        <td>@b.PoNumber</td>
+                        <td class="text-center actions-col">
+                            <a href="/SalesBill/Detail?id=@Uri.EscapeDataString(b.BillNo)" class="btn btn-sm btn-outline-primary shadow-sm" title="ดูบิล">
+                                <i class="bi bi-eye"></i> ดูบิล
+                            </a>
+                            @if (canDelete)
+                            {
+                                <form asp-controller="SalesBill" asp-action="DeleteBill" method="post" class="d-inline" onsubmit="return confirm('ยืนยันการลบบิลขายเลขที่ @b.BillNo ออกจากระบบหรือไม่?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@b.BillNo" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="ลบบิลนี้">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<!-- Pagination -->
+@if (ViewBag.TotalPages > 1) {
+    <nav class="d-flex justify-content-center no-print">
+        <ul class="pagination pagination-sm">
+            @for (int p = 1; p <= ViewBag.TotalPages; p++) {
+                if (p == ViewBag.Page) {
+                    <li class="page-item active"><span class="page-link" style="background:#0d9488; border-color:#0d9488;">@p</span></li>
+                } else if (p == 1 || p == ViewBag.TotalPages || Math.Abs(p - (int)ViewBag.Page) <= 2) {
+                    <li class="page-item"><a class="page-link" href="?search=@ViewBag.Search&poSearch=@ViewBag.PoSearch&region=@ViewBag.SelectedRegion&province=@ViewBag.SelectedProvince&salesRep=@ViewBag.SalesRep&month=@ViewBag.Month&status=@ViewBag.Status&page=@p">@p</a></li>
+                }
+            }
+        </ul>
+    </nav>
+}
+
+<script>
+const allProvincesMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(allProvincesMap));
+
+function onRegionChange() {
+    const reg = document.getElementById('region-select').value;
+    const pSel = document.getElementById('province-select');
+    pSel.innerHTML = '<option value="">-- ทุกจังหวัด --</option>';
+    let provList = [];
+    if (!reg) {
+        Object.values(allProvincesMap).forEach(list => {
+            list.forEach(p => { if (!provList.includes(p)) provList.push(p); });
+        });
+    } else if (allProvincesMap[reg]) {
+        provList = allProvincesMap[reg];
+    }
+    provList.sort().forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p;
+        opt.textContent = p;
+        pSel.appendChild(opt);
+    });
+}
+</script>
+
+

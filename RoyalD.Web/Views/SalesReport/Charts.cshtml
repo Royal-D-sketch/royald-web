@@ -1,0 +1,499 @@
+@using RoyalD.Web.Services
+@model RoyalD.Web.Services.AnnualPerformanceViewModel
+@{
+    ViewData["Title"] = "2. รายงานกราฟแสดงยอดขายแต่ละผู้แทนในแต่ละเดือน";
+    var months = Model.Months;
+    var allReps = Model.RepReports;
+    var overall = Model.OverallCompany;
+    bool isAdmin = User.IsInRole("admin");
+    var canDownloadClaim = ViewContext.HttpContext.User.FindFirst("CanDownload")?.Value;
+    bool canDownload = isAdmin || canDownloadClaim == "true";
+}
+
+<style>
+/* Sub-Tabs Nav - Soft Mint Green Theme */
+.sales-subnav {
+    display: flex;
+    gap: 10px;
+    background: #ecfdf5;
+    padding: 8px;
+    border-radius: 14px;
+    margin-bottom: 20px;
+    border: 1px solid #a7f3d0;
+}
+.sales-subnav .subnav-item {
+    flex: 1;
+    text-align: center;
+    padding: 12px 18px;
+    font-weight: 800;
+    font-size: 1.02rem;
+    color: #065f46;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: all .2s ease-in-out;
+}
+.sales-subnav .subnav-item:hover {
+    background: rgba(255,255,255,0.9);
+    color: #059669;
+    transform: translateY(-1px);
+}
+.sales-subnav .subnav-item.active {
+    background: #059669;
+    color: white;
+    box-shadow: 0 4px 15px rgba(5,150,105,0.3);
+}
+
+.kpi-banner {
+    border-radius: 14px;
+    padding: 20px 26px;
+    background: linear-gradient(135deg, #065f46 0%, #059669 50%, #10b981 100%);
+    color: white;
+    box-shadow: 0 4px 18px rgba(5,150,105,0.22);
+}
+
+.chart-card {
+    border-radius: 14px;
+    border: none;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+    background: white;
+    padding: 22px;
+}
+
+@@media print {
+    .no-print, .sales-subnav, nav, .btn, .export-bar { display: none !important; }
+    body { font-size: 10pt; background: #fff !important; }
+    .chart-card { break-inside: avoid; page-break-inside: avoid; }
+    .signature-area { break-inside: avoid; page-break-inside: avoid; margin-top: 30px; }
+}
+</style>
+
+<!-- Sub-Tabs Navigation Header -->
+<div class="sales-subnav no-print">
+    <a href="/SalesReport/Summary" class="subnav-item">
+        <i class="bi bi-table me-2"></i> 1. สรุปยอดขาย-ยอดเก็บรายเดือน (Pivot Matrix)
+    </a>
+    <a href="/SalesReport/Charts" class="subnav-item active">
+        <i class="bi bi-bar-chart-line me-2"></i> 2. กราฟวิเคราะห์ผลงานรายผู้แทน (Charts)
+    </a>
+    <a href="/SalesReport/ProductDetails" class="subnav-item">
+        <i class="bi bi-box-seam me-2"></i> 3. รายละเอียดสินค้าที่ขาย (Product Details)
+    </a>
+</div>
+
+<!-- Header Title & Export Toolbar -->
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 export-bar">
+    <div>
+        <h3 class="mb-1 fw-bold" style="color:#065f46;">
+            <i class="bi bi-graph-up" style="color:#059669;"></i> กราฟวิเคราะห์ยอดขายและแนวโน้มผลงานสิ้นปี
+        </h3>
+        <span class="text-muted fw-semibold">กราฟแท่งเปรียบเทียบสัดส่วนยอดขาย เก็บเงิน หนี้ค้าง และ Trendline อัตราเก็บเงินรายบุคคล</span>
+    </div>
+    
+    @if (canDownload)
+    {
+        <!-- 3 Export Buttons (Admin / Authorized Only) -->
+        <div class="d-flex gap-2 no-print">
+            <button onclick="window.print()" class="btn btn-outline-danger btn-sm fw-bold px-3 py-2 shadow-sm" title="สั่งพิมพ์เป็นเอกสาร PDF">
+                <i class="bi bi-file-earmark-pdf me-1"></i> 📥 Export to PDF
+            </button>
+            <a href="/SalesReport/ExportSummaryExcel" class="btn btn-sm fw-bold px-3 py-2 shadow-sm text-white" title="ดาวน์โหลดไฟล์ Excel" style="background:#059669; border-color:#059669;">
+                <i class="bi bi-file-earmark-excel me-1"></i> 📊 Export to Excel (.xlsx)
+            </a>
+            <button onclick="downloadScreenCapture('chart-capture-area')" class="btn btn-outline-success btn-sm fw-bold px-3 py-2 shadow-sm" title="บันทึกภาพกราฟความละเอียดสูง">
+                <i class="bi bi-image me-1"></i> 🖼️ Download Image (PNG)
+            </button>
+        </div>
+    }
+</div>
+
+<!-- ================= COMPACT SINGLE-ROW REP SELECTOR ================= -->
+<div class="card border-0 shadow-sm mb-3 no-print" style="background: #f0fdf4; border: 1.5px solid #a7f3d0 !important; border-radius: 14px;">
+    <div class="card-body py-2 px-3">
+        <div class="row align-items-center g-2">
+            <div class="col-md-auto">
+                <span class="fw-bold" style="color: #065f46; font-size: 0.95rem;">
+                    <i class="bi bi-person-badge-fill me-1 text-success"></i> เลือกผู้แทนขาย:
+                </span>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <select class="form-select form-select-sm fw-bold shadow-sm" id="chartsRepDropdown" onchange="switchChartRep(this.value)" style="border: 2px solid #10b981; border-radius: 10px; color: #065f46; font-size: 0.92rem; background-color: #ffffff; cursor: pointer;">
+                    <option value="overall" selected>🏢 ภาพรวมผู้แทนทุกคน (รวมทั้งบริษัท)</option>
+                    @for (int rIdx = 0; rIdx < allReps.Count; rIdx++)
+                    {
+                        var rep = allReps[rIdx];
+                        <option value="@rIdx">👤 @rep.SalesRep</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3 col-lg-3">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white border-success text-success"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control form-control-sm border-success fw-semibold" id="chartRepQuickSearch" placeholder="พิมพ์ชื่อผู้แทนเพื่อค้นหา..." oninput="filterChartRepByName(this.value)" />
+                </div>
+            </div>
+            <div class="col-md-auto d-flex gap-1">
+                <button type="button" class="btn btn-sm btn-outline-success fw-semibold shadow-sm" onclick="selectPreviousChartRep()" title="ผู้แทนคนก่อนหน้า" style="border-radius: 8px;">
+                    <i class="bi bi-chevron-left"></i> ก่อนหน้า
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-success fw-semibold shadow-sm" onclick="selectNextChartRep()" title="ผู้แทนคนถัดไป" style="border-radius: 8px;">
+                    ถัดไป <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
+            <div class="col-md text-end">
+                <span class="badge shadow-sm" style="background:#d1fae5; color:#065f46; font-size:0.85rem; padding: 6px 12px; border-radius: 10px; border: 1px solid #a7f3d0;">
+                    <i class="bi bi-people-fill me-1"></i> ผู้แทนทั้งหมด: <strong>@allReps.Count</strong> ท่าน
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tab Contents -->
+<div class="tab-content" id="chart-capture-area">
+    <!-- Overall Tab -->
+    <div class="tab-pane fade show active" id="tab-c-overall" role="tabpanel">
+        @{
+            RenderChartSection(overall, "overall");
+        }
+    </div>
+
+    <!-- Individual Rep Tabs -->
+    @for (int rIdx = 0; rIdx < allReps.Count; rIdx++)
+    {
+        var rep = allReps[rIdx];
+        <div class="tab-pane fade" id="tab-c-rep-@rIdx" role="tabpanel">
+            @{
+                RenderChartSection(rep, rIdx.ToString());
+            }
+        </div>
+    }
+</div>
+
+@functions {
+    void RenderChartSection(SalesRepMonthlyReport data, string key)
+    {
+        <div class="kpi-banner mb-3">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <div class="fs-3 fw-bold mb-0"><i class="bi bi-person-badge me-2"></i>@data.SalesRep</div>
+                    <span style="opacity:.9; font-size:0.95rem;">ผลงานสรุปยอดขายและการตามหนี้ ไทม์ไลน์ 8 เดือน ปี 2569</span>
+                </div>
+                <div class="col-md-8">
+                    <div class="row text-center g-2">
+                        <div class="col-3">
+                            <small class="d-block" style="opacity:.85;">ยอดขายสะสม</small>
+                            <span class="fs-4 fw-bold">@data.TotalSales.ToString("N0")</span> <small>บ.</small>
+                        </div>
+                        <div class="col-3">
+                            <small class="d-block" style="opacity:.85;">ยอดเก็บได้</small>
+                            <span class="fs-4 fw-bold" style="color:#d1e7dd;">@data.TotalCollected.ToString("N0")</span> <small>บ.</small>
+                        </div>
+                        <div class="col-3">
+                            <small class="d-block" style="opacity:.85;">หนี้คงค้าง</small>
+                            <span class="fs-4 fw-bold" style="color:#ffc9c9;">@data.TotalOutstanding.ToString("N0")</span> <small>บ.</small>
+                        </div>
+                        <div class="col-3">
+                            <small class="d-block" style="opacity:.85;">% เก็บสำเร็จ</small>
+                            <span class="fs-4 fw-bold text-warning">@data.OverallCollectionRate%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <!-- Chart 1: Grouped Bar Chart -->
+            <div class="col-md-7">
+                <div class="chart-card">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold" style="color:#1a1a2e; font-size:1.05rem;">
+                            <i class="bi bi-bar-chart-fill text-primary"></i> 1. กราฟแท่งเปรียบเทียบ ยอดขาย vs เก็บได้ vs หนี้ค้าง (Grouped Bar Chart)
+                        </span>
+                        <button class="btn btn-sm btn-outline-secondary no-print" onclick="downloadSingleChart('barChart-@key', 'BarChart_@key')">
+                            <i class="bi bi-download"></i> PNG
+                        </button>
+                    </div>
+                    <canvas id="barChart-@key" height="135"></canvas>
+                </div>
+            </div>
+            <!-- Chart 2: Trendline -->
+            <div class="col-md-5">
+                <div class="chart-card">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold" style="color:#1a1a2e; font-size:1.05rem;">
+                            <i class="bi bi-graph-up-arrow text-success"></i> 2. เส้นแนวโน้ม % ประสิทธิภาพการเก็บเงิน (Trendline)
+                        </span>
+                        <button class="btn btn-sm btn-outline-secondary no-print" onclick="downloadSingleChart('lineChart-@key', 'Trendline_@key')">
+                            <i class="bi bi-download"></i> PNG
+                        </button>
+                    </div>
+                    <canvas id="lineChart-@key" height="135"></canvas>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+<!-- ================= SIGNATURE SECTION & PRINT CONTROLS ================= -->
+<div class="card shadow-sm border-0 mb-3 no-print" style="background:#f8f9fa;">
+    <div class="card-body py-2">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <span class="fw-bold text-dark"><i class="bi bi-pen me-1"></i> ตัวเลือกการแสดงผลช่องลงนามท้ายรายงาน:</span>
+            </div>
+            <div class="col-md-6 d-flex justify-content-end gap-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="toggle-sig" checked onchange="toggleSignatures()">
+                    <label class="form-check-label small fw-bold" for="toggle-sig">แสดงช่องลงนาม 4 ฝ่าย</label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="signature-area" id="signature-block">
+    <div class="row text-center mt-3 pt-3" style="border-top: 1.5px dashed #ccc;">
+        <div class="col-3">
+            <div style="border-bottom: 1px solid #333; margin: 45px 15px 6px;">&nbsp;</div>
+            <p class="mb-0 fw-bold" style="font-size:0.95rem;">(ผู้รายงาน)</p>
+            <small class="text-muted">วันที่ ...... / ...... / ..........</small>
+        </div>
+        <div class="col-3">
+            <div style="border-bottom: 1px solid #333; margin: 45px 15px 6px;">&nbsp;</div>
+            <p class="mb-0 fw-bold" style="font-size:0.95rem;">(ผู้ตรวจสอบ)</p>
+            <small class="text-muted">วันที่ ...... / ...... / ..........</small>
+        </div>
+        <div class="col-3">
+            <div style="border-bottom: 1px solid #333; margin: 45px 15px 6px;">&nbsp;</div>
+            <p class="mb-0 fw-bold" style="font-size:0.95rem;">(ผู้มีอำนาจลงนาม)</p>
+            <small class="text-muted">วันที่ ...... / ...... / ..........</small>
+        </div>
+        <div class="col-3">
+            <div style="border-bottom: 1px solid #333; margin: 45px 15px 6px;">&nbsp;</div>
+            <p class="mb-0 fw-bold" style="font-size:0.95rem;">(ผู้แทนขาย)</p>
+            <small class="text-muted">วันที่ ...... / ...... / ..........</small>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+const monthsLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Months));
+const chartInstances = {};
+
+const reportsData = {
+    "overall": {
+        sales: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OverallCompany.MonthlyData.Select(m => m.TotalSales).ToList())),
+        collected: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OverallCompany.MonthlyData.Select(m => m.TotalCollected).ToList())),
+        debt: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OverallCompany.MonthlyData.Select(m => m.Outstanding).ToList())),
+        rates: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OverallCompany.MonthlyData.Select(m => m.CollectionRate).ToList()))
+    }
+    @for (int rIdx = 0; rIdx < allReps.Count; rIdx++)
+    {
+        var rep = allReps[rIdx];
+        <text>
+        , "@rIdx": {
+            sales: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.TotalSales).ToList())),
+            collected: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.TotalCollected).ToList())),
+            debt: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.Outstanding).ToList())),
+            rates: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.CollectionRate).ToList()))
+        }
+        </text>
+    }
+};
+
+function initChartsFor(key) {
+    if (chartInstances['bar-' + key]) return;
+    const d = reportsData[key];
+    if (!d) return;
+
+    const barEl = document.getElementById('barChart-' + key);
+    if (barEl) {
+        chartInstances['bar-' + key] = new Chart(barEl, {
+            type: 'bar',
+            data: {
+                labels: monthsLabels,
+                datasets: [
+                    {
+                        label: 'ยอดขาย (บาท)',
+                        data: d.sales,
+                        backgroundColor: 'rgba(0, 112, 185, 0.85)',
+                        borderColor: '#0070B9',
+                        borderWidth: 1.5,
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'ยอดเก็บได้ (บาท)',
+                        data: d.collected,
+                        backgroundColor: 'rgba(25, 135, 84, 0.85)',
+                        borderColor: '#198754',
+                        borderWidth: 1.5,
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'หนี้คงค้าง (บาท)',
+                        data: d.debt,
+                        backgroundColor: 'rgba(220, 53, 69, 0.85)',
+                        borderColor: '#dc3545',
+                        borderWidth: 1.5,
+                        borderRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'top', labels: { font: { weight: 'bold', size: 12 } } },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString('th-TH') + ' บาท'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: v => (v >= 1000000 ? (v/1000000).toFixed(1)+'M' : (v/1000).toFixed(0)+'K')
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    const lineEl = document.getElementById('lineChart-' + key);
+    if (lineEl) {
+        chartInstances['line-' + key] = new Chart(lineEl, {
+            type: 'line',
+            data: {
+                labels: monthsLabels,
+                datasets: [
+                    {
+                        label: '% ประสิทธิภาพการเก็บเงิน',
+                        data: d.rates,
+                        borderColor: '#198754',
+                        backgroundColor: 'rgba(25, 135, 84, 0.15)',
+                        borderWidth: 3.5,
+                        pointBackgroundColor: '#198754',
+                        pointRadius: 6,
+                        fill: true,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'เป้าหมายมาตรฐาน (85%)',
+                        data: monthsLabels.map(() => 85),
+                        borderColor: '#ffc107',
+                        borderWidth: 2,
+                        borderDash: [6, 6],
+                        pointRadius: 0,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'top', labels: { font: { weight: 'bold', size: 12 } } },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y + '%'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 100,
+                        ticks: { callback: v => v + '%' }
+                    }
+                }
+            }
+        });
+    }
+}
+
+function selectPreviousChartRep() {
+    const dropdown = document.getElementById('chartsRepDropdown');
+    if (!dropdown) return;
+    let idx = dropdown.selectedIndex;
+    if (idx > 0) {
+        dropdown.selectedIndex = idx - 1;
+        switchChartRep(dropdown.value);
+    }
+}
+
+function selectNextChartRep() {
+    const dropdown = document.getElementById('chartsRepDropdown');
+    if (!dropdown) return;
+    let idx = dropdown.selectedIndex;
+    if (idx < dropdown.options.length - 1) {
+        dropdown.selectedIndex = idx + 1;
+        switchChartRep(dropdown.value);
+    }
+}
+
+function switchChartRep(key) {
+    const dropdown = document.getElementById('chartsRepDropdown');
+    if (dropdown && dropdown.value !== key) {
+        dropdown.value = key;
+    }
+    document.querySelectorAll('#chart-capture-area .tab-pane').forEach(p => {
+        p.classList.remove('show', 'active');
+    });
+    const target = document.getElementById(key === 'overall' ? 'tab-c-overall' : 'tab-c-rep-' + key);
+    if (target) {
+        target.classList.add('show', 'active');
+    }
+    setTimeout(() => {
+        initChartsFor(key);
+    }, 100);
+}
+
+function downloadSingleChart(canvasId, fileName) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const link = document.createElement('a');
+    link.download = fileName + '_' + new Date().toISOString().slice(0,10) + '.png';
+    link.href = canvas.toDataURL('image/png', 1.0);
+    link.click();
+}
+
+function downloadScreenCapture(elementId) {
+    const target = document.getElementById(elementId);
+    if (!target) return;
+    html2canvas(target, { scale: 2, useCORS: true }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'SalesReport_Charts_' + new Date().toISOString().slice(0,10) + '.png';
+        link.href = canvas.toDataURL('image/png', 1.0);
+        link.click();
+    });
+}
+
+function toggleSignatures() {
+    const el = document.getElementById('signature-block');
+    el.style.display = document.getElementById('toggle-sig').checked ? 'block' : 'none';
+}
+
+function filterChartRepByName(keyword) {
+    if (!keyword) return;
+    keyword = keyword.toLowerCase().trim();
+    const dropdown = document.getElementById('chartsRepDropdown');
+    if (!dropdown) return;
+    for (let i = 0; i < dropdown.options.length; i++) {
+        const text = dropdown.options[i].text.toLowerCase();
+        if (text.includes(keyword)) {
+            dropdown.selectedIndex = i;
+            switchChartRep(dropdown.options[i].value);
+            break;
+        }
+    }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    initChartsFor('overall');
+});
+</script>
+}

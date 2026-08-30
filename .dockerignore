@@ -1,0 +1,15 @@
+﻿**/.git
+**/.gitignore
+**/.vs
+**/.vscode
+**/bin
+**/obj
+**/*.user
+**/*.lock.json
+**/Dockerfile*
+**/docker-compose*
+**/.system_generated
+royald.db
+royald.db-shm
+royald.db-wal
+app.db

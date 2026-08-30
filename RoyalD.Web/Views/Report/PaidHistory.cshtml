@@ -1,0 +1,41 @@
+﻿@model IEnumerable<RoyalD.Web.Models.SalesBill>
+@{
+    ViewData["Title"] = "ประวัติบิลที่ชำระครบ (Paid History)";
+}
+
+<div class="card shadow-sm border-0" style="border-radius:12px;">
+    <div class="card-header bg-success text-white py-3 fw-bold">
+        <i class="bi bi-check-circle me-1"></i> ประวัติบิลที่ชำระครบ (120 วันย้อนหลัง)
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>เลขที่บิล</th>
+                    <th>วันที่บิล</th>
+                    <th>รหัสลูกค้า</th>
+                    <th>ชื่อลูกค้า</th>
+                    <th>ยอดบิล (บาท)</th>
+                    <th>เลขที่ใบเสร็จ</th>
+                    <th>วันที่รับเงิน</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td><a href="/SalesBill/Detail?id=@Uri.EscapeDataString(item.BillNo)" class="text-decoration-none fw-bold">@item.BillNo</a></td>
+                        <td>@item.BillDate.ToString("dd/MM/yyyy")</td>
+                        <td><code>@item.CustomerCode</code></td>
+                        <td>@item.CustomerName</td>
+                        <td>@item.TotalAmount.ToString("N2")</td>
+                        <td><span class="badge bg-light text-dark border">@(item.ReceiptNo ?? "-")</span></td>
+                        <td>@(item.ReceiptDate?.ToString("dd/MM/yyyy") ?? "-")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+

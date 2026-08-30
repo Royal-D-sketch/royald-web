@@ -1,0 +1,225 @@
+﻿@model List<RoyalD.Web.Models.AppUser>
+@{
+    ViewData["Title"] = "จัดการผู้ใช้งาน";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0 fw-bold" style="color:#0f766e;"><i class="bi bi-people-fill text-primary"></i> จัดการผู้ใช้งานและกำหนดสิทธิ์ระบบ</h4>
+        <small class="text-muted">กำหนดสิทธิ์การเข้าดูหน้าจอ ขอบเขตพื้นที่ ตำแหน่งงาน และความปลอดภัย</small>
+    </div>
+    <a href="/Account/CreateUser" class="btn btn-primary fw-bold shadow-sm" style="background:#0d9488; border-color:#0d9488;">
+        <i class="bi bi-person-plus-fill me-1"></i> เพิ่มผู้ใช้ใหม่
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-1"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="card shadow-sm border-0 mb-4" style="border-radius:12px; overflow:hidden;">
+    <div class="card-header bg-white py-3">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="ค้นหาชื่อผู้ใช้, ชื่อ-นามสกุล, ตำแหน่ง..." value="@ViewBag.Search" />
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">ค้นหา</button>
+            </div>
+            @if (!string.IsNullOrEmpty(ViewBag.Search))
+            {
+                <div class="col-md-2">
+                    <a href="/Account/Users" class="btn btn-outline-secondary w-100">ล้างค้นหา</a>
+                </div>
+            }
+        </form>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light" style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
+                    <tr>
+                        <th style="width:40px;">#</th>
+                        <th style="min-width:140px;">บัญชีผู้ใช้</th>
+                        <th style="width:110px;">ตำแหน่งงาน</th>
+                        <th class="text-center" style="width:80px;">บทบาท</th>
+                        <th style="min-width:200px;">สิทธิ์หน้าจอที่เข้าได้</th>
+                        <th style="min-width:140px;">พื้นที่รับผิดชอบ</th>
+                        <th class="text-center" style="width:95px;">ดูรับชำระ</th>
+                        <th class="text-center" style="width:75px;">โหลดไฟล์</th>
+                        <th class="text-center" style="width:80px;">แคปจอ</th>
+                        <th class="text-center" style="width:85px;">สถานะ</th>
+                        <th class="text-center" style="width:180px;">การจัดการสิทธิ์</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="11" class="text-center text-muted py-4">ไม่พบข้อมูลบัญชีผู้ใช้</td></tr>
+                    }
+                    @{int idx = 1;}
+                    @foreach (var u in Model)
+                    {
+                        var pages = u.AllowedPages?.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim()).ToList() ?? new();
+                        <tr class="@(!u.IsActive ? "table-secondary" : "")">
+                            <td>@idx++</td>
+                            <td>
+                                <div class="fw-bold text-dark fs-6"><code>@u.Username</code></div>
+                                <div class="text-muted small">@u.FullName</div>
+                                @if (!string.IsNullOrEmpty(u.SalesRepCode))
+                                {
+                                    <small class="badge bg-light text-primary border mt-1">ผู้แทน: @u.SalesRepCode</small>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border px-2 py-1 fw-bold">
+                                    @(string.IsNullOrEmpty(u.Position) ? "ผู้แทนขาย" : u.Position)
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                @if (u.Role == "admin")
+                                {
+                                    <span class="badge bg-danger px-2 py-1">Admin</span>
+                                }
+                                else
+                                {
+                                    <span class="badge px-2 py-1" style="background:#0d9488;">User</span>
+                                }
+                            </td>
+                            <td>
+                                @if (u.Role == "admin")
+                                {
+                                    <span class="badge bg-success">เข้าได้ทุกหน้าจอ (Full Access)</span>
+                                }
+                                else if (!pages.Any())
+                                {
+                                    <span class="badge bg-danger">ไม่มีสิทธิ์ดูหน้าจอใด</span>
+                                }
+                                else
+                                {
+                                    <div class="d-flex flex-wrap gap-1" style="max-width:260px;">
+                                        @foreach (var p in pages)
+                                        {
+                                            string pTitle = p switch {
+                                                "Dashboard" => "Dashboard",
+                                                "SalesBill" => "บิลขาย",
+                                                "Debtor" => "การ์ดลูกหนี้",
+                                                "DebtorHistory" => "ประวัติชำระ",
+                                                "Cancelled" => "บิลยกเลิก",
+                                                "WaitingGoods" => "บิลรอสินค้า",
+                                                "SalesReport" => "รายงานผู้แทน",
+                                                "Audit" => "Audit Logs",
+                                                "Users" => "จัดการผู้ใช้",
+                                                "Upload" => "อัปโหลด",
+                                                _ => p
+                                            };
+                                            <span class="badge bg-light text-dark border" style="font-size:0.75rem;">@pTitle</span>
+                                        }
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                @if (string.IsNullOrEmpty(u.AllowedRegion) && string.IsNullOrEmpty(u.AllowedProvinces))
+                                {
+                                    <span class="text-muted small">ทุกพื้นที่ (ทั่วประเทศ)</span>
+                                }
+                                else
+                                {
+                                    <div>
+                                        @if (!string.IsNullOrEmpty(u.AllowedRegion))
+                                        {
+                                            <span class="badge bg-info text-dark me-1">@u.AllowedRegion</span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(u.AllowedProvinces))
+                                        {
+                                            <small class="text-muted d-block">จ. @u.AllowedProvinces</small>
+                                        }
+                                    </div>
+                                }
+                            </td>
+                            <!-- สิทธิ์ดูรับชำระ -->
+                            <td class="text-center">
+                                @if (u.Role == "admin" || u.CanViewPaymentDetails)
+                                {
+                                    <span class="badge bg-success"><i class="bi bi-check-circle"></i> ได้</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger"><i class="bi bi-lock-fill"></i> ซ่อน</span>
+                                }
+                            </td>
+                            <!-- โหลดไฟล์ -->
+                            <td class="text-center">
+                                @if (u.Role == "admin" || u.CanDownload)
+                                {
+                                    <span class="badge bg-success"><i class="bi bi-check-circle"></i> ได้</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary"><i class="bi bi-x-circle"></i> ปิด</span>
+                                }
+                            </td>
+                            <!-- แคปจอ -->
+                            <td class="text-center">
+                                @if (u.Role == "admin" || u.CanScreenCapture)
+                                {
+                                    <span class="badge bg-success"><i class="bi bi-camera"></i> ได้</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger" title="หากแคปจอ จะจอดำ+เตะออกทันที"><i class="bi bi-shield-x"></i> ห้าม</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                @if (u.IsActive)
+                                {
+                                    <span class="badge bg-success">ใช้งานปกติ</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">ปิดใช้งาน</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <a href="/Account/EditUser/@u.Id" class="btn btn-sm btn-primary fw-bold text-nowrap shadow-sm" style="background:#0d9488; border-color:#0d9488;" title="แก้ไขสิทธิ์และขอบเขตพื้นที่">
+                                        <i class="bi bi-pencil-square"></i> แก้ไขสิทธิ์
+                                    </a>
+                                    @if (u.Username != "admin")
+                                    {
+                                        <form asp-controller="Account" asp-action="DeleteUser" method="post"
+                                              onsubmit="return confirm('⚠️ ยืนยันการลบสิทธิ์และบัญชี @u.Username (@u.FullName)?\nผู้ใช้นี้จะไม่สามารถเข้าสู่ระบบได้อีกต่อไป');" class="mb-0">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@u.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger fw-bold text-nowrap shadow-sm" title="ลบสิทธิ์การใช้งาน">
+                                                <i class="bi bi-trash3-fill"></i> ลบสิทธิ์
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary py-1 px-2 align-self-center"><i class="bi bi-lock-fill"></i> แอดมินหลัก</span>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

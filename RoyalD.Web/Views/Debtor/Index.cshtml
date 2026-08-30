@@ -1,0 +1,633 @@
+@model List<RoyalD.Web.Models.OutstandingDebt>
+@using RoyalD.Web.Models
+@{
+    ViewData["Title"] = "การ์ดลูกหนี้คงค้าง";
+    var today = DateTime.Today;
+    var allProvincesMap = ViewBag.AllProvincesMap as Dictionary<string, List<string>> ?? new();
+    var regions = ViewBag.Regions as List<string> ?? new();
+    var provinces = ViewBag.Provinces as List<string> ?? new();
+    bool isLockedRegion = ViewBag.IsLockedRegion == true;
+    bool isLockedProvince = ViewBag.IsLockedProvince == true;
+    bool canDelete = ViewBag.CanDeleteDebtor == true;
+}
+
+@section Styles {
+<style>
+/* ===== Premium Executive Theme Styles ===== */
+.debt-card-container {
+    background: #f8fafc;
+}
+
+/* 1. Soft Highlight for Overdue 120+ Days (No jarring solid red) */
+.row-overdue-120 {
+    background-color: #fff1f2 !important; /* Soft Pastel Light Rose (bg-red-50) */
+    border-left: 4.5px solid #e11d48 !important; /* Distinct Crimson Indicator */
+}
+.row-overdue-120 > td {
+    background-color: transparent !important;
+    color: #9f1239 !important; /* Deep Ruby Red */
+}
+.row-overdue-120 .customer-name {
+    color: #881337 !important;
+    font-weight: 800 !important;
+}
+.row-overdue-120 .debt-amount {
+    color: #be123c !important;
+    font-weight: 900 !important;
+    font-size: 1.02rem;
+}
+.row-overdue-120 .bill-code {
+    color: #9f1239 !important;
+    font-weight: 800;
+}
+
+/* 2. Soft Highlight for Other Statuses */
+.row-overdue-normal {
+    background-color: #fff7ed !important; /* Soft Pastel Light Orange */
+    border-left: 3.5px solid #f97316 !important;
+}
+.row-installment {
+    background-color: #fefce8 !important; /* Soft Pastel Light Yellow */
+    border-left: 3.5px solid #eab308 !important;
+}
+.row-postponed {
+    background-color: #f8fafc !important; /* Soft Slate Light Gray */
+    border-left: 3.5px solid #94a3b8 !important;
+}
+
+/* 3. Table Header & Cells: Elegant Slate-100 with Generous Padding */
+.debt-scroll-wrap, #top-scroll-container {
+    overflow-x: auto !important;
+    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: #0d9488 #e2e8f0 !important;
+}
+.debt-scroll-wrap::-webkit-scrollbar, #top-scroll-container::-webkit-scrollbar {
+    height: 14px !important;
+}
+.debt-scroll-wrap::-webkit-scrollbar-track, #top-scroll-container::-webkit-scrollbar-track {
+    background: #e2e8f0 !important;
+    border-radius: 8px !important;
+}
+.debt-scroll-wrap::-webkit-scrollbar-thumb, #top-scroll-container::-webkit-scrollbar-thumb {
+    background: #0d9488 !important;
+    border-radius: 8px !important;
+    border: 3px solid #e2e8f0 !important;
+}
+.debt-scroll-wrap::-webkit-scrollbar-thumb:hover, #top-scroll-container::-webkit-scrollbar-thumb:hover {
+    background: #0f766e !important;
+}
+
+.debt-scroll-wrap {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    max-height: 75vh !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 12px !important;
+    border: 1.5px solid #cbd5e1 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
+    background: #ffffff !important;
+    position: relative !important;
+}
+.debt-table {
+    width: 100% !important;
+    min-width: 100% !important;
+    table-layout: auto !important;
+    font-size: 0.90rem;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+.debt-table thead th {
+    position: sticky !important;
+    top: 0 !important;
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+    font-weight: 800 !important;
+    font-size: 0.90rem;
+    padding: 15px 14px !important;
+    border-bottom: 2.5px solid #94a3b8 !important;
+    border-top: none;
+    white-space: nowrap;
+    z-index: 20 !important;
+    letter-spacing: 0.2px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.06);
+}
+.debt-table td {
+    padding: 13px 14px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    border-top: none;
+    white-space: nowrap;
+    vertical-align: middle;
+    color: #334155;
+}
+.debt-table tbody tr {
+    transition: background-color 0.15s ease-in-out;
+}
+.debt-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+/* 4. Soft Pastel Badges */
+.badge-soft {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.82rem;
+    line-height: 1.25;
+}
+.badge-soft-danger {
+    background: #ffe4e6;
+    color: #9f1239;
+    border: 1px solid #fecdd3;
+}
+.badge-soft-warning {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+.badge-soft-info {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+.badge-soft-secondary {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+.badge-soft-success {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+.badge-soft-emerald {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.aging-badge {
+    font-size: 0.80rem;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+}
+
+.filter-card {
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+</style>
+}
+
+<div class="debt-card-container">
+    <!-- Header Title & Overview KPIs -->
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h4 class="mb-1 fw-bold" style="color:#0f766e;">
+                <i class="bi bi-credit-card-2-front text-primary me-2"></i> การ์ดลูกหนี้คงค้าง
+            </h4>
+            <span class="text-muted small fw-semibold">ติดตามยอดหนี้ครบกำหนดชำระ สถานะการผ่อน และการเลื่อนนัด</span>
+        </div>
+        
+        <div class="d-flex gap-2 align-items-center">
+            <a href="/Debtor/History" class="btn btn-outline-success btn-sm fw-bold shadow-sm" style="border-radius:10px;">
+                <i class="bi bi-clock-history"></i> ประวัติชำระครบแล้ว
+            </a>
+        </div>
+
+        @{
+            int overdue120Count = Model.Count(d =>
+                d.Status == DebtStatus.Outstanding &&
+                (today - d.BillDate.AddDays(d.Credit)).TotalDays > 120);
+        }
+
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            <div class="btn-group shadow-sm">
+                <a href="?status=outstanding" class="btn btn-sm btn-outline-danger @(ViewBag.SelectedStatus == "outstanding" ? "active fw-bold" : "")">ค้างชำระ</a>
+                <a href="?status=paid" class="btn btn-sm btn-outline-success @(ViewBag.SelectedStatus == "paid" ? "active fw-bold" : "")">ชำระแล้ว</a>
+                <a href="?status=all" class="btn btn-sm btn-outline-secondary @(ViewBag.SelectedStatus == "all" ? "active fw-bold" : "")">ทั้งหมด</a>
+            </div>
+            
+            <div class="badge-soft badge-soft-danger fs-6 px-3 py-2 ms-2">
+                <i class="bi bi-wallet2 me-1"></i> ยอดค้างรวม: <strong>@ViewBag.TotalAmount.ToString("N2")</strong> บาท
+            </div>
+            @if (ViewBag.OverdueCount > 0)
+            {
+                <div class="badge-soft badge-soft-warning px-3 py-2">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i> เกินกำหนด @ViewBag.OverdueCount ราย
+                </div>
+            }
+            @if (overdue120Count > 0)
+            {
+                <div class="badge-soft badge-soft-danger px-3 py-2">
+                    <i class="bi bi-exclamation-octagon-fill me-1"></i> เกิน 120 วัน: <strong>@overdue120Count</strong> ราย
+                </div>
+            }
+            @if (ViewBag.CanDownload == true)
+            {
+                <div class="ms-auto d-flex gap-2">
+                    @if (ViewBag.SelectedStatus == "paid")
+                    {
+                        <a href="@Url.Action("ExportPaidExcel", new { search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, credit = ViewBag.SelectedCredit })" 
+                           class="btn btn-sm btn-success fw-bold shadow-sm px-3" style="background:#15803d; border-color:#15803d;">
+                            <i class="bi bi-file-earmark-excel-fill me-1"></i> ดาวน์โหลด Excel (ชำระแล้ว)
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="@Url.Action("ExportExcel", new { search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, status = ViewBag.SelectedStatus, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, credit = ViewBag.SelectedCredit })" 
+                           class="btn btn-sm btn-success fw-bold shadow-sm px-3" style="background:#15803d; border-color:#15803d;">
+                            <i class="bi bi-file-earmark-excel-fill me-1"></i> ดาวน์โหลด Excel
+                        </a>
+                    }
+                    <a href="@Url.Action("ExportPdf", new { search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, status = ViewBag.SelectedStatus, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, credit = ViewBag.SelectedCredit })" 
+                       target="_blank" class="btn btn-sm btn-danger fw-bold shadow-sm px-3" style="background:#b91c1c; border-color:#b91c1c;">
+                        <i class="bi bi-file-earmark-pdf-fill me-1"></i> ดาวน์โหลด PDF
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="card mb-3 filter-card">
+        <div class="card-body py-3">
+            <form method="get" class="row g-2 align-items-end" id="debtor-filter-form">
+                <input type="hidden" name="status" value="@ViewBag.SelectedStatus" />
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold mb-1" style="color:#475569;">🔍 ค้นหา</label>
+                    <input type="text" name="search" class="form-control form-control-sm"
+                           placeholder="รหัสลูกค้า / เลขที่บิล / ชื่อ..." value="@ViewBag.SearchTerm" style="border-color:#cbd5e1;" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold mb-1" style="color:#475569;">🛒 PO Number</label>
+                    <input type="text" name="poSearch" class="form-control form-control-sm"
+                           placeholder="PO Number..." value="@ViewBag.PoSearch" style="border-color:#cbd5e1;" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold mb-1" style="color:#475569;">🗺️ ภาค/ภูมิภาค</label>
+                    <select name="region" id="debtor-region-select" class="form-select form-select-sm" onchange="onDebtorRegionChange()" @(isLockedRegion ? "disabled" : "") style="border-color:#cbd5e1;">
+                        @if (!isLockedRegion) {
+                            <option value="">-- ทุกภาค / ทุกพื้นที่ --</option>
+                            <option value="กรุงเทพฯ" selected="@(ViewBag.SelectedRegion == "กรุงเทพฯ" || ViewBag.SelectedRegion == "กรุงเทพ")">🏙️ กรุงเทพฯ (เงินสด / 7 วัน)</option>
+                            <option value="ต่างจังหวัด" selected="@(ViewBag.SelectedRegion == "ต่างจังหวัด")">🌾 ต่างจังหวัด (ทุกภาค)</option>
+                        }
+                        @foreach (var reg in regions) {
+                            if (reg == ViewBag.SelectedRegion) { <option value="@reg" selected>@reg</option> }
+                            else { <option value="@reg">@reg</option> }
+                        }
+                    </select>
+                    @if (isLockedRegion) { <input type="hidden" name="region" value="@ViewBag.SelectedRegion" /> }
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold mb-1" style="color:#475569;">📍 จังหวัด (พิมพ์หรือเลือก)</label>
+                    @if (isLockedProvince && provinces.Count == 1)
+                    {
+                        <input type="text" class="form-control form-control-sm bg-light fw-bold text-primary" value="@ViewBag.SelectedProvince" readonly style="border-color:#cbd5e1;" />
+                        <input type="hidden" name="province" value="@ViewBag.SelectedProvince" />
+                    }
+                    else
+                    {
+                        <input type="text" list="debtorProvinceList" name="province" id="debtor-province-select" class="form-control form-control-sm"
+                               placeholder="🔍 พิมพ์ชื่อจังหวัด (เช่น น, เชียง)..." value="@ViewBag.SelectedProvince" style="border-color:#cbd5e1;" />
+                        <datalist id="debtorProvinceList">
+                            <option value="">-- ทุกจังหวัด --</option>
+                            @foreach (var prov in provinces) {
+                                <option value="@prov">@prov</option>
+                            }
+                        </datalist>
+                    }
+                </div>
+                @if (ViewBag.IsRestricted == true)
+                {
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold mb-1" style="color:#475569;">👤 ผู้แทนขาย (ตามสิทธิ์)</label>
+                        <input type="text" class="form-control form-control-sm bg-light fw-bold text-primary" value="@ViewBag.AssignedSalesRep" readonly style="border-color:#cbd5e1;" />
+                        <input type="hidden" name="salesRep" value="@ViewBag.AssignedSalesRep" />
+                    </div>
+                }
+                else
+                {
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold mb-1" style="color:#475569;">👤 ผู้แทนขาย (พิมพ์หรือเลือก)</label>
+                        <input type="text" list="debtorRepList" name="salesRep" class="form-control form-control-sm"
+                               placeholder="🔍 พิมพ์ชื่อ / คลิกเลือก..." value="@ViewBag.SelectedSalesRep" style="border-color:#cbd5e1;" />
+                        <datalist id="debtorRepList">
+                            <option value="">-- ทั้งหมด --</option>
+                            @foreach (var r in (ViewBag.SalesReps as List<string> ?? new()))
+                            {
+                                <option value="@r">@r</option>
+                            }
+                        </datalist>
+                    </div>
+                }
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold mb-1" style="color:#475569;">💳 เครดิต</label>
+                    <select name="credit" class="form-select form-select-sm" style="border-color:#cbd5e1;">
+                        <option value="">-- ทุกเครดิต --</option>
+                        @foreach (var cOpt in (ViewBag.CreditOptions as List<string> ?? new()))
+                        {
+                            if (cOpt == "0_7")
+                            {
+                                bool isSel = ViewBag.SelectedCredit == "0_7" || ViewBag.SelectedCredit == "0" || ViewBag.SelectedCredit == "7";
+                                <option value="0_7" selected="@isSel">💵 เงินสด / 7 วัน</option>
+                            }
+                            else
+                            {
+                                bool isSel = ViewBag.SelectedCredit == cOpt;
+                                <option value="@cOpt" selected="@isSel">📅 @cOpt วัน</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold mb-1" style="color:#475569;">📌 สถานะหนี้</label>
+                    <select name="status" class="form-select form-select-sm" style="border-color:#cbd5e1;">
+                        <option value="">-- หนี้คงค้างทั้งหมด (ค่าเริ่มต้น) --</option>
+                        <option value="All" selected="@(ViewBag.SelectedStatus == "All")">📋 ทั้งหมดทุกสถานะ (รวมชำระครบ)</option>
+                        <optgroup label="สถานะการค้างชำระ">
+                            <option value="Outstanding" selected="@(ViewBag.SelectedStatus == "Outstanding")">🔴 ค้างชำระปกติ</option>
+                            <option value="Overdue" selected="@(ViewBag.SelectedStatus == "Overdue")">⏰ เกินกำหนดชำระ</option>
+                            <option value="Overdue120" selected="@(ViewBag.SelectedStatus == "Overdue120")">⚠️ ค้างเกิน 120 วัน</option>
+                            <option value="Installment" selected="@(ViewBag.SelectedStatus == "Installment")">🟡 ผ่อนชำระ</option>
+                            <option value="Postponed" selected="@(ViewBag.SelectedStatus == "Postponed")">⚪ เลื่อนนัดชำระ</option>
+                        </optgroup>
+                        <optgroup label="สถานะพิเศษ / จัดการหนี้">
+                            <option value="BadDebt" selected="@(ViewBag.SelectedStatus == "BadDebt")">⚫ หนี้สูญ</option>
+                            <option value="CheckReturned" selected="@(ViewBag.SelectedStatus == "CheckReturned")">🛑 เช็คคืน</option>
+                            <option value="Consignment" selected="@(ViewBag.SelectedStatus == "Consignment")">📦 สินค้าฝากขาย</option>
+                            <option value="ReturnIssued" selected="@(ViewBag.SelectedStatus == "ReturnIssued")">📄 รับคืน (ออกใบลดหนี้แล้ว)</option>
+                            <option value="ReturnPending" selected="@(ViewBag.SelectedStatus == "ReturnPending")">⏳ รับคืน (รอออกใบลดหนี้)</option>
+                            <option value="ChangeProduct" selected="@(ViewBag.SelectedStatus == "ChangeProduct")">🔄 เปลี่ยนสินค้า</option>
+                            <option value="Delivering" selected="@(ViewBag.SelectedStatus == "Delivering")">🚚 บิลอยู่จัดส่ง</option>
+                            <option value="WaitingGoods" selected="@(ViewBag.SelectedStatus == "WaitingGoods")">⏳ รอสินค้า</option>
+                        </optgroup>
+                        <optgroup label="สถานะชำระครบแล้ว">
+                            <option value="FullyPaid" selected="@(ViewBag.SelectedStatus == "FullyPaid")">🟢 ชำระครบแล้ว (ทุกช่องทาง)</option>
+                            <option value="PaidCash" selected="@(ViewBag.SelectedStatus == "PaidCash")">💵 ชำระเงินสดครบแล้ว</option>
+                            <option value="PaidTransfer" selected="@(ViewBag.SelectedStatus == "PaidTransfer")">🏦 โอนเงินครบแล้ว</option>
+                            <option value="PaidCheck" selected="@(ViewBag.SelectedStatus == "PaidCheck")">📑 ชำระเช็คครบแล้ว</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="col-md-2 mt-2">
+                    <button type="submit" class="btn btn-sm btn-primary w-100 fw-bold shadow-sm" style="background:#0d9488; border-color:#0d9488;">
+                        <i class="bi bi-search me-1"></i> ค้นหาข้อมูล
+                    </button>
+                </div>
+                <div class="col-md-2 mt-2">
+                    <a href="/Debtor" class="btn btn-sm btn-outline-secondary w-100 fw-semibold">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i> ล้างตัวกรอง
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Table Section -->
+    @if (!Model.Any())
+    {
+        <div class="card p-5 text-center text-muted shadow-sm border-0" style="border-radius:12px;">
+            <i class="bi bi-inbox fs-1 d-block mb-3 text-secondary"></i>
+            <h5 class="fw-bold">ไม่พบข้อมูลการ์ดลูกหนี้ตามเงื่อนไขที่เลือก</h5>
+            <small>กรุณาปรับเปลี่ยนตัวกรอง หรือค้นหาใหม่อีกครั้ง</small>
+        </div>
+    }
+    else
+    {
+        <div class="debt-scroll-wrap mb-4" id="main-debt-scroll">
+            <table class="table align-middle mb-0 debt-table">
+                <thead>
+                    <tr>
+                        <th style="width: 125px;">เลขที่บิล / วันที่</th>
+                        <th style="width: 110px;">PO Number</th>
+                        <th style="min-width: 220px;">ชื่อลูกค้า / รหัส</th>
+                        <th style="width: 130px;">เขต/อำเภอ - จังหวัด</th>
+                        <th class="text-center" style="width: 80px;">เครดิต</th>
+                        <th class="text-center" style="width: 110px;">อายุหนี้ / ครบกำหนด</th>
+                        <th class="text-end" style="width: 130px;">ยอดหนี้คงค้าง (บาท)</th>
+                        <th class="text-center" style="width: 115px;">สถานะ</th>
+                        <th style="width: 110px;">ผู้แทนขาย</th>
+                        <th class="text-center" style="width: 110px;">จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var d in Model)
+                    {
+                        var dueByCredit = d.BillDate.AddDays(d.Credit);
+                        int agingDays = (int)(today - dueByCredit).TotalDays;
+                        bool overdue120 = agingDays > 120 && d.Status == DebtStatus.Outstanding;
+                        bool overdue = dueByCredit < today && d.Status == DebtStatus.Outstanding;
+
+                        string rowClass = overdue120 ? "row-overdue-120"
+                                       : overdue ? "row-overdue-normal"
+                                       : d.Status == DebtStatus.Installment ? "row-installment"
+                                       : d.Status == DebtStatus.Postponed ? "row-postponed"
+                                       : "";
+
+                        string statusText;
+                        string statusBadgeClass;
+                        if (overdue120)
+                        {
+                            statusText = "เกิน 120 วัน";
+                            statusBadgeClass = "badge-soft-danger";
+                        }
+                        else
+                        {
+                            (statusText, statusBadgeClass) = d.Status switch
+                            {
+                                DebtStatus.Outstanding => overdue ? ("เกินกำหนดชำระ", "badge-soft-danger") : ("ค้างชำระ", "badge-soft-danger"),
+                                DebtStatus.Installment => ("ผ่อนชำระ", "badge-soft-warning"),
+                                DebtStatus.Postponed => ("เลื่อนชำระ", "badge-soft-secondary"),
+                                DebtStatus.BadDebt => ("หนี้สูญ", "badge-soft-secondary"),
+                                DebtStatus.CheckReturned => ("เช็คคืน", "badge-soft-danger"),
+                                DebtStatus.Consignment => ("สินค้าฝากขาย", "badge-soft-info"),
+                                DebtStatus.ReturnIssued => ("รับคืน (ออกใบลดหนี้)", "badge-soft-secondary"),
+                                DebtStatus.ReturnPending => ("รับคืน (รอใบลดหนี้)", "badge-soft-warning"),
+                                DebtStatus.ChangeProduct => ("เปลี่ยนสินค้า", "badge-soft-info"),
+                                DebtStatus.Delivering => ("บิลอยู่จัดส่ง", "badge-soft-info"),
+                                DebtStatus.WaitingGoods => ("รอสินค้า", "badge-soft-secondary"),
+                                DebtStatus.PaidCash => ("ชำระครบแล้ว", "badge-soft-success"),
+                                DebtStatus.PaidTransfer => ("ชำระครบแล้ว", "badge-soft-success"),
+                                DebtStatus.PaidCheck => ("ชำระครบแล้ว", "badge-soft-success"),
+                                _ => ("ค้างชำระ", "badge-soft-danger")
+                            };
+                        }
+
+                        string agingBadgeClass = agingDays > 120 ? "badge-soft-danger"
+                                               : agingDays > 60 ? "badge-soft-danger"
+                                               : agingDays > 30 ? "badge-soft-warning"
+                                               : agingDays > 0 ? "badge-soft-info"
+                                               : "badge-soft-success";
+
+                        <tr class="@rowClass">
+                            <!-- 1. เลขที่บิล / วันที่บิล -->
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <code class="bill-code fw-bold text-nowrap" style="font-size: 0.92rem;">@d.BillNo</code>
+                                </div>
+                                <small class="text-muted d-block text-nowrap mt-1" style="font-size: 0.76rem;">
+                                    <i class="bi bi-calendar3"></i> @d.BillDate.ToString("dd/MM/yyyy")
+                                </small>
+                            </td>
+
+                            <!-- 1.5 PO Number -->
+                            <td>
+                                <div style="font-size: 0.85rem; word-break: break-all;">
+                                    @(string.IsNullOrEmpty(d.PoNumber) ? "-" : d.PoNumber)
+                                </div>
+                            </td>
+
+                            <!-- 2. ชื่อลูกค้า / รหัสลูกค้า -->
+                            <td>
+                                <div class="customer-name" style="white-space: normal; word-break: break-word; line-height: 1.35; font-size: 0.92rem;">
+                                    @(d.Customer?.Name ?? d.CustomerName)
+                                </div>
+                                <small class="text-muted d-block font-monospace mt-1" style="font-size: 0.74rem;">
+                                    รหัส: @(d.Customer?.CustomerCode ?? d.CustomerCode)
+                                </small>
+                            </td>
+
+                            <!-- 3. เขต/อำเภอ - จังหวัด -->
+                            <td>
+                                <div style="white-space: normal; word-break: break-word; line-height: 1.25; font-size: 0.84rem;">
+                                    @(!string.IsNullOrEmpty(d.District) ? d.District : "-")
+                                </div>
+                                <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">
+                                    <i class="bi bi-geo-alt-fill text-danger"></i> @(!string.IsNullOrEmpty(d.Province) ? d.Province : "-")
+                                </small>
+                            </td>
+
+                            <!-- 4. เครดิต (วัน) -->
+                            <td class="text-center">
+                                @if (d.Credit == 0 || d.Credit == 7)
+                                {
+                                    <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.75rem;">
+                                        @(d.Credit == 0 ? "สด" : "7 วัน")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-secondary border px-2 py-1" style="font-size: 0.75rem;">
+                                        @d.Credit ว.
+                                    </span>
+                                }
+                            </td>
+
+                            <!-- 5. อายุหนี้ / วันครบกำหนด -->
+                            <td class="text-center">
+                                @if (agingDays > 0)
+                                {
+                                    <span class="aging-badge @agingBadgeClass d-inline-block mb-1">
+                                        @agingDays วัน
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="aging-badge badge-soft-emerald d-inline-block mb-1">ยังไม่ถึง</span>
+                                }
+                                <small class="text-muted d-block text-nowrap @(overdue || overdue120 ? "text-danger fw-bold" : "")" style="font-size: 0.75rem;">
+                                    ครบ @dueByCredit.ToString("dd/MM/yy")
+                                </small>
+                            </td>
+
+                            <!-- 6. ยอดหนี้คงค้าง -->
+                            <td class="text-end">
+                                <div class="debt-amount fw-black text-danger fs-6 text-nowrap">
+                                    @d.RemainingAmount.ToString("N2")
+                                </div>
+                                @if (d.OriginalAmount != d.RemainingAmount)
+                                {
+                                    <small class="text-muted d-block text-nowrap" style="font-size: 0.73rem;">
+                                        (เดิม: @d.OriginalAmount.ToString("N2"))
+                                    </small>
+                                }
+                            </td>
+
+                            <!-- 7. สถานะหนี้ -->
+                            <td class="text-center">
+                                <span class="badge-soft @statusBadgeClass" style="font-size: 0.78rem;">@statusText</span>
+                            </td>
+
+                            <!-- 8. ผู้แทนขาย -->
+                            <td>
+                                <div style="white-space: normal; word-break: break-word; line-height: 1.25; font-size: 0.82rem; max-width: 120px;" class="text-secondary fw-semibold">
+                                    @(!string.IsNullOrEmpty(d.SalesRep) ? d.SalesRep : "-")
+                                </div>
+                            </td>
+
+                            <!-- 9. ปุ่มดูบิล/จัดการ -->
+                            <td class="text-center">
+                                <div class="d-flex gap-1 justify-content-center">
+                                    <a href="/Debtor/Detail/@d.Id" class="btn btn-sm btn-primary fw-bold text-nowrap shadow-sm px-2 py-1" style="background:#0d9488; border-color:#0d9488; font-size:0.82rem;">
+                                        <i class="bi bi-eye-fill"></i> ดูบิล
+                                    </a>
+                                    @if (canDelete)
+                                    {
+                                        <form asp-controller="Debtor" asp-action="DeleteDebt" method="post" class="d-inline" onsubmit="return confirm('ยืนยันการลบการ์ดลูกหนี้บิล @d.BillNo ออกจากระบบหรือไม่?');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@d.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger px-2 py-1 shadow-sm" style="font-size:0.82rem;" title="ลบการ์ดลูกหนี้">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="d-flex justify-content-between align-items-center text-muted small px-2 mb-4">
+            <div>
+                แสดงทั้งหมด <strong>@Model.Count</strong> รายการ
+            </div>
+            @if (overdue120Count > 0)
+            {
+                <div class="fw-bold text-danger">
+                    <i class="bi bi-exclamation-octagon-fill"></i>
+                    แถบสีแดง = หนี้ค้างเกิน 120 วัน (@overdue120Count รายการ)
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+    const debtorProvincesMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(allProvincesMap));
+    const selectedDebtorProv = "@ViewBag.SelectedProvince";
+
+    function onDebtorRegionChange() {
+        const regionSelect = document.getElementById('debtor-region-select');
+        const provSelect = document.getElementById('debtor-province-select');
+        const selectedRegion = regionSelect ? regionSelect.value : '';
+        
+        provSelect.innerHTML = '<option value="">-- ทุกจังหวัด --</option>';
+        let list = [];
+        if (!selectedRegion) {
+            Object.values(debtorProvincesMap).forEach(arr => {
+                arr.forEach(p => { if (!list.includes(p)) list.push(p); });
+            });
+        } else if (debtorProvincesMap[selectedRegion]) {
+            list = debtorProvincesMap[selectedRegion];
+        }
+
+        list.sort().forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p;
+            opt.textContent = p;
+            if (p === selectedDebtorProv) opt.selected = true;
+            provSelect.appendChild(opt);
+        });
+    }
+</script>
+}

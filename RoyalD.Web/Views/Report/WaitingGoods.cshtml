@@ -1,0 +1,43 @@
+@model IEnumerable<dynamic>
+@{
+    ViewData["Title"] = "รอสินค้า / ของขาด (Waiting for Goods)";
+}
+
+<div class="card shadow-sm border-0" style="border-radius:12px;">
+    <div class="card-header text-white py-3 fw-bold" style="background:#0d9488;">
+        <i class="bi bi-box-seam me-1"></i> รายการสินค้าที่รอส่งมอบ (Waiting Goods)
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>เลขที่บิล</th>
+                    <th>วันที่บิล</th>
+                    <th>รหัสลูกค้า</th>
+                    <th>ชื่อลูกค้า</th>
+                    <th>ผู้แทนขาย</th>
+                    <th>วันที่อัปเดต</th>
+                    <th>รหัสสินค้า</th>
+                    <th>ชื่อสินค้า</th>
+                    <th class="text-end">จำนวนรอส่ง</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td><a href="/SalesBill/Detail?id=@Uri.EscapeDataString(item.BillNo)" class="text-decoration-none fw-bold">@item.BillNo</a></td>
+                        <td>@item.BillDate.ToString("dd/MM/yyyy")</td>
+                        <td><code>@item.CustomerCode</code></td>
+                        <td>@item.CustomerName</td>
+                        <td><span class="badge bg-light text-dark border">@item.SalesRep</span></td>
+                        <td>@(item.UpdatedAt != null ? ((DateTime)item.UpdatedAt).ToString("dd/MM/yyyy") : "-")</td>
+                        <td><code>@item.ProductCode</code></td>
+                        <td>@item.ProductName</td>
+                        <td class="text-end text-danger fw-bold">@item.Quantity.ToString("N0")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

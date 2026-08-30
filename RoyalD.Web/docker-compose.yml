@@ -1,0 +1,76 @@
+﻿version: '3.8'
+
+services:
+  # ============================================================================
+  #  1. High-Performance PostgreSQL Database (รองรับพนักงานล็อกอินพร้อมกัน)
+  # ============================================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: royald_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: royald_db
+      POSTGRES_USER: royald_admin
+      POSTGRES_PASSWORD: RoyalD_Secure_Password_2026!
+      PGDATA: /var/lib/postgresql/data/pgdata
+    command: >
+      postgres -c max_connections=200
+               -c shared_buffers=256MB
+               -c effective_cache_size=768MB
+               -c maintenance_work_mem=64MB
+               -c checkpoint_completion_target=0.9
+               -c wal_buffers=16MB
+               -c default_statistics_target=100
+               -c random_page_cost=1.1
+               -c effective_io_concurrency=200
+               -c work_mem=4MB
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U royald_admin -d royald_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - royald_network
+
+  # ============================================================================
+  #  2. Royal-D Accounts Receivable Web Application (.NET 6 Web App)
+  # ============================================================================
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: royald_web
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - DatabaseProvider=PostgreSQL
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=royald_db;Username=royald_admin;Password=RoyalD_Secure_Password_2026!;Pooling=true;Maximum Pool Size=100;
+      - USE_POSTGRES=true
+    ports:
+      - "5050:8080"
+      - "80:8080"
+    volumes:
+      - web_uploads:/app/wwwroot/uploads
+    networks:
+      - royald_network
+
+# ==============================================================================
+#  Persistent Storage Volumes & Network
+# ==============================================================================
+volumes:
+  postgres_data:
+    name: royald_postgres_data
+  web_uploads:
+    name: royald_web_uploads
+
+networks:
+  royald_network:
+    driver: bridge

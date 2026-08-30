@@ -1,0 +1,51 @@
+﻿/* Royal-D Debtor System - Custom CSS */
+html { font-size: 15px; }
+
+body {
+    font-family: 'Sarabun', 'Noto Sans Thai', 'TH Sarabun New', sans-serif;
+}
+
+/* ===== Debt Aging Highlight ===== */
+.row-aging-critical {
+    background-color: #8b0000 !important;
+    color: #fff !important;
+}
+.row-aging-critical td {
+    color: #fff !important;
+}
+.card-aging-critical {
+    border-color: #8b0000 !important;
+    border-width: 3px !important;
+    box-shadow: 0 0 12px rgba(139,0,0,0.5) !important;
+}
+.card-aging-critical .card-header {
+    background-color: #8b0000 !important;
+    color: #fff !important;
+}
+
+/* ===== Pulse animation for critical ===== */
+@keyframes pulse-danger {
+    0% { box-shadow: 0 0 0 0 rgba(139, 0, 0, 0.7); }
+    70% { box-shadow: 0 0 0 8px rgba(139, 0, 0, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(139, 0, 0, 0); }
+}
+.card-aging-critical {
+    animation: pulse-danger 2s infinite;
+}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #0070B9; border-radius: 3px; }
+
+/* ===== Table ===== */
+.table-sm td, .table-sm th { vertical-align: middle; }
+
+/* ===== Print ===== */
+@media print {
+    .no-print { display: none !important; }
+    .sidebar { display: none !important; }
+    .navbar { display: none !important; }
+    .main-content { margin: 0 !important; padding: 0 !important; }
+    body { font-size: 11pt; }
+}

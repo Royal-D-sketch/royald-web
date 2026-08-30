@@ -1,0 +1,395 @@
+@using RoyalD.Web.Services
+@model RoyalD.Web.Services.ProductDetailsReportViewModel
+@{
+    ViewData["Title"] = "3. รายการขายสินค้าจำนวนและราคาของแต่ละผู้แทน";
+    var months = Model.Months;
+    var monthKeys = Model.MonthKeys;
+    var reps = Model.SalesReps;
+    bool isAdmin = User.IsInRole("admin");
+    var canDownloadClaim = ViewContext.HttpContext.User.FindFirst("CanDownload")?.Value;
+    bool canDownload = isAdmin || canDownloadClaim == "true";
+}
+
+<style>
+/* Sub-Tabs Nav - Soft Mint Green Theme */
+.sales-subnav {
+    display: flex;
+    gap: 10px;
+    background: #ecfdf5;
+    padding: 8px;
+    border-radius: 14px;
+    margin-bottom: 20px;
+    border: 1px solid #a7f3d0;
+}
+.sales-subnav .subnav-item {
+    flex: 1;
+    text-align: center;
+    padding: 12px 18px;
+    font-weight: 800;
+    font-size: 1.02rem;
+    color: #065f46;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: all .2s ease-in-out;
+}
+.sales-subnav .subnav-item:hover {
+    background: rgba(255,255,255,0.9);
+    color: #059669;
+    transform: translateY(-1px);
+}
+.sales-subnav .subnav-item.active {
+    background: #059669;
+    color: white;
+    box-shadow: 0 4px 15px rgba(5,150,105,0.3);
+}
+
+/* Product Movement Table */
+.prod-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 12px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+    background: white;
+    margin-bottom: 24px;
+}
+.prod-table {
+    width: 100%;
+    min-width: 950px;
+    border-collapse: collapse;
+    font-size: 0.94rem;
+}
+.prod-table th {
+    background: #1e293b !important;
+    color: white !important;
+    padding: 12px 14px;
+    border: 1px solid #334155;
+    white-space: nowrap;
+    font-size: 0.98rem;
+}
+.prod-table td {
+    padding: 11px 14px;
+    border: 1px solid #e9ecef;
+    vertical-align: middle;
+}
+
+.rep-group-header {
+    background: linear-gradient(135deg, #065f46 0%, #059669 50%, #10b981 100%);
+    color: white;
+    padding: 14px 20px;
+    border-radius: 12px 12px 0 0;
+    font-weight: 800;
+    font-size: 1.18rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.month-sub-header {
+    background: #ecfdf5;
+    color: #065f46;
+    padding: 10px 18px;
+    font-weight: 800;
+    font-size: 1.02rem;
+    border-left: 5px solid #059669;
+}
+
+/* Delivering Strike-through style */
+.delivering-strike {
+    text-decoration: line-through;
+    opacity: 0.60;
+    color: #888;
+}
+.badge-delivering {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    text-decoration: none !important;
+}
+
+@@media print {
+    .no-print, .sales-subnav, nav, .btn, .filter-card, .export-bar { display: none !important; }
+    body { font-size: 9pt; background: #fff !important; }
+    .prod-table-wrap { overflow: visible !important; box-shadow: none !important; }
+    .prod-table { min-width: 100% !important; }
+    .prod-table th { background: #333 !important; color: #fff !important; }
+    .signature-area { break-inside: avoid; page-break-inside: avoid; margin-top: 30px; }
+}
+</style>
+
+<!-- Sub-Tabs Navigation Header -->
+<div class="sales-subnav no-print">
+    <a href="/SalesReport/Summary" class="subnav-item">
+        <i class="bi bi-table me-2"></i> 1. สรุปยอดขาย-ยอดเก็บรายเดือน (Pivot Matrix)
+    </a>
+    <a href="/SalesReport/Charts" class="subnav-item">
+        <i class="bi bi-bar-chart-line me-2"></i> 2. กราฟวิเคราะห์ผลงานรายผู้แทน (Charts)
+    </a>
+    <a href="/SalesReport/ProductDetails" class="subnav-item active">
+        <i class="bi bi-box-seam me-2"></i> 3. รายละเอียดสินค้าที่ขาย (Product Details)
+    </a>
+</div>
+
+<!-- Header Title & Export Toolbar -->
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 export-bar">
+    <div>
+        <h3 class="mb-1 fw-bold" style="color:#065f46;">
+            <i class="bi bi-boxes" style="color:#059669;"></i> รายการขายสินค้า จำนวนและราคาของแต่ละผู้แทน (Product Movement)
+        </h3>
+        <span class="text-muted fw-semibold">แจกแจงตาม ผู้แทนขาย &gt; แยกรายเดือน &gt; รายละเอียดสินค้า (หักลบสถานะ "บิลอยู่จัดส่ง" อัตโนมัติ)</span>
+    </div>
+    
+    @if (canDownload)
+    {
+        <div class="d-flex gap-2 no-print">
+            <button onclick="window.print()" class="btn btn-outline-danger btn-sm fw-bold px-3 py-2 shadow-sm" title="สั่งพิมพ์เป็นเอกสาร PDF">
+                <i class="bi bi-file-earmark-pdf me-1"></i> 📥 Export to PDF
+            </button>
+            <a href="/SalesReport/ExportProductDetailsExcel@(Context.Request.QueryString)" class="btn btn-sm fw-bold px-3 py-2 shadow-sm text-white" title="ดาวน์โหลดไฟล์ Excel" style="background:#059669; border-color:#059669;">
+                <i class="bi bi-file-earmark-excel me-1"></i> 📊 Export to Excel (.xlsx)
+            </a>
+            <button onclick="downloadScreenCapture('product-details-area')" class="btn btn-outline-success btn-sm fw-bold px-3 py-2 shadow-sm" title="บันทึกภาพตารางความละเอียดสูง">
+                <i class="bi bi-image me-1"></i> 🖼️ Download Image (PNG)
+            </button>
+        </div>
+    }
+</div>
+
+<!-- Filter Bar -->
+<div class="card mb-4 no-print border-0 shadow-sm filter-card" style="background:#f8f9fa;">
+    <div class="card-body py-2">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small fw-bold text-primary mb-1">👤 เลือกผู้แทนขาย</label>
+                <select name="salesRep" class="form-select form-select-sm">
+                    <option value="">-- ผู้แทนขายทุกคน --</option>
+                    @foreach (var r in reps)
+                    {
+                        if (r == Model.SelectedSalesRep) { <option value="@r" selected>@r</option> }
+                        else { <option value="@r">@r</option> }
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-primary mb-1">📅 เลือกเดือน</label>
+                <select name="month" class="form-select form-select-sm">
+                    <option value="">-- ทุกเดือน (ม.ค. - ส.ค. 69) --</option>
+                    @for (int mi = 0; mi < monthKeys.Count; mi++)
+                    {
+                        var mk = monthKeys[mi];
+                        var ml = months[mi];
+                        if (mk == Model.SelectedMonth) { <option value="@mk" selected>@ml</option> }
+                        else { <option value="@mk">@ml</option> }
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">
+                    <i class="bi bi-filter"></i> กรองข้อมูล
+                </button>
+            </div>
+            <div class="col-md-2">
+                <a href="/SalesReport/ProductDetails" class="btn btn-outline-secondary btn-sm w-100">
+                    <i class="bi bi-x-circle"></i> ล้างตัวกรอง
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ================= REPORT CONTENT ================= -->
+<div id="product-capture-area">
+@if (!Model.RepReports.Any())
+{
+    <div class="text-center py-5 text-muted bg-white rounded shadow-sm">
+        <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
+        ไม่พบข้อมูลรายการขายสินค้าที่ตรงกับเงื่อนไข
+    </div>
+}
+else
+{
+    @foreach (var repReport in Model.RepReports)
+    {
+        <div class="mb-4">
+            <!-- Rep Header -->
+            <div class="rep-group-header">
+                <div>
+                    <i class="bi bi-person-fill text-warning me-2"></i>ผู้แทนขาย: @repReport.SalesRep
+                </div>
+                <div class="fs-6 fw-normal">
+                    ยอดขายสุทธิรวม: <strong class="text-warning fs-5">@repReport.TotalNetSales.ToString("N0")</strong> บาท 
+                    <small class="opacity-75">(@repReport.TotalNetQty.ToString("N0") ชิ้น/กล่อง)</small>
+                </div>
+            </div>
+
+            @foreach (var monthGroup in repReport.MonthlyMovements)
+            {
+                <div class="month-sub-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-calendar-event me-2"></i>ประจำเดือน: @monthGroup.MonthNameThai</span>
+                    <span class="small">
+                        ยอดขายสุทธิเดือนนี้: <strong class="text-success fs-6">@monthGroup.MonthNetAmount.ToString("N0")</strong> บาท
+                        @if (monthGroup.MonthDeliveringDeduction > 0)
+                        {
+                            <span class="text-muted ms-2">(หักบิลอยู่จัดส่ง -@monthGroup.MonthDeliveringDeduction.ToString("N0") บ.)</span>
+                        }
+                    </span>
+                </div>
+
+                <div class="prod-table-wrap">
+                    <table class="table prod-table mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width:45px;" class="text-center">#</th>
+                                <th style="min-width:340px;">1. รหัสสินค้า และ ชื่อสินค้า</th>
+                                <th style="width:170px;" class="text-end">2. จำนวนขายรวม (หน่วย)</th>
+                                <th style="width:170px;" class="text-end">3. ราคาเฉลี่ย / หน่วย (บาท)</th>
+                                <th style="width:200px;" class="text-end">4. ยอดเงินรวมสุทธิ (บาท)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{int pIdx = 1;}
+                            @foreach (var prod in monthGroup.Products)
+                            {
+                                bool isDelivering = prod.IsAllDelivering;
+                                bool hasPartialDelivering = prod.HasDelivering && !prod.IsAllDelivering;
+
+                                <tr class="@(isDelivering ? "table-light" : "")">
+                                    <td class="text-center text-muted">@(pIdx++)</td>
+                                    
+                                    <!-- 1. รหัส และ ชื่อสินค้า -->
+                                    <td>
+                                        <div class="fw-bold @(isDelivering ? "delivering-strike" : "text-dark")" style="font-size:1rem;">
+                                            <span class="badge bg-secondary me-1">@prod.ProductCode</span>
+                                            @prod.ProductName
+                                        </div>
+                                        @if (isDelivering)
+                                        {
+                                            <div class="badge-delivering mt-1 d-inline-block">
+                                                🚚 บิลอยู่จัดส่ง — ขีดฆ่าไม่รวมยอดขาย (-@prod.TotalAmount.ToString("N0") บ.)
+                                            </div>
+                                        }
+                                        else if (hasPartialDelivering)
+                                        {
+                                            <div class="badge-delivering mt-1 d-inline-block">
+                                                🚚 รวมบิลอยู่จัดส่ง @prod.DeliveringQty.ToString("N0") @prod.Unit (หักลบ -@prod.DeliveringAmount.ToString("N0") บ.)
+                                            </div>
+                                        }
+                                    </td>
+
+                                    <!-- 2. จำนวนขาย -->
+                                    <td class="text-end @(isDelivering ? "delivering-strike" : "fw-bold text-dark")" style="font-size:0.98rem;">
+                                        @if (isDelivering)
+                                        {
+                                            <span>@prod.TotalQty.ToString("N0") @prod.Unit</span>
+                                        }
+                                        else
+                                        {
+                                            <span>@prod.NetQty.ToString("N0") <small class="text-muted">@prod.Unit</small></span>
+                                        }
+                                    </td>
+
+                                    <!-- 3. ราคาเฉลี่ย -->
+                                    <td class="text-end text-muted fw-semibold">
+                                        @prod.AvgPrice.ToString("N2")
+                                    </td>
+
+                                    <!-- 4. ยอดเงินรวมภาษีสุทธิ -->
+                                    <td class="text-end @(isDelivering ? "delivering-strike" : "fw-bold text-primary")" style="font-size:1.05rem;">
+                                        @if (isDelivering)
+                                        {
+                                            <span>@prod.TotalAmount.ToString("N0")</span>
+                                        }
+                                        else
+                                        {
+                                            <span>@prod.NetAmount.ToString("N0")</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="table-light fw-bold" style="border-top:2px solid #dee2e6;">
+                            <tr>
+                                <td colspan="2" class="text-end fs-6">
+                                    รวมสุทธิเดือน @monthGroup.MonthNameThai
+                                </td>
+                                <td class="text-end text-dark fs-6">
+                                    @monthGroup.MonthNetQty.ToString("N0")
+                                </td>
+                                <td class="text-end text-muted">-</td>
+                                <td class="text-end text-success" style="font-size:1.15rem;">
+                                    @monthGroup.MonthNetAmount.ToString("N0") บ.
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+}
+</div>
+
+<!-- ================= SIGNATURE SECTION & PRINT CONTROLS ================= -->
+<div class="card shadow-sm border-0 mb-3 no-print" style="background:#f8f9fa;">
+    <div class="card-body py-2">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <span class="fw-bold text-dark"><i class="bi bi-pen me-1"></i> ตัวเลือกการแสดงผลช่องลงนามท้ายรายงาน:</span>
+            </div>
+            <div class="col-md-6 d-flex justify-content-end gap-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="toggle-sig" checked onchange="toggleSignatures()">
+                    <label class="form-check-label small fw-bold" for="toggle-sig">แสดงช่องลงนาม 4 ฝ่าย</label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="signature-area" id="signature-block">
+    <div class="row text-center mt-3 pt-3" style="border-top: 1.5px dashed #ccc;">
+        <div class="col-3">
+            <div style="border-bottom: 1px solid #333; margin: 45px 15px 6px;">&nbsp;</div>
+            <p class="mb-0 fw-bold" style="font-size:0.95rem;">(ผู้รายงาน)</p>
+            <small class="text-muted">วันที่ ...... / ...... / ..........</small>
+        </div>
+        <div class="col-3">
+            <div style="border-bottom: 1px solid #333; margin: 45px 15px 6px;">&nbsp;</div>
+            <p class="mb-0 fw-bold" style="font-size:0.95rem;">(ผู้ตรวจสอบ)</p>
+            <small class="text-muted">วันที่ ...... / ...... / ..........</small>
+        </div>
+        <div class="col-3">
+            <div style="border-bottom: 1px solid #333; margin: 45px 15px 6px;">&nbsp;</div>
+            <p class="mb-0 fw-bold" style="font-size:0.95rem;">(ผู้มีอำนาจลงนาม)</p>
+            <small class="text-muted">วันที่ ...... / ...... / ..........</small>
+        </div>
+        <div class="col-3">
+            <div style="border-bottom: 1px solid #333; margin: 45px 15px 6px;">&nbsp;</div>
+            <p class="mb-0 fw-bold" style="font-size:0.95rem;">(ผู้แทนขาย)</p>
+            <small class="text-muted">วันที่ ...... / ...... / ..........</small>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+function downloadScreenCapture(elementId) {
+    const target = document.getElementById(elementId);
+    if (!target) return;
+    html2canvas(target, { scale: 2, useCORS: true }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'SalesReport_ProductMovement_' + new Date().toISOString().slice(0,10) + '.png';
+        link.href = canvas.toDataURL('image/png', 1.0);
+        link.click();
+    });
+}
+
+function toggleSignatures() {
+    const el = document.getElementById('signature-block');
+    el.style.display = document.getElementById('toggle-sig').checked ? 'block' : 'none';
+}
+</script>
+}

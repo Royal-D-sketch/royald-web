@@ -1,0 +1,501 @@
+﻿@using RoyalD.Web.Models
+@using RoyalD.Web
+@model RoyalD.Web.Models.OutstandingDebt
+@{
+    ViewData["Title"] = "เธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”เธฅเธนเธเธซเธเธตเน";
+    var isMinDate = Model.DueDate.Year < 1900;
+    var overdue120 = !isMinDate && Model.DueDate < DateTime.Today.AddDays(-120);
+    var overdue = !isMinDate && Model.DueDate < DateTime.Today;
+    var aging = isMinDate ? 0 : (int)(DateTime.Today - Model.DueDate).TotalDays;
+    if (aging < 0) aging = 0;
+    bool canViewPayment = ViewBag.CanViewPaymentDetails == true;
+    bool canChangeStatus = ViewBag.CanChangeDebtStatus == true;
+    bool canDelete = ViewBag.CanDeleteDebtor == true;
+    var bill = ViewBag.SalesBill as SalesBill;
+    var billItems = ViewBag.Items as List<SalesBillItem> ?? new List<SalesBillItem>();
+}
+
+@section Styles {
+<style>
+.detail-card {
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.badge-soft {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+.badge-soft-danger { background: #ffe4e6; color: #9f1239; border: 1px solid #fecdd3; }
+.badge-soft-warning { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+.badge-soft-info { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+.badge-soft-success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.badge-soft-secondary { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+</style>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <a href="/Debtor" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> เธเธฅเธฑเธเธซเธเนเธฒเธฃเธฒเธขเธเธฒเธฃเธเธฒเธฃเนเธ”เธฅเธนเธเธซเธเธตเน
+    </a>
+    <div class="d-flex gap-2 align-items-center">
+        <h4 class="mb-0 fw-bold" style="color:#0f766e;">
+            <i class="bi bi-person-lines-fill"></i> เธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”เธฅเธนเธเธซเธเธตเน: <span class="text-dark">@Model.BillNo</span>
+        </h4>
+        @if (canDelete)
+        {
+            <form asp-controller="Debtor" asp-action="DeleteDebt" method="post" class="d-inline ms-2" onsubmit="return confirm('เธขเธทเธเธขเธฑเธเธเธฒเธฃเธฅเธเธเธฒเธฃเนเธ”เธฅเธนเธเธซเธเธตเนเธเธดเธฅ @Model.BillNo เธญเธญเธเธเธฒเธเธฃเธฐเธเธเธซเธฃเธทเธญเนเธกเน?');">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-danger btn-sm fw-bold">
+                    <i class="bi bi-trash"></i> เธฅเธเธเธฒเธฃเนเธ”เธฅเธนเธเธซเธเธตเน
+                </button>
+            </form>
+        }
+    </div>
+</div>
+
+@if (Model.RemainingAmount <= 0 && Model.Status != DebtStatus.BadDebt && Model.Status != DebtStatus.ReturnIssued)
+{
+    <div class="alert alert-success d-flex align-items-center shadow-sm border-0 mb-4" role="alert" style="border-radius:12px; background:#dcfce7; color:#14532d;">
+        <i class="bi bi-check-circle-fill fs-2 me-3 text-success"></i>
+        <div>
+            <h5 class="alert-heading mb-1 fw-bold">๐ เธเธณเธฃเธฐเธเธฃเธเธ–เนเธงเธเนเธฅเนเธง (Fully Paid)</h5>
+            <p class="mb-0 small">เธเธดเธฅเธเธตเนเนเธ”เนเธฃเธฑเธเธเธฒเธฃเธเธณเธฃเธฐเน€เธเธดเธเธเธฃเธเน€เธ•เนเธกเธเธณเธเธงเธเนเธฅเนเธง เน€เธกเธทเนเธญเธงเธฑเธเธ—เธตเน @(Model.FullyPaidDate?.ToString("dd/MM/yyyy") ?? "-")</p>
+        </div>
+    </div>
+}
+else if (overdue120)
+{
+    <div class="alert alert-danger d-flex align-items-center shadow-sm border-0 mb-4" role="alert" style="border-radius:12px; background:#ffe4e6; color:#881337;">
+        <i class="bi bi-exclamation-triangle-fill fs-2 me-3 text-danger"></i>
+        <div>
+            <h5 class="alert-heading mb-1 fw-bold">โ ๏ธ เธเธดเธฅเน€เธเธดเธเธเธณเธซเธเธ”เธเธณเธฃเธฐเธกเธฒเธเธเธงเนเธฒ 120 เธงเธฑเธ (เธซเธเธตเนเธงเธดเธเธคเธ•)</h5>
+            <p class="mb-0 small">เธญเธฒเธขเธธเธซเธเธตเนเธเธฑเธเธเธธเธเธฑเธ: <strong>@aging เธงเธฑเธ</strong> (เธเธฃเธเธเธณเธซเธเธ”เน€เธกเธทเนเธญ @Model.DueDate.ToString("dd/MM/yyyy"))</p>
+        </div>
+    </div>
+}
+
+<div class="row g-4 mb-4">
+    <!-- เธเธฑเนเธเธเนเธฒเธข: เธเนเธญเธกเธนเธฅเธเธดเธฅเนเธฅเธฐเธฅเธนเธเธเนเธฒ -->
+    <div class="col-lg-6">
+        <div class="card detail-card h-100">
+            <div class="card-header bg-warning text-dark py-3 fw-bold d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-file-earmark-text me-1"></i> เธเนเธญเธกเธนเธฅเธเธดเธฅเนเธฅเธฐเธฅเธนเธเธซเธเธตเน</span>
+                <span class="badge bg-dark text-white">@Model.Status</span>
+            </div>
+            <div class="card-body">
+                <div class="row mb-2">
+                    <div class="col-4 text-muted fw-semibold">เน€เธฅเธเธ—เธตเนเธเธดเธฅ</div>
+                    <div class="col-8 fw-bold fs-5 text-primary"><code>@Model.BillNo</code></div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-4 text-muted fw-semibold">เนเธเธชเธฑเนเธเธเธทเนเธญ (PO)</div>
+                    <div class="col-8 fw-bold text-dark">@Model.PoNumber</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-4 text-muted">เธงเธฑเธเธ—เธตเนเธญเธญเธเธเธดเธฅ</div>
+                    <div class="col-8">@(Model.BillDate.Year < 1900 ? "-" : Model.BillDate.ToString("dd/MM/yyyy"))</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-4 text-muted">เธงเธฑเธเธเธฃเธเธเธณเธซเธเธ”</div>
+                    <div class="col-8 @(overdue || overdue120 ? "text-danger fw-bold" : "")">
+                        @(isMinDate ? "-" : Model.DueDate.ToString("dd/MM/yyyy"))
+                        @if (overdue || overdue120)
+                        {
+                            <span class="badge bg-danger ms-1">เน€เธเธดเธเธเธณเธซเธเธ”</span>
+                        }
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-4 text-muted">เน€เธเธฃเธ”เธดเธ•เน€เธ—เธญเธก</div>
+                    <div class="col-8">@(Model.Credit == 0 ? "เน€เธเธดเธเธชเธ” (0 เธงเธฑเธ)" : $"{Model.Credit} เธงเธฑเธ")</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-4 text-muted">เธญเธฒเธขเธธเธซเธเธตเน</div>
+                    <div class="col-8 fw-bold">@aging เธงเธฑเธ</div>
+                </div>
+
+                <!-- เธชเธ–เธฒเธเธฐเน€เธเธเธฒเธฐเธเธดเธ -->
+                @if (Model.Status == DebtStatus.Postponed && Model.PostponedDate.HasValue)
+                {
+                    <div class="row mb-2 text-warning fw-bold">
+                        <div class="col-4">เธงเธฑเธเธ—เธตเนเธเธฑเธ”เธเธณเธฃเธฐเนเธซเธกเน</div>
+                        <div class="col-8">@Model.PostponedDate.Value.ToString("dd/MM/yyyy")</div>
+                    </div>
+                }
+                @if (Model.Status == DebtStatus.Delivering && Model.DeliveringDate.HasValue)
+                {
+                    <div class="row mb-2 text-info fw-bold">
+                        <div class="col-4">เธงเธฑเธเธ—เธตเนเธเธฑเธ”เธชเนเธ</div>
+                        <div class="col-8">@Model.DeliveringDate.Value.ToString("dd/MM/yyyy")</div>
+                    </div>
+                }
+                @if (Model.Status == DebtStatus.WaitingGoods)
+                {
+                    @if (Model.WaitingGoodsDate.HasValue)
+                    {
+                        <div class="row mb-2 text-warning fw-bold">
+                            <div class="col-4">เธงเธฑเธเธ—เธตเนเธฃเธญเธชเธดเธเธเนเธฒ</div>
+                            <div class="col-8">@Model.WaitingGoodsDate.Value.ToString("dd/MM/yyyy")</div>
+                        </div>
+                    }
+                    @if (Model.PendingProducts != null && Model.PendingProducts.Any())
+                    {
+                        <div class="p-2 mb-2 rounded border border-warning bg-warning bg-opacity-10">
+                            <div class="small fw-bold text-dark mb-1"><i class="bi bi-box-seam text-warning me-1"></i> เธฃเธฒเธขเธเธฒเธฃเธชเธดเธเธเนเธฒเธ—เธตเนเธฃเธญเธชเนเธ/เธเธญเธเธเธฒเธ”:</div>
+                            <ul class="mb-0 ps-3 small text-dark">
+                                @foreach (var pp in Model.PendingProducts)
+                                {
+                                    <li class="mb-1">
+                                        <code>@pp.ProductCode</code> <span class="fw-semibold">@pp.ProductName</span> : <span class="badge bg-danger">@pp.Quantity.ToString("N0") เธฃเธฒเธขเธเธฒเธฃ</span>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                }
+                @if (Model.BadDebtAmount.HasValue && Model.BadDebtAmount > 0)
+                {
+                    <div class="row mb-2 text-danger fw-bold">
+                        <div class="col-4">เธขเธญเธ”เธ•เธฑเธ”เธซเธเธตเนเธชเธนเธ</div>
+                        <div class="col-8">@Model.BadDebtAmount.Value.ToString("N2") เธเธฒเธ— (@(Model.BadDebtDate?.ToString("dd/MM/yyyy") ?? "-"))</div>
+                    </div>
+                }
+                @if (Model.ReturnAmount.HasValue && Model.ReturnAmount > 0)
+                {
+                    <div class="row mb-2 text-secondary fw-bold">
+                        <div class="col-4">เธขเธญเธ”เธฃเธฑเธเธเธทเธเธชเธดเธเธเนเธฒ</div>
+                        <div class="col-8">@Model.ReturnAmount.Value.ToString("N2") เธเธฒเธ— @(Model.IsReturnCutFromBill ? "(เธ•เธฑเธ”เธขเธญเธ”เธเธดเธฅเนเธฅเนเธง)" : "(เธขเธฑเธเนเธกเนเธ•เธฑเธ”เธเธดเธฅ)")</div>
+                    </div>
+                }
+
+                <hr class="my-3" />
+
+                <!-- เธเนเธญเธกเธนเธฅเธฅเธนเธเธเนเธฒ -->
+                <div class="row mb-2">
+                    <div class="col-4 text-muted fw-semibold">เธฃเธซเธฑเธชเธฅเธนเธเธเนเธฒ</div>
+                    <div class="col-8 fw-bold"><code>@Model.CustomerCode</code></div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-4 text-muted fw-semibold">เธเธทเนเธญเธฅเธนเธเธเนเธฒ/เธฃเนเธฒเธเธเนเธฒ</div>
+                    <div class="col-8 fw-bold text-dark fs-6">@Model.CustomerName</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-4 text-muted">เน€เธเธ•/เธญเธณเน€เธ เธญ</div>
+                    <div class="col-8">@(!string.IsNullOrEmpty(Model.District) ? Model.District : "-")</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-4 text-muted">เธเธฑเธเธซเธงเธฑเธ”</div>
+                    <div class="col-8">@(!string.IsNullOrEmpty(Model.Province) ? Model.Province : "-")</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-4 text-muted">เธเธนเนเนเธ—เธเธเธฒเธข</div>
+                    <div class="col-8"><span class="badge bg-light text-dark border">@Model.SalesRep</span></div>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Note))
+                {
+                    <div class="row mb-2">
+                        <div class="col-4 text-muted">เธเธฑเธเธ—เธถเธเน€เธเธดเนเธกเน€เธ•เธดเธก</div>
+                        <div class="col-8 text-break text-muted">@Model.Note</div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- เธเธฑเนเธเธเธงเธฒ: เธชเธฃเธธเธเธขเธญเธ”เน€เธเธดเธ เนเธฅเธฐเธชเธ–เธฒเธเธฐเธเธฒเธฃเน€เธเธดเธ -->
+    <div class="col-lg-6">
+        <div class="card detail-card h-100">
+            <div class="card-header bg-dark text-white py-3 fw-bold">
+                <i class="bi bi-wallet2 me-1"></i> เธชเธฃเธธเธเธขเธญเธ”เน€เธเธดเธเนเธฅเธฐเธเธฒเธฃเธเธณเธฃเธฐ
+            </div>
+            <div class="card-body">
+            @{
+                var debtorItems = (ViewBag.SalesBillItems as List<SalesBillItem>) ?? new List<SalesBillItem>();
+                decimal debtorItemSum = debtorItems.Sum(x => x.Amount);
+                var dVatCalc = VatHelper.Calculate(Model.BillNo, Model.CustomerCode, Model.CustomerName, Model.Province, Model.OriginalAmount, debtorItemSum, Model.SalesRep, debtorItems);
+                string dVatLabel = dVatCalc.Label;
+                string dVatBadgeClass = dVatCalc.BadgeClass;
+                string dVatNotice = dVatCalc.Explanation;
+            }
+                <div class="p-3 mb-3 rounded" style="background:#f8fafc; border:1px solid #e2e8f0;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted">เธขเธญเธ”เธซเธเธตเนเน€เธ”เธดเธก (Original Amount)</span>
+                        <span class="fw-bold fs-5">@Model.OriginalAmount.ToString("N2") เธเธฒเธ—</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted">เธเธณเธฃเธฐเนเธฅเนเธง (Paid Amount)</span>
+                        <span class="fw-bold fs-5 text-success">@((Model.OriginalAmount - Model.RemainingAmount).ToString("N2")) เธเธฒเธ—</span>
+                    </div>
+                    <hr class="my-2" />
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold text-dark fs-6">เธขเธญเธ”เธซเธเธตเนเธเธเธเนเธฒเธ (Remaining Debt)</span>
+                        <span class="fw-black fs-4 text-danger">@Model.RemainingAmount.ToString("N2") เธเธฒเธ—</span>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.ReceiptNo) || Model.ReceiptDate.HasValue)
+                {
+                    <div class="p-3 rounded mt-3" style="background:#f0fdf4; border:1px solid #bbf7d0;">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold text-success"><i class="bi bi-receipt me-1"></i> เธเนเธญเธกเธนเธฅเนเธเน€เธชเธฃเนเธเธฃเธฑเธเน€เธเธดเธ</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editReceiptModal">
+                                <i class="bi bi-pencil-square"></i> เนเธเนเนเธ
+                            </button>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-muted">เน€เธฅเธเธ—เธตเนเนเธเน€เธชเธฃเนเธ:</span>
+                            <span class="fw-bold text-dark">@(string.IsNullOrEmpty(Model.ReceiptNo) ? "-" : Model.ReceiptNo)</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">เธงเธฑเธเธ—เธตเนเธฃเธฑเธเน€เธเธดเธ:</span>
+                            <span class="fw-bold text-dark">@(Model.ReceiptDate?.ToString("dd/MM/yyyy") ?? "-")</span>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="mt-3 text-end">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editReceiptModal">
+                            <i class="bi bi-plus-circle"></i> เน€เธเธดเนเธกเธเนเธญเธกเธนเธฅเนเธเน€เธชเธฃเนเธ
+                        </button>
+                    </div>
+                }
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@using RoyalD.Web.Services
+@if (debtorItems.Any())
+{
+    <!-- เธฃเธฒเธขเธเธฒเธฃเธชเธดเธเธเนเธฒเนเธเธเธดเธฅเธเธฒเธข & เธเธณเธเธงเธ“เธ เธฒเธฉเธตเธกเธนเธฅเธเนเธฒเน€เธเธดเนเธก (VAT 7%) -->
+    <div class="card detail-card mb-4">
+        <div class="card-header bg-light py-3 d-flex justify-content-between align-items-center">
+            <div>
+                <span class="fw-bold text-dark"><i class="bi bi-box-seam me-1 text-primary"></i> เธฃเธฒเธขเธเธฒเธฃเธชเธดเธเธเนเธฒเนเธเธเธดเธฅเธเธฒเธข (@debtorItems.Count เธฃเธฒเธขเธเธฒเธฃ)</span>
+                <span class="badge @dVatBadgeClass ms-2 px-2 py-1"><i class="bi bi-patch-check-fill me-1"></i> @dVatLabel</span>
+            </div>
+            <a asp-controller="SalesBill" asp-action="Detail" asp-route-id="@Model.BillNo" class="btn btn-sm btn-outline-primary" target="_blank">
+                <i class="bi bi-box-arrow-up-right me-1"></i> เธ”เธนเนเธเธชเนเธเธชเธดเธเธเนเธฒ/เนเธเธเธณเธเธฑเธเธ เธฒเธฉเธตเน€เธ•เนเธก
+            </a>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="font-size:0.875rem;">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center" style="width:45px;">#</th>
+                            <th style="width:120px;">เธฃเธซเธฑเธชเธชเธดเธเธเนเธฒ</th>
+                            <th>เธเธทเนเธญเธชเธดเธเธเนเธฒ / เธฃเธฒเธขเธเธฒเธฃ</th>
+                            <th class="text-center" style="width:80px;">เธเธณเธเธงเธ</th>
+                            <th class="text-center" style="width:70px;">เธซเธเนเธงเธข</th>
+                            <th class="text-end" style="width:100px;">เธฃเธฒเธเธฒ/เธซเธเนเธงเธข</th>
+                            <th class="text-end" style="width:80px;">เธชเนเธงเธเธฅเธ”</th>
+                            <th class="text-end" style="width:120px;">เธเธณเธเธงเธเน€เธเธดเธ (เธเธฒเธ—)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ int itIndex = 1; }
+                        @foreach (var it in debtorItems)
+                        {
+                            <tr>
+                                <td class="text-center text-muted">@(itIndex++)</td>
+                                <td><code>@it.ProductCode</code></td>
+                                <td class="fw-semibold text-dark">@it.ProductName</td>
+                                <td class="text-center fw-bold">@it.Qty.ToString("N0")</td>
+                                <td class="text-center text-muted">@it.Unit</td>
+                                <td class="text-end">@it.Price.ToString("N2")</td>
+                                <td class="text-end text-muted">@(it.Discount > 0 ? it.Discount.ToString("N2") + "%" : "-")</td>
+                                <td class="text-end fw-bold text-dark">@it.Amount.ToString("N2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot class="table-light" style="border-top:2px solid #cbd5e1; background:#f8fafc;">
+                        @if (dVatCalc.DiscountAmount > 0)
+                        {
+                            <tr>
+                                <td colspan="7" class="text-end text-muted fw-semibold py-2">
+                                    <i class="bi bi-tag me-1"></i> เธฃเธงเธกเน€เธเนเธเน€เธเธดเธเธเนเธญเธเธซเธฑเธเธชเนเธงเธเธฅเธ” (Gross Total):
+                                </td>
+                                <td class="text-end fw-bold text-dark py-2">@dVatCalc.GrossAmount.ToString("N2") เธเธฒเธ—</td>
+                            </tr>
+                            <tr>
+                                <td colspan="7" class="text-end text-muted fw-semibold py-2">
+                                    <i class="bi bi-percent me-1"></i> เธชเนเธงเธเธฅเธ”เธเธฒเธฃเธเนเธฒ (Trade Discount):
+                                </td>
+                                <td class="text-end fw-bold text-danger py-2">-@dVatCalc.DiscountAmount.ToString("N2") เธเธฒเธ—</td>
+                            </tr>
+                            <tr style="background:#f1f5f9;">
+                                <td colspan="7" class="text-end fw-bold text-dark py-2">
+                                    <i class="bi bi-cash-stack me-1"></i> เธฃเธงเธกเน€เธเธดเธเธซเธฅเธฑเธเธซเธฑเธเธชเนเธงเธเธฅเธ” (Net Total):
+                                </td>
+                                <td class="text-end fw-bold text-dark py-2">@dVatCalc.NetAmount.ToString("N2") เธเธฒเธ—</td>
+                            </tr>
+                        }
+
+                        @if (dVatCalc.Category == VatCategory.VatOut)
+                        {
+                            <tr>
+                                <td colspan="7" class="text-end text-muted fw-semibold py-2">
+                                    <i class="bi bi-calculator me-1"></i> เธฃเธงเธกเธฃเธฒเธเธฒเธชเธดเธเธเนเธฒเธเนเธญเธเธ เธฒเธฉเธต (Sub Total):
+                                </td>
+                                <td class="text-end fw-bold text-dark py-2">@dVatCalc.SubTotal.ToString("N2") เธเธฒเธ—</td>
+                            </tr>
+                            <tr>
+                                <td colspan="7" class="text-end text-muted fw-semibold py-2">
+                                    <i class="bi bi-percent me-1"></i> เธ เธฒเธฉเธตเธกเธนเธฅเธเนเธฒเน€เธเธดเนเธก 7% เธเธญเธ (VAT 7% Extra):
+                                </td>
+                                <td class="text-end fw-bold text-danger py-2">+@dVatCalc.VatAmount.ToString("N2") เธเธฒเธ—</td>
+                            </tr>
+                            <tr style="background:#fffbeb; border-top:2px solid #d97706;">
+                                <td colspan="7" class="text-end fw-bold py-2" style="color:#b45309;">
+                                    <i class="bi bi-check2-circle me-1"></i> เธขเธญเธ”เธฃเธงเธกเธชเธธเธ—เธเธดเธ—เธฑเนเธเธชเธดเนเธ (Grand Total):
+                                </td>
+                                <td class="text-end fw-black py-2" style="font-size:1.1rem; color:#92400e;">@dVatCalc.GrandTotal.ToString("N2") เธเธฒเธ—</td>
+                            </tr>
+                        }
+                        else if (dVatCalc.Category == VatCategory.VatIn)
+                        {
+                            <tr>
+                                <td colspan="7" class="text-end text-muted fw-semibold py-2">
+                                    <i class="bi bi-calculator me-1"></i> เธฃเธงเธกเธกเธนเธฅเธเนเธฒเธชเธดเธเธเนเธฒเธเนเธญเธเธ เธฒเธฉเธต (Amount Before VAT 7%):
+                                </td>
+                                <td class="text-end fw-bold text-dark py-2">@dVatCalc.SubTotal.ToString("N2") เธเธฒเธ—</td>
+                            </tr>
+                            <tr>
+                                <td colspan="7" class="text-end text-muted fw-semibold py-2">
+                                    <i class="bi bi-percent me-1"></i> เธ เธฒเธฉเธตเธกเธนเธฅเธเนเธฒเน€เธเธดเนเธก 7% เนเธเธ•เธฑเธงเธชเธดเธเธเนเธฒ (VAT 7% Included):
+                                </td>
+                                <td class="text-end fw-bold text-success py-2">@dVatCalc.VatAmount.ToString("N2") เธเธฒเธ—</td>
+                            </tr>
+                            <tr style="background:#f0fdfa; border-top:2px solid #0d9488;">
+                                <td colspan="7" class="text-end fw-bold py-2" style="color:#0f766e;">
+                                    <i class="bi bi-check2-circle me-1"></i> เธขเธญเธ”เธฃเธงเธกเธชเธธเธ—เธเธดเธ—เธฑเนเธเธชเธดเนเธ (Grand Total):
+                                </td>
+                                <td class="text-end fw-black text-primary py-2" style="font-size:1.1rem;">@dVatCalc.GrandTotal.ToString("N2") เธเธฒเธ—</td>
+                            </tr>
+                        }
+                        else if (dVatCalc.Category == VatCategory.VatZero)
+                        {
+                            <tr>
+                                <td colspan="7" class="text-end text-muted fw-semibold py-2">
+                                    <i class="bi bi-calculator me-1"></i> เธกเธนเธฅเธเนเธฒเธชเธดเธเธเนเธฒเธฃเธงเธก (Subtotal):
+                                </td>
+                                <td class="text-end fw-bold text-dark py-2">@dVatCalc.SubTotal.ToString("N2") เธเธฒเธ—</td>
+                            </tr>
+                            <tr>
+                                <td colspan="7" class="text-end text-muted fw-semibold py-2">
+                                    <i class="bi bi-percent me-1"></i> เธ เธฒเธฉเธตเธกเธนเธฅเธเนเธฒเน€เธเธดเนเธก 0% (VAT 0%):
+                                </td>
+                                <td class="text-end fw-bold text-info-emphasis py-2">0.00 เธเธฒเธ— (VAT 0%)</td>
+                            </tr>
+                            <tr style="background:#f0f9ff; border-top:2px solid #0284c7;">
+                                <td colspan="7" class="text-end fw-bold py-2" style="color:#0369a1;">
+                                    <i class="bi bi-check2-circle me-1"></i> เธขเธญเธ”เธฃเธงเธกเธชเธธเธ—เธเธดเธ—เธฑเนเธเธชเธดเนเธ (Grand Total):
+                                </td>
+                                <td class="text-end fw-black text-primary py-2" style="font-size:1.1rem;">@dVatCalc.GrandTotal.ToString("N2") เธเธฒเธ—</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="7" class="text-end text-muted fw-semibold py-2">
+                                    <i class="bi bi-calculator me-1"></i> เธกเธนเธฅเธเนเธฒเธชเธดเธเธเนเธฒเธฃเธงเธก (Subtotal):
+                                </td>
+                                <td class="text-end fw-bold text-dark py-2">@dVatCalc.SubTotal.ToString("N2") เธเธฒเธ—</td>
+                            </tr>
+                            <tr>
+                                <td colspan="7" class="text-end text-muted fw-semibold py-2">
+                                    <i class="bi bi-dash-circle me-1"></i> เธ เธฒเธฉเธตเธกเธนเธฅเธเนเธฒเน€เธเธดเนเธก (VAT):
+                                </td>
+                                <td class="text-end fw-bold text-secondary py-2">0.00 เธเธฒเธ— (NO VAT)</td>
+                            </tr>
+                            <tr style="background:#f8fafc; border-top:2px solid #64748b;">
+                                <td colspan="7" class="text-end fw-bold py-2" style="color:#334155;">
+                                    <i class="bi bi-check2-circle me-1"></i> เธขเธญเธ”เธฃเธงเธกเธชเธธเธ—เธเธดเธ—เธฑเนเธเธชเธดเนเธ (Grand Total):
+                                </td>
+                                <td class="text-end fw-black text-dark py-2" style="font-size:1.1rem;">@dVatCalc.GrandTotal.ToString("N2") เธเธฒเธ—</td>
+                            </tr>
+                        }
+                    </tfoot>
+                </table>
+            </div>
+            <div class="px-3 py-2 bg-light border-top d-flex align-items-center">
+                <i class="bi bi-info-circle-fill text-primary me-2"></i>
+                <small class="text-muted"><strong class="text-dark">เธเธฃเธฐเน€เธ เธ—เธ เธฒเธฉเธต:</strong> <span class="badge @dVatBadgeClass me-1">@dVatLabel</span> (@dVatNotice)</small>
+            </div>
+        </div>
+    </div>
+}
+
+<script>
+    function setPayMethod(method) {
+    document.getElementById('methodField').value = method;
+}
+
+function syncPayment() {
+    var method = document.getElementById('methodField').value;
+    document.getElementById('realAmount').value = document.getElementById('amount_' + method).value;
+    document.getElementById('realPayDate').value = document.getElementById('payDate_' + method).value;
+    document.getElementById('realNote').value = document.getElementById('note_' + method).value;
+    
+    // Manage files
+    var ft = document.getElementById('file_Transfer');
+    var fc = document.getElementById('file_Check');
+    if(ft) { ft.name = method === 'Transfer' ? 'file' : ''; }
+    if(fc) { fc.name = method === 'Check' ? 'file' : ''; }
+
+    // Disable check inputs if not Check method
+    if(method !== 'Check') {
+        var cp = document.getElementById('check-pane');
+        var checkInputs = cp.querySelectorAll('input[name="checkDate"], input[name="bank"], input[name="checkNo"]');
+        checkInputs.forEach(function(inp) { inp.disabled = true; });
+    }
+    
+    return true;
+}
+
+    function selectAllWaitingProducts(checked) {
+        const checkboxes = document.querySelectorAll('.waiting-prod-chk');
+        checkboxes.forEach((chk, idx) => {
+            chk.checked = checked;
+            toggleWaitingQtyInput(idx);
+        });
+    }
+
+    function toggleWaitingQtyInput(idx) {
+        const chk = document.getElementById('chk_prod_' + idx);
+        const input = document.getElementById('qty_input_' + idx);
+        if (chk && input) {
+            input.disabled = !chk.checked;
+        }
+    }
+
+    function onStatusSelectChange() {
+        const val = document.getElementById('statusSelect').value;
+        const sections = ['f-postponed', 'f-delivering', 'f-waiting', 'f-return', 'f-baddebt', 'f-cancelled'];
+        sections.forEach(s => {
+            const el = document.getElementById(s);
+            if (el) el.classList.add('d-none');
+        });
+
+        if (val === 'Postponed') document.getElementById('f-postponed')?.classList.remove('d-none');
+        if (val === 'Delivering') document.getElementById('f-delivering')?.classList.remove('d-none');
+        if (val === 'WaitingGoods') document.getElementById('f-waiting')?.classList.remove('d-none');
+        if (val === 'ReturnIssued' || val === 'ReturnPending') document.getElementById('f-return')?.classList.remove('d-none');
+        if (val === 'BadDebt') document.getElementById('f-baddebt')?.classList.remove('d-none');
+        if (val === 'Cancelled') document.getElementById('f-cancelled')?.classList.remove('d-none');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        onStatusSelectChange();
+    });
+</script>

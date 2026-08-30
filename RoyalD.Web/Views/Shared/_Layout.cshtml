@@ -1,0 +1,642 @@
+@using System.Security.Claims
+@{
+    bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
+    bool isMasterAdmin = isAdmin;
+    var positionClaim = ViewContext.HttpContext.User.FindFirst("Position")?.Value ?? "";
+    bool isSalesRep = !isMasterAdmin && (positionClaim == "ผู้แทนขาย" || positionClaim == "พนักงานขาย" || positionClaim.Contains("ผู้แทน") || positionClaim.Contains("พนักงานขาย"));
+    var allowedPagesClaim = ViewContext.HttpContext.User.FindFirst("AllowedPages")?.Value ?? "";
+    var canDownloadClaim = ViewContext.HttpContext.User.FindFirst("CanDownload")?.Value;
+    var canCaptureClaim = ViewContext.HttpContext.User.FindFirst("CanScreenCapture")?.Value;
+
+    // สิทธิ์การดาวน์โหลดและแคปหน้าจอ:
+    // 1. แอดมิน (Admin) -> ปลดล็อค 100% ไม่มีลายน้ำ และสามารถแคปจอ/ดาวน์โหลดได้ตลอดเวลา
+    // 2. ตำแหน่งผู้แทนขาย (Sales Rep) -> ถูกล็อกความปลอดภัยเสมอ (มีลายน้ำ และห้ามแคปจอ/ห้ามดาวน์โหลด)
+    // 3. ตำแหน่งอื่นๆ (ผู้บริหาร, พนักงาน, หัวหน้างาน, บัญชี ฯลฯ) -> ถ้าแอดมินติ๊กอนุญาต ก็จะไม่มีลายน้ำ และแคปจอ/ดาวน์โหลดได้ตามปกติ
+    bool canDownload = isMasterAdmin || (!isSalesRep && canDownloadClaim == "true");
+    bool canScreenCapture = isMasterAdmin || (!isSalesRep && canCaptureClaim == "true");
+
+    var allowedPagesList = allowedPagesClaim.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                           .Select(p => p.Trim().ToLower())
+                                           .ToList();
+
+    bool hasDash = isAdmin || allowedPagesList.Contains("dashboard");
+    bool hasBill = isAdmin || allowedPagesList.Contains("salesbill");
+    bool hasDebt = isAdmin || allowedPagesList.Contains("debtor");
+    bool hasHist = isAdmin || allowedPagesList.Contains("debtorhistory") || allowedPagesList.Contains("history");
+    bool hasCancel = isAdmin || allowedPagesList.Contains("cancelled") || allowedPagesList.Contains("debtorcancelled");
+    bool hasWaiting = isAdmin || allowedPagesList.Contains("waitinggoods");
+    bool hasRep = isAdmin || allowedPagesList.Contains("salesreport");
+    bool hasAudit = isAdmin || allowedPagesList.Contains("audit");
+    bool hasUsers = isAdmin || allowedPagesList.Contains("users");
+    bool hasUpload = isAdmin || allowedPagesList.Contains("upload");
+}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — ระบบลูกหนี้ รอแยล-ดี</title>
+    
+    <!-- PWA & Mobile App Support -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#059669" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Royal-D" />
+    <link rel="apple-touch-icon" href="/favicon.ico" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" />
+    <style>
+        body { font-family: 'Sarabun', 'Noto Sans Thai', sans-serif; font-size: 15px; }
+        .navbar-brand { font-weight: bold; font-size: 1.1rem; }
+        .sidebar { min-height: calc(100vh - 56px); background: #1a2942; transition: all 0.25s ease; width: 220px; min-width: 220px; }
+        .sidebar.collapsed { margin-left: -220px !important; width: 0 !important; min-width: 0 !important; overflow: hidden !important; display: none !important; }
+        .sidebar .nav-link { color: #c9d1d9; padding: 10px 20px; border-radius: 6px; margin: 2px 8px; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background: #0070B9; color: #fff; }
+        .sidebar .nav-link i { width: 22px; }
+        .sidebar .nav-section { color: #8b949e; font-size: 11px; padding: 12px 20px 4px; text-transform: uppercase; letter-spacing: 1px; }
+        .main-content { background: #f0f4f8; min-height: calc(100vh - 56px); width: 100%; transition: all 0.25s ease; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+        .card-stat { border-left: 4px solid; }
+        .card-stat.blue { border-color: #0070B9; }
+        .card-stat.red { border-color: #dc3545; }
+        .card-stat.green { border-color: #198754; }
+        .card-stat.orange { border-color: #fd7e14; }
+        .table-responsive { border-radius: 8px; }
+        .badge-status { font-size: 12px; padding: 4px 8px; border-radius: 4px; }
+        
+        :root {
+            --bs-primary: #0d9488;
+            --bs-primary-rgb: 13, 148, 136;
+        }
+        .text-primary { color: #0d9488 !important; }
+        .bg-primary { background-color: #0d9488 !important; }
+        .btn-primary { background-color: #0d9488 !important; border-color: #0d9488 !important; }
+        .btn-primary:hover { background-color: #0f766e !important; border-color: #115e59 !important; }
+        .btn-outline-primary { color: #0d9488 !important; border-color: #0d9488 !important; }
+        .btn-outline-primary:hover { background-color: #0d9488 !important; color: #fff !important; }
+        .table-primary { --bs-table-bg: #ccfbf1; --bs-table-color: #115e59; border-color: #99f6e4; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background: #0d9488 !important; color: #fff; }
+    </style>
+
+    @if (!canDownload)
+    {
+        <style>
+            /* ซ่อนปุ่ม Export และดาวน์โหลดทั้งหมดสำหรับผู้ใช้ที่ไม่มีสิทธิ์ */
+            .btn-export, [href*="Export"], [onclick*="Export"], [onclick*="downloadScreenCapture"], [onclick*="print"] {
+                display: none !important;
+            }
+        </style>
+    }
+
+    @RenderSection("Styles", required: false)
+</head>
+<body>
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <!-- Navbar (Teal / Ocean Green) -->
+    <nav class="navbar navbar-dark py-1" style="background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%) !important;">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-outline-light me-2 py-0 px-2 border-0 shadow-none" type="button" onclick="toggleSidebar()" title="ซ่อน/แสดง เมนูซ้ายมือ (กางหน้าจอเต็ม 100%)">
+                    <i class="bi bi-list fs-3"></i>
+                </button>
+                <a class="navbar-brand mb-0" href="/">
+                    <i class="bi bi-building"></i> บจก.รอแยล-ดี (ไทยแลนด์)
+                </a>
+            </div>
+            <div class="ms-auto d-flex align-items-center gap-3">
+                @{
+                    var sessionTimeoutClaim = ViewContext.HttpContext.User.FindFirst("SessionTimeout")?.Value;
+                    int sessionTimeoutSec = 0;
+                    if (int.TryParse(sessionTimeoutClaim, out var stMin) && stMin > 0)
+                        sessionTimeoutSec = stMin * 60;
+                }
+                @if (sessionTimeoutSec > 0)
+                {
+                    <span id="session-timer" class="badge bg-warning text-dark px-2 py-1" title="ระยะเวลาเข้าใช้งานระบบคงเหลือ">
+                        <i class="bi bi-stopwatch"></i> เวลาเข้าใช้งานคงเหลือ: <span id="timer-display">@($"{stMin:D2}:00")</span>
+                    </span>
+                }
+                <!-- PWA 1-Click Install Button -->
+                <button id="pwaInstallBtn" class="btn btn-sm btn-warning fw-bold text-dark d-inline-flex align-items-center shadow-sm" style="border-radius:20px; font-size:0.82rem;" title="ติดตั้งไอคอนแอปบนหน้าจอ Desktop / มือถือ" onclick="triggerPwaInstall()">
+                    <i class="bi bi-download me-1"></i> ติดตั้งแอปลง PC / มือถือ
+                </button>
+                <span class="text-white">
+                    <i class="bi bi-person-circle"></i>
+                    @(ViewContext.HttpContext.User.FindFirst("FullName")?.Value ?? User.Identity.Name)
+                </span>
+                <form asp-controller="Account" asp-action="Logout" method="post" class="mb-0">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-box-arrow-right"></i> ออกจากระบบ
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <div class="d-flex" id="app-wrapper">
+        <!-- Sidebar (แสดงเฉพาะเมนูที่ได้รับอนุญาต) -->
+        <div class="sidebar" id="sidebar">
+            <nav class="pt-3">
+                @if (hasDash)
+                {
+                    <div class="nav-section">หลัก</div>
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")"
+                       href="/Dashboard">
+                        <i class="bi bi-speedometer2"></i> Accounts Receivable Dashboard
+                    </a>
+                }
+
+                @if (hasBill)
+                {
+                    <div class="nav-section">บิลขาย</div>
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesBill" ? "active" : "")"
+                       href="/SalesBill">
+                        <i class="bi bi-receipt"></i> รายการบิลขาย
+                    </a>
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "WaitingGoods" ? "active" : "")"
+                       href="/Report/WaitingGoods">
+                        <i class="bi bi-box-seam"></i> บิลรอเอกสาร/รอสินค้า
+                    </a>
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "ReturnNotes" ? "active" : "")"
+                       href="/Report/ReturnNotes">
+                        <i class="bi bi-arrow-return-left"></i> รับคืนสินค้า
+                    </a>
+                }
+
+                @if (hasDebt || hasHist || hasCancel)
+                {
+                    <div class="nav-section">ลูกหนี้</div>
+                    @if (hasDebt)
+                    {
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Debtor" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
+                           href="/Debtor">
+                            <i class="bi bi-credit-card-2-front"></i> การ์ดลูกหนี้
+                        </a>
+                    }
+                    @if (hasHist)
+                    {
+                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "History" ? "active" : "")"
+                           href="/Debtor/History">
+                            <i class="bi bi-clock-history"></i> ประวัติชำระครบ
+                        </a>
+                    }
+                    @if (hasCancel)
+                    {
+                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Cancelled" ? "active" : "")"
+                           href="/Debtor/Cancelled">
+                            <i class="bi bi-trash3"></i> บิลยกเลิก (30 วัน)
+                        </a>
+                    }
+                    <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "BadDebt" ? "active" : "")"
+                       href="/Debtor/BadDebt">
+                        <i class="bi bi-exclamation-octagon"></i> หนี้สูญ
+                    </a>
+                }
+
+                @if (hasRep || hasWaiting)
+                {
+                    <div class="nav-section">รายงาน</div>
+                    @if (hasRep)
+                    {
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "Sales" ? "active" : "")"
+                           href="/Report/Sales">
+                            <i class="bi bi-bar-chart-grouped"></i> รายงานผู้แทนขาย
+                        </a>
+                    }
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "PaidHistory" ? "active" : "")"
+                       href="/Report/PaidHistory">
+                        <i class="bi bi-check2-all"></i> ประวัติชำระครบ
+                    </a>
+                }
+
+                @if (hasUpload || hasUsers || hasAudit)
+                {
+                    <div class="nav-section">จัดการระบบ</div>
+                    @if (hasUpload)
+                    {
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Upload" ? "active" : "")"
+                           href="/Upload">
+                            <i class="bi bi-cloud-upload"></i> อัปโหลดไฟล์
+                        </a>
+                    }
+                    @if (hasUsers)
+                    {
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Account" && ViewContext.RouteData.Values["action"]?.ToString() == "Users" ? "active" : "")"
+                           href="/Account/Users">
+                            <i class="bi bi-people"></i> จัดการผู้ใช้
+                        </a>
+                    }
+                    @if (hasAudit)
+                    {
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Audit" ? "active" : "")"
+                           href="/Audit">
+                            <i class="bi bi-journal-text"></i> ประวัติการใช้งาน
+                        </a>
+                    }
+                }
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content p-4 @(!canScreenCapture ? "pb-5" : "")">
+            @RenderBody()
+
+            @if (!canScreenCapture)
+            {
+                <footer class="mt-4 pt-3 pb-3 text-center border-top" style="background:#fff1f2; border-color:#fecdd3 !important; border-radius:10px;">
+                    <div class="fw-bold text-danger" style="font-size:0.95rem;">
+                        <i class="bi bi-shield-lock-fill me-1"></i> ⚠️ เอกสารห้ามเผยแพร่ — ใช้สำหรับงานภายในบริษัท รอแยล-ดี (ไทยแลนด์) จำกัด เท่านั้น
+                    </div>
+                    <small class="text-muted">ห้ามบันทึกภาพ แคปหน้าจอ คัดลอก หรือส่งต่อข้อมูลสู่ภายนอกโดยเด็ดขาด (Security Protected)</small>
+                </footer>
+
+                <div class="fixed-bottom py-1 text-center text-white fw-bold shadow" style="background:#dc2626; font-size:0.82rem; z-index:999980; pointer-events:none; letter-spacing:0.5px;">
+                    <i class="bi bi-shield-slash-fill me-1"></i> ⚠️ เอกสารห้ามเผยแพร่ — ข้อมูลความลับเฉพาะภายในบริษัท รอแยล-ดี (ไทยแลนด์) จำกัด
+                </div>
+            }
+        </main>
+    </div>
+}
+else
+{
+    @RenderBody()
+}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="~/js/site.js"></script>
+
+@if (User.Identity?.IsAuthenticated == true)
+{
+    var sessionTimeoutClaim = ViewContext.HttpContext.User.FindFirst("SessionTimeout")?.Value;
+    int sessionSeconds = 0;
+    if (int.TryParse(sessionTimeoutClaim, out var stMinutes) && stMinutes > 0)
+    {
+        sessionSeconds = stMinutes * 60;
+    }
+    else if (isSalesRep)
+    {
+        // ค่าเริ่มต้นสำหรับผู้แทนขาย: จำกัดเวลาใช้งานไม่เกิน 10 นาที (600 วินาที)
+        sessionSeconds = 600;
+    }
+
+    // ขยายเวลาใช้งานและปิดระบบตัดการเชื่อมต่อเมื่ออยู่นิ่ง (No idle blackout)
+    int idleMaxSeconds = 0; 
+    sessionSeconds = 0; // ไม่จำกัดเวลาล็อกอิน
+
+    <script>
+    // ===== 1. Session & Inactivity settings =====
+    const SESSION_SECONDS = @sessionSeconds;
+    const IDLE_MAX_SECONDS = @idleMaxSeconds;
+
+    let remainingSession = SESSION_SECONDS;
+    let remainingIdle = IDLE_MAX_SECONDS;
+    const timerEl = document.getElementById('timer-display');
+
+    function resetIdleTimer() {
+        remainingIdle = IDLE_MAX_SECONDS;
+    }
+
+    // ดักฟังการขยับรายการของผู้ใช้ (ขยับเมาส์, คลิก, เลื่อนหน้าจอ, กดปุ่ม, แตะจอสัมผัส)
+    if (IDLE_MAX_SECONDS > 0) {
+        ['mousemove', 'mousedown', 'keydown', 'touchstart', 'touchmove', 'scroll', 'click'].forEach(evt => {
+            window.addEventListener(evt, resetIdleTimer, { passive: true });
+        });
+    }
+
+    function updateSessionAndIdleTimers() {
+        // ตรวจสอบ Inactivity Timeout (ไม่มีการขยับรายการนานเกิน 5 นาที)
+        if (IDLE_MAX_SECONDS > 0) {
+            remainingIdle--;
+            if (remainingIdle <= 0) {
+                clearInterval(masterTimerInterval);
+                autoLogout('IDLE_INACTIVITY_5_MIN');
+                return;
+            }
+        }
+
+        // ตรวจสอบ Total Session Timeout (จำกัดเวลาล็อกอินไม่เกิน 10 นาที)
+        if (SESSION_SECONDS > 0) {
+            if (remainingSession <= 0) {
+                clearInterval(masterTimerInterval);
+                if (timerEl) timerEl.textContent = '00:00';
+                autoLogout('SESSION_TIMEOUT_10_MIN');
+                return;
+            }
+            const m = Math.floor(remainingSession / 60).toString().padStart(2, '0');
+            const s = (remainingSession % 60).toString().padStart(2, '0');
+            if (timerEl) timerEl.textContent = m + ':' + s;
+            if (remainingSession <= 60) {
+                const timerBox = document.getElementById('session-timer');
+                if (timerBox) {
+                    timerBox.className = 'badge bg-danger text-white px-2 py-1';
+                }
+            }
+            remainingSession--;
+        }
+    }
+
+    const masterTimerInterval = setInterval(updateSessionAndIdleTimers, 1000);
+
+    function autoLogout(reason) {
+        try {
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon('/Account/ForceLogout', JSON.stringify({ reason: reason || 'SESSION_EXPIRED' }));
+            }
+        } catch(e) {}
+        window.location.replace('/Account/Login?expired=1');
+    }
+
+    // ===== Sidebar Toggle =====
+    function toggleSidebar() {
+        const sb = document.getElementById('sidebar');
+        if (sb) {
+            sb.classList.toggle('collapsed');
+            localStorage.setItem('sidebar_collapsed', sb.classList.contains('collapsed') ? '1' : '0');
+            setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 300);
+        }
+    }
+    if (localStorage.getItem('sidebar_collapsed') === '1') {
+        document.getElementById('sidebar')?.classList.add('collapsed');
+    }
+
+    // ===== PWA 1-Click Install Handler =====
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+    });
+
+    window.addEventListener('appinstalled', () => {
+        deferredPrompt = null;
+        const btn = document.getElementById('pwaInstallBtn');
+        if (btn) {
+            btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> ติดตั้งแล้ว';
+            btn.disabled = true;
+        }
+    });
+
+    function triggerPwaInstall() {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('PWA installed');
+                }
+                deferredPrompt = null;
+            });
+        } else {
+            alert('💡 วิธีติดตั้งไอคอนลงบนหน้าจอ Desktop:\n\n1. มองที่แถบช่องพิมพ์ URL ด้านบนขวาสุด จะมีไอคอน "รูปจอคอมฯ ลูกศรชี้ลง" หรือไอคอนรูปแอป (Install App)\n2. หรือกดปุ่ม 3 จุด (⋮) ที่มุมขวาบนสุดของ Chrome / Edge\n3. เลือก "บันทึกและแชร์" (Save and share) -> เลือก "ติดตั้งระบบลูกหนี้ รอแยล-ดี" (Install Royal-D)\n4. ไอคอนจะถูกสร้างบน Desktop พร้อมเปิดใช้งานเป็นแอปได้ทันที!');
+        }
+    }
+    </script>
+
+    @if (!canScreenCapture)
+    {
+        <style>
+        /* Disable text selection, dragging, and printing */
+        body, * {
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            user-select: none !important;
+            -webkit-touch-callout: none !important;
+        }
+        @@media print {
+            html, body, * {
+                display: none !important;
+                visibility: hidden !important;
+                background: #000000 !important;
+            }
+        }
+        /* Security Watermark Background Overlay */
+        .security-watermark-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 999990;
+            opacity: 0.25;
+            background-repeat: repeat;
+            display: block;
+        }
+        </style>
+        
+        <canvas id="watermarkCanvas" width="450" height="250" style="display:none;"></canvas>
+        <div class="security-watermark-overlay" id="watermarkOverlay"></div>
+
+        <script>
+        // =========================================================================
+        //  ANTI-SCREEN CAPTURE & ANTI-RECORDING: INSTANT SOLID BLACKOUT + IMMEDIATE LOGOUT
+        // =========================================================================
+        (function() {
+            let isBlackoutTriggered = false;
+
+            // 1. Watermark แบบไดนามิกครอบคลุมทั้งจอ
+            try {
+                const canvas = document.getElementById('watermarkCanvas');
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, 450, 250);
+                    ctx.save();
+                    ctx.translate(225, 125);
+                    ctx.rotate(-22 * Math.PI / 180);
+                    ctx.textAlign = 'center';
+                    
+                    ctx.fillStyle = 'rgba(220, 38, 38, 0.45)';
+                    ctx.font = 'bold 16px sans-serif';
+                    const userName = '⚠️ @(User.Identity?.Name ?? "USER") - @(ViewContext.HttpContext.User.FindFirst("FullName")?.Value ?? "ผู้แทนขาย")';
+                    ctx.fillText(userName, 0, -10);
+
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.55)';
+                    ctx.font = 'bold 13px sans-serif';
+                    const nowStr = 'ห้ามบันทึกภาพ/อัดวิดีโอ ' + new Date().toLocaleDateString('th-TH');
+                    ctx.fillText(nowStr, 0, 16);
+                    ctx.restore();
+
+                    const overlay = document.getElementById('watermarkOverlay');
+                    if (overlay) {
+                        overlay.style.backgroundImage = 'url(' + canvas.toDataURL('image/png') + ')';
+                    }
+                }
+            } catch(e) {}
+
+            function triggerScreenCaptureBlackout(reason) {
+                // ปิดการจอดำสนิทเพื่อให้สามารถใช้งานเว็บได้ปกติ
+                console.warn('Security capture warning:', reason);
+            }
+
+            // 2. ดักจับการใช้ Screen Recording API (WebRTC getDisplayMedia & MediaRecorder)
+            if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+                navigator.mediaDevices.getDisplayMedia = function() {
+                    triggerScreenCaptureBlackout('GET_DISPLAY_MEDIA_API');
+                    return Promise.reject(new Error('Screen capture/recording prohibited'));
+                };
+            }
+            if (window.MediaRecorder) {
+                const OrigMediaRecorder = window.MediaRecorder;
+                window.MediaRecorder = function(stream, options) {
+                    triggerScreenCaptureBlackout('MEDIA_RECORDER_CONSTRUCTOR');
+                    return new OrigMediaRecorder(stream, options);
+                };
+            }
+
+            // 3. ตัวแปรเก็บสถานะการกดปุ่ม Modifier เพื่อดักจับ Win + Shift + S และ Snipping Tool
+            let isShiftDown = false;
+            let isMetaDown = false;
+            let isCtrlDown = false;
+            let isAltDown = false;
+
+            window.addEventListener('keydown', function(e) {
+                if (e.key === 'Shift' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') isShiftDown = true;
+                if (e.key === 'Meta' || e.key === 'OS' || e.code === 'MetaLeft' || e.code === 'MetaRight' || e.code === 'OSLeft' || e.code === 'OSRight') isMetaDown = true;
+                if (e.key === 'Control' || e.code === 'ControlLeft' || e.code === 'ControlRight') isCtrlDown = true;
+                if (e.key === 'Alt' || e.code === 'AltLeft' || e.code === 'AltRight') isAltDown = true;
+
+                // 1. ปุ่ม PrintScreen / Snapshot (ทุกรูปแบบ)
+                if (e.key === 'PrintScreen' || e.key === 'Snapshot' || e.code === 'PrintScreen' || e.keyCode === 44 || e.which === 44) {
+                    e.preventDefault();
+                    triggerScreenCaptureBlackout('KEY_PRINTSCREEN');
+                    return false;
+                }
+
+                // 2. Windows Snipping Tool (Win + Shift + S หรือ Shift + S ขณะมี Meta/Ctrl หรือ Shift+S)
+                if ((isShiftDown || e.shiftKey) && (e.key === 'S' || e.key === 's' || e.code === 'KeyS' || e.keyCode === 83)) {
+                    if (isMetaDown || isCtrlDown || e.metaKey || e.ctrlKey || isShiftDown) {
+                        e.preventDefault();
+                        triggerScreenCaptureBlackout('SNIPPING_TOOL_WIN_SHIFT_S');
+                        return false;
+                    }
+                }
+
+                // 3. Mac Shortcuts: Cmd + Shift + 3, 4, 5
+                if ((e.shiftKey || isShiftDown) && (e.metaKey || isMetaDown || e.ctrlKey || isCtrlDown)) {
+                    if (['3', '4', '5', 's', 'S'].includes(e.key) || ['Digit3', 'Digit4', 'Digit5', 'KeyS'].includes(e.code)) {
+                        e.preventDefault();
+                        triggerScreenCaptureBlackout('MAC_SCREEN_CAPTURE_SHORTCUT');
+                        return false;
+                    }
+                }
+
+                // 4. LINE PC Screen Capture & Video Capture Shortcuts (Alt + Ctrl + C / Alt + C / Alt + Ctrl + V)
+                if ((isAltDown || e.altKey) && (e.key === 'c' || e.key === 'C' || e.code === 'KeyC' || e.key === 'v' || e.key === 'V' || e.code === 'KeyV')) {
+                    e.preventDefault();
+                    triggerScreenCaptureBlackout('LINE_APP_SCREEN_CAPTURE_SHORTCUT');
+                    return false;
+                }
+
+                // 5. Windows Game Bar / Recorder: Win + G / Win + Alt + R
+                if ((e.metaKey || isMetaDown || e.ctrlKey || isCtrlDown) && (e.key === 'G' || e.key === 'g' || e.code === 'KeyG' || e.key === 'R' || e.key === 'r' || e.code === 'KeyR')) {
+                    e.preventDefault();
+                    triggerScreenCaptureBlackout('GAME_BAR_RECORDING_SHORTCUT');
+                    return false;
+                }
+
+                // 6. Alt + PrintScreen
+                if ((e.altKey || isAltDown) && (e.key === 'PrintScreen' || e.code === 'PrintScreen' || e.keyCode === 44 || e.which === 44)) {
+                    e.preventDefault();
+                    triggerScreenCaptureBlackout('ALT_PRINTSCREEN');
+                    return false;
+                }
+
+                // 7. Print Page (Ctrl+P / Cmd+P)
+                if ((e.ctrlKey || e.metaKey || isCtrlDown || isMetaDown) && (e.key === 'P' || e.key === 'p' || e.code === 'KeyP')) {
+                    e.preventDefault();
+                    triggerScreenCaptureBlackout('PRINT_PAGE_SHORTCUT');
+                    return false;
+                }
+
+                // 8. DevTools (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U)
+                if (e.key === 'F12' || e.keyCode === 123 || ((e.ctrlKey || e.metaKey || isCtrlDown || isMetaDown) && (e.shiftKey || isShiftDown) && (e.key === 'I' || e.key === 'C' || e.key === 'J')) || ((e.ctrlKey || e.metaKey) && (e.key === 'U' || e.key === 'u'))) {
+                    e.preventDefault();
+                    triggerScreenCaptureBlackout('DEV_TOOLS_SHORTCUT');
+                    return false;
+                }
+            }, true);
+
+            window.addEventListener('keyup', function(e) {
+                if (e.key === 'Shift' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') isShiftDown = false;
+                if (e.key === 'Meta' || e.key === 'OS' || e.code === 'MetaLeft' || e.code === 'MetaRight' || e.code === 'OSLeft' || e.code === 'OSRight') isMetaDown = false;
+                if (e.key === 'Control' || e.code === 'ControlLeft' || e.code === 'ControlRight') isCtrlDown = false;
+                if (e.key === 'Alt' || e.code === 'AltLeft' || e.code === 'AltRight') isAltDown = false;
+
+                if (e.key === 'PrintScreen' || e.key === 'Snapshot' || e.code === 'PrintScreen' || e.keyCode === 44 || e.which === 44) {
+                    e.preventDefault();
+                    triggerScreenCaptureBlackout('KEYUP_PRINTSCREEN');
+                }
+            }, true);
+
+            // (Removed aggressive 'blur' check that accidentally triggers on Alt+Tab or Ctrl+Tab)
+
+            // 5. ป้องกัน Right Click, Copy, Drag
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                return false;
+            });
+            document.addEventListener('copy', function(e) {
+                e.preventDefault();
+                triggerScreenCaptureBlackout('COPY_DATA');
+                return false;
+            });
+            document.addEventListener('dragstart', function(e) {
+                e.preventDefault();
+                return false;
+            });
+            window.addEventListener('beforeprint', function() {
+                triggerScreenCaptureBlackout('BEFORE_PRINT');
+            });
+
+            // 6. ปิดระบบจอดำเมื่อไม่มีการใช้งาน (Disabled idle blackout)
+            // เพื่อให้ผู้ใช้สามารถเปิดหน้าจอค้างไว้ใช้งานได้ตลอดทั้งวันโดยไม่จอดำ
+
+        })();
+        </script>
+    }
+}
+@RenderSection("Scripts", required: false)
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Auto-ping เพื่อรักษา session ไม่ให้หมดอายุ
+        (function(){
+            if(!document.cookie.includes('.AspNetCore.Cookies')) return;
+            setInterval(function(){
+                fetch('/Account/Ping',{credentials:'same-origin'}).catch(function(){});
+            }, 10 * 60 * 1000); // ทุก 10 นาที
+        })();
+        
+        // SweetAlert สำหรับแสดงผล TempData
+        @if (TempData["Success"] != null)
+        {
+            <text>
+            Swal.fire({
+                icon: 'success',
+                title: 'สำเร็จ!',
+                text: '@Html.Raw(TempData["Success"]?.ToString()?.Replace("'", "\\'"))',
+                confirmButtonColor: '#28a745'
+            });
+            </text>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <text>
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด!',
+                text: '@Html.Raw(TempData["Error"]?.ToString()?.Replace("'", "\\'"))',
+                confirmButtonColor: '#dc3545'
+            });
+            </text>
+        }
+    </script>
+</body>
+</html>

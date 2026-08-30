@@ -1,0 +1,193 @@
+@model IEnumerable<RoyalD.Web.Models.OutstandingDebt>
+@using RoyalD.Web.Models
+
+@{
+    ViewData["Title"] = "Sales Dashboard";
+    var repStats = ViewBag.RepStats as List<SalesRepStatsViewModel> ?? new List<SalesRepStatsViewModel>();
+}
+
+<style>
+    .dashboard-card {
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+        background: #fff;
+    }
+    .stat-value {
+        font-size: 24px;
+        font-weight: bold;
+    }
+    .table-container {
+        border-radius: 12px;
+        background: #fff;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    @@media print {
+        body { font-size: 12pt; background: white; }
+        .dashboard-card, .table-container { box-shadow: none; border: 1px solid #ccc; margin-bottom: 20px; break-inside: avoid; }
+        .btn, .no-print { display: none !important; }
+        .sidebar, .navbar { display: none !important; }
+        .main-content { margin: 0; padding: 0; width: 100%; }
+        h2, h3, h4 { color: #000; }
+        canvas { max-width: 100% !important; height: auto !important; }
+    }
+</style>
+
+<div class="container-fluid" id="dashboard-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-speedometer2"></i> Sales & AR Dashboard</h2>
+        <div class="no-print">
+            <button class="btn btn-outline-success me-2" onclick="exportToExcel()"><i class="bi bi-file-earmark-excel"></i> Export Excel</button>
+            <button class="btn btn-outline-primary me-2" onclick="downloadGraphPNG()"><i class="bi bi-image"></i> Download Graph PNG</button>
+            <button class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer"></i> Export PDF/Print</button>
+        </div>
+    </div>
+
+    <!-- Section 1: AR Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="dashboard-card border-start border-primary border-5">
+                <h5 class="text-muted">Total Outstanding Debt</h5>
+                <div class="stat-value text-primary">฿ @string.Format("{0:N2}", ViewBag.TotalOutstanding)</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="dashboard-card border-start border-danger border-5">
+                <h5 class="text-muted">Overdue > 120 Days</h5>
+                <div class="stat-value text-danger">฿ @string.Format("{0:N2}", ViewBag.Overdue120Amount)</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="dashboard-card border-start border-warning border-5">
+                <h5 class="text-muted">Waiting Goods (Bills)</h5>
+                <div class="stat-value text-warning">@ViewBag.WaitingGoodsCount</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <!-- Section 2: Donut Chart -->
+        <div class="col-md-5">
+            <div class="dashboard-card text-center">
+                <h5>Total Debt by Sales Rep</h5>
+                <canvas id="donutChart" height="250"></canvas>
+            </div>
+        </div>
+
+        <!-- Section 3: Grouped Bar Chart -->
+        <div class="col-md-7">
+            <div class="dashboard-card">
+                <h5>Sales vs Collected vs Outstanding (per Rep)</h5>
+                <canvas id="barChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 4: Sales Rep Table -->
+    <div class="table-container mb-5">
+        <h5>Sales Rep Performance</h5>
+        <div class="table-responsive">
+            <table class="table table-hover table-striped" id="salesRepTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Sales Rep</th>
+                        <th class="text-end">Total Sales</th>
+                        <th class="text-end">Total Collected</th>
+                        <th class="text-end">Outstanding</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var rep in repStats)
+                    {
+                        <tr>
+                            <td>@rep.SalesRepName</td>
+                            <td class="text-end">@string.Format("{0:N2}", rep.TotalSales)</td>
+                            <td class="text-end">@string.Format("{0:N2}", rep.TotalCollected)</td>
+                            <td class="text-end text-danger fw-bold">@string.Format("{0:N2}", rep.Outstanding)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Prepare Data for Charts
+        var repLabels = @Html.Raw(Json.Serialize(repStats.Select(r => r.SalesRepName)));
+        var outstandingData = @Html.Raw(Json.Serialize(repStats.Select(r => r.Outstanding)));
+        var salesData = @Html.Raw(Json.Serialize(repStats.Select(r => r.TotalSales)));
+        var collectedData = @Html.Raw(Json.Serialize(repStats.Select(r => r.TotalCollected)));
+
+        // Donut Chart - Total Debt by Sales Rep
+        var ctxDonut = document.getElementById('donutChart').getContext('2d');
+        var donutChart = new Chart(ctxDonut, {
+            type: 'doughnut',
+            data: {
+                labels: repLabels,
+                datasets: [{
+                    data: outstandingData,
+                    backgroundColor: [
+                        '#ff6384', '#36a2eb', '#cc65fe', '#ffce56', '#4bc0c0', '#9966ff', '#ff9f40'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        // Grouped Bar Chart
+        var ctxBar = document.getElementById('barChart').getContext('2d');
+        var barChart = new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: repLabels,
+                datasets: [
+                    {
+                        label: 'Total Sales',
+                        data: salesData,
+                        backgroundColor: '#36a2eb'
+                    },
+                    {
+                        label: 'Total Collected',
+                        data: collectedData,
+                        backgroundColor: '#4bc0c0'
+                    },
+                    {
+                        label: 'Outstanding',
+                        data: outstandingData,
+                        backgroundColor: '#ff6384'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        // Task 4: Export Functions
+        function exportToExcel() {
+            var table = document.getElementById("salesRepTable");
+            var wb = XLSX.utils.table_to_book(table, {sheet: "Sales Rep Stats"});
+            XLSX.writeFile(wb, 'SalesRepPerformance.xlsx');
+        }
+
+        function downloadGraphPNG() {
+            var base64Image = barChart.toBase64Image();
+            var a = document.createElement('a');
+            a.href = base64Image;
+            a.download = 'SalesRep_BarChart.png';
+            a.click();
+        }
+    </script>
+}

@@ -1,0 +1,11 @@
+node_modules/
+bin/
+obj/
+*.db
+*.db-shm
+*.db-wal
+*.zip
+.vscode/
+gh/
+mingit/
+.next/

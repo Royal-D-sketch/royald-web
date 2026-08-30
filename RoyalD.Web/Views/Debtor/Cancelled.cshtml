@@ -1,0 +1,259 @@
+@model List<RoyalD.Web.Models.OutstandingDebt>
+@{
+    ViewData["Title"] = "รายการบิลยกเลิก (เก็บบิล 30 วัน)";
+    int totalCount = ViewBag.TotalCount ?? 0;
+    decimal totalAmount = ViewBag.TotalAmount ?? 0m;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-1 fw-bold text-danger">
+            <i class="bi bi-trash3-fill"></i> รายการบิลยกเลิก (เก็บบิล 30 วัน)
+        </h2>
+        <p class="text-muted mb-0 small">
+            บิลที่ถูกยกเลิกจะถูกเก็บไว้ในหน้านี้เป็นเวลา <strong>30 วัน</strong> และสามารถกู้คืนกลับเป็นการ์ดลูกหนี้ปกติได้ตลอดเวลา
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="@Url.Action("ExportCancelledExcel", new { search = ViewBag.Search, salesRep = ViewBag.SalesRep })" 
+           class="btn btn-sm btn-success fw-bold shadow-sm px-3 d-flex align-items-center" style="background:#15803d; border-color:#15803d;">
+            <i class="bi bi-file-earmark-excel-fill me-1"></i> ดาวน์โหลด Excel
+        </a>
+        <a href="@Url.Action("ExportCancelledPdf", new { search = ViewBag.Search, salesRep = ViewBag.SalesRep })" 
+           target="_blank" class="btn btn-sm btn-danger fw-bold shadow-sm px-3 d-flex align-items-center" style="background:#b91c1c; border-color:#b91c1c;">
+            <i class="bi bi-file-earmark-pdf-fill me-1"></i> ดาวน์โหลด PDF
+        </a>
+        <a href="/Debtor" class="btn btn-outline-secondary d-flex align-items-center">
+            <i class="bi bi-arrow-left me-1"></i> กลับหน้ารวมลูกหนี้
+        </a>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm fw-bold mb-3" role="alert">
+        <i class="bi bi-check-circle-fill me-1"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm fw-bold mb-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Summary Statistics -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="card shadow-sm border-0 bg-danger bg-opacity-10 border-start border-danger border-4 h-100">
+            <div class="card-body py-3">
+                <div class="text-danger fw-bold small text-uppercase">จำนวนบิลที่ยกเลิก</div>
+                <div class="fs-3 fw-black text-danger">@totalCount.ToString("N0") <small class="fs-6 fw-normal text-muted">บิล</small></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card shadow-sm border-0 bg-dark bg-opacity-10 border-start border-dark border-4 h-100">
+            <div class="card-body py-3">
+                <div class="text-muted fw-bold small text-uppercase">มูลค่ารวมบิลยกเลิก</div>
+                <div class="fs-3 fw-black text-dark">@totalAmount.ToString("N2") <small class="fs-6 fw-normal text-muted">บาท</small></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-12 col-lg-6">
+        <div class="card shadow-sm border-0 bg-light h-100 d-flex align-items-center p-3">
+            <div class="d-flex align-items-center w-100">
+                <i class="bi bi-shield-lock-fill fs-2 text-primary me-3"></i>
+                <div>
+                    <div class="fw-bold text-dark">ระบบรักษาความปลอดภัยในการกู้คืนบิล</div>
+                    <small class="text-muted">หากต้องการยกเลิกการยกเลิกบิล (ดึงบิลกลับเข้าสู่ระบบ) จะต้องใส่รหัสผ่านยืนยันความปลอดภัยทุกครั้ง</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Filters -->
+<div class="card shadow-sm border-0 mb-4" style="border-radius:12px;">
+    <div class="card-body p-3">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="ค้นหาเลขที่บิล, รหัสลูกค้า, ชื่อลูกค้า..." value="@ViewBag.SearchTerm" />
+                </div>
+            </div>
+            <div class="col-md-4">
+                <select name="salesRep" class="form-select">
+                    <option value="">-- พนักงานขายทั้งหมด --</option>
+                    @if (ViewBag.SalesReps != null)
+                    {
+                        foreach (var rep in (List<string>)ViewBag.SalesReps)
+                        {
+                            if (!string.IsNullOrEmpty(rep))
+                            {
+                                if (ViewBag.SelectedSalesRep == rep)
+                                {
+                                    <option value="@rep" selected>@rep</option>
+                                }
+                                else
+                                {
+                                    <option value="@rep">@rep</option>
+                                }
+                            }
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100 fw-bold"><i class="bi bi-filter"></i> ค้นหา</button>
+                <a href="/Debtor/Cancelled" class="btn btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Table of Cancelled Bills -->
+<div class="card shadow-sm border-0" style="border-radius:14px; overflow:hidden;">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th style="width: 100px;">รหัสลูกค้า</th>
+                    <th style="min-width: 180px;">ชื่อลูกค้า</th>
+                    <th style="width: 110px;">เลขที่บิล</th>
+                    <th class="text-center" style="width: 100px;">วันที่บิล</th>
+                    <th class="text-center" style="width: 110px;">วันที่ยกเลิก</th>
+                    <th style="width: 120px;">ผู้ทำรายการ</th>
+                    <th style="min-width: 180px;">สาเหตุที่ยกเลิก</th>
+                    <th class="text-end" style="width: 120px;">ยอดเงิน (บาท)</th>
+                    <th class="text-center" style="width: 150px;">นับถอยหลัง 30 วัน</th>
+                    <th class="text-center" style="width: 120px;">การจัดการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model == null || !Model.Any())
+                {
+                    <tr>
+                        <td colspan="10" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
+                            ไม่มีรายการบิลยกเลิกในระบบขณะนี้
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var item in Model)
+                    {
+                        var cancelledDate = item.CancelledDate ?? item.BillDate;
+                        int elapsedDays = (int)(DateTime.Today - cancelledDate.Date).TotalDays;
+                        int remainingDays = Math.Max(0, 30 - elapsedDays);
+
+                        <tr>
+                            <td><code class="fw-bold text-dark">@item.CustomerCode</code></td>
+                            <td class="fw-bold text-dark">@item.CustomerName</td>
+                            <td>
+                                <span class="badge bg-secondary">@item.BillNo</span>
+                            </td>
+                            <td class="text-center text-muted small">@item.BillDate.ToString("dd/MM/yyyy")</td>
+                            <td class="text-center text-danger fw-bold small">@cancelledDate.ToString("dd/MM/yyyy")</td>
+                            <td class="small text-muted">
+                                <i class="bi bi-person-fill"></i> @(item.CancelledBy ?? "-")
+                            </td>
+                            <td class="small text-dark">
+                                @(string.IsNullOrEmpty(item.CancelReason) ? (string.IsNullOrEmpty(item.Note) ? "-" : item.Note) : item.CancelReason)
+                            </td>
+                            <td class="text-end fw-black text-danger fs-6">
+                                @item.OriginalAmount.ToString("N2")
+                            </td>
+                            <td class="text-center">
+                                @if (remainingDays > 10)
+                                {
+                                    <span class="badge bg-warning text-dark fw-bold px-2 py-1">
+                                        <i class="bi bi-clock-history"></i> เหลืออีก @remainingDays วัน
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger text-white fw-bold px-2 py-1">
+                                        <i class="bi bi-exclamation-octagon-fill"></i> เหลืออีก @remainingDays วัน
+                                    </span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-outline-success fw-bold" 
+                                        onclick="openRestoreModal(@item.Id, '@item.BillNo', '@Html.Raw(item.CustomerName.Replace("'", "\\'"))', '@item.OriginalAmount.ToString("N2")')">
+                                    <i class="bi bi-arrow-counterclockwise"></i> กู้คืนบิล
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Restore Confirmation Modal -->
+<div class="modal fade" id="restoreModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius:14px;">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-arrow-counterclockwise"></i> กู้คืนบิลกลับสู่การ์ดลูกหนี้
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-action="RestoreCancelledBill">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="debtId" id="modalDebtId" value="" />
+                <div class="modal-body p-4">
+                    <div class="alert alert-info border-0 mb-3 small">
+                        <i class="bi bi-info-circle-fill me-1"></i> เมื่อกู้คืน บิลนี้จะกลับไปอยู่ในการ์ดลูกหนี้คงค้างปกติทันที
+                    </div>
+                    
+                    <div class="bg-light p-3 rounded-3 mb-3">
+                        <div class="row g-2 small">
+                            <div class="col-4 text-muted">เลขที่บิล:</div>
+                            <div class="col-8 fw-bold" id="modalBillNo">-</div>
+                            <div class="col-4 text-muted">ลูกค้า:</div>
+                            <div class="col-8 fw-bold" id="modalCustomerName">-</div>
+                            <div class="col-4 text-muted">ยอดเงินบิล:</div>
+                            <div class="col-8 fw-bold text-success" id="modalAmount">-</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark">
+                            <i class="bi bi-shield-lock-fill text-danger me-1"></i> กรอกรหัสผ่านยืนยันความปลอดภัย <span class="text-danger">*</span>
+                        </label>
+                        <input type="password" name="confirmPassword" class="form-control form-control-lg" placeholder="กรอกรหัสผ่านเพื่อยืนยัน..." required />
+                        <small class="text-muted d-block mt-1">
+                            (ใช้รหัสผ่านบัญชีของคุณ หรือรหัสผ่าน Admin เพื่อยืนยันสิทธิ์)
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-success fw-bold px-4">
+                        <i class="bi bi-check-lg"></i> ยืนยันการกู้คืนบิล
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openRestoreModal(debtId, billNo, customerName, amount) {
+    document.getElementById('modalDebtId').value = debtId;
+    document.getElementById('modalBillNo').innerText = billNo;
+    document.getElementById('modalCustomerName').innerText = customerName;
+    document.getElementById('modalAmount').innerText = amount + ' บาท';
+    
+    var modal = new bootstrap.Modal(document.getElementById('restoreModal'));
+    modal.show();
+}
+</script>

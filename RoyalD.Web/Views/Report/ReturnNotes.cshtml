@@ -1,0 +1,70 @@
+@model IEnumerable<RoyalD.Web.Models.OutstandingDebt>
+@{
+    ViewData["Title"] = "รับคืนสินค้า (Return Notes)";
+}
+
+<div class="card shadow-sm border-0" style="border-radius:12px;">
+    <div class="card-header bg-warning text-dark py-3 fw-bold">
+        <i class="bi bi-arrow-return-left me-1"></i> รับคืนสินค้า (Return Issued / Pending)
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>เลขที่บิล</th>
+                    <th>ชื่อลูกค้า</th>
+                    <th>ผู้แทนขาย</th>
+                    <th>วันที่อัปเดต</th>
+                    <th>สถานะการคืน</th>
+                    <th class="text-end">ยอดรับคืน (บาท)</th>
+                    <th>ตัดยอดทันที</th>
+                    <th>ไฟล์แนบ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td><a href="/SalesBill/Detail?id=@Uri.EscapeDataString(item.BillNo)" class="text-decoration-none fw-bold">@item.BillNo</a></td>
+                        <td>@item.CustomerName</td>
+                        <td><span class="badge bg-light text-dark border">@item.SalesRep</span></td>
+                        <td>@(item.PaidDate?.ToString("dd/MM/yyyy") ?? item.BillDate.ToString("dd/MM/yyyy"))</td>
+                        <td>
+                            <span class="badge @(item.Status == RoyalD.Web.Models.DebtStatus.ReturnIssued ? "bg-success" : "bg-warning text-dark")">
+                                @(item.Status == RoyalD.Web.Models.DebtStatus.ReturnIssued ? "ออกใบลดหนี้" : "รอออกใบลดหนี้")
+                            </span>
+                        </td>
+                        <td class="text-end text-danger fw-bold">@((item.ReturnAmount ?? 0).ToString("N2"))</td>
+                        <td>
+                            @if (item.IsReturnCutFromBill)
+                            {
+                                <span class="badge bg-primary">ตัดกับบิลเลย</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-dark">ยังไม่ตัดยอด</span>
+                            }
+                        </td>
+                        <td>
+                            @if (item.Attachments != null && item.Attachments.Any())
+                            {
+                                foreach(var att in item.Attachments)
+                                {
+                                    <a href="@att.FilePath" target="_blank" class="btn btn-sm btn-outline-primary py-0 px-1 me-1"><i class="bi bi-file-earmark"></i></a>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+

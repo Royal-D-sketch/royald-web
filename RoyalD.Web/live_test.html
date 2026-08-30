@@ -1,0 +1,235 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>&#xFFFD;&#xFFFD;&#xA7;&#x4B9;&#xFFFD;&#xFFFD;&#xFFFD;&#x2B6;&#x4B9;&#xFFFD;&#xFFFD;&#xFFFD;&#xFFFD;&#x539;&#xFFFD;&#xFFFD;&#xFFFD; — ระบบลูกหนี้ รอแยล-ดี</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/site.css?v=i8oQpFSMbXQLgN7gfwktTxS5nUzRf5FV5Itwk8gXRKg" />
+    <style>
+        body { font-family: 'Sarabun', 'Noto Sans Thai', sans-serif; font-size: 15px; }
+        .navbar-brand { font-weight: bold; font-size: 1.1rem; }
+        .sidebar { min-height: calc(100vh - 56px); background: #1a2942; transition: all 0.25s ease; width: 220px; min-width: 220px; }
+        .sidebar.collapsed { margin-left: -220px !important; width: 0 !important; min-width: 0 !important; overflow: hidden !important; display: none !important; }
+        .sidebar .nav-link { color: #c9d1d9; padding: 10px 20px; border-radius: 6px; margin: 2px 8px; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background: #0070B9; color: #fff; }
+        .sidebar .nav-link i { width: 22px; }
+        .sidebar .nav-section { color: #8b949e; font-size: 11px; padding: 12px 20px 4px; text-transform: uppercase; letter-spacing: 1px; }
+        .main-content { background: #f0f4f8; min-height: calc(100vh - 56px); width: 100%; transition: all 0.25s ease; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+        .card-stat { border-left: 4px solid; }
+        .card-stat.blue { border-color: #0070B9; }
+        .card-stat.red { border-color: #dc3545; }
+        .card-stat.green { border-color: #198754; }
+        .card-stat.orange { border-color: #fd7e14; }
+        #session-timer { font-size: 12px; color: #ffc107; }
+        
+        /* Status badges */
+        .badge-status-Outstanding { background: #dc3545; }
+        .badge-status-PaidCash { background: #198754; }
+        .badge-status-PaidTransfer { background: #0d6efd; }
+        .badge-status-PaidCheck { background: #0dcaf0; color: #000; }
+        .badge-status-Installment { background: #ffc107; color: #000; }
+        .badge-status-Postponed { background: #6c757d; }
+        .badge-status-BadDebt { background: #343a40; }
+        
+        /* Teal / Ocean Green Theme Overrides */
+        :root {
+            --bs-primary: #0d9488;
+            --bs-primary-rgb: 13, 148, 136;
+        }
+        .text-primary { color: #0d9488 !important; }
+        .bg-primary { background-color: #0d9488 !important; }
+        .btn-primary { background-color: #0d9488 !important; border-color: #0d9488 !important; }
+        .btn-primary:hover { background-color: #0f766e !important; border-color: #115e59 !important; }
+        .btn-outline-primary { color: #0d9488 !important; border-color: #0d9488 !important; }
+        .btn-outline-primary:hover { background-color: #0d9488 !important; color: #fff !important; }
+        .table-primary { --bs-table-bg: #ccfbf1; --bs-table-color: #115e59; border-color: #99f6e4; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background: #0d9488 !important; color: #fff; }
+    </style>
+
+
+    
+</head>
+<body>
+    <!-- Navbar (Teal / Ocean Green) -->
+    <nav b-v8ohwuot8y class="navbar navbar-dark py-1" style="background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%) !important;">
+        <div b-v8ohwuot8y class="container-fluid">
+            <div b-v8ohwuot8y class="d-flex align-items-center">
+                <button b-v8ohwuot8y class="btn btn-outline-light me-2 py-0 px-2 border-0 shadow-none" type="button" onclick="toggleSidebar()" title="ซ่อน/แสดง เมนูซ้ายมือ (กางหน้าจอเต็ม 100%)">
+                    <i b-v8ohwuot8y class="bi bi-list fs-3"></i>
+                </button>
+                <a b-v8ohwuot8y class="navbar-brand mb-0" href="/">
+                    <i b-v8ohwuot8y class="bi bi-building"></i> บจก.รอแยล-ดี (ไทยแลนด์)
+                </a>
+            </div>
+            <div b-v8ohwuot8y class="ms-auto d-flex align-items-center gap-3">
+                <span b-v8ohwuot8y class="text-white">
+                    <i b-v8ohwuot8y class="bi bi-person-circle"></i>
+                    &#xE1C;&#xE39;&#xE49;&#xE14;&#xE39;&#xE41;&#xE25;&#xE23;&#xE30;&#xE1A;&#xE1A;
+                </span>
+                <form method="post" class="mb-0" action="/Account/Logout">
+                    
+                    <button b-v8ohwuot8y type="submit" class="btn btn-outline-light btn-sm">
+                        <i b-v8ohwuot8y class="bi bi-box-arrow-right"></i> ออกจากระบบ
+                    </button>
+                <input name="__RequestVerificationToken" type="hidden" value="CfDJ8G47F7K-U6NDoc-j_CVvJFpCSC5bblCsDQmri54lKU-qUvcJguAlHgpF9VDQWxEpnwE0vwnBBXxyyYEFoEMRUpwUj7CviUqpg6Ey3lzxYg_vAakSWzcRxo1CyhdkEhdE-80MWpAmK84plcnEO2NhgDgI4YpRjQQVfhy_0thr0f__qYHPQFr7_ffq9I6SXNZY3A" /></form>
+            </div>
+        </div>
+    </nav>
+    <div b-v8ohwuot8y class="d-flex" id="app-wrapper">
+        <!-- Sidebar (แสดงเฉพาะเมนูที่ได้รับอนุญาต) -->
+        <div b-v8ohwuot8y class="sidebar" id="sidebar">
+            <nav b-v8ohwuot8y class="pt-3">
+                    <div b-v8ohwuot8y class="nav-section">หลัก</div>
+                    <a b-v8ohwuot8y class="nav-link "
+                       href="/Dashboard">
+                        <i b-v8ohwuot8y class="bi bi-speedometer2"></i> Accounts Receivable Dashboard
+                    </a>
+
+                    <div b-v8ohwuot8y class="nav-section">บิลขาย</div>
+                    <a b-v8ohwuot8y class="nav-link "
+                       href="/SalesBill">
+                        <i b-v8ohwuot8y class="bi bi-receipt"></i> รายการบิลขาย
+                    </a>
+
+                    <div b-v8ohwuot8y class="nav-section">ลูกหนี้</div>
+                        <a b-v8ohwuot8y class="nav-link "
+                           href="/Debtor">
+                            <i b-v8ohwuot8y class="bi bi-credit-card-2-front"></i> การ์ดลูกหนี้
+                        </a>
+                        <a b-v8ohwuot8y class="nav-link "
+                           href="/Debtor/History">
+                            <i b-v8ohwuot8y class="bi bi-clock-history"></i> ประวัติชำระครบ
+                        </a>
+                        <a b-v8ohwuot8y class="nav-link "
+                           href="/Debtor/Cancelled">
+                            <i b-v8ohwuot8y class="bi bi-trash3"></i> บิลยกเลิก (40 วัน)
+                        </a>
+
+                    <div b-v8ohwuot8y class="nav-section">รายงาน</div>
+                    <a b-v8ohwuot8y class="nav-link "
+                       href="/SalesReport/Summary">
+                        <i b-v8ohwuot8y class="bi bi-bar-chart-grouped"></i> รายงานผู้แทนขาย
+                    </a>
+                    <a b-v8ohwuot8y class="nav-link active"
+                       href="/Report/WaitingGoods">
+                        <i b-v8ohwuot8y class="bi bi-box-seam"></i> บิลรอสินค้า
+                    </a>
+
+                    <div b-v8ohwuot8y class="nav-section">จัดการระบบ</div>
+                        <a b-v8ohwuot8y class="nav-link "
+                           href="/Upload">
+                            <i b-v8ohwuot8y class="bi bi-cloud-upload"></i> อัปโหลดไฟล์
+                        </a>
+                        <a b-v8ohwuot8y class="nav-link "
+                           href="/Account/Users">
+                            <i b-v8ohwuot8y class="bi bi-people"></i> จัดการผู้ใช้
+                        </a>
+                        <a b-v8ohwuot8y class="nav-link "
+                           href="/Audit">
+                            <i b-v8ohwuot8y class="bi bi-journal-text"></i> ประวัติการใช้งาน
+                        </a>
+                        <a b-v8ohwuot8y class="nav-link "
+                           href="/CloudMigration">
+                            <i b-v8ohwuot8y class="bi bi-cloud-arrow-up text-info"></i> ขึ้นระบบ Cloud
+                        </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div b-v8ohwuot8y class="main-content flex-grow-1 p-3">
+            
+<div class="card mb-4">
+    <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0"><i class="bi bi-box-seam"></i> ��§ҹ���ʶҹ����Թ���</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered align-middle table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>�Ţ�����</th>
+                    <th>�ѹ���</th>
+                    <th>�����١���</th>
+                    <th>ࢵ/�����</th>
+                    <th>�ѧ��Ѵ</th>
+                    <th>���᷹</th>
+                    <th>����-�����Թ���</th>
+                    <th class="text-end">�ӹǹ</th>
+                </tr>
+            </thead>
+            <tbody>
+                    <tr><td colspan="8" class="text-center py-4">����պ�ŷ�����Թ���</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+        </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <script>
+    // ===== Custom Session Timeout (per-user) =====
+    const SESSION_SECONDS = 0;
+
+    if (SESSION_SECONDS > 0) {
+        let remaining = SESSION_SECONDS;
+        const timerEl = document.getElementById('timer-display');
+
+        function updateTimer() {
+            if (remaining <= 0) {
+                clearInterval(timerInterval);
+                if (timerEl) timerEl.textContent = '00:00';
+                autoLogout('SESSION_TIMEOUT');
+                return;
+            }
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            if (timerEl) timerEl.textContent = m + ':' + s;
+            if (remaining <= 60) {
+                const timerBox = document.getElementById('session-timer');
+                if (timerBox) timerBox.style.color = '#ff4444';
+            }
+            remaining--;
+        }
+
+        const timerInterval = setInterval(updateTimer, 1000);
+
+        // รีเซ็ตเมื่อมีกิจกรรมผู้ใช้ (mouse, keyboard, click, scroll, touch)
+        ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(evt => {
+            document.addEventListener(evt, () => { remaining = SESSION_SECONDS; }, { passive: true });
+        });
+    }
+
+    function autoLogout(reason) {
+        fetch('/Account/ForceLogout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason: reason || 'SESSION_TIMEOUT' })
+        }).finally(() => { 
+            window.location.href = (reason && reason.includes('CAPTURE')) ? '/Account/Login?blocked=capture' : '/Account/Login?expired=1'; 
+        });
+    }
+
+    // ===== Sidebar Toggle (Widescreen 100% full view) =====
+    function toggleSidebar() {
+        const sb = document.getElementById('sidebar');
+        if (sb) {
+            sb.classList.toggle('collapsed');
+            localStorage.setItem('sidebar_collapsed', sb.classList.contains('collapsed') ? '1' : '0');
+            setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 300);
+        }
+    }
+    if (localStorage.getItem('sidebar_collapsed') === '1') {
+        document.getElementById('sidebar')?.classList.add('collapsed');
+    }
+    </script>
+
+</body>
+</html>

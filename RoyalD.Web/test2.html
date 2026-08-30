@@ -1,0 +1,67 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>เข้าสู่ระบบ — ระบบลูกหนี้ รอแยล-ดี</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+    <style>
+        body { background: linear-gradient(135deg, #0070B9 0%, #1a2942 100%); min-height: 100vh; font-family: 'Sarabun', sans-serif; }
+        .login-card { border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 420px; }
+        .logo-circle { width: 80px; height: 80px; background: #0070B9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+    </style>
+</head>
+<body class="d-flex align-items-center justify-content-center">
+<div class="login-card card p-4 m-3 w-100">
+    <div class="text-center mb-4">
+        <div class="logo-circle">
+            <i class="bi bi-building text-white fs-2"></i>
+        </div>
+        <h4 class="fw-bold text-primary">ระบบลูกหนี้</h4>
+        <p class="text-muted mb-0">บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด</p>
+    </div>
+
+    
+
+    <form method="post" action="/Account/Login?returnUrl=%2FDebtor%2FDetail%2F6848">
+        
+        <div class="mb-3">
+            <label class="form-label fw-semibold">ชื่อผู้ใช้</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                <input type="text" name="username" class="form-control" placeholder="กรอกชื่อผู้ใช้" required autofocus autocomplete="username"/>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="form-label fw-semibold">รหัสผ่าน</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                <input type="password" name="password" id="pwd" class="form-control" placeholder="กรอกรหัสผ่าน" required autocomplete="current-password"/>
+                <button type="button" class="btn btn-outline-secondary" onclick="togglePwd()">
+                    <i class="bi bi-eye" id="eye-icon"></i>
+                </button>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+            <i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบ
+        </button>
+    <input name="__RequestVerificationToken" type="hidden" value="CfDJ8BPHFIzRkXNPjv5yW9JPBT04GgZNhCAEqMefQWUeTMCymBS6BV50jZToX0-CRO3JK_RKr_QuN2E7R651C-k4gy4ZTZK4hBzty65NX-29ftLVlb2cEKLS99RU_MrgBO0_cVkoltNpNryUhvgY3dhStl8" /></form>
+
+    <hr/>
+    <p class="text-center text-muted small mb-0">
+        <i class="bi bi-shield-lock"></i> ระบบนี้สำหรับพนักงานที่ได้รับอนุญาตเท่านั้น
+    </p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function togglePwd() {
+    var pwd = document.getElementById('pwd');
+    var icon = document.getElementById('eye-icon');
+    if (pwd.type === 'password') { pwd.type = 'text'; icon.className = 'bi bi-eye-slash'; }
+    else { pwd.type = 'password'; icon.className = 'bi bi-eye'; }
+}
+</script>
+</body>
+</html>
+

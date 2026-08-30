@@ -1,0 +1,519 @@
+@model List<RoyalD.Web.Models.OutstandingDebt>
+@{
+    ViewData["Title"] = "Accounts Receivable Dashboard";
+    var summary = ViewBag.Summary as RoyalD.Web.Models.DashboardSummary;
+    var today = DateTime.Today;
+}
+
+<style>
+/* ===== DASHBOARD STYLES ===== */
+body { font-family: 'Sarabun', 'Prompt', sans-serif !important; }
+
+/* KPI Cards */
+.kpi-card {
+    border-radius: 16px;
+    padding: 20px 22px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.10);
+    border: none;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    top: -20px; right: -20px;
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+}
+.kpi-label { font-size: 0.82rem; font-weight: 600; opacity: 0.88; letter-spacing: 0.3px; }
+.kpi-value { font-size: 2.4rem; font-weight: 900; line-height: 1.1; letter-spacing: -1px; }
+.kpi-sub { font-size: 0.78rem; opacity: 0.78; margin-top: 2px; }
+.kpi-blue { background: linear-gradient(135deg, #4361ee, #3a0ca3); }
+.kpi-red { background: linear-gradient(135deg, #e63946, #9b1d20); }
+.kpi-orange { background: linear-gradient(135deg, #f77f00, #d62828); }
+.kpi-dark { background: linear-gradient(135deg, #7b0000, #3d0000); }
+
+/* Comparison Cards */
+.compare-panel {
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.09);
+    overflow: hidden;
+    border: none;
+}
+.compare-header {
+    padding: 14px 20px;
+    font-weight: 800;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.compare-header.bkk { background: linear-gradient(90deg, #4361ee, #3a0ca3); color: white; }
+.compare-header.upc { background: linear-gradient(90deg, #2d6a4f, #1b4332); color: white; }
+.compare-body { background: #fff; padding: 18px 20px; }
+.compare-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+.compare-row:last-child { border-bottom: none; }
+.compare-row-label { font-size: 0.83rem; font-weight: 700; color: #6b7a99; }
+.compare-row-value { text-align: right; }
+.compare-amount { font-size: 1.5rem; font-weight: 900; color: #1a1a2e; line-height: 1; }
+.compare-amount.danger { color: #c1121f; }
+.compare-amount.success { color: #1a7a4a; }
+.compare-amount.warning { color: #b5540b; }
+.compare-bills { font-size: 0.72rem; color: #9aa3b0; font-weight: 600; }
+
+/* 120-day overdue alert */
+.overdue-120-row .compare-amount {
+    color: #c1121f;
+    font-size: 1.7rem;
+}
+.overdue-120-row .compare-row-label {
+    color: #c1121f;
+}
+.blink-icon {
+    animation: blinkIcon 1.2s infinite;
+    display: inline-block;
+}
+@@keyframes blinkIcon {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+}
+.overdue-alert-bg {
+    background: linear-gradient(90deg, #fff0f0, #ffe0e0);
+    border-left: 5px solid #e63946;
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin-top: 8px;
+}
+
+/* Section Headers */
+.section-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #1a1a2e;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+/* Overdue Table */
+.overdue-table th { font-size: 0.85rem; font-weight: 800; background: #1e293b; color: #ffffff; padding: 12px 14px; }
+.overdue-table td { font-size: 0.92rem; font-weight: 600; vertical-align: middle; padding: 10px 14px; color: #0f172a !important; }
+.ov120-row { background-color: #fff1f2 !important; color: #0f172a !important; }
+.ov120-row td { color: #0f172a !important; }
+.ov120-amount { font-size: 1.1rem; font-weight: 900; color: #9f1239 !important; }
+
+/* Chart container */
+.chart-card {
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: none;
+    padding: 20px;
+    background: white;
+}
+</style>
+
+<!-- ===== HEADER ===== -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-0 fw-bold" style="color:#0f766e; font-size:1.5rem;">
+            <i class="bi bi-speedometer2" style="color:#0d9488;"></i> AR Dashboard
+        </h4>
+        <small class="text-muted">
+            <i class="bi bi-calendar3"></i>
+            @DateTime.Now.ToString("dd MMMM yyyy HH:mm", new System.Globalization.CultureInfo("th-TH")) น.
+            &nbsp;|&nbsp; ข้อมูลแบบเรียลไทม์
+        </small>
+    </div>
+    <div class="d-flex gap-2">
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-printer"></i> พิมพ์
+        </button>
+        <a href="/Debtor" class="btn btn-primary btn-sm">
+            <i class="bi bi-eye"></i> ดูลูกหนี้ทั้งหมด
+        </a>
+    </div>
+</div>
+
+<!-- ===== KPI CARDS ===== -->
+<div class="row g-3 mb-4">
+    <!-- Card 1: ยอดค้างชำระรวมทั้งหมดทุกจังหวัด -->
+    <div class="col-6 col-md-3">
+        <a href="/Debtor" class="text-decoration-none">
+            <div class="kpi-card kpi-blue">
+                <div class="kpi-label"><i class="bi bi-wallet2 me-1"></i> ยอดค้างชำระรวม</div>
+                <div class="kpi-value" style="font-size:1.85rem;">@((ViewBag.TotalOutstanding as decimal? ?? 0).ToString("N0"))</div>
+                <div class="kpi-sub">บาท (ยอดค้างทั้งหมดทุกจังหวัด)</div>
+            </div>
+        </a>
+    </div>
+    <!-- Card 2: ลูกหนี้ค้างชำระทั้งหมดไม่เกิน120วัน (คลิกดูบิลได้) -->
+    <div class="col-6 col-md-3">
+        <a href="/Debtor?status=Outstanding" class="text-decoration-none">
+            <div class="kpi-card kpi-orange" style="cursor:pointer;">
+                <div class="kpi-label"><i class="bi bi-clock-history me-1"></i> ลูกหนี้ค้างชำระทั้งหมดไม่เกิน120วัน</div>
+                <div class="kpi-value" style="font-size:1.85rem;">@((ViewBag.OutstandingLessThan120Amount as decimal? ?? 0).ToString("N0"))</div>
+                <div class="kpi-sub">@((ViewBag.OutstandingLessThan120Count as int? ?? 0).ToString("N0")) บิล (คลิกดูบิลได้)</div>
+            </div>
+        </a>
+    </div>
+    <!-- Card 3: ลูกหนี้เกินชำระมากกว่า120วัน (คลิกดูบิลได้) -->
+    <div class="col-6 col-md-3">
+        <a href="/Debtor?status=Overdue120" class="text-decoration-none">
+            <div class="kpi-card kpi-dark" style="cursor:pointer;">
+                <div class="kpi-label">
+                    <span class="blink-icon"><i class="bi bi-exclamation-octagon-fill"></i></span>
+                    ลูกหนี้เกินชำระมากกว่า120วัน
+                </div>
+                <div class="kpi-value" style="font-size:1.85rem;">@((ViewBag.OutstandingOver120Amount as decimal? ?? 0).ToString("N0"))</div>
+                <div class="kpi-sub">@((ViewBag.OutstandingOver120Count as int? ?? 0).ToString("N0")) บิล (คลิกดูบิลได้)</div>
+            </div>
+        </a>
+    </div>
+    <!-- Card 4: บิลขายทั้งหมด -->
+    <div class="col-6 col-md-3">
+        <a href="/SalesBill" class="text-decoration-none">
+            <div class="kpi-card kpi-red">
+                <div class="kpi-label"><i class="bi bi-receipt me-1"></i> บิลขายทั้งหมด</div>
+                <div class="kpi-value" style="font-size:1.85rem;">@ViewBag.TotalBills?.ToString("N0")</div>
+                <div class="kpi-sub">รายการ (ลูกหนี้ @ViewBag.TotalDebtors ราย)</div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- ===== COMPARISON CARDS (กทม. vs ต่างจังหวัด) ===== -->
+@if (summary != null)
+{
+    <div class="section-title mb-2">
+        <i class="bi bi-bar-chart-steps" style="color:#0d9488;"></i>
+        เปรียบเทียบยอดลูกหนี้ — กรุงเทพฯ (เงินสด/7วัน) vs ต่างจังหวัด
+        <small class="text-muted fw-normal ms-2" style="font-size:0.78rem;">(คลิกเพื่อเปิดดูรายละเอียด)</small>
+    </div>
+    <div class="row g-3 mb-4">
+        <!-- Bangkok (Cash / 7 Days Credit) -->
+        <div class="col-md-6">
+            <div class="compare-panel">
+                <a href="/Debtor?region=กรุงเทพฯ&credit=0_7" class="text-decoration-none">
+                    <div class="compare-header bkk">
+                        <i class="bi bi-buildings"></i> กรุงเทพฯ (เงินสด / 7 วัน)
+                        <span class="ms-auto badge bg-white text-primary fw-bold">@summary.Bangkok.BillCount.ToString("N0") บิล <i class="bi bi-arrow-right-short"></i></span>
+                    </div>
+                </a>
+                <div class="compare-body">
+                    <!-- 1. ยอดจำนวนเงินค้างชำระทั้งหมด -->
+                    <a href="/Debtor?region=กรุงเทพฯ&credit=0_7&status=Outstanding" class="text-decoration-none text-dark d-block">
+                        <div class="compare-row" style="cursor:pointer;">
+                            <div class="compare-row-label"><i class="bi bi-cash-stack text-primary me-1"></i> ยอดจำนวนเงินค้างชำระทั้งหมด</div>
+                            <div class="compare-row-value">
+                                <div class="compare-amount">@summary.Bangkok.OutstandingTotal.TotalAmount.ToString("N0") <small style="font-size:0.9rem; font-weight:normal;">บาท</small></div>
+                                <div class="compare-bills text-primary">@summary.Bangkok.OutstandingTotal.BillCount.ToString("N0") บิล <i class="bi bi-chevron-right"></i></div>
+                            </div>
+                        </div>
+                    </a>
+                    <!-- 2. ยอดเกินกำหนดชำระไม่เกิน 120 วัน -->
+                    <a href="/Debtor?region=กรุงเทพฯ&credit=0_7&status=Outstanding" class="text-decoration-none text-dark d-block">
+                        <div class="compare-row" style="cursor:pointer;">
+                            <div class="compare-row-label"><i class="bi bi-clock-history text-warning me-1"></i> ยอดเกินกำหนดชำระไม่เกิน 120 วัน</div>
+                            <div class="compare-row-value">
+                                <div class="compare-amount warning">@summary.Bangkok.LessThan120Days.TotalAmount.ToString("N0") <small style="font-size:0.9rem; font-weight:normal;">บาท</small></div>
+                                <div class="compare-bills text-warning">@summary.Bangkok.LessThan120Days.BillCount.ToString("N0") บิล <i class="bi bi-chevron-right"></i></div>
+                            </div>
+                        </div>
+                    </a>
+                    <!-- 3. ยอดเกินกำหนดชำระเกิน 120 วัน -->
+                    <a href="/Debtor?region=กรุงเทพฯ&credit=0_7&status=Overdue120" class="text-decoration-none text-dark d-block">
+                        <div class="overdue-120-row" style="cursor:pointer;">
+                            <div class="overdue-alert-bg">
+                                <div class="compare-row" style="border:none; padding:4px 0;">
+                                    <div class="compare-row-label" style="font-size:0.88rem;">
+                                        <span class="blink-icon">⚠️</span> <strong>ยอดเกินกำหนดชำระเกิน 120 วัน</strong>
+                                    </div>
+                                    <div class="compare-row-value">
+                                        <div class="compare-amount danger" style="font-size:1.9rem; font-weight:900;">@summary.Bangkok.Over120Days.TotalAmount.ToString("N0") <small style="font-size:0.9rem; font-weight:normal;">บาท</small></div>
+                                        <div class="compare-bills" style="color:#c1121f; font-weight:700;">@summary.Bangkok.Over120Days.BillCount.ToString("N0") บิล <i class="bi bi-chevron-right"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    <!-- 4. ยอดเก็บได้แล้ว -->
+                    <a href="/Debtor/History" class="text-decoration-none text-dark d-block">
+                        <div class="compare-row mt-2" style="cursor:pointer;">
+                            <div class="compare-row-label"><i class="bi bi-check-circle-fill text-success me-1"></i> ยอดเก็บได้แล้ว</div>
+                            <div class="compare-row-value">
+                                <div class="compare-amount success">@summary.Bangkok.Paid.TotalAmount.ToString("N0") <small style="font-size:0.9rem; font-weight:normal;">บาท</small></div>
+                                <div class="compare-bills text-success">@summary.Bangkok.Paid.BillCount.ToString("N0") บิล <i class="bi bi-chevron-right"></i></div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcountry -->
+        <div class="col-md-6">
+            <div class="compare-panel">
+                <a href="/Debtor?region=ต่างจังหวัด" class="text-decoration-none">
+                    <div class="compare-header upc">
+                        <i class="bi bi-geo-alt"></i> ต่างจังหวัด (ทุกภาค)
+                        <span class="ms-auto badge bg-white text-success fw-bold">@summary.Upcountry.BillCount.ToString("N0") บิล <i class="bi bi-arrow-right-short"></i></span>
+                    </div>
+                </a>
+                <div class="compare-body">
+                    <!-- 1. ยอดจำนวนเงินค้างชำระทั้งหมด -->
+                    <a href="/Debtor?region=ต่างจังหวัด&status=Outstanding" class="text-decoration-none text-dark d-block">
+                        <div class="compare-row" style="cursor:pointer;">
+                            <div class="compare-row-label"><i class="bi bi-cash-stack text-primary me-1"></i> ยอดจำนวนเงินค้างชำระทั้งหมด</div>
+                            <div class="compare-row-value">
+                                <div class="compare-amount">@summary.Upcountry.OutstandingTotal.TotalAmount.ToString("N0") <small style="font-size:0.9rem; font-weight:normal;">บาท</small></div>
+                                <div class="compare-bills text-primary">@summary.Upcountry.OutstandingTotal.BillCount.ToString("N0") บิล <i class="bi bi-chevron-right"></i></div>
+                            </div>
+                        </div>
+                    </a>
+                    <!-- 2. ยอดเกินกำหนดชำระไม่เกิน 120 วัน -->
+                    <a href="/Debtor?region=ต่างจังหวัด&status=Outstanding" class="text-decoration-none text-dark d-block">
+                        <div class="compare-row" style="cursor:pointer;">
+                            <div class="compare-row-label"><i class="bi bi-clock-history text-warning me-1"></i> ยอดเกินกำหนดชำระไม่เกิน 120 วัน</div>
+                            <div class="compare-row-value">
+                                <div class="compare-amount warning">@summary.Upcountry.LessThan120Days.TotalAmount.ToString("N0") <small style="font-size:0.9rem; font-weight:normal;">บาท</small></div>
+                                <div class="compare-bills text-warning">@summary.Upcountry.LessThan120Days.BillCount.ToString("N0") บิล <i class="bi bi-chevron-right"></i></div>
+                            </div>
+                        </div>
+                    </a>
+                    <!-- 3. ยอดเกินกำหนดชำระเกิน 120 วัน -->
+                    <a href="/Debtor?region=ต่างจังหวัด&status=Overdue120" class="text-decoration-none text-dark d-block">
+                        <div class="overdue-120-row" style="cursor:pointer;">
+                            <div class="overdue-alert-bg">
+                                <div class="compare-row" style="border:none; padding:4px 0;">
+                                    <div class="compare-row-label" style="font-size:0.88rem;">
+                                        <span class="blink-icon">⚠️</span> <strong>ยอดเกินกำหนดชำระเกิน 120 วัน</strong>
+                                    </div>
+                                    <div class="compare-row-value">
+                                        <div class="compare-amount danger" style="font-size:1.9rem; font-weight:900;">@summary.Upcountry.Over120Days.TotalAmount.ToString("N0") <small style="font-size:0.9rem; font-weight:normal;">บาท</small></div>
+                                        <div class="compare-bills" style="color:#c1121f; font-weight:700;">@summary.Upcountry.Over120Days.BillCount.ToString("N0") บิล <i class="bi bi-chevron-right"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    <!-- 4. ยอดเก็บได้แล้ว -->
+                    <a href="/Debtor/History" class="text-decoration-none text-dark d-block">
+                        <div class="compare-row mt-2" style="cursor:pointer;">
+                            <div class="compare-row-label"><i class="bi bi-check-circle-fill text-success me-1"></i> ยอดเก็บได้แล้ว</div>
+                            <div class="compare-row-value">
+                                <div class="compare-amount success">@summary.Upcountry.Paid.TotalAmount.ToString("N0") <small style="font-size:0.9rem; font-weight:normal;">บาท</small></div>
+                                <div class="compare-bills text-success">@summary.Upcountry.Paid.BillCount.ToString("N0") บิล <i class="bi bi-chevron-right"></i></div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ===== CHARTS ROW ===== -->
+<div class="row g-3 mb-4">
+    <div class="col-md-8">
+        <div class="chart-card">
+            <div class="section-title">
+                <i class="bi bi-bar-chart-fill" style="color:#4361ee;"></i>
+                ยอดขาย vs เก็บเงินได้ vs หนี้ค้างชำระ รายเดือน (Grouped Bar)
+            </div>
+            <canvas id="monthlyChart" height="100"></canvas>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="chart-card">
+            <div class="section-title">
+                <i class="bi bi-pie-chart-fill" style="color:#e63946;"></i>
+                สัดส่วนสถานะหนี้
+            </div>
+            <canvas id="statusChart" height="175"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- ===== OVERDUE TABLE ===== -->
+<div class="chart-card mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="section-title mb-0">
+            <span class="blink-icon"><i class="bi bi-exclamation-triangle-fill text-danger"></i></span>
+            หนี้ครบกำหนด — ต้องติดตาม (ล่าสุด 10 รายการ)
+        </div>
+        <a href="/Debtor" class="btn btn-sm btn-outline-primary">ดูทั้งหมด <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle overdue-table mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>รหัสลูกค้า</th>
+                    <th>ชื่อลูกค้า</th>
+                    <th>เลขที่บิล</th>
+                    <th class="text-center">วันครบกำหนด</th>
+                    <th class="text-center">อายุหนี้</th>
+                    <th class="text-end">ยอดค้าง (บาท)</th>
+                    <th>ผู้แทน</th>
+                    <th class="text-center"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="8" class="text-center text-muted py-4">
+                        <i class="bi bi-check-circle text-success fs-3 d-block mb-2"></i> ไม่มีหนี้ค้างชำระ
+                    </td></tr>
+                }
+                @foreach (var d in Model)
+                {
+                    var dueByCredit = d.BillDate.AddDays(d.Credit);
+                    int aging = (int)(today - dueByCredit).TotalDays;
+                    bool ov120 = aging > 120;
+                    bool overdue = dueByCredit < today;
+                    <tr class="@(ov120 ? "ov120-row" : overdue ? "table-danger" : "")" style="border-bottom:1px solid #e2e8f0;">
+                        <td><code class="fw-bold text-dark fs-6">@d.CustomerCode</code></td>
+                        <td class="fw-bold text-dark">@d.CustomerName</td>
+                        <td>
+                            <span class="badge @(ov120 ? "bg-danger text-white" : "bg-light text-dark border") fw-bold">@d.BillNo</span>
+                        </td>
+                        <td class="text-center fw-semibold text-dark">@dueByCredit.ToString("dd/MM/yyyy")</td>
+                        <td class="text-center">
+                            @if (ov120)
+                            {
+                                <span class="badge bg-danger text-white fw-bold" style="font-size:0.85rem; padding:5px 8px;">
+                                    <span class="blink-icon">⚠️</span> @aging วัน
+                                </span>
+                            }
+                            else if (aging > 0)
+                            {
+                                <span class="badge @(aging > 60 ? "bg-danger text-white" : "bg-warning text-dark") fw-bold">@aging วัน</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success text-white">ยังไม่ถึง</span>
+                            }
+                        </td>
+                        <td class="text-end fw-black text-dark" style="font-size:1.05rem;">
+                            @d.RemainingAmount.ToString("N0")
+                        </td>
+                        <td class="fw-bold text-dark">@d.SalesRep</td>
+                        <td class="text-center">
+                            <a href="/Debtor/Detail/@d.Id"
+                               class="btn btn-sm @(ov120 ? "btn-outline-danger" : "btn-outline-primary")"
+                               title="ดูการ์ดลูกหนี้">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// ===== GROUPED BAR CHART (ยอดขาย vs เก็บเงิน vs ค้างชำระ) =====
+const monthlyCtx = document.getElementById('monthlyChart');
+const labels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.ChartLabels as List<string> ?? new List<string>()));
+const values = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.ChartValues as List<decimal> ?? new List<decimal>()));
+const paidValues = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.PaidValues as List<decimal> ?? new List<decimal>()));
+const overdueValues = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.OverdueValues as List<decimal> ?? new List<decimal>()));
+
+new Chart(monthlyCtx, {
+    type: 'bar',
+    data: {
+        labels: labels,
+        datasets: [
+            {
+                label: 'ยอดขาย (บาท)',
+                data: values,
+                backgroundColor: 'rgba(67,97,238,0.80)',
+                borderColor: '#4361ee',
+                borderWidth: 1.5,
+                borderRadius: 6,
+                borderSkipped: false
+            },
+            {
+                label: 'ยอดเก็บเงินได้ (บาท)',
+                data: paidValues.length > 0 ? paidValues : values.map(v => v * 0.75),
+                backgroundColor: 'rgba(45,198,83,0.80)',
+                borderColor: '#2dc653',
+                borderWidth: 1.5,
+                borderRadius: 6,
+                borderSkipped: false
+            },
+            {
+                label: 'ยอดหนี้ค้างชำระ (บาท)',
+                data: overdueValues.length > 0 ? overdueValues : values.map(v => v * 0.18),
+                backgroundColor: 'rgba(230,57,70,0.85)',
+                borderColor: '#e63946',
+                borderWidth: 1.5,
+                borderRadius: 6,
+                borderSkipped: false
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: { font: { size: 13, weight: 'bold' }, padding: 20 }
+            },
+            tooltip: {
+                callbacks: {
+                    label: ctx => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString('th-TH', {minimumFractionDigits: 0}) + ' บาท'
+                }
+            }
+        },
+        scales: {
+            x: { ticks: { font: { size: 12, weight: '700' } } },
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    font: { size: 12, weight: '700' },
+                    callback: v => (v >= 1000000 ? (v/1000000).toFixed(1)+'M' : (v/1000).toFixed(0)+'K')
+                },
+                grid: { color: '#f0f0f0' }
+            }
+        }
+    }
+});
+
+// ===== DOUGHNUT CHART =====
+const statusCtx = document.getElementById('statusChart');
+new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['ค้างชำระ/เกินกำหนด', 'ผ่อนชำระ', 'เลื่อนนัด', 'หนี้สูญ'],
+        datasets: [{
+            data: [@ViewBag.OverdueCount, @ViewBag.InstallmentCount, @ViewBag.PostponedCount, @ViewBag.BadDebtCount],
+            backgroundColor: ['#e63946', '#ffc107', '#6c757d', '#343a40'],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: { font: { size: 12, weight: '700' }, padding: 10 }
+            }
+        },
+        cutout: '65%'
+    }
+});
+</script>
+}
