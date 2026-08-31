@@ -27,7 +27,15 @@ namespace RoyalD.Web.Controllers
             var bills = _db.SalesBills.Where(b => b.CustomerCode == code).ToList();
             return Json(new { bills = bills.Select(b => b.BillNo), debts = debts.Select(d => new { d.BillNo, d.OriginalAmount }) });
         }
-                [AllowAnonymous]
+                        [AllowAnonymous]
+        [HttpGet("CheckDb")]
+        public IActionResult CheckDb()
+        {
+            var debts = _db.OutstandingDebts.Count();
+            var bills = _db.SalesBills.Count();
+            return Content($"Debts: {debts}, Bills: {bills}");
+        }
+[AllowAnonymous]
         [HttpGet("DumpDebug")]
         public IActionResult DumpDebug([FromServices] IWebHostEnvironment env)
         {
