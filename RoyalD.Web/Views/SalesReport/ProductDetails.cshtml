@@ -1,4 +1,4 @@
-@using RoyalD.Web.Services
+﻿@using RoyalD.Web.Services
 @model RoyalD.Web.Services.ProductDetailsReportViewModel
 @{
     ViewData["Title"] = "3. รายการขายสินค้าจำนวนและราคาของแต่ละผู้แทน";
@@ -244,7 +244,7 @@ else
                                 <th style="width:45px;" class="text-center">#</th>
                                 <th style="min-width:340px;">1. รหัสสินค้า และ ชื่อสินค้า</th>
                                 <th style="width:170px;" class="text-end">2. จำนวนขายรวม (หน่วย)</th>
-                                <th style="width:170px;" class="text-end">3. ราคาเฉลี่ย / หน่วย (บาท)</th>
+                                <th style="width:170px;" class="text-end">3. ราคาต่อหน่วย (บาท)</th>
                                 <th style="width:200px;" class="text-end">4. ยอดเงินรวมสุทธิ (บาท)</th>
                             </tr>
                         </thead>
@@ -292,7 +292,7 @@ else
 
                                     <!-- 3. ราคาเฉลี่ย -->
                                     <td class="text-end text-muted fw-semibold">
-                                        @prod.AvgPrice.ToString("N2")
+                                        @prod.Price.ToString("N2")
                                     </td>
 
                                     <!-- 4. ยอดเงินรวมภาษีสุทธิ -->

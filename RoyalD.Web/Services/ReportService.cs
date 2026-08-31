@@ -1,4 +1,4 @@
-using RoyalD.Web.Models;
+﻿using RoyalD.Web.Models;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
@@ -400,7 +400,7 @@ namespace RoyalD.Web.Services
                     };
 
                     var groupedProducts = monthItems
-                        .GroupBy(i => new { i.ProductCode, i.ProductName, i.Unit })
+                        .GroupBy(i => new { i.ProductCode, i.ProductName, i.Unit, i.Price })
                         .Select(g => {
                             decimal totalQty = g.Sum(x => x.Qty);
                             decimal totalAmt = g.Sum(x => x.Amount);
@@ -505,17 +505,17 @@ namespace RoyalD.Web.Services
             var ws = pkg.Workbook.Worksheets.Add("รายละเอียดสินค้าที่ขาย");
 
             ws.Cells["A1"].Value = "บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด";
-            ws.Cells["A1:F1"].Merge = true;
+            ws.Cells["A1:G1"].Merge = true;
             ws.Cells["A1"].Style.Font.Bold = true;
             ws.Cells["A1"].Style.Font.Size = 14;
             ws.Cells["A1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
             ws.Cells["A2"].Value = "รายงานการเคลื่อนไหวสินค้าแยกตามผู้แทนขายและรายเดือน";
-            ws.Cells["A2:F2"].Merge = true;
+            ws.Cells["A2:G2"].Merge = true;
             ws.Cells["A2"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
             int row = 4;
-            string[] headers = { "ผู้แทนขาย", "เดือน", "รหัสสินค้า", "ชื่อสินค้า", "จำนวนขายสุทธิ (หน่วย)", "ยอดเงินสุทธิ (บาท)" };
+            string[] headers = { "ผู้แทนขาย", "เดือน", "รหัสสินค้า", "ชื่อสินค้า", "จำนวนขายสุทธิ (หน่วย)", "ราคาต่อหน่วย", "ยอดเงินสุทธิ (บาท)" };
             for (int c = 0; c < headers.Length; c++)
             {
                 ws.Cells[row, c + 1].Value = headers[c];
@@ -603,13 +603,13 @@ namespace RoyalD.Web.Services
             var ws = pkg.Workbook.Worksheets.Add("รายงานผู้แทนขาย");
 
             ws.Cells["A1"].Value = "บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด";
-            ws.Cells["A1:F1"].Merge = true;
+            ws.Cells["A1:G1"].Merge = true;
             ws.Cells["A1"].Style.Font.Bold = true;
             ws.Cells["A1"].Style.Font.Size = 14;
             ws.Cells["A1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
             ws.Cells["A2"].Value = "รายงานยอดขาย-เก็บเงิน-หนี้คงค้าง แยกตามผู้แทนขาย";
-            ws.Cells["A2:F2"].Merge = true;
+            ws.Cells["A2:G2"].Merge = true;
             ws.Cells["A2"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
             string period = (from.HasValue && to.HasValue) ?
