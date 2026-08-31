@@ -268,8 +268,8 @@ namespace RoyalD.Web.Services
                     }
 
                     if (!string.IsNullOrEmpty(billNo) && !billNo.Contains("เธขเธญเธ”เธขเธเธกเธฒ") && !billNo.Contains("เธขเธญเธ”เธฃเธงเธก")) {
-                        var billDate = ParseDate(cBillDate >= 0 && cBillDate < tbl.Columns.Count ? row[cBillDate]?.ToString() : "");
-                        var dueDate = ParseDate(cDueDate >= 0 && cDueDate < tbl.Columns.Count ? row[cDueDate]?.ToString() : "");
+                        var billDate = ParseDate(cBillDate >= 0 && cBillDate < tbl.Columns.Count ? row[cBillDate] : null);
+                        var dueDate = ParseDate(cDueDate >= 0 && cDueDate < tbl.Columns.Count ? row[cDueDate] : null);
                         var amount = ParseDecimal(cAmount >= 0 && cAmount < tbl.Columns.Count ? row[cAmount]?.ToString() : "");
                         var credit = ParseInt(cCredit >= 0 && cCredit < tbl.Columns.Count ? row[cCredit]?.ToString() : "");
 
@@ -390,7 +390,7 @@ namespace RoyalD.Web.Services
                     currentBillNo = col0;
                     
                     // Column 2: Date -> index 1
-                    currentBillDate = ParseDate(tbl.Columns.Count > 1 ? row[1]?.ToString() : "");
+                    currentBillDate = ParseDate(tbl.Columns.Count > 1 ? row[1] : null);
                     
                     // Column 3: Customer ID -> index 2
                     currentCustCode = tbl.Columns.Count > 2 ? row[2]?.ToString()?.Trim() ?? "" : "";
@@ -565,7 +565,7 @@ namespace RoyalD.Web.Services
                     foreach (var b in existingBills)
                     {
                         b.ReceiptNo = receiptNo;
-                        var rDate = ParseDate(receiptDateStr);
+                        var rDate = ParseDate((object)receiptDateStr);
                         if (rDate != DateTime.MinValue) b.ReceiptDate = rDate;
                         b.IsFullyPaid = true;
                     }
@@ -583,7 +583,7 @@ namespace RoyalD.Web.Services
                     foreach (var d in existingDebts)
                     {
                         d.ReceiptNo = receiptNo;
-                        var rDate = ParseDate(receiptDateStr);
+                        var rDate = ParseDate((object)receiptDateStr);
                         if (rDate != DateTime.MinValue) d.ReceiptDate = rDate;
                         d.RemainingAmount = 0;
                         d.Status = DebtStatus.PaidTransfer;
