@@ -527,18 +527,34 @@ namespace RoyalD.Web.Controllers
 
             var debts = await _svc.GetPaidHistoryAsync(search, salesRep, userAllowedRegion, userAllowedProvinces, userAllowedDistricts);
             
-            // Backfill missing Customer Code/Name for the same ReceiptNo
+            // Backfill missing or invalid Customer Code/Name for the same ReceiptNo
             var receiptGroups = debts.Where(d => !string.IsNullOrEmpty(d.ReceiptNo)).GroupBy(d => d.ReceiptNo);
             foreach (var g in receiptGroups)
             {
-                var validCode = g.FirstOrDefault(d => !string.IsNullOrEmpty(d.CustomerCode))?.CustomerCode;
-                var validName = g.FirstOrDefault(d => !string.IsNullOrEmpty(d.CustomerName))?.CustomerName;
+                var validCode = g.FirstOrDefault(d => !string.IsNullOrEmpty(d.CustomerCode) && !d.CustomerCode.Contains("/"))?.CustomerCode;
+                var validName = g.FirstOrDefault(d => !string.IsNullOrEmpty(d.CustomerName) && !d.CustomerName.Contains("/") && !d.CustomerName.StartsWith("RD", StringComparison.OrdinalIgnoreCase))?.CustomerName;
+                
+                // If still missing, fallback to SalesBills
+                if (string.IsNullOrEmpty(validName))
+                {
+                    var firstBill = g.FirstOrDefault()?.BillNo;
+                    if (!string.IsNullOrEmpty(firstBill))
+                    {
+                        var realBill = await _db.SalesBills.FirstOrDefaultAsync(b => b.BillNo == firstBill);
+                        if (realBill != null)
+                        {
+                            validCode = realBill.CustomerCode;
+                            validName = realBill.CustomerName;
+                        }
+                    }
+                }
+
                 if (!string.IsNullOrEmpty(validCode) || !string.IsNullOrEmpty(validName))
                 {
                     foreach (var d in g)
                     {
-                        if (string.IsNullOrEmpty(d.CustomerCode)) d.CustomerCode = validCode ?? "";
-                        if (string.IsNullOrEmpty(d.CustomerName)) d.CustomerName = validName ?? "";
+                        if (string.IsNullOrEmpty(d.CustomerCode) || d.CustomerCode.Contains("/")) d.CustomerCode = validCode ?? "";
+                        if (string.IsNullOrEmpty(d.CustomerName) || d.CustomerName.Contains("/") || d.CustomerName.StartsWith("RD", StringComparison.OrdinalIgnoreCase)) d.CustomerName = validName ?? "";
                     }
                 }
             }
