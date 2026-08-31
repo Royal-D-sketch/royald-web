@@ -601,8 +601,9 @@ namespace RoyalD.Web.Services
             return (matched, notFound);
         }
 
-        private static DateTime ParseDate(string? s)
+        private static DateTime ParseDate(object? obj)
         {
+            string s = obj?.ToString() ?? "";
             if (string.IsNullOrWhiteSpace(s)) return DateTime.Today;
             s = s.Trim();
             if (s.Contains("/"))

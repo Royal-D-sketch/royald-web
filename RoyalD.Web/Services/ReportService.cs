@@ -70,6 +70,7 @@ namespace RoyalD.Web.Services
     {
         public string ProductCode { get; set; } = string.Empty;
         public string ProductName { get; set; } = string.Empty;
+        public decimal Price { get; set; }
         public string Unit { get; set; } = string.Empty;
         public decimal TotalQty { get; set; }
         public decimal AvgPrice => TotalQty > 0 ? Math.Round(TotalAmount / TotalQty, 2) : 0m;
@@ -410,6 +411,7 @@ namespace RoyalD.Web.Services
                             {
                                 ProductCode = g.Key.ProductCode,
                                 ProductName = g.Key.ProductName,
+                                Price = g.Key.Price,
                                 Unit = g.Key.Unit,
                                 TotalQty = totalQty,
                                 TotalAmount = totalAmt,
