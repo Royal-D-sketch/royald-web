@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using ExcelDataReader;
 using System.Data;
@@ -12,14 +12,13 @@ class Program {
         using var reader = ExcelReaderFactory.CreateReader(stream);
         var ds = reader.AsDataSet();
         var tbl = ds.Tables[0];
-        int[] rowsToPrint = { 6, 8, 17, 19 };
-        foreach (int r in rowsToPrint) {
+        
+        for (int r = 0; r < Math.Min(tbl.Rows.Count, 50); r++) {
             var row = tbl.Rows[r];
-            Console.WriteLine($"Row {r:D3} (Col1='{row[0]}'):");
             for (int c = 0; c < tbl.Columns.Count; c++) {
                 var val = row[c]?.ToString()?.Trim() ?? "";
-                if (!string.IsNullOrEmpty(val)) {
-                    Console.WriteLine($"  Col {c+1} (index {c}): '{val}'");
+                if (val.Contains("วัน")) {
+                    Console.WriteLine($"Row {r:D3}, Col {c+1}: '{val}'");
                 }
             }
         }

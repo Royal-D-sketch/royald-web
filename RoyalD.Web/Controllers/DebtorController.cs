@@ -526,6 +526,23 @@ namespace RoyalD.Web.Controllers
             }
 
             var debts = await _svc.GetPaidHistoryAsync(search, salesRep, userAllowedRegion, userAllowedProvinces, userAllowedDistricts);
+            
+            // Backfill missing Customer Code/Name for the same ReceiptNo
+            var receiptGroups = debts.Where(d => !string.IsNullOrEmpty(d.ReceiptNo)).GroupBy(d => d.ReceiptNo);
+            foreach (var g in receiptGroups)
+            {
+                var validCode = g.FirstOrDefault(d => !string.IsNullOrEmpty(d.CustomerCode))?.CustomerCode;
+                var validName = g.FirstOrDefault(d => !string.IsNullOrEmpty(d.CustomerName))?.CustomerName;
+                if (!string.IsNullOrEmpty(validCode) || !string.IsNullOrEmpty(validName))
+                {
+                    foreach (var d in g)
+                    {
+                        if (string.IsNullOrEmpty(d.CustomerCode)) d.CustomerCode = validCode ?? "";
+                        if (string.IsNullOrEmpty(d.CustomerName)) d.CustomerName = validName ?? "";
+                    }
+                }
+            }
+
             var todayHistory = DateTime.Today;
             debts = debts.Where(d => {
                 var dateToCheck = d.ReceiptDate ?? d.FullyPaidDate ?? d.PaidDate ?? d.BillDate;

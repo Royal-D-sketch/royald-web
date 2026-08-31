@@ -404,8 +404,11 @@ namespace RoyalD.Web.Services
                     // Column 9: Province -> index 8
                     currentProvince = tbl.Columns.Count > 8 ? row[8]?.ToString()?.Trim() ?? "" : "";
                     
-                    // Column 11: Credit Terms -> index 10
-                    currentCredit = tbl.Columns.Count > 10 ? ParseInt(row[10]?.ToString()) : 0;
+                    // Column 11: Credit Terms -> could be shifted to index 9, 10 or 11
+                    int c10 = tbl.Columns.Count > 10 ? ParseInt(row[10]?.ToString()) : 0;
+                    int c9 = tbl.Columns.Count > 9 ? ParseInt(row[9]?.ToString()) : 0;
+                    int c11 = tbl.Columns.Count > 11 ? ParseInt(row[11]?.ToString()) : 0;
+                    currentCredit = c10 > 0 ? c10 : (c9 > 0 ? c9 : c11);
                     
                     // Column 16: Sales Representative -> index 15
                     currentSalesRep = tbl.Columns.Count > 15 ? row[15]?.ToString()?.Trim() ?? "" : "";
