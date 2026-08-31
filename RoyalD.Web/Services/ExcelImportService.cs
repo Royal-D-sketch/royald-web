@@ -315,30 +315,6 @@ namespace RoyalD.Web.Services
             var tbl = ds.Tables[0];
             if (tbl == null || tbl.Rows.Count < 4) return result;
 
-            int headerRow = FindHeaderRow(tbl, out var map, "บิล", "วันที่", "รหัส", "ชื่อ");
-            if (headerRow < 0) headerRow = 3;
-
-            int cBillNo = GetCol(map, "บิล", "เลขที่");
-            int cBillDate = GetCol(map, "วันที่");
-            int cCustCode = GetCol(map, "รหัส");
-            int cPo = GetCol(map, "PO", "ใบสั่งซื้อ");
-            int cCustName = GetCol(map, "ชื่อ");
-            int cDistrict = GetCol(map, "อำเภอ");
-            int cProvince = GetCol(map, "จังหวัด");
-            int cPhone = GetCol(map, "โทร");
-            int cCredit = GetCol(map, "เครดิต");
-            int cQty = GetCol(map, "จำนวน");
-            int cUnit = GetCol(map, "หน่วย");
-            int cPrice = GetCol(map, "ราคา");
-            int cDiscount = GetCol(map, "ส่วนลด");
-            int cAmount = GetCol(map, "จำนวนเงิน", "ยอดสุทธิ");
-            int cSalesRep = GetCol(map, "ผู้แทน");
-
-            if (cBillNo < 0) cBillNo = 0;
-            if (cQty < 0) cQty = 12;
-            if (cPrice < 0) cPrice = 14;
-            if (cAmount < 0) cAmount = 16;
-
             var parsedBills = new List<BillPreviewItem>();
             string currentBillNo = "";
             DateTime currentBillDate = DateTime.MinValue;
@@ -371,175 +347,140 @@ namespace RoyalD.Web.Services
                 });
             }
 
-            for (int r = headerRow + 1; r < tbl.Rows.Count; r++)
+            for (int r = 0; r < tbl.Rows.Count; r++)
             {
                 var row = tbl.Rows[r];
-                var col0 = row[0]?.ToString()?.Trim() ?? "";
-                var col1 = tbl.Columns.Count > 1 ? row[1]?.ToString()?.Trim() ?? "" : "";
-                var col2 = tbl.Columns.Count > 2 ? row[2]?.ToString()?.Trim() ?? "" : "";
+                var col0 = tbl.Columns.Count > 0 ? row[0]?.ToString()?.Trim() ?? "" : "";
                 
-                string mainStr = !string.IsNullOrEmpty(col0) ? col0 : (!string.IsNullOrEmpty(col1) ? col1 : col2);
-                if (string.IsNullOrWhiteSpace(mainStr)) continue;
-                if (mainStr.Contains("รวม") || mainStr.Contains("VAT") || mainStr.Contains("ภาษี")) continue;
-                if (mainStr.StartsWith("S/N", StringComparison.OrdinalIgnoreCase)) continue;
-
-                string newBillNo = cBillNo >= 0 && cBillNo < tbl.Columns.Count && !string.IsNullOrEmpty(row[cBillNo]?.ToString()) ? row[cBillNo]?.ToString()?.Trim() ?? "" : mainStr;
-                bool isSameBill = !string.IsNullOrEmpty(currentBillNo) && newBillNo == currentBillNo;
-                
-                bool isBillHeader = false;
-                if (!isSameBill) {
-                    string checkStr = newBillNo.Trim().ToUpper();
-                    if (!DateTime.TryParse(checkStr, out _)) {
-                        if ((checkStr.Length > 0 && char.IsDigit(checkStr[0]) && checkStr.Contains("/")) ||
-                            checkStr.StartsWith("R") || checkStr.StartsWith("B") || checkStr.StartsWith("INV")) {
-                            isBillHeader = true;
+                if (string.IsNullOrWhiteSpace(col0))
+                {
+                    // Check if it's a footer row to scrape total or other values
+                    for (int c = 0; c < tbl.Columns.Count; c++)
+                    {
+                        var cellVal = row[c]?.ToString()?.Trim() ?? "";
+                        if (cellVal == "รวมทั้งสิ้น")
+                        {
+                            decimal amt = 0;
+                            if (tbl.Columns.Count > 14) amt = ParseDecimal(row[14]?.ToString());
+                            if (amt == 0 && tbl.Columns.Count > 15) amt = ParseDecimal(row[15]?.ToString());
+                            if (amt > 0) currentTotal = amt;
+                            break;
                         }
                     }
+                    continue;
                 }
+
+                if (col0.StartsWith("S/N", StringComparison.OrdinalIgnoreCase)) continue;
+
+                // Check if Column 1 (index 0) starts with digits and slash, or starts with 'R'
+                bool startsWithR = col0.StartsWith("R", StringComparison.OrdinalIgnoreCase);
+                bool isNoVatSlash = col0.Length > 0 && char.IsDigit(col0[0]) && col0.Contains("/");
+                bool isBillHeader = startsWithR || isNoVatSlash;
 
                 if (isBillHeader)
                 {
                     CollectCurrentBill();
                     currentItems = new List<SalesBillItem>();
 
-                    currentBillNo = cBillNo >= 0 && cBillNo < tbl.Columns.Count && !string.IsNullOrEmpty(row[cBillNo]?.ToString()) ? row[cBillNo]?.ToString()?.Trim() ?? "" : mainStr;
-                    currentBillDate = ParseDate(cBillDate >= 0 && cBillDate < tbl.Columns.Count && !string.IsNullOrEmpty(row[cBillDate]?.ToString()) ? row[cBillDate]?.ToString() : col1);
-                    currentCustCode = cCustCode >= 0 && cCustCode < tbl.Columns.Count && !string.IsNullOrEmpty(row[cCustCode]?.ToString()) ? row[cCustCode]?.ToString()?.Trim() ?? "" : col2;
+                    // Map Header Columns
+                    // Column 1: Bill Number -> index 0
+                    currentBillNo = col0;
                     
-                    var col3 = tbl.Columns.Count > 3 ? row[3]?.ToString()?.Trim() ?? "" : "";
-                    var col4 = tbl.Columns.Count > 4 ? row[4]?.ToString()?.Trim() ?? "" : "";
-                    currentPoNumber = cPo >= 0 && cPo < tbl.Columns.Count ? row[cPo]?.ToString()?.Trim() ?? "" : "";
-                    for (int i = 2; i <= 6; i++)
+                    // Column 2: Date -> index 1
+                    currentBillDate = ParseDate(tbl.Columns.Count > 1 ? row[1]?.ToString() : "");
+                    
+                    // Column 3: Customer ID -> index 2
+                    currentCustCode = tbl.Columns.Count > 2 ? row[2]?.ToString()?.Trim() ?? "" : "";
+                    
+                    // Column 4: PO Number -> index 3 (If empty, display blank)
+                    currentPoNumber = tbl.Columns.Count > 3 ? row[3]?.ToString()?.Trim() ?? "" : "";
+                    
+                    // Column 5: Customer Name -> index 4
+                    currentCustName = tbl.Columns.Count > 4 ? row[4]?.ToString()?.Trim() ?? "" : "";
+                    
+                    // Column 7: District/Area -> index 6
+                    currentDistrict = tbl.Columns.Count > 6 ? row[6]?.ToString()?.Trim() ?? "" : "";
+                    
+                    // Column 9: Province -> index 8
+                    currentProvince = tbl.Columns.Count > 8 ? row[8]?.ToString()?.Trim() ?? "" : "";
+                    
+                    // Column 11: Credit Terms -> index 10
+                    currentCredit = tbl.Columns.Count > 10 ? ParseInt(row[10]?.ToString()) : 0;
+                    
+                    // Column 16: Sales Representative -> index 15
+                    currentSalesRep = tbl.Columns.Count > 15 ? row[15]?.ToString()?.Trim() ?? "" : "";
+
+                    // Phone Number: row 2 containing "โทร." (row immediately following header row)
+                    currentPhone = "";
+                    if (r + 1 < tbl.Rows.Count)
                     {
-                        if (i < tbl.Columns.Count)
+                        var nextRow = tbl.Rows[r + 1];
+                        for (int c = 0; c < tbl.Columns.Count; c++)
                         {
-                            var cellVal = row[i]?.ToString()?.Trim() ?? "";
-                            if (cellVal.StartsWith("PO", StringComparison.OrdinalIgnoreCase) || cellVal.StartsWith("ใบสั่ง", StringComparison.OrdinalIgnoreCase))
+                            var val = nextRow[c]?.ToString()?.Trim() ?? "";
+                            if (val.Contains("โทร") || val.Contains("โ."))
                             {
-                                currentPoNumber = cellVal;
-                                if (i == 3) col3 = col4;
+                                currentPhone = val.Replace("โทร.", "").Replace("โทร", "").Replace("โ.", "").Trim();
                                 break;
                             }
                         }
                     }
-                    currentCustName = cCustName >= 0 && cCustName < tbl.Columns.Count && !string.IsNullOrEmpty(row[cCustName]?.ToString()) ? row[cCustName]?.ToString()?.Trim() ?? "" : col3;
 
-                    string dynDist = "";
-                    string dynProv = "";
-                    string dynRep = "";
-
-                    var strParts = new List<string>();
-                    for (int i = 5; i < tbl.Columns.Count; i++)
-                    {
-                        var val = row[i]?.ToString()?.Trim() ?? "";
-                        if (!string.IsNullOrEmpty(val) && !decimal.TryParse(val.Replace(",", ""), out _))
-                        {
-                            strParts.Add(val);
-                        }
-                    }
-
-                    if (strParts.Count > 0)
-                    {
-                        dynRep = strParts.Last();
-                    }
-                    
-                    if (strParts.Count >= 3)
-                    {
-                        dynDist = strParts[0];
-                        dynProv = strParts[1];
-                    }
-                    else if (strParts.Count == 2)
-                    {
-                        if (strParts[0].Contains("จ.") || strParts[0].Contains("กรุงเทพ"))
-                        {
-                            dynProv = strParts[0];
-                        }
-                        else
-                        {
-                            dynDist = strParts[0];
-                        }
-                    }
-
-                    currentDistrict = cDistrict >= 0 && cDistrict < tbl.Columns.Count && !string.IsNullOrWhiteSpace(row[cDistrict]?.ToString()) ? row[cDistrict].ToString().Trim() : dynDist;
-                    currentProvince = cProvince >= 0 && cProvince < tbl.Columns.Count && !string.IsNullOrWhiteSpace(row[cProvince]?.ToString()) ? row[cProvince].ToString().Trim() : dynProv;
-
-                    string dynPhone = "";
-                    int dynCredit = -1;
-                    for (int i = 4; i < tbl.Columns.Count; i++)
-                    {
-                        var cell = row[i]?.ToString()?.Trim() ?? "";
-                        if (string.IsNullOrEmpty(cell)) continue;
-                        if (cell.StartsWith("โทร", StringComparison.OrdinalIgnoreCase) || (cell.StartsWith("0") && cell.Contains("-")))
-                        {
-                            var cleanPhone = cell.Replace("โทร.", "").Replace("โทร", "").Trim();
-                            if (cleanPhone.Length >= 7) dynPhone = cleanPhone;
-                        }
-                        else if (int.TryParse(cell, out int credVal) && credVal >= 0 && credVal <= 365)
-                        {
-                            if (dynCredit < 0 || (i >= 7 && i <= 11))
-                            {
-                                dynCredit = credVal;
-                            }
-                        }
-                    }
-
-                    currentPhone = !string.IsNullOrEmpty(dynPhone) ? dynPhone : (cPhone >= 0 && cPhone < tbl.Columns.Count ? (row[cPhone]?.ToString()?.Trim() ?? "") : "");
-                    if (currentPhone.StartsWith("โทร.", StringComparison.OrdinalIgnoreCase) || currentPhone.StartsWith("โทร", StringComparison.OrdinalIgnoreCase))
-                    {
-                        currentPhone = currentPhone.Replace("โทร.", "").Replace("โทร", "").Trim();
-                    }
-                    if (int.TryParse(currentPhone, out int fakePhoneAsCredit) && fakePhoneAsCredit < 365 && currentPhone.Length < 4)
-                    {
-                        // If phone was accidentally a small number like 7 or 30
-                        if (dynCredit <= 0) dynCredit = fakePhoneAsCredit;
-                        currentPhone = "";
-                    }
-
-                    currentCredit = dynCredit >= 0 ? dynCredit : ParseInt(cCredit >= 0 && cCredit < tbl.Columns.Count && !string.IsNullOrEmpty(row[cCredit]?.ToString()) ? row[cCredit]?.ToString() : (tbl.Columns.Count > 11 ? row[11]?.ToString() : ""));
-                    
-                    currentSalesRep = cSalesRep >= 0 && cSalesRep < tbl.Columns.Count && !string.IsNullOrWhiteSpace(row[cSalesRep]?.ToString()) ? row[cSalesRep].ToString().Trim() : dynRep;
-                    
                     currentTotal = 0;
                 }
                 else
                 {
-                    var prodName = mainStr;
-                    var parts = prodName.Split(new[] { "  " }, 2, StringSplitOptions.RemoveEmptyEntries);
-                    
-                    decimal qty = 0, price = 0, amt = 0;
-                    if (cQty >= 0 && cQty < tbl.Columns.Count) qty = ParseDecimal(row[cQty]?.ToString());
-                    if (qty == 0 && tbl.Columns.Count > 13) qty = ParseDecimal(row[13]?.ToString());
-                    if (qty == 0 && tbl.Columns.Count > 12) qty = ParseDecimal(row[12]?.ToString());
-                    
-                    if (cPrice >= 0 && cPrice < tbl.Columns.Count) price = ParseDecimal(row[cPrice]?.ToString());
-                    if (price == 0 && tbl.Columns.Count > 15) price = ParseDecimal(row[15]?.ToString());
-                    if (price == 0 && tbl.Columns.Count > 14) price = ParseDecimal(row[14]?.ToString());
+                    // Product detail row: Column 1 (index 0) has the product code + name
+                    string rawProd = col0.Replace((char)160, ' ').Trim();
+                    string prodCode = "";
+                    string prodName = rawProd;
+                    var parts = rawProd.Split(new[] { ' ' }, 2, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length > 1)
+                    {
+                        prodCode = parts[0].Trim();
+                        prodName = parts[1].Trim();
+                    }
 
-                    if (cAmount >= 0 && cAmount < tbl.Columns.Count) amt = ParseDecimal(row[cAmount]?.ToString());
-                    if (amt == 0 && tbl.Columns.Count > 17) amt = ParseDecimal(row[17]?.ToString());
-                    if (amt == 0 && tbl.Columns.Count > 16) amt = ParseDecimal(row[16]?.ToString());
+                    decimal qty = 0, price = 0, discount = 0, amt = 0;
+                    string unit = "";
+
+                    // Let's use our dynamic off-by-one shifting protection!
+                    // If Column 11 (index 10) is numeric, then Qty is in index 10
+                    if (tbl.Columns.Count > 10 && decimal.TryParse(row[10]?.ToString()?.Replace(",", ""), out decimal qty11))
+                    {
+                        qty = qty11;
+                        unit = tbl.Columns.Count > 11 ? row[11]?.ToString()?.Trim() ?? "" : "";
+                        price = tbl.Columns.Count > 12 ? ParseDecimal(row[12]?.ToString()) : 0;
+                        discount = tbl.Columns.Count > 13 ? ParseDecimal(row[13]?.ToString()?.Replace("%", "")) : 0;
+                        amt = tbl.Columns.Count > 14 ? ParseDecimal(row[14]?.ToString()) : 0;
+                    }
+                    else if (tbl.Columns.Count > 11 && decimal.TryParse(row[11]?.ToString()?.Replace(",", ""), out decimal qty12))
+                    {
+                        qty = qty12;
+                        unit = tbl.Columns.Count > 12 ? row[12]?.ToString()?.Trim() ?? "" : "";
+                        price = tbl.Columns.Count > 13 ? ParseDecimal(row[13]?.ToString()) : 0;
+                        discount = tbl.Columns.Count > 14 ? ParseDecimal(row[14]?.ToString()?.Replace("%", "")) : 0;
+                        amt = tbl.Columns.Count > 15 ? ParseDecimal(row[15]?.ToString()) : 0;
+                    }
+
+                    if (qty == 0 && amt == 0) continue; // skip non-product lines
+                    if (amt == 0 && qty > 0 && price > 0) amt = qty * price;
 
                     var item = new SalesBillItem
                     {
-                        ProductCode = parts.Length > 0 ? parts[0].Trim() : "",
-                        ProductName = parts.Length > 1 ? parts[1].Trim() : prodName,
+                        ProductCode = prodCode.Length > 30 ? prodCode.Substring(0, 30) : prodCode,
+                        ProductName = prodName.Length > 100 ? prodName.Substring(0, 100) : prodName,
                         Qty = qty,
-                        Unit = cUnit >= 0 && cUnit < tbl.Columns.Count ? row[cUnit]?.ToString()?.Trim() ?? "" : "",
+                        Unit = unit.Length > 30 ? unit.Substring(0, 30) : unit,
                         Price = price,
-                        Discount = ParseDecimal(cDiscount >= 0 && cDiscount < tbl.Columns.Count ? row[cDiscount]?.ToString() : ""),
+                        Discount = discount,
                         Amount = amt
                     };
-                    
-                    if (item.Amount == 0 && item.Qty == 0) continue;
-
-                    if (item.Amount == 0 && item.Qty > 0 && item.Price > 0) item.Amount = item.Qty * item.Price;
-                    
-                    if (item.ProductCode.Length > 30) item.ProductCode = item.ProductCode.Substring(0, 30);
-                    if (item.ProductName.Length > 100) item.ProductName = item.ProductName.Substring(0, 100);
-                    if (item.Unit.Length > 30) item.Unit = item.Unit.Substring(0, 30);
-                    
                     currentItems.Add(item);
-                    currentTotal += item.Amount;
+                    if (currentTotal == 0)
+                    {
+                        currentTotal += amt; // fallback if no "รวมทั้งสิ้น" row has set it yet
+                    }
                 }
             }
             CollectCurrentBill();

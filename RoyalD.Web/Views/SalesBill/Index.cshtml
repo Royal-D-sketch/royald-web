@@ -183,11 +183,11 @@
                     <th>เขต/อำเภอ</th>
                     <th>จังหวัด</th>
                     <th class="text-center">เครดิต</th>
-                    <th class="text-center">อายุลูกหนี้</th>
-                    <th class="text-end">จำนวนเงินรวมทั้งสิ้น</th>
+                    <th>อายุลูกหนี้คำนวณจากวันครบกำหนด</th>
+                    <th class="text-end">จำนวนเงินรวมทั้งสิน</th>
                     <th class="text-center">สถานะ</th>
                     <th>ผู้แทนขาย</th>
-                    <th class="text-center actions-col">ดูรายละเอียด</th>
+                    <th class="text-center actions-col">ดูรายละเอียดบิล</th>
                 </tr>
             </thead>
             <tbody>
@@ -218,13 +218,9 @@
                             {
                                 <span class="badge bg-success">ชำระแล้ว</span>
                             }
-                            else if (isOverdue120)
+                            else if (overdueDays > 0)
                             {
-                                <span class="badge bg-danger">เกิน @overdueDays วัน</span>
-                            }
-                            else if (isOverdue)
-                            {
-                                <span class="badge bg-warning text-dark">เกิน @overdueDays วัน</span>
+                                <span class="badge bg-warning text-dark">เกินกำหนดมาแล้ว @overdueDays วัน</span>
                             }
                             else
                             {
@@ -284,9 +280,9 @@
                         </td>
                         <td><span class="badge bg-light text-dark border">@b.SalesRep</span></td>
                         <td class="text-center actions-col">
-                            <a href="/SalesBill/Detail?id=@Uri.EscapeDataString(b.BillNo)" class="btn btn-sm btn-outline-primary shadow-sm" title="ดูบิล">
-                                <i class="bi bi-eye"></i> ดูบิล
-                            </a>
+                             <a href="/SalesBill/Detail?id=@Uri.EscapeDataString(b.BillNo)" class="btn btn-sm btn-outline-primary shadow-sm" title="ดูรายละเอียดบิล">
+                                 <i class="bi bi-eye"></i> ดูรายละเอียดบิล
+                             </a>
                             @if (canDelete)
                             {
                                 <form asp-controller="SalesBill" asp-action="DeleteBill" method="post" class="d-inline" onsubmit="return confirm('ยืนยันการลบบิลขายเลขที่ @b.BillNo ออกจากระบบหรือไม่?');">

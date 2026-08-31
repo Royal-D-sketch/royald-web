@@ -1,15 +1,26 @@
 using System;
-using Npgsql;
+using System.IO;
+using ExcelDataReader;
+using System.Data;
 
 class Program {
-    static async System.Threading.Tasks.Task Main() {
-        var connStr = "Host=aws-0-ap-southeast-1.pooler.supabase.com;Port=5432;Database=postgres;Username=postgres.pssccxujypweaahkbvdw;Password=029030445Rd*;Pooling=true;Maximum Pool Size=100;SSL Mode=Require;Trust Server Certificate=true;";
-        using var conn = new NpgsqlConnection(connStr);
-        await conn.OpenAsync();
-
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT COUNT(*) FROM \"SalesBills\" WHERE \"Credit\" = 0;";
-        var zeroCount = await cmd.ExecuteScalarAsync();
-        Console.WriteLine($"Remaining bills with Credit = 0: {zeroCount}");
+    static void Main() {
+        Console.OutputEncoding = System.Text.Encoding.UTF8;
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        string filePath = @"c:\Users\User2\Desktop\อาร์ต\บิลขาย การ์ดลูกหนี้และการติดตามการชำระเงิน\รายละเอียดบิลขาย\รายละเอียดบิลขาย วันที่ 1-28.8.69.xlsx";
+        using var stream = File.Open(filePath, FileMode.Open, FileAccess.Read);
+        using var reader = ExcelReaderFactory.CreateReader(stream);
+        var ds = reader.AsDataSet();
+        var tbl = ds.Tables[0];
+        for (int r = 18; r <= 26; r++) {
+            var row = tbl.Rows[r];
+            Console.WriteLine($"Row {r:D3}:");
+            for (int c = 0; c < tbl.Columns.Count; c++) {
+                var val = row[c]?.ToString()?.Trim() ?? "";
+                if (!string.IsNullOrEmpty(val)) {
+                    Console.WriteLine($"  Col {c+1} (index {c}): '{val}'");
+                }
+            }
+        }
     }
 }
