@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RoyalD.Web.Models;
 using RoyalD.Web.Services;
@@ -53,7 +53,11 @@ namespace RoyalD.Web.Controllers
 
             try
             {
-                using var stream = file.OpenReadStream();
+                var debugDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "debug");
+Directory.CreateDirectory(debugDir);
+var debugPath = Path.Combine(debugDir, file.FileName);
+using (var fs = new FileStream(debugPath, FileMode.Create)) { await file.CopyToAsync(fs); }
+using var stream = file.OpenReadStream();
 
                 if (fileType == "outstanding")
                 {
@@ -155,7 +159,11 @@ namespace RoyalD.Web.Controllers
                     var ext = Path.GetExtension(file.FileName).ToLower();
                     if (ext != ".xls" && ext != ".xlsx" && ext != ".csv") continue;
 
-                    using var stream = file.OpenReadStream();
+                    var debugDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "debug");
+Directory.CreateDirectory(debugDir);
+var debugPath = Path.Combine(debugDir, file.FileName);
+using (var fs = new FileStream(debugPath, FileMode.Create)) { await file.CopyToAsync(fs); }
+using var stream = file.OpenReadStream();
                     var (ins, upd) = await _importer.ImportSalesBillAsync(stream, "Direct", true, file.FileName);
                     totalInserted += ins;
                     totalUpdated += upd;
@@ -200,7 +208,11 @@ namespace RoyalD.Web.Controllers
 
             try
             {
-                using var stream = file.OpenReadStream();
+                var debugDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "debug");
+Directory.CreateDirectory(debugDir);
+var debugPath = Path.Combine(debugDir, file.FileName);
+using (var fs = new FileStream(debugPath, FileMode.Create)) { await file.CopyToAsync(fs); }
+using var stream = file.OpenReadStream();
                 var (matched, notFound) = await _importer.ImportReceiptMatchAsync(stream, file.FileName);
                 
                 TempData["Success"] = $"จับคู่ใบเสร็จสำเร็จ {matched} รายการ (ไม่พบ: {notFound})";
