@@ -1,5 +1,5 @@
-﻿@{
-    ViewData["Title"] = "เธญเธฑเธเนเธซเธฅเธ”เธเนเธญเธกเธนเธฅ";
+@{
+    ViewData["Title"] = "อัปโหลดข้อมูล";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -8,36 +8,36 @@
 
   <div class="row g-4 mt-2">
 
-    <!-- เธเธฅเนเธญเธเธ—เธตเน 1: เธเธดเธฅเธเธฒเธข -->
+    <!-- กล่องที่ 1: บิลขาย -->
     <div class="col-12">
       <div class="card shadow-sm">
         <div class="card-header bg-primary text-white">
-          <i class="bi bi-file-earmark-spreadsheet"></i> เธชเนเธงเธเธ—เธตเน 1: เธญเธฑเธเนเธซเธฅเธ”เนเธเธฅเนเธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”เธเธดเธฅเธเธฒเธข
-          <small class="ms-2">(เธฃเธญเธเธฃเธฑเธเธชเธนเธเธชเธธเธ” 8 เนเธเธฅเนเธเธฃเนเธญเธกเธเธฑเธ)</small>
+          <i class="bi bi-file-earmark-spreadsheet"></i> ส่วนที่ 1: อัปโหลดไฟล์รายละเอียดบิลขาย
+          <small class="ms-2">(รองรับสูงสุด 8 ไฟล์พร้อมกัน)</small>
         </div>
         <div class="card-body">
           <form asp-action="UploadSalesBills" method="post" enctype="multipart/form-data" id="formBills">
             @Html.AntiForgeryToken()
             <div class="mb-3">
-              <label class="form-label">เน€เธฅเธทเธญเธเนเธเธฅเนเธเธดเธฅเธเธฒเธข (.xls / .xlsx / .csv)</label>
+              <label class="form-label">เลือกไฟล์บิลขาย (.xls / .xlsx / .csv)</label>
               <input type="file" name="files" multiple accept=".xls,.xlsx,.csv" class="form-control" id="billFiles" required>
-              <div class="form-text">เน€เธฅเธทเธญเธเนเธ”เนเธชเธนเธเธชเธธเธ” 8 เนเธเธฅเนเนเธเธเธฃเธฑเนเธเน€เธ”เธตเธขเธง เธฃเธฐเธเธเธเธฐเธฃเธงเธกเนเธเธฅเนเนเธฅเธฐเธเธณเน€เธเนเธฒเธญเธฑเธ•เนเธเธกเธฑเธ•เธด</div>
+              <div class="form-text">เลือกได้สูงสุด 8 ไฟล์ในครั้งเดียว ระบบจะรวมไฟล์และนำเข้าอัตโนมัติ</div>
             </div>
             <div id="billFileList" class="mb-3"></div>
             <div class="progress mb-3 d-none" id="billProgress">
-              <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width:100%">เธเธณเธฅเธฑเธเธเธฃเธฐเธกเธงเธฅเธเธฅ...</div>
+              <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width:100%">กำลังประมวลผล...</div>
             </div>
-            <button type="submit" class="btn btn-primary" onclick="showProgress('billProgress')"><i class="bi bi-upload"></i> เธญเธฑเธเนเธซเธฅเธ”เธเธดเธฅเธเธฒเธข</button>
+            <button type="submit" class="btn btn-primary" onclick="showProgress('billProgress')"><i class="bi bi-upload"></i> อัปโหลดบิลขาย</button>
           </form>
         </div>
       </div>
     </div>
 
-    <!-- เธเธฅเนเธญเธเธ—เธตเน 2: เธเธฒเธฃเนเธ”เธฅเธนเธเธซเธเธตเน -->
+    <!-- กล่องที่ 2: การ์ดลูกหนี้ -->
     <div class="col-md-6">
       <div class="card shadow-sm">
         <div class="card-header bg-warning text-dark">
-          <i class="bi bi-person-lines-fill"></i> เธชเนเธงเธเธ—เธตเน 2: เธญเธฑเธเนเธซเธฅเธ”เธเธฒเธฃเนเธ”เธฅเธนเธเธซเธเธตเนเธเนเธฒเธเธเธณเธฃเธฐ
+          <i class="bi bi-person-lines-fill"></i> ส่วนที่ 2: อัปโหลดการ์ดลูกหนี้ค้างชำระ
         </div>
         <div class="card-body">
           <form asp-action="Upload" method="post" enctype="multipart/form-data">
@@ -45,37 +45,37 @@
             <input type="hidden" name="fileType" value="outstanding">
             <input type="hidden" name="isCurrentMonth" value="false">
             <div class="mb-3">
-              <label class="form-label">เน€เธฅเธทเธญเธเนเธเธฅเนเธเธฒเธฃเนเธ”เธฅเธนเธเธซเธเธตเน (.xls / .xlsx / .csv)</label>
+              <label class="form-label">เลือกไฟล์การ์ดลูกหนี้ (.xls / .xlsx / .csv)</label>
               <input type="file" name="file" accept=".xls,.xlsx,.csv" class="form-control" required>
-              <div class="form-text">เธฃเธฐเธเธเธเธฐเน€เธเธตเธขเธเธ—เธฑเธเธเนเธญเธกเธนเธฅเธฅเธนเธเธซเธเธตเนเธ—เธฑเนเธเธซเธกเธ”เธ—เธตเนเธชเธ–เธฒเธเธฐ Outstanding</div>
+              <div class="form-text">ระบบจะเขียนทับข้อมูลลูกหนี้ทั้งหมดที่สถานะ Outstanding</div>
             </div>
             <div class="progress mb-3 d-none" id="debtProgress">
-              <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" style="width:100%">เธเธณเธฅเธฑเธเธเธฃเธฐเธกเธงเธฅเธเธฅ...</div>
+              <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" style="width:100%">กำลังประมวลผล...</div>
             </div>
-            <button type="submit" class="btn btn-warning" onclick="showProgress('debtProgress')"><i class="bi bi-upload"></i> เธญเธฑเธเนเธซเธฅเธ”เธเธฒเธฃเนเธ”เธฅเธนเธเธซเธเธตเน</button>
+            <button type="submit" class="btn btn-warning" onclick="showProgress('debtProgress')"><i class="bi bi-upload"></i> อัปโหลดการ์ดลูกหนี้</button>
           </form>
         </div>
       </div>
     </div>
 
-    <!-- เธเธฅเนเธญเธเธ—เธตเน 3: เธชเธฃเธธเธเธฃเธฑเธเน€เธเธดเธ -->
+    <!-- กล่องที่ 3: สรุปรับเงิน -->
     <div class="col-md-6">
       <div class="card shadow-sm">
         <div class="card-header bg-success text-white">
-          <i class="bi bi-receipt"></i> เธชเนเธงเธเธ—เธตเน 3: เธญเธฑเธเนเธซเธฅเธ”เธชเธฃเธธเธเธเธฒเธฃเธฃเธฑเธเน€เธเธดเธเธ•เธฒเธกเนเธเน€เธชเธฃเนเธ
+          <i class="bi bi-receipt"></i> ส่วนที่ 3: อัปโหลดสรุปการรับเงินตามใบเสร็จ
         </div>
         <div class="card-body">
           <form asp-action="UploadReceipt" method="post" enctype="multipart/form-data">
             @Html.AntiForgeryToken()
             <div class="mb-3">
-              <label class="form-label">เน€เธฅเธทเธญเธเนเธเธฅเนเธชเธฃเธธเธเธฃเธฑเธเน€เธเธดเธ (.xls / .xlsx / .csv)</label>
+              <label class="form-label">เลือกไฟล์สรุปรับเงิน (.xls / .xlsx / .csv)</label>
               <input type="file" name="file" accept=".xls,.xlsx,.csv" class="form-control" required>
-              <div class="form-text">เธฃเธฐเธเธเธเธฐเธเธฑเธเธเธนเนเธเนเธญเธกเธนเธฅเน€เธฅเธเธ—เธตเนเนเธเน€เธชเธฃเนเธเนเธฅเธฐเธงเธฑเธเธ—เธตเนเธฃเธฑเธเน€เธเธดเธเน€เธเนเธฒเธชเธนเนเธเธฒเธฃเนเธ”เธฅเธนเธเธซเธเธตเน</div>
+              <div class="form-text">ระบบจะจับคู่ข้อมูลเลขที่ใบเสร็จและวันที่รับเงินเข้าสู่การ์ดลูกหนี้</div>
             </div>
             <div class="progress mb-3 d-none" id="receiptProgress">
-              <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width:100%">เธเธณเธฅเธฑเธเธเธฃเธฐเธกเธงเธฅเธเธฅ...</div>
+              <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width:100%">กำลังประมวลผล...</div>
             </div>
-            <button type="submit" class="btn btn-success" onclick="showProgress('receiptProgress')"><i class="bi bi-upload"></i> เธญเธฑเธเนเธซเธฅเธ”เธชเธฃเธธเธเธฃเธฑเธเน€เธเธดเธ</button>
+            <button type="submit" class="btn btn-success" onclick="showProgress('receiptProgress')"><i class="bi bi-upload"></i> อัปโหลดสรุปรับเงิน</button>
           </form>
         </div>
       </div>
@@ -88,12 +88,12 @@
 function showProgress(id) {
   document.getElementById(id).classList.remove('d-none');
 }
-// เนเธชเธ”เธเธฃเธฒเธขเธเธทเนเธญเนเธเธฅเนเธ—เธตเนเน€เธฅเธทเธญเธ
+// แสดงรายชื่อไฟล์ที่เลือก
 document.getElementById('billFiles').addEventListener('change', function(){
   var list = document.getElementById('billFileList');
   list.innerHTML = '';
   if (this.files.length > 8) {
-    alert('เน€เธฅเธทเธญเธเนเธ”เนเธชเธนเธเธชเธธเธ” 8 เนเธเธฅเน');
+    alert('เลือกได้สูงสุด 8 ไฟล์');
     this.value = '';
     return;
   }

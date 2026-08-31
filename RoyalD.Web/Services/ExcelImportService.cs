@@ -630,8 +630,8 @@ namespace RoyalD.Web.Services
         private static int ParseInt(string? s)
         {
             if (string.IsNullOrWhiteSpace(s)) return 0;
-            s = s.Split(' ')[0].Trim();
-            return int.TryParse(s, out int result) ? result : 0;
+            var match = System.Text.RegularExpressions.Regex.Match(s, @"\d+");
+            return match.Success ? int.Parse(match.Value) : 0;
         }
     }
 }
