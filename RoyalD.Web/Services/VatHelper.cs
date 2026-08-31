@@ -38,10 +38,12 @@ namespace RoyalD.Web.Services
             custCode ??= "";
             salesRep ??= "";
 
-            bool startsWithR = billNo.Trim().StartsWith("R", StringComparison.OrdinalIgnoreCase);
+            string cleanBill = billNo.Trim();
+            bool isNoVatSlash = cleanBill.Length > 0 && char.IsDigit(cleanBill[0]) && cleanBill.Contains("/");
+            bool startsWithR = cleanBill.StartsWith("R", StringComparison.OrdinalIgnoreCase);
 
-            // 1. บิลที่ไม่ได้ขึ้นต้นด้วย R หรือ ไม่มียอดเงิน -> NO VAT
-            if (!startsWithR || (totalAmount <= 0 && itemSum <= 0))
+            // 1. บิลที่ขึ้นต้นด้วยตัวเลขและมีสแลช (เช่น 635/31729) หรือไม่ได้ขึ้นต้นด้วย R -> NOVAT
+            if (isNoVatSlash || !startsWithR || (totalAmount <= 0 && itemSum <= 0))
             {
                 return VatCategory.NoVat;
             }
@@ -213,18 +215,18 @@ namespace RoyalD.Web.Services
 
         public static string GetLabel(VatCategory cat) => cat switch
         {
-            VatCategory.NoVat => "NO VAT (ไม่มีภาษีมูลค่าเพิ่ม)",
-            VatCategory.VatZero => "VAT 0% (ภาษีมูลค่าเพิ่ม 0%)",
+            VatCategory.NoVat => "NOVAT",
+            VatCategory.VatZero => "VAT 0% (ยกเว้นภาษี)",
             VatCategory.VatOut => "VAT นอก (ราคาแยกภาษี 7%)",
-            _ => "VAT ใน (ราคารวมภาษี 7% แล้ว)"
+            _ => "VAT (ราคารวมภาษี 7% แล้ว)"
         };
 
         public static string GetShortLabel(VatCategory cat) => cat switch
         {
-            VatCategory.NoVat => "NO VAT",
+            VatCategory.NoVat => "NOVAT",
             VatCategory.VatZero => "VAT 0%",
             VatCategory.VatOut => "VAT นอก",
-            _ => "VAT ใน"
+            _ => "VAT"
         };
 
         public static string GetBadgeClass(VatCategory cat) => cat switch

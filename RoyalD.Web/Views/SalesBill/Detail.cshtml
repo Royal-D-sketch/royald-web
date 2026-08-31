@@ -90,28 +90,27 @@
                 <h5 class="fw-bold" style="color:#0f766e;">บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด (สำนักงานใหญ่)</h5>
                 <h6 class="text-muted fw-semibold">ใบส่งสินค้า / Tax Invoice</h6>
                 <div class="position-absolute top-0 end-0">
-                    <span class="badge @vatBadgeClass px-3 py-2 fs-6"><i class="bi bi-tag-fill me-1"></i> @vatTypeLabel</span>
+                    <span class="badge @vatBadgeClass px-3 py-2 fs-6"><i class="bi bi-tag-fill me-1"></i> @vatShortLabel</span>
                 </div>
             </div>
             <div class="row g-3">
                 <div class="col-md-6">
                     <table class="table table-borderless table-sm mb-0">
-                        <tr><td class="fw-semibold text-muted" width="130">เลขที่บิล:</td><td><strong class="text-primary fs-6">@Model.BillNo</strong></td></tr>
-                        <tr><td class="fw-semibold text-muted">ใบสั่งซื้อ (PO):</td><td><strong class="text-dark">@Model.PoNumber</strong></td></tr>
-                        <tr><td class="fw-semibold text-muted">วันที่บิล:</td><td>@Model.BillDate.ToString("dd/MM/yyyy")</td></tr>
+                        <tr><td class="fw-semibold text-muted" width="140">ชื่อลูกค้า:</td><td class="fw-bold text-dark">@Model.CustomerName</td></tr>
                         <tr><td class="fw-semibold text-muted">รหัสลูกค้า:</td><td><code>@Model.CustomerCode</code></td></tr>
-                        <tr><td class="fw-semibold text-muted">ชื่อลูกค้า:</td><td class="fw-bold text-dark">@Model.CustomerName</td></tr>
                         <tr><td class="fw-semibold text-muted">เขต/อำเภอ:</td><td>@(!string.IsNullOrEmpty(Model.District) ? Model.District : "-")</td></tr>
                         <tr><td class="fw-semibold text-muted">จังหวัด:</td><td>@(!string.IsNullOrEmpty(Model.Province) ? Model.Province : "-")</td></tr>
+                        <tr><td class="fw-semibold text-muted">เบอร์โทร:</td><td>@(!string.IsNullOrEmpty(Model.Phone) ? Model.Phone : "-")</td></tr>
                     </table>
                 </div>
                 <div class="col-md-6">
                     <table class="table table-borderless table-sm mb-0">
-                        <tr><td class="fw-semibold text-muted" width="130">สถานะภาษี (VAT):</td><td><span class="badge @vatBadgeClass px-2 py-1"><i class="bi bi-patch-check-fill me-1"></i> @vatTypeLabel</span></td></tr>
-                        <tr><td class="fw-semibold text-muted">เบอร์โทร:</td><td>@(!string.IsNullOrEmpty(Model.Phone) ? Model.Phone : "-")</td></tr>
-                        <tr><td class="fw-semibold text-muted">เครดิตเทอม:</td><td><span class="badge bg-light text-dark border">@Model.Credit วัน</span></td></tr>
+                        <tr><td class="fw-semibold text-muted" width="140">เลขที่บิล:</td><td><strong class="text-primary fs-6">@Model.BillNo</strong></td></tr>
+                        <tr><td class="fw-semibold text-muted">วันที่บิล:</td><td>@Model.BillDate.ToString("dd/MM/yyyy")</td></tr>
+                        <tr><td class="fw-semibold text-muted">ใบสั่งซื้อเลขที่:</td><td><strong class="text-dark">@(!string.IsNullOrEmpty(Model.PoNumber) ? Model.PoNumber : "-")</strong></td></tr>
+                        <tr><td class="fw-semibold text-muted">เครดิตเทอม:</td><td><span class="badge bg-info text-dark border">@Model.Credit วัน</span></td></tr>
                         <tr><td class="fw-semibold text-muted">ผู้แทนขาย:</td><td><span class="badge bg-info-subtle text-info-emphasis border">@Model.SalesRep</span></td></tr>
-                        <tr><td class="fw-semibold text-muted">เดือนรอบบิล:</td><td><span class="badge bg-light text-secondary border">@Model.SourceMonth</span></td></tr>
+                        <tr><td class="fw-semibold text-muted">ประเภทภาษี:</td><td><span class="badge @vatBadgeClass px-2 py-1"><i class="bi bi-patch-check-fill me-1"></i> @vatTypeLabel</span></td></tr>
                     </table>
                 </div>
             </div>

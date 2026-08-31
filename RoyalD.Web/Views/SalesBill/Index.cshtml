@@ -175,107 +175,114 @@
         <table class="table table-hover table-sm align-middle">
             <thead class="table-light">
                 <tr>
-                    <th>เลขที่บิล / สถานะ</th>
+                    <th>เลขที่บิล</th>
                     <th>วันที่</th>
-                    <th>ลูกค้า</th>
-                    <th>จังหวัด / เขต</th>
-                    <th>ผู้แทนขาย</th>
+                    <th>ใบสั่งซื้อเลขที่</th>
+                    <th>รหัสลูกค้า</th>
+                    <th>ชื่อลูกค้า</th>
+                    <th>เขต/อำเภอ</th>
+                    <th>จังหวัด</th>
                     <th class="text-center">เครดิต</th>
-                    <th class="text-center">อายุหนี้</th>
-                    <th class="text-end">ยอดสุทธิ</th>
-                    <th>PO Number</th>
+                    <th class="text-center">อายุลูกหนี้</th>
+                    <th class="text-end">จำนวนเงินรวมทั้งสิ้น</th>
+                    <th class="text-center">สถานะ</th>
+                    <th>ผู้แทนขาย</th>
                     <th class="text-center actions-col">ดูรายละเอียด</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var b in Model) {
-                    bool isOverdue = !b.IsFullyPaid && (DateTime.Today - b.BillDate.AddDays(b.Credit)).TotalDays > 0;
-                    bool isOverdue120 = !b.IsFullyPaid && (DateTime.Today - b.BillDate.AddDays(b.Credit)).TotalDays > 120;
+                    var dueDate = b.BillDate.AddDays(b.Credit);
+                    var overdueDays = (int)(DateTime.Today - dueDate).TotalDays;
+                    bool isOverdue = !b.IsFullyPaid && overdueDays > 0;
+                    bool isOverdue120 = !b.IsFullyPaid && overdueDays > 120;
                     debtDict.TryGetValue(b.BillNo, out var debt);
                     var debtStatus = debt?.Status;
 
                     var rowClass = b.IsFullyPaid ? "table-success" : (debtStatus == DebtStatus.BadDebt || isOverdue120 ? "table-danger" : "");
                     <tr class="@rowClass">
-                        <td class="fw-bold">
+                        <td class="fw-bold text-primary">
                             @b.BillNo
-                            @if (b.IsFullyPaid)
-                            {
-                                <span class="badge bg-success ms-1" style="font-size:0.75em;">ชำระครบแล้ว</span>
-                            }
-                            else if (debtStatus == DebtStatus.BadDebt)
-                            {
-                                <span class="badge bg-danger ms-1" style="font-size:0.75em;">หนี้สูญ</span>
-                            }
-                            else if (debtStatus == DebtStatus.Cancelled)
-                            {
-                                <span class="badge bg-dark ms-1" style="font-size:0.75em;">ยกเลิกบิล</span>
-                            }
-                            else if (debtStatus == DebtStatus.Installment)
-                            {
-                                <span class="badge bg-primary ms-1" style="font-size:0.75em;">ผ่อนชำระ</span>
-                            }
-                            else if (debtStatus == DebtStatus.Postponed)
-                            {
-                                <span class="badge bg-warning text-dark ms-1" style="font-size:0.75em;">เลื่อนนัดชำระ</span>
-                            }
-                            else if (debtStatus == DebtStatus.WaitingGoods)
-                            {
-                                <span class="badge bg-info text-dark ms-1" style="font-size:0.75em;">รอสินค้า / ของขาด</span>
-                            }
-                            else if (debtStatus == DebtStatus.Delivering)
-                            {
-                                <span class="badge bg-secondary ms-1" style="font-size:0.75em;">บิลอยู่จัดส่ง</span>
-                            }
-                            else if (debtStatus == DebtStatus.ReturnPending)
-                            {
-                                <span class="badge bg-danger bg-opacity-75 ms-1" style="font-size:0.75em;">รอออกใบลดหนี้</span>
-                            }
-                            else if (debtStatus == DebtStatus.ReturnIssued)
-                            {
-                                <span class="badge bg-success bg-opacity-75 ms-1" style="font-size:0.75em;">ออกใบลดหนี้แล้ว</span>
-                            }
-                            else if (isOverdue120)
-                            {
-                                <span class="badge bg-danger ms-1" style="font-size:0.75em;">ค้างชำระเกิน 120 วัน</span>
-                            }
-                            else if (isOverdue)
-                            {
-                                <span class="badge bg-warning text-dark ms-1" style="font-size:0.75em;">เกินกำหนดชำระ</span>
-                            }
                         </td>
                         <td>@b.BillDate.ToString("dd/MM/yyyy")</td>
-                        <td>
-                            <div class="fw-bold">@b.CustomerName</div>
-                            <small class="text-muted"><code>@b.CustomerCode</code></small>
-                        </td>
-                        <td>
-                            <div>@b.Province</div>
-                            @if (!string.IsNullOrEmpty(b.District))
-                            {
-                                <small class="text-muted">@b.District</small>
-                            }
-                        </td>
-                        <td><span class="badge bg-light text-dark border">@b.SalesRep</span></td>
+                        <td>@(!string.IsNullOrEmpty(b.PoNumber) ? b.PoNumber : "-")</td>
+                        <td><code>@b.CustomerCode</code></td>
+                        <td class="fw-semibold text-dark text-wrap" style="max-width:200px;">@b.CustomerName</td>
+                        <td>@(!string.IsNullOrEmpty(b.District) ? b.District : "-")</td>
+                        <td>@(!string.IsNullOrEmpty(b.Province) ? b.Province : "-")</td>
                         <td class="text-center">
                             <span class="badge bg-info text-dark">@b.Credit วัน</span>
                         </td>
-                        @{
-                            var dueDate = b.BillDate.AddDays(b.Credit);
-                            var aging = (int)(DateTime.Today - b.BillDate).TotalDays;
-                            var agingColor = b.IsFullyPaid ? "success" : (aging > 120 ? "danger" : (aging > 60 ? "warning" : "secondary"));
-                        }
                         <td class="text-center">
                             @if (b.IsFullyPaid)
                             {
                                 <span class="badge bg-success">ชำระแล้ว</span>
                             }
+                            else if (isOverdue120)
+                            {
+                                <span class="badge bg-danger">เกิน @overdueDays วัน</span>
+                            }
+                            else if (isOverdue)
+                            {
+                                <span class="badge bg-warning text-dark">เกิน @overdueDays วัน</span>
+                            }
                             else
                             {
-                                <span class="badge bg-@agingColor text-@(agingColor == "warning" ? "dark" : "white")">@aging วัน</span>
+                                <span class="badge bg-light text-secondary border">ยังไม่ถึงกำหนด</span>
                             }
                         </td>
                         <td class="text-end fw-bold text-success">@b.TotalAmount.ToString("N2")</td>
-                        <td>@b.PoNumber</td>
+                        <td class="text-center">
+                            @if (b.IsFullyPaid)
+                            {
+                                <span class="badge bg-success">ชำระครบแล้ว</span>
+                            }
+                            else if (debtStatus == DebtStatus.BadDebt)
+                            {
+                                <span class="badge bg-danger">หนี้สูญ</span>
+                            }
+                            else if (debtStatus == DebtStatus.Cancelled)
+                            {
+                                <span class="badge bg-dark">ยกเลิกบิล</span>
+                            }
+                            else if (debtStatus == DebtStatus.Installment)
+                            {
+                                <span class="badge bg-primary">ผ่อนชำระ</span>
+                            }
+                            else if (debtStatus == DebtStatus.Postponed)
+                            {
+                                <span class="badge bg-warning text-dark">เลื่อนนัดชำระ</span>
+                            }
+                            else if (debtStatus == DebtStatus.WaitingGoods)
+                            {
+                                <span class="badge bg-info text-dark">รอสินค้า</span>
+                            }
+                            else if (debtStatus == DebtStatus.Delivering)
+                            {
+                                <span class="badge bg-secondary">บิลอยู่จัดส่ง</span>
+                            }
+                            else if (debtStatus == DebtStatus.ReturnPending)
+                            {
+                                <span class="badge bg-danger bg-opacity-75">รอออกใบลดหนี้</span>
+                            }
+                            else if (debtStatus == DebtStatus.ReturnIssued)
+                            {
+                                <span class="badge bg-success bg-opacity-75">ออกใบลดหนี้แล้ว</span>
+                            }
+                            else if (isOverdue120)
+                            {
+                                <span class="badge bg-danger">ค้างชำระ > 120 วัน</span>
+                            }
+                            else if (isOverdue)
+                            {
+                                <span class="badge bg-warning text-dark">เกินกำหนดชำระ</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">รอชำระ</span>
+                            }
+                        </td>
+                        <td><span class="badge bg-light text-dark border">@b.SalesRep</span></td>
                         <td class="text-center actions-col">
                             <a href="/SalesBill/Detail?id=@Uri.EscapeDataString(b.BillNo)" class="btn btn-sm btn-outline-primary shadow-sm" title="ดูบิล">
                                 <i class="bi bi-eye"></i> ดูบิล
