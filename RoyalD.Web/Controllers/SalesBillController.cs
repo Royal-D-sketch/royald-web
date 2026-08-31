@@ -27,7 +27,18 @@ namespace RoyalD.Web.Controllers
             var bills = _db.SalesBills.Where(b => b.CustomerCode == code).ToList();
             return Json(new { bills = bills.Select(b => b.BillNo), debts = debts.Select(d => new { d.BillNo, d.OriginalAmount }) });
         }
-        [AllowAnonymous]
+                [AllowAnonymous]
+        [HttpGet("DumpDebug")]
+        public IActionResult DumpDebug([FromServices] IWebHostEnvironment env)
+        {
+            var debugDir = Path.Combine(env.WebRootPath, "debug");
+            if (!Directory.Exists(debugDir)) return Content("No debug dir");
+            var files = Directory.GetFiles(debugDir);
+            if (files.Length == 0) return Content("No files");
+            var bytes = System.IO.File.ReadAllBytes(files[0]);
+            return File(bytes, "application/octet-stream", Path.GetFileName(files[0]));
+        }
+[AllowAnonymous]
         [HttpGet("CheckAmount")]
         public async Task<IActionResult> CheckAmount()
         {
