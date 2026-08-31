@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using RoyalD.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -44,12 +44,21 @@ namespace RoyalD.Web.Controllers
             return View(data);
         }
         
-        public async Task<IActionResult> PaidHistory([FromServices] AppDbContext db)
+                public async Task<IActionResult> PaidHistory([FromServices] AppDbContext db, string? search)
         {
             var dateLimit = DateTime.Now.AddDays(-120);
-            var data = await db.SalesBills.AsNoTracking()
-                .Where(b => b.IsFullyPaid && b.ReceiptDate >= dateLimit)
-                .ToListAsync();
+            var q = db.SalesBills.AsNoTracking().Where(b => b.IsFullyPaid && b.ReceiptDate >= dateLimit);
+            
+            if (!string.IsNullOrEmpty(search))
+            {
+                q = q.Where(b => b.BillNo.Contains(search) 
+                              || b.CustomerName.Contains(search) 
+                              || b.CustomerCode.Contains(search) 
+                              || (b.ReceiptNo != null && b.ReceiptNo.Contains(search)));
+            }
+            
+            var data = await q.OrderByDescending(b => b.ReceiptDate).ToListAsync();
+            ViewBag.SearchTerm = search;
             return View(data);
         }
 
@@ -82,3 +91,4 @@ namespace RoyalD.Web.Controllers
         }
     }
 }
+

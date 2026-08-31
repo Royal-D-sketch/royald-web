@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -187,19 +187,19 @@ namespace RoyalD.Web.Services
                 _db.OutstandingDebts.RemoveRange(_db.OutstandingDebts.Where(d => d.Status == DebtStatus.Outstanding));
                 await _db.SaveChangesAsync();
 
-                int headerRow = FindHeaderRow(tbl, out var map, "รหัส", "ชื่อ", "บิล", "จำนวนเงิน");
+                int headerRow = FindHeaderRow(tbl, out var map, "เธฃเธซเธฑเธช", "เธเธทเนเธญ", "เธเธดเธฅ", "เธเธณเธเธงเธเน€เธเธดเธ");
                 if (headerRow < 0) headerRow = 3;
 
-                int cCustCode = GetCol(map, "รหัสลูกค้า", "รหัส");
-                int cCustName = GetCol(map, "ชื่อ");
-                int cDistrict = GetCol(map, "อำเภอ");
-                int cProvince = GetCol(map, "จังหวัด");
-                int cBillNo = GetCol(map, "บิล", "เลขที่");
-                int cBillDate = GetCol(map, "วันที่บิล", "วันที่");
-                int cDueDate = GetCol(map, "กำหนดชำระ");
-                int cAmount = GetCol(map, "จำนวนเงิน", "ยอดสุทธิ", "ยอดหนี้");
-                int cCredit = GetCol(map, "เครดิต");
-                int cSalesRep = GetCol(map, "ผู้แทน");
+                int cCustCode = GetCol(map, "เธฃเธซเธฑเธชเธฅเธนเธเธเนเธฒ", "เธฃเธซเธฑเธช");
+                int cCustName = GetCol(map, "เธเธทเนเธญ");
+                int cDistrict = GetCol(map, "เธญเธณเน€เธ เธญ");
+                int cProvince = GetCol(map, "เธเธฑเธเธซเธงเธฑเธ”");
+                int cBillNo = GetCol(map, "เธเธดเธฅ", "เน€เธฅเธเธ—เธตเน");
+                int cBillDate = GetCol(map, "เธงเธฑเธเธ—เธตเนเธเธดเธฅ", "เธงเธฑเธเธ—เธตเน");
+                int cDueDate = GetCol(map, "เธเธณเธซเธเธ”เธเธณเธฃเธฐ");
+                int cAmount = GetCol(map, "เธเธณเธเธงเธเน€เธเธดเธ", "เธขเธญเธ”เธชเธธเธ—เธเธด", "เธขเธญเธ”เธซเธเธตเน");
+                int cCredit = GetCol(map, "เน€เธเธฃเธ”เธดเธ•");
+                int cSalesRep = GetCol(map, "เธเธนเนเนเธ—เธ");
 
                 if (cCustCode < 0) cCustCode = 0;
                 if (cCustName < 0) cCustName = 1;
@@ -223,7 +223,7 @@ namespace RoyalD.Web.Services
                     var colBill = cBillNo >= 0 && cBillNo < tbl.Columns.Count ? row[cBillNo]?.ToString()?.Trim() ?? "" : "";
                     
                     if (string.IsNullOrWhiteSpace(colCust) && string.IsNullOrWhiteSpace(colBill)) continue;
-                    if (colCust.Contains("รวม") || colCust.Contains("ทั้งหมด")) continue;
+                    if (colCust.Contains("เธฃเธงเธก") || colCust.Contains("เธ—เธฑเนเธเธซเธกเธ”")) continue;
 
                     if (!string.IsNullOrEmpty(colCust) && !colCust.Contains("/"))
                     {
@@ -244,7 +244,7 @@ namespace RoyalD.Web.Services
                         if (strParts.Count > 0) dynRep = strParts.Last();
                         if (strParts.Count >= 3) { dynDist = strParts[0]; dynProv = strParts[1]; }
                         else if (strParts.Count == 2) { 
-                            if (strParts[0].Contains("จ.") || strParts[0].Contains("กรุงเทพ")) dynProv = strParts[0];
+                            if (strParts[0].Contains("เธ.") || strParts[0].Contains("เธเธฃเธธเธเน€เธ—เธ")) dynProv = strParts[0];
                             else dynDist = strParts[0];
                         }
 
@@ -267,7 +267,7 @@ namespace RoyalD.Web.Services
                             billNo = row[cBillDate]?.ToString()?.Trim() ?? "";
                     }
 
-                    if (!string.IsNullOrEmpty(billNo) && !billNo.Contains("ยอดยกมา") && !billNo.Contains("ยอดรวม")) {
+                    if (!string.IsNullOrEmpty(billNo) && !billNo.Contains("เธขเธญเธ”เธขเธเธกเธฒ") && !billNo.Contains("เธขเธญเธ”เธฃเธงเธก")) {
                         var billDate = ParseDate(cBillDate >= 0 && cBillDate < tbl.Columns.Count ? row[cBillDate]?.ToString() : "");
                         var dueDate = ParseDate(cDueDate >= 0 && cDueDate < tbl.Columns.Count ? row[cDueDate]?.ToString() : "");
                         var amount = ParseDecimal(cAmount >= 0 && cAmount < tbl.Columns.Count ? row[cAmount]?.ToString() : "");
@@ -361,7 +361,7 @@ namespace RoyalD.Web.Services
                     for (int c = 0; c < tbl.Columns.Count; c++)
                     {
                         var cellVal = row[c]?.ToString()?.Trim() ?? "";
-                        if (cellVal == "รวมทั้งสิ้น")
+                        if (cellVal == "เธฃเธงเธกเธ—เธฑเนเธเธชเธดเนเธ")
                         {
                             decimal amt = 0;
                             if (tbl.Columns.Count > 14) amt = ParseDecimal(row[14]?.ToString());
@@ -416,7 +416,7 @@ namespace RoyalD.Web.Services
                     // Column 16: Sales Representative -> index 15
                     currentSalesRep = tbl.Columns.Count > 15 ? row[15]?.ToString()?.Trim() ?? "" : "";
 
-                    // Phone Number: row 2 containing "โทร." (row immediately following header row)
+                    // Phone Number: row 2 containing "เนเธ—เธฃ." (row immediately following header row)
                     currentPhone = "";
                     if (r + 1 < tbl.Rows.Count)
                     {
@@ -424,9 +424,9 @@ namespace RoyalD.Web.Services
                         for (int c = 0; c < tbl.Columns.Count; c++)
                         {
                             var val = nextRow[c]?.ToString()?.Trim() ?? "";
-                            if (val.Contains("โทร") || val.Contains("โ."))
+                            if (val.Contains("เนเธ—เธฃ") || val.Contains("เน."))
                             {
-                                currentPhone = val.Replace("โทร.", "").Replace("โทร", "").Replace("โ.", "").Trim();
+                                currentPhone = val.Replace("เนเธ—เธฃ.", "").Replace("เนเธ—เธฃ", "").Replace("เน.", "").Trim();
                                 break;
                             }
                         }
@@ -450,35 +450,56 @@ namespace RoyalD.Web.Services
                     decimal qty = 0, price = 0, discount = 0, amt = 0;
                     string unit = "";
 
-                    // Qty is index 10 (Column 11) if numeric, else index 9 (Column 10)
-                    decimal q10 = 0, q9 = 0;
-                    bool hasQty10 = tbl.Columns.Count > 10 && decimal.TryParse(row[10]?.ToString()?.Replace(",", ""), out q10);
-                    bool hasQty9 = tbl.Columns.Count > 9 && decimal.TryParse(row[9]?.ToString()?.Replace(",", ""), out q9);
+                    var rowParts = new List<string>();
+                    for (int i = 1; i < tbl.Columns.Count; i++) {
+                        var val = row[i]?.ToString()?.Trim();
+                        if (!string.IsNullOrWhiteSpace(val)) rowParts.Add(val);
+                    }
 
-                    if (hasQty10)
+                    var nums = new List<decimal>();
+                    foreach (var p in rowParts)
                     {
-                        qty = q10;
-                        unit = tbl.Columns.Count > 11 ? row[11]?.ToString()?.Trim() ?? "" : "";
-                        if (tbl.Columns.Count > 12) price = ParseDecimal(row[12]?.ToString());
-                        if (tbl.Columns.Count > 13) discount = ParseDecimal(row[13]?.ToString()?.Replace("%", ""));
-                        if (tbl.Columns.Count > 14) amt = ParseDecimal(row[14]?.ToString());
+                        if (p.EndsWith("%"))
+                        {
+                            discount = ParseDecimal(p.Replace("%", ""));
+                        }
+                        else if (decimal.TryParse(p.Replace(",", ""), out var d) && !p.Contains("-"))
+                        {
+                            nums.Add(d);
+                        }
                     }
-                    else if (hasQty9)
+
+                    if (nums.Count >= 4)
                     {
-                        qty = q9;
-                        unit = tbl.Columns.Count > 10 ? row[10]?.ToString()?.Trim() ?? "" : "";
-                        if (tbl.Columns.Count > 11) price = ParseDecimal(row[11]?.ToString());
-                        if (tbl.Columns.Count > 12) discount = ParseDecimal(row[12]?.ToString()?.Replace("%", ""));
-                        if (tbl.Columns.Count > 13) amt = ParseDecimal(row[13]?.ToString());
+                        amt = nums[nums.Count - 1];
+                        if (discount == 0) discount = nums[nums.Count - 2];
+                        price = nums[nums.Count - 3];
+                        qty = nums[nums.Count - 4];
                     }
-                    else
+                    else if (nums.Count == 3)
                     {
-                        // Fallback to old format
-                        qty = tbl.Columns.Count > 10 ? ParseDecimal(row[10]?.ToString()) : 0;
-                        unit = tbl.Columns.Count > 11 ? row[11]?.ToString()?.Trim() ?? "" : "";
-                        if (tbl.Columns.Count > 12) price = ParseDecimal(row[12]?.ToString());
-                        if (tbl.Columns.Count > 13) discount = ParseDecimal(row[13]?.ToString()?.Replace("%", ""));
-                        if (tbl.Columns.Count > 14) amt = ParseDecimal(row[14]?.ToString());
+                        amt = nums[2];
+                        price = nums[1];
+                        qty = nums[0];
+                    }
+                    else if (nums.Count == 2)
+                    {
+                        amt = nums[1];
+                        qty = nums[0];
+                    }
+                    else if (nums.Count == 1)
+                    {
+                        amt = nums[0];
+                        qty = 1;
+                    }
+
+                    foreach (var p in rowParts)
+                    {
+                        if (!decimal.TryParse(p.Replace(",", ""), out _) && !p.EndsWith("%") && !p.Contains("-") && p.Length < 20)
+                        {
+                            unit = p;
+                            break;
+                        }
                     }
 
                     if (price == 0 && qty > 0 && amt > 0)
@@ -502,7 +523,7 @@ namespace RoyalD.Web.Services
                     currentItems.Add(item);
                     if (currentTotal == 0)
                     {
-                        currentTotal += amt; // fallback if no "รวมทั้งสิ้น" row has set it yet
+                        currentTotal += amt; // fallback if no "เธฃเธงเธกเธ—เธฑเนเธเธชเธดเนเธ" row has set it yet
                     }
                 }
             }
@@ -534,13 +555,13 @@ namespace RoyalD.Web.Services
             if (tbl == null) return (0, 0);
 
             int matched = 0, notFound = 0;
-            int headerRow = FindHeaderRow(tbl, out var map, "บิล", "ใบเสร็จ", "วันที่รับเงิน");
+            int headerRow = FindHeaderRow(tbl, out var map, "เธเธดเธฅ", "เนเธเน€เธชเธฃเนเธ", "เธงเธฑเธเธ—เธตเนเธฃเธฑเธเน€เธเธดเธ");
             if (headerRow < 0) headerRow = 3;
 
-            int billColIndex = GetCol(map, "บิล", "เลขที่บิล", "เลขที่เอกสาร");
-            int receiptColIndex = GetCol(map, "ใบเสร็จ", "เลขที่ใบเสร็จ");
-            int dateColIndex = GetCol(map, "วันที่รับเงิน", "วันที่");
-            int custColIndex = GetCol(map, "รหัส", "ลูกค้า", "รหัสลูกค้า");
+            int billColIndex = GetCol(map, "เธเธดเธฅ", "เน€เธฅเธเธ—เธตเนเธเธดเธฅ", "เน€เธฅเธเธ—เธตเนเน€เธญเธเธชเธฒเธฃ");
+            int receiptColIndex = GetCol(map, "เนเธเน€เธชเธฃเนเธ", "เน€เธฅเธเธ—เธตเนเนเธเน€เธชเธฃเนเธ");
+            int dateColIndex = GetCol(map, "เธงเธฑเธเธ—เธตเนเธฃเธฑเธเน€เธเธดเธ", "เธงเธฑเธเธ—เธตเน");
+            int custColIndex = GetCol(map, "เธฃเธซเธฑเธช", "เธฅเธนเธเธเนเธฒ", "เธฃเธซเธฑเธชเธฅเธนเธเธเนเธฒ");
 
             if (billColIndex < 0) billColIndex = 2;
             if (receiptColIndex < 0) receiptColIndex = 1;
@@ -642,6 +663,7 @@ namespace RoyalD.Web.Services
         }
     }
 }
+
 
 
 
