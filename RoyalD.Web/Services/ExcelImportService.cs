@@ -118,7 +118,7 @@ namespace RoyalD.Web.Services
             
             int inserted = 0, updated = 0, skipped = 0;
             var billNos = p.Items.Select(b => b.BillNo).Distinct().ToList();
-            var existingBills = await _db.SalesBills.Where(b => billNos.Contains(b.BillNo)).ToDictionaryAsync(b => b.BillNo);
+            var existingBills = await _db.SalesBills.Include(b => b.Items).Where(b => billNos.Contains(b.BillNo)).ToDictionaryAsync(b => b.BillNo);
 
             foreach (var b in p.Items.GroupBy(x => x.BillNo).Select(g => g.First()))
             {
@@ -138,6 +138,9 @@ namespace RoyalD.Web.Services
                         ex.SourceMonth = p.FileType != null && p.FileType.Length > 10 ? p.FileType.Substring(0, 10) : (p.FileType ?? "");
                         
                         ex.PoNumber = b.PoNumber != null && b.PoNumber.Length > 100 ? b.PoNumber.Substring(0, 100) : (b.PoNumber ?? "");
+                        
+                        _db.SalesBillItems.RemoveRange(ex.Items);
+                        ex.Items = b.Items ?? new List<SalesBillItem>();
                         
                         updated++;
                     }
@@ -447,13 +450,6 @@ namespace RoyalD.Web.Services
                     decimal qty = 0, price = 0, discount = 0, amt = 0;
                     string unit = "";
 
-                    // Price is always index 12 (Column 13)
-                    if (tbl.Columns.Count > 12) price = ParseDecimal(row[12]?.ToString());
-                    // Discount is always index 13 (Column 14)
-                    if (tbl.Columns.Count > 13) discount = ParseDecimal(row[13]?.ToString()?.Replace("%", ""));
-                    // Amount is always index 14 (Column 15)
-                    if (tbl.Columns.Count > 14) amt = ParseDecimal(row[14]?.ToString());
-
                     // Qty is index 10 (Column 11) if numeric, else index 9 (Column 10)
                     decimal q10 = 0, q9 = 0;
                     bool hasQty10 = tbl.Columns.Count > 10 && decimal.TryParse(row[10]?.ToString()?.Replace(",", ""), out q10);
@@ -463,18 +459,26 @@ namespace RoyalD.Web.Services
                     {
                         qty = q10;
                         unit = tbl.Columns.Count > 11 ? row[11]?.ToString()?.Trim() ?? "" : "";
+                        if (tbl.Columns.Count > 12) price = ParseDecimal(row[12]?.ToString());
+                        if (tbl.Columns.Count > 13) discount = ParseDecimal(row[13]?.ToString()?.Replace("%", ""));
+                        if (tbl.Columns.Count > 14) amt = ParseDecimal(row[14]?.ToString());
                     }
                     else if (hasQty9)
                     {
                         qty = q9;
-                        string u11 = tbl.Columns.Count > 11 ? row[11]?.ToString()?.Trim() ?? "" : "";
-                        string u10 = tbl.Columns.Count > 10 ? row[10]?.ToString()?.Trim() ?? "" : "";
-                        unit = !string.IsNullOrEmpty(u11) ? u11 : u10;
+                        unit = tbl.Columns.Count > 10 ? row[10]?.ToString()?.Trim() ?? "" : "";
+                        if (tbl.Columns.Count > 11) price = ParseDecimal(row[11]?.ToString());
+                        if (tbl.Columns.Count > 12) discount = ParseDecimal(row[12]?.ToString()?.Replace("%", ""));
+                        if (tbl.Columns.Count > 13) amt = ParseDecimal(row[13]?.ToString());
                     }
                     else
                     {
+                        // Fallback to old format
                         qty = tbl.Columns.Count > 10 ? ParseDecimal(row[10]?.ToString()) : 0;
                         unit = tbl.Columns.Count > 11 ? row[11]?.ToString()?.Trim() ?? "" : "";
+                        if (tbl.Columns.Count > 12) price = ParseDecimal(row[12]?.ToString());
+                        if (tbl.Columns.Count > 13) discount = ParseDecimal(row[13]?.ToString()?.Replace("%", ""));
+                        if (tbl.Columns.Count > 14) amt = ParseDecimal(row[14]?.ToString());
                     }
 
                     if (price == 0 && qty > 0 && amt > 0)

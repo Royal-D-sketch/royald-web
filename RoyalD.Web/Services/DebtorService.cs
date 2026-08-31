@@ -161,7 +161,7 @@ namespace RoyalD.Web.Services
             }
 
             if (!string.IsNullOrEmpty(search))
-                q = q.Where(d => d.CustomerName.Contains(search) || d.BillNo.Contains(search) || d.CustomerCode.Contains(search));
+                q = q.Where(d => d.CustomerName.Contains(search) || d.BillNo.Contains(search) || d.CustomerCode.Contains(search) || (d.ReceiptNo != null && d.ReceiptNo.Contains(search)));
 
             if (!string.IsNullOrEmpty(credit))
             {
@@ -198,7 +198,7 @@ namespace RoyalD.Web.Services
             }
 
             if (!string.IsNullOrEmpty(search))
-                q = q.Where(d => d.CustomerName.Contains(search) || d.BillNo.Contains(search) || d.CustomerCode.Contains(search));
+                q = q.Where(d => d.CustomerName.Contains(search) || d.BillNo.Contains(search) || d.CustomerCode.Contains(search) || (d.ReceiptNo != null && d.ReceiptNo.Contains(search)));
 
             var list = await q.OrderByDescending(d => d.FullyPaidDate ?? d.BillDate).ToListAsync();
             
@@ -236,7 +236,7 @@ namespace RoyalD.Web.Services
             }
 
             if (!string.IsNullOrEmpty(search))
-                q = q.Where(d => d.CustomerName.Contains(search) || d.BillNo.Contains(search) || d.CustomerCode.Contains(search));
+                q = q.Where(d => d.CustomerName.Contains(search) || d.BillNo.Contains(search) || d.CustomerCode.Contains(search) || (d.ReceiptNo != null && d.ReceiptNo.Contains(search)));
 
             var list = await q.OrderByDescending(d => d.CancelledDate ?? d.BillDate).ToListAsync();
             
@@ -385,3 +385,4 @@ namespace RoyalD.Web.Services
         }
     }
 }
+
