@@ -27,6 +27,14 @@ namespace RoyalD.Web.Controllers
             var bills = _db.SalesBills.Where(b => b.CustomerCode == code).ToList();
             return Json(new { bills = bills.Select(b => b.BillNo), debts = debts.Select(d => new { d.BillNo, d.OriginalAmount }) });
         }
+        [AllowAnonymous]
+        [HttpGet("CheckAmount")]
+        public async Task<IActionResult> CheckAmount()
+        {
+            var debts = _db.OutstandingDebts.Where(d => d.OriginalAmount == 3069 || d.RemainingAmount == 3069).ToList();
+            var bills = _db.SalesBills.Where(b => b.TotalAmount == 3069).ToList();
+            return Json(new { bills = bills.Select(b => new { b.BillNo, b.CustomerCode }), debts = debts.Select(d => new { d.BillNo, d.CustomerCode, d.OriginalAmount }) });
+        }
 [AllowAnonymous]
         [HttpGet("DeleteBillEndpoint/{billNo}")]
         public async Task<IActionResult> DeleteBillEndpoint(string billNo)
