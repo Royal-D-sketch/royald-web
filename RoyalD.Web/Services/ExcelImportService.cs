@@ -444,23 +444,39 @@ namespace RoyalD.Web.Services
                     decimal qty = 0, price = 0, discount = 0, amt = 0;
                     string unit = "";
 
-                    // Let's use our dynamic off-by-one shifting protection!
-                    // If Column 11 (index 10) is numeric, then Qty is in index 10
-                    if (tbl.Columns.Count > 10 && decimal.TryParse(row[10]?.ToString()?.Replace(",", ""), out decimal qty11))
+                    // Price is always index 12 (Column 13)
+                    if (tbl.Columns.Count > 12) price = ParseDecimal(row[12]?.ToString());
+                    // Discount is always index 13 (Column 14)
+                    if (tbl.Columns.Count > 13) discount = ParseDecimal(row[13]?.ToString()?.Replace("%", ""));
+                    // Amount is always index 14 (Column 15)
+                    if (tbl.Columns.Count > 14) amt = ParseDecimal(row[14]?.ToString());
+
+                    // Qty is index 10 (Column 11) if numeric, else index 9 (Column 10)
+                    decimal q10 = 0, q9 = 0;
+                    bool hasQty10 = tbl.Columns.Count > 10 && decimal.TryParse(row[10]?.ToString()?.Replace(",", ""), out q10);
+                    bool hasQty9 = tbl.Columns.Count > 9 && decimal.TryParse(row[9]?.ToString()?.Replace(",", ""), out q9);
+
+                    if (hasQty10)
                     {
-                        qty = qty11;
+                        qty = q10;
                         unit = tbl.Columns.Count > 11 ? row[11]?.ToString()?.Trim() ?? "" : "";
-                        price = tbl.Columns.Count > 12 ? ParseDecimal(row[12]?.ToString()) : 0;
-                        discount = tbl.Columns.Count > 13 ? ParseDecimal(row[13]?.ToString()?.Replace("%", "")) : 0;
-                        amt = tbl.Columns.Count > 14 ? ParseDecimal(row[14]?.ToString()) : 0;
                     }
-                    else if (tbl.Columns.Count > 11 && decimal.TryParse(row[11]?.ToString()?.Replace(",", ""), out decimal qty12))
+                    else if (hasQty9)
                     {
-                        qty = qty12;
-                        unit = tbl.Columns.Count > 12 ? row[12]?.ToString()?.Trim() ?? "" : "";
-                        price = tbl.Columns.Count > 13 ? ParseDecimal(row[13]?.ToString()) : 0;
-                        discount = tbl.Columns.Count > 14 ? ParseDecimal(row[14]?.ToString()?.Replace("%", "")) : 0;
-                        amt = tbl.Columns.Count > 15 ? ParseDecimal(row[15]?.ToString()) : 0;
+                        qty = q9;
+                        string u11 = tbl.Columns.Count > 11 ? row[11]?.ToString()?.Trim() ?? "" : "";
+                        string u10 = tbl.Columns.Count > 10 ? row[10]?.ToString()?.Trim() ?? "" : "";
+                        unit = !string.IsNullOrEmpty(u11) ? u11 : u10;
+                    }
+                    else
+                    {
+                        qty = tbl.Columns.Count > 10 ? ParseDecimal(row[10]?.ToString()) : 0;
+                        unit = tbl.Columns.Count > 11 ? row[11]?.ToString()?.Trim() ?? "" : "";
+                    }
+
+                    if (price == 0 && qty > 0 && amt > 0)
+                    {
+                        price = Math.Round(amt / qty, 2);
                     }
 
                     if (qty == 0 && amt == 0) continue; // skip non-product lines
