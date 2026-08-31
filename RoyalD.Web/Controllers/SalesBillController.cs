@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -19,7 +19,15 @@ namespace RoyalD.Web.Controllers
             _cache = cache;
         }
 
-        [AllowAnonymous]
+                [AllowAnonymous]
+        [HttpGet("CheckCustomer/{code}")]
+        public async Task<IActionResult> CheckCustomer(string code)
+        {
+            var debts = _db.OutstandingDebts.Where(d => d.CustomerCode == code).ToList();
+            var bills = _db.SalesBills.Where(b => b.CustomerCode == code).ToList();
+            return Json(new { bills = bills.Select(b => b.BillNo), debts = debts.Select(d => new { d.BillNo, d.OriginalAmount }) });
+        }
+[AllowAnonymous]
         [HttpGet("DeleteBillEndpoint/{billNo}")]
         public async Task<IActionResult> DeleteBillEndpoint(string billNo)
         {
