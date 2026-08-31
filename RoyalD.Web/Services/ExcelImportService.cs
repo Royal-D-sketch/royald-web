@@ -175,9 +175,10 @@ namespace RoyalD.Web.Services
         public async Task<int> ImportOutstandingDebtsAsync(Stream stream, string fileName = "")
         {
             int count = 0;
-            using var reader = fileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase) 
-                ? ExcelReaderFactory.CreateCsvReader(stream) 
-                : ExcelReaderFactory.CreateReader(stream);
+            var conf = new ExcelReaderConfiguration { FallbackEncoding = System.Text.Encoding.GetEncoding(874) };
+              using var reader = fileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase) 
+                  ? ExcelReaderFactory.CreateCsvReader(stream, conf) 
+                  : ExcelReaderFactory.CreateReader(stream, conf);
             var ds = reader.AsDataSet(new ExcelDataSetConfiguration { ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = false } });
             var tbl = ds.Tables[0];
             if (tbl == null) return 0;
@@ -311,9 +312,10 @@ namespace RoyalD.Web.Services
         public async Task<ImportPreviewResult> PreviewSalesBillAsync(Stream stream, string sourceMonth, bool isCurrentMonth, string fileName)
         {
             var result = new ImportPreviewResult { FileType = sourceMonth, FileName = fileName, IsCurrentMonth = isCurrentMonth };
-            using var reader = fileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase) 
-                ? ExcelReaderFactory.CreateCsvReader(stream) 
-                : ExcelReaderFactory.CreateReader(stream);
+            var conf = new ExcelReaderConfiguration { FallbackEncoding = System.Text.Encoding.GetEncoding(874) };
+              using var reader = fileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase) 
+                  ? ExcelReaderFactory.CreateCsvReader(stream, conf) 
+                  : ExcelReaderFactory.CreateReader(stream, conf);
             var ds = reader.AsDataSet(new ExcelDataSetConfiguration { ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = false } });
             var tbl = ds.Tables[0];
             if (tbl == null || tbl.Rows.Count < 4) return result;
@@ -522,9 +524,10 @@ namespace RoyalD.Web.Services
 
                 public async Task<(int matched, int notFound)> ImportReceiptMatchAsync(Stream stream, string fileName = "")
         {
-            using var reader = fileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase) 
-                ? ExcelReaderFactory.CreateCsvReader(stream) 
-                : ExcelReaderFactory.CreateReader(stream);
+            var conf = new ExcelReaderConfiguration { FallbackEncoding = System.Text.Encoding.GetEncoding(874) };
+              using var reader = fileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase) 
+                  ? ExcelReaderFactory.CreateCsvReader(stream, conf) 
+                  : ExcelReaderFactory.CreateReader(stream, conf);
             var ds = reader.AsDataSet(new ExcelDataSetConfiguration { ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = false } });
             var tbl = ds.Tables[0];
             if (tbl == null) return (0, 0);
