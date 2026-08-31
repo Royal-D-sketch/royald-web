@@ -62,7 +62,7 @@ namespace RoyalD.Web.Services
             var p = await PreviewSalesBillAsync(stream, sourceMonth, isCurrentMonth, fileName);
             int inserted = 0, updated = 0;
             var billNos = p.Items.Select(b => b.BillNo).Distinct().ToList();
-            var existingBills = await _db.SalesBills.Where(b => billNos.Contains(b.BillNo)).ToDictionaryAsync(b => b.BillNo);
+            var existingBills = await _db.SalesBills.Include(b => b.Items).Where(b => billNos.Contains(b.BillNo)).ToDictionaryAsync(b => b.BillNo);
 
             foreach (var b in p.Items.GroupBy(x => x.BillNo).Select(g => g.First()))
             {
@@ -505,7 +505,7 @@ namespace RoyalD.Web.Services
             CollectCurrentBill();
             
             var billNos = parsedBills.Select(b => b.BillNo).Distinct().ToList();
-            var existingBills = await _db.SalesBills.Where(b => billNos.Contains(b.BillNo)).ToDictionaryAsync(b => b.BillNo);
+            var existingBills = await _db.SalesBills.Include(b => b.Items).Where(b => billNos.Contains(b.BillNo)).ToDictionaryAsync(b => b.BillNo);
 
             foreach (var b in parsedBills)
             {
