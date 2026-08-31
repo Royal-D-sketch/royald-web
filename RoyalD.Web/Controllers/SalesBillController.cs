@@ -19,6 +19,22 @@ namespace RoyalD.Web.Controllers
             _cache = cache;
         }
 
+        [HttpGet("DeleteBillEndpoint/{billNo}")]
+        public async Task<IActionResult> DeleteBillEndpoint(string billNo)
+        {
+            var debts = _db.OutstandingDebts.Where(d => d.BillNo == billNo);
+            _db.OutstandingDebts.RemoveRange(debts);
+
+            var items = _db.SalesBillItems.Where(i => i.BillNo == billNo);
+            _db.SalesBillItems.RemoveRange(items);
+
+            var bills = _db.SalesBills.Where(b => b.BillNo == billNo);
+            _db.SalesBills.RemoveRange(bills);
+
+            await _db.SaveChangesAsync();
+            return Content($"Deleted {bills.Count()} bills, {debts.Count()} debts, {items.Count()} items for {billNo}");
+        }
+
         public async Task<IActionResult> Index(
             string? search, 
             string? region, 
