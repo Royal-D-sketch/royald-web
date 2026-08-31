@@ -19,6 +19,7 @@ namespace RoyalD.Web.Controllers
             _cache = cache;
         }
 
+        [AllowAnonymous]
         [HttpGet("DeleteBillEndpoint/{billNo}")]
         public async Task<IActionResult> DeleteBillEndpoint(string billNo)
         {
