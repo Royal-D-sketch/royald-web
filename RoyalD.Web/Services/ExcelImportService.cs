@@ -450,59 +450,34 @@ namespace RoyalD.Web.Services
                     decimal qty = 0, price = 0, discount = 0, amt = 0;
                     string unit = "";
 
-                    var rowParts = new List<string>();
-                    for (int i = 1; i < tbl.Columns.Count; i++) {
-                        var val = row[i]?.ToString()?.Trim();
-                        if (!string.IsNullOrWhiteSpace(val)) rowParts.Add(val);
-                    }
-
-                    var nums = new List<decimal>();
-                    foreach (var p in rowParts)
+                    int lastIdx = -1;
+                    for (int i = tbl.Columns.Count - 1; i >= 1; i--)
                     {
-                        if (p.EndsWith("%"))
+                        if (!string.IsNullOrWhiteSpace(row[i]?.ToString()))
                         {
-                            discount = ParseDecimal(p.Replace("%", ""));
-                        }
-                        else if (decimal.TryParse(p.Replace(",", ""), out var d) && !p.Contains("-"))
-                        {
-                            nums.Add(d);
-                        }
-                    }
-
-                    if (nums.Count >= 4)
-                    {
-                        amt = nums[nums.Count - 1];
-                        if (discount == 0) discount = nums[nums.Count - 2];
-                        price = nums[nums.Count - 3];
-                        qty = nums[nums.Count - 4];
-                    }
-                    else if (nums.Count == 3)
-                    {
-                        amt = nums[2];
-                        price = nums[1];
-                        qty = nums[0];
-                    }
-                    else if (nums.Count == 2)
-                    {
-                        amt = nums[1];
-                        qty = nums[0];
-                    }
-                    else if (nums.Count == 1)
-                    {
-                        amt = nums[0];
-                        qty = 1;
-                    }
-
-                    foreach (var p in rowParts)
-                    {
-                        if (!decimal.TryParse(p.Replace(",", ""), out _) && !p.EndsWith("%") && !p.Contains("-") && p.Length < 20)
-                        {
-                            unit = p;
+                            lastIdx = i;
                             break;
                         }
                     }
 
-                    if (price == 0 && qty > 0 && amt > 0)
+                    if (lastIdx >= 4)
+                    {
+                        amt = ParseDecimal(row[lastIdx]?.ToString());
+                        string rawDiscount = row[lastIdx - 1]?.ToString()?.Trim() ?? "";
+                        if (rawDiscount.EndsWith("%"))
+                        {
+                            discount = ParseDecimal(rawDiscount.Replace("%", ""));
+                        }
+                        else
+                        {
+                            discount = ParseDecimal(rawDiscount);
+                        }
+                        price = ParseDecimal(row[lastIdx - 2]?.ToString());
+                        unit = row[lastIdx - 3]?.ToString()?.Trim() ?? "";
+                        qty = ParseDecimal(row[lastIdx - 4]?.ToString());
+                    }
+
+                    if (qty > 0 && price == 0 && amt > 0)
                     {
                         price = Math.Round(amt / qty, 2);
                     }
