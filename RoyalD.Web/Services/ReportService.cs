@@ -71,6 +71,7 @@ namespace RoyalD.Web.Services
         public string ProductCode { get; set; } = string.Empty;
         public string ProductName { get; set; } = string.Empty;
         public decimal Price { get; set; }
+        public int Credit { get; set; }
         public string Unit { get; set; } = string.Empty;
         public decimal TotalQty { get; set; }
         public decimal AvgPrice => TotalQty > 0 ? Math.Round(TotalAmount / TotalQty, 2) : 0m;
@@ -830,8 +831,7 @@ namespace RoyalD.Web.Services
                         ProductCode = g.Key.Code ?? "",
                         ProductName = g.Key.Name ?? "",
                         Price = g.Key.Price,
-                        Qty = g.Sum(x => x.Qty),
-                        TotalAmount = g.Sum(x => x.Amount)
+                        Credit = g.First().SalesBill.Credit
                     };
                 })
                 .OrderBy(x => x.CustomerName).ThenBy(x => x.ProductName)
@@ -847,7 +847,7 @@ namespace RoyalD.Web.Services
             var ws = pkg.Workbook.Worksheets.Add("CustomerSales");
 
             // Headers
-            var headers = new[] { "ลำดับ", "เดือน", "รหัสลูกค้า", "ชื่อลูกค้า", "รหัสสินค้า : ชื่อสินค้า", "ราคาต่อหน่วย", "ชื่อผู้แทนขาย" };
+            var headers = new[] { "ลำดับ", "เดือน", "รหัสลูกค้า", "ชื่อลูกค้า", "รหัสสินค้า : ชื่อสินค้า", "ราคาต่อหน่วย", "เครดิต(วัน)", "ชื่อผู้แทนขาย" };
             for (int i = 0; i < headers.Length; i++)
             {
                 ws.Cells[1, i + 1].Value = headers[i];
@@ -864,7 +864,8 @@ namespace RoyalD.Web.Services
                 ws.Cells[row, 4].Value = item.CustomerName;
                 ws.Cells[row, 5].Value = item.ProductCode + " : " + item.ProductName;
                 ws.Cells[row, 6].Value = item.Price;
-                ws.Cells[row, 7].Value = item.SalesRep;
+                ws.Cells[row, 7].Value = item.Credit;
+                ws.Cells[row, 8].Value = item.SalesRep;
                 row++;
             }
 
@@ -893,8 +894,10 @@ namespace RoyalD.Web.Services
         public string ProductCode { get; set; } = "";
         public string ProductName { get; set; } = "";
         public decimal Price { get; set; }
+        public int Credit { get; set; }
         public decimal Qty { get; set; }
         public string Unit { get; set; } = "";
         public decimal TotalAmount { get; set; }
     }
 }
+

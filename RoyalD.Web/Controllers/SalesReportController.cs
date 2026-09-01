@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RoyalD.Web.Services;
 
@@ -80,13 +80,13 @@ namespace RoyalD.Web.Controllers
         {
             var data = await _svc.GetCustomerProductReportAsync(rep, month, date, q);
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("ลำดับ,เดือน,รหัสลูกค้า,ชื่อลูกค้า,รหัสสินค้า,ชื่อสินค้า,ราคาต่อหน่วย,ชื่อผู้แทนขาย");
+            sb.AppendLine("เธฅเธณเธ”เธฑเธ,เน€เธ”เธทเธญเธ,เธฃเธซเธฑเธชเธฅเธนเธเธเนเธฒ,เธเธทเนเธญเธฅเธนเธเธเนเธฒ,เธฃเธซเธฑเธชเธชเธดเธเธเนเธฒ,เธเธทเนเธญเธชเธดเธเธเนเธฒ,เธฃเธฒเธเธฒเธ•เนเธญเธซเธเนเธงเธข,เธเธทเนเธญเธเธนเนเนเธ—เธเธเธฒเธข");
             int idx = 1;
             foreach (var item in data.Items)
             {
                 var custName = (item.CustomerName ?? "").Replace("\"", "\"\"");
                 var prodName = (item.ProductName ?? "").Replace("\"", "\"\"");
-                sb.AppendLine($"{idx++},{item.Month},{item.CustomerCode},\"{custName}\",{item.ProductCode},\"{prodName}\",{item.Price},{item.SalesRep}");
+                sb.AppendLine($"{idx++},{item.Month},{item.CustomerCode},\"{custName}\",{item.ProductCode},\"{prodName}\",{item.Price},{item.Credit},{item.SalesRep}");
             }
             // Use UTF8 with BOM so Excel reads Thai correctly
             var utf8Bom = new byte[] { 0xEF, 0xBB, 0xBF };
@@ -99,3 +99,4 @@ namespace RoyalD.Web.Controllers
         }
     }
 }
+

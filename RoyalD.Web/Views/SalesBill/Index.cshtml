@@ -1,7 +1,7 @@
-@using RoyalD.Web.Models
+﻿@using RoyalD.Web.Models
 @model List<RoyalD.Web.Models.SalesBill>
 @{
-    ViewData["Title"] = "รายการบิลขาย";
+    ViewData["Title"] = "เธฃเธฒเธขเธเธฒเธฃเธเธดเธฅเธเธฒเธข";
     var today = DateTime.Today;
     var allProvincesMap = ViewBag.AllProvincesMap as Dictionary<string, List<string>> ?? new();
     var regions = ViewBag.Regions as List<string> ?? new();
@@ -32,7 +32,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3 no-print">
     <div>
         <h4 class="mb-0 fw-bold" style="color:#0f766e;">
-            <i class="bi bi-receipt text-primary me-2"></i> รายการบิลขาย (Sales Bills)
+            <i class="bi bi-receipt text-primary me-2"></i> เธฃเธฒเธขเธเธฒเธฃเธเธดเธฅเธเธฒเธข (Sales Bills)
         </h4>
     </div>
     <div class="d-flex gap-2">
@@ -45,10 +45,10 @@
                 <i class="bi bi-filetype-csv"></i> Export CSV
             </a>
             <button onclick="window.print()" class="btn btn-outline-danger btn-sm no-print shadow-sm">
-                <i class="bi bi-file-earmark-pdf"></i> พิมพ์ / PDF
+                <i class="bi bi-file-earmark-pdf"></i> เธเธดเธกเธเน / PDF
             </button>
         }
-        <span class="badge bg-primary fs-6 align-self-center">@ViewBag.TotalCount?.ToString("N0") รายการ</span>
+        <span class="badge bg-primary fs-6 align-self-center">@ViewBag.TotalCount?.ToString("N0") เธฃเธฒเธขเธเธฒเธฃ</span>
     </div>
 </div>
 
@@ -57,43 +57,43 @@
     <form method="get" class="row g-2 align-items-end" id="filter-form">
         
         <div class="col-md-2">
-            <label class="form-label small fw-bold text-primary mb-1">🏷️ สถานะบิล</label>
+            <label class="form-label small fw-bold text-primary mb-1">๐ท๏ธ เธชเธ–เธฒเธเธฐเธเธดเธฅ</label>
             <select name="status" class="form-select form-select-sm">
-                <option value="">-- ทุกสถานะบิล --</option>
-                <option value="paid" selected="@(ViewBag.Status == "paid")">✅ ชำระครบแล้ว</option>
-                <option value="unpaid" selected="@(ViewBag.Status == "unpaid")">⏳ ค้างชำระทั้งหมด</option>
-                <option value="overdue120" selected="@(ViewBag.Status == "overdue120")">🚨 ค้างเกิน 120 วัน</option>
-                <option value="installment" selected="@(ViewBag.Status == "installment")">💳 ผ่อนชำระ</option>
-                <option value="postponed" selected="@(ViewBag.Status == "postponed")">📅 เลื่อนนัดชำระ</option>
-                <option value="waiting_goods" selected="@(ViewBag.Status == "waiting_goods")">📦 รอสินค้า / ของขาด</option>
-                <option value="delivering" selected="@(ViewBag.Status == "delivering")">🚚 บิลอยู่จัดส่ง</option>
-                <option value="return_pending" selected="@(ViewBag.Status == "return_pending")">🔄 รอออกใบลดหนี้</option>
-                <option value="return_issued" selected="@(ViewBag.Status == "return_issued")">📝 ออกใบลดหนี้แล้ว</option>
-                <option value="bad_debt" selected="@(ViewBag.Status == "bad_debt")">⚠️ หนี้สูญ</option>
-                <option value="cancelled" selected="@(ViewBag.Status == "cancelled")">❌ ยกเลิกบิล</option>
+                <option value="">-- เธ—เธธเธเธชเธ–เธฒเธเธฐเธเธดเธฅ --</option>
+                <option value="paid" selected="@(ViewBag.Status == "paid")">โ… เธเธณเธฃเธฐเธเธฃเธเนเธฅเนเธง</option>
+                <option value="unpaid" selected="@(ViewBag.Status == "unpaid")">โณ เธเนเธฒเธเธเธณเธฃเธฐเธ—เธฑเนเธเธซเธกเธ”</option>
+                <option value="overdue120" selected="@(ViewBag.Status == "overdue120")">๐จ เธเนเธฒเธเน€เธเธดเธ 120 เธงเธฑเธ</option>
+                <option value="installment" selected="@(ViewBag.Status == "installment")">๐’ณ เธเนเธญเธเธเธณเธฃเธฐ</option>
+                <option value="postponed" selected="@(ViewBag.Status == "postponed")">๐“… เน€เธฅเธทเนเธญเธเธเธฑเธ”เธเธณเธฃเธฐ</option>
+                <option value="waiting_goods" selected="@(ViewBag.Status == "waiting_goods")">๐“ฆ เธฃเธญเธชเธดเธเธเนเธฒ / เธเธญเธเธเธฒเธ”</option>
+                <option value="delivering" selected="@(ViewBag.Status == "delivering")">๐ เธเธดเธฅเธญเธขเธนเนเธเธฑเธ”เธชเนเธ</option>
+                <option value="return_pending" selected="@(ViewBag.Status == "return_pending")">๐” เธฃเธญเธญเธญเธเนเธเธฅเธ”เธซเธเธตเน</option>
+                <option value="return_issued" selected="@(ViewBag.Status == "return_issued")">๐“ เธญเธญเธเนเธเธฅเธ”เธซเธเธตเนเนเธฅเนเธง</option>
+                <option value="bad_debt" selected="@(ViewBag.Status == "bad_debt")">โ ๏ธ เธซเธเธตเนเธชเธนเธ</option>
+                <option value="cancelled" selected="@(ViewBag.Status == "cancelled")">โ เธขเธเน€เธฅเธดเธเธเธดเธฅ</option>
             </select>
         </div>
         <div class="col-md-2">
-            <label class="form-label small fw-bold text-primary mb-1">🔍 ค้นหาบิล/ลูกค้า</label>
-            <input type="text" name="search" class="form-control form-control-sm" placeholder="รหัสลูกค้า / เลขที่บิล / ชื่อ..." value="@ViewBag.Search"/>
+            <label class="form-label small fw-bold text-primary mb-1">๐” เธเนเธเธซเธฒเธเธดเธฅ/เธฅเธนเธเธเนเธฒ</label>
+            <input type="text" name="search" class="form-control form-control-sm" placeholder="เธฃเธซเธฑเธชเธฅเธนเธเธเนเธฒ / เน€เธฅเธเธ—เธตเนเธเธดเธฅ / เธเธทเนเธญ..." value="@ViewBag.Search"/>
         </div>
         <div class="col-md-2">
-            <label class="form-label small fw-bold text-primary mb-1">🛒 ค้นหา PO Number</label>
+            <label class="form-label small fw-bold text-primary mb-1">๐’ เธเนเธเธซเธฒ PO Number</label>
             <input type="text" name="poSearch" class="form-control form-control-sm" placeholder="PO Number..." value="@ViewBag.PoSearch"/>
         </div>
         <div class="col-md-2">
-            <label class="form-label small fw-bold text-primary mb-1">📅 วันที่เริ่มต้น</label>
+            <label class="form-label small fw-bold text-primary mb-1">๐“… เธงเธฑเธเธ—เธตเนเน€เธฃเธดเนเธกเธ•เนเธ</label>
             <input type="date" name="startDate" class="form-control form-control-sm" value="@ViewBag.StartDate" />
         </div>
         <div class="col-md-2">
-            <label class="form-label small fw-bold text-primary mb-1">📅 วันที่สิ้นสุด</label>
+            <label class="form-label small fw-bold text-primary mb-1">๐“… เธงเธฑเธเธ—เธตเนเธชเธดเนเธเธชเธธเธ”</label>
             <input type="date" name="endDate" class="form-control form-control-sm" value="@ViewBag.EndDate" />
         </div>
         <div class="col-md-2">
-            <label class="form-label small fw-bold text-primary mb-1">🗺️ ภาค/ภูมิภาค</label>
+            <label class="form-label small fw-bold text-primary mb-1">๐—บ๏ธ เธ เธฒเธ/เธ เธนเธกเธดเธ เธฒเธ</label>
             <select name="region" id="region-select" class="form-select form-select-sm" onchange="onRegionChange()" @(isLockedRegion ? "disabled" : "")>
                 @if (!isLockedRegion) {
-                    <option value="">-- ทุกภาค --</option>
+                    <option value="">-- เธ—เธธเธเธ เธฒเธ --</option>
                 }
                 @foreach (var reg in regions) {
                     if (reg == ViewBag.SelectedRegion) { <option value="@reg" selected>@reg</option> }
@@ -103,7 +103,7 @@
             @if (isLockedRegion) { <input type="hidden" name="region" value="@ViewBag.SelectedRegion" /> }
         </div>
         <div class="col-md-2">
-            <label class="form-label small fw-bold text-primary mb-1">📍 จังหวัด</label>
+            <label class="form-label small fw-bold text-primary mb-1">๐“ เธเธฑเธเธซเธงเธฑเธ”</label>
             @if (isLockedProvince && provinces.Count == 1)
             {
                 <input type="text" class="form-control form-control-sm bg-light fw-bold text-primary" value="@ViewBag.SelectedProvince" readonly />
@@ -112,9 +112,9 @@
             else
             {
                 <input type="text" list="salesBillProvinceList" name="province" id="province-select" class="form-control form-control-sm"
-                       placeholder="ทุกจังหวัด" value="@ViewBag.SelectedProvince" />
+                       placeholder="เธ—เธธเธเธเธฑเธเธซเธงเธฑเธ”" value="@ViewBag.SelectedProvince" />
                 <datalist id="salesBillProvinceList">
-                    <option value="">-- ทุกจังหวัด --</option>
+                    <option value="">-- เธ—เธธเธเธเธฑเธเธซเธงเธฑเธ” --</option>
                     @foreach (var p in provinces) {
                         <option value="@p">@p</option>
                     }
@@ -124,7 +124,7 @@
         @if (ViewBag.IsRestricted == true)
         {
             <div class="col-md-2">
-                <label class="form-label small fw-bold text-primary mb-1">👔 ผู้แทนขาย</label>
+                <label class="form-label small fw-bold text-primary mb-1">๐‘” เธเธนเนเนเธ—เธเธเธฒเธข</label>
                 <input type="text" class="form-control form-control-sm bg-light fw-bold text-primary" value="@ViewBag.AssignedSalesRep" readonly />
                 <input type="hidden" name="salesRep" value="@ViewBag.AssignedSalesRep" />
             </div>
@@ -132,9 +132,9 @@
         else
         {
             <div class="col-md-2">
-                <label class="form-label small fw-bold text-primary mb-1">👔 ผู้แทนขาย</label>
+                <label class="form-label small fw-bold text-primary mb-1">๐‘” เธเธนเนเนเธ—เธเธเธฒเธข</label>
                 <select name="salesRep" class="form-select form-select-sm select2-searchable">
-                      <option value="">-- ทุกผู้แทน --</option>
+                      <option value="">-- เธ—เธธเธเธเธนเนเนเธ—เธ --</option>
                       @foreach (var s in (ViewBag.SalesReps as List<string> ?? new())) {
                           if (s == ViewBag.SalesRep) { <option value="@s" selected>@s</option> }
                           else { <option value="@s">@s</option> }
@@ -143,20 +143,14 @@
             </div>
         }
         <div class="col-md-2">
-            <label class="form-label small fw-bold text-primary mb-1">📅 แฟ้มเดือน</label>
-            <select name="month" class="form-select form-select-sm select2-searchable">
-                <option value="">-- ทุกเดือน --</option>
-                @foreach (var m in (ViewBag.Months as List<string> ?? new())) {
-                    if (m == ViewBag.Month) { <option value="@m" selected>@m</option> }
-                    else { <option value="@m">@m</option> }
-                }
-            </select>
+            <label class="form-label small fw-bold text-primary mb-1">๐“… เนเธเนเธกเน€เธ”เธทเธญเธ</label>
+            <input type="month" name="month" class="form-control form-control-sm" value="@ViewBag.Month" />
         </div>
         <div class="col-md-2 d-flex gap-1">
             <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">
-                <i class="bi bi-search"></i> ค้นหา
+                <i class="bi bi-search"></i> เธเนเธเธซเธฒ
             </button>
-            <a href="/SalesBill" class="btn btn-outline-secondary btn-sm" title="ล้างตัวกรอง">
+            <a href="/SalesBill" class="btn btn-outline-secondary btn-sm" title="เธฅเนเธฒเธเธ•เธฑเธงเธเธฃเธญเธ">
                 <i class="bi bi-x-circle"></i>
             </a>
         </div>
@@ -167,16 +161,16 @@
 <div class="row g-3 mb-3 no-print" id="summary-bar">
     <div class="col-6 col-md-3">
         <div class="card border-0 shadow-sm text-center py-3 px-2" style="border-radius:12px; background:linear-gradient(135deg,#f0fdfa,#ccfbf1);">
-            <div class="fs-6 text-muted mb-1">📋 จำนวนบิล</div>
+            <div class="fs-6 text-muted mb-1">๐“ เธเธณเธเธงเธเธเธดเธฅ</div>
             <div class="fw-bold fs-4 text-primary" id="summary-count">@ViewBag.TotalCount?.ToString("N0")</div>
-            <div class="small text-muted">รายการ</div>
+            <div class="small text-muted">เธฃเธฒเธขเธเธฒเธฃ</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="card border-0 shadow-sm text-center py-3 px-2" style="border-radius:12px; background:linear-gradient(135deg,#fefce8,#fef08a);">
-            <div class="fs-6 text-muted mb-1">💰 ยอดเงินรวม</div>
+            <div class="fs-6 text-muted mb-1">๐’ฐ เธขเธญเธ”เน€เธเธดเธเธฃเธงเธก</div>
             <div class="fw-bold fs-4 text-success" id="summary-amount">@((ViewBag.TotalAmount as decimal? ?? 0m).ToString("N2"))</div>
-            <div class="small text-muted">บาท</div>
+            <div class="small text-muted">เธเธฒเธ—</div>
         </div>
     </div>
 </div>
@@ -184,27 +178,27 @@
 @if (!Model.Any()) {
     <div class="card p-5 text-center text-muted">
         <i class="bi bi-inbox fs-1 d-block mb-3"></i>
-        <h5>ไม่พบบิลขายที่ตรงกับเงื่อนไข</h5>
-        <small>ลองเปลี่ยนตัวกรอง หรือค้นหาด้วยคำใหม่อีกครั้ง</small>
+        <h5>เนเธกเนเธเธเธเธดเธฅเธเธฒเธขเธ—เธตเนเธ•เธฃเธเธเธฑเธเน€เธเธทเนเธญเธเนเธ</h5>
+        <small>เธฅเธญเธเน€เธเธฅเธตเนเธขเธเธ•เธฑเธงเธเธฃเธญเธ เธซเธฃเธทเธญเธเนเธเธซเธฒเธ”เนเธงเธขเธเธณเนเธซเธกเนเธญเธตเธเธเธฃเธฑเนเธ</small>
     </div>
 } else {
     <div class="card shadow-sm p-3 mb-4 table-responsive">
         <table class="table table-hover table-sm align-middle">
             <thead class="table-light">
                 <tr>
-                    <th>เลขที่บิล</th>
-                    <th>วันที่</th>
-                    <th>ใบสั่งซื้อเลขที่</th>
-                    <th>รหัสลูกค้า</th>
-                    <th>ชื่อลูกค้า</th>
-                    <th>เขต/อำเภอ</th>
-                    <th>จังหวัด</th>
-                    <th class="text-center">เครดิต</th><th class="text-center">ครบกำหนด</th>
-                    <th class="header-wrap">อายุลูกหนี้</th>
-                    <th class="text-end header-wrap">จำนวนเงินรวม</th>
-                    <th class="text-center">สถานะ</th>
-                    <th>ผู้แทนขาย</th>
-                    <th class="text-center actions-col">จัดการ</th>
+                    <th>เน€เธฅเธเธ—เธตเนเธเธดเธฅ</th>
+                    <th>เธงเธฑเธเธ—เธตเน</th>
+                    <th>เนเธเธชเธฑเนเธเธเธทเนเธญเน€เธฅเธเธ—เธตเน</th>
+                    <th>เธฃเธซเธฑเธชเธฅเธนเธเธเนเธฒ</th>
+                    <th>เธเธทเนเธญเธฅเธนเธเธเนเธฒ</th>
+                    <th>เน€เธเธ•/เธญเธณเน€เธ เธญ</th>
+                    <th>เธเธฑเธเธซเธงเธฑเธ”</th>
+                    <th class="text-center">เน€เธเธฃเธ”เธดเธ•</th><th class="text-center">เธเธฃเธเธเธณเธซเธเธ”</th>
+                    <th class="header-wrap">เธญเธฒเธขเธธเธฅเธนเธเธซเธเธตเน</th>
+                    <th class="text-end header-wrap">เธเธณเธเธงเธเน€เธเธดเธเธฃเธงเธก</th>
+                    <th class="text-center">เธชเธ–เธฒเธเธฐ</th>
+                    <th>เธเธนเนเนเธ—เธเธเธฒเธข</th>
+                    <th class="text-center actions-col">เธเธฑเธ”เธเธฒเธฃ</th>
                 </tr>
             </thead>
             <tbody>
@@ -228,84 +222,84 @@
                         <td>@(!string.IsNullOrEmpty(b.District) ? b.District : "-")</td>
                         <td>@(!string.IsNullOrEmpty(b.Province) ? b.Province : "-")</td>
                         <td class="text-center">
-                            <span class="badge bg-info text-dark">@b.Credit วัน</span>
+                            <span class="badge bg-info text-dark">@b.Credit เธงเธฑเธ</span>
                         </td><td class="text-center">@b.BillDate.AddDays(b.Credit).ToString("dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture)</td>
                         <td class="text-center">
                             @if (b.IsFullyPaid)
                             {
-                                <span class="badge bg-success">ชำระแล้ว</span>
+                                <span class="badge bg-success">เธเธณเธฃเธฐเนเธฅเนเธง</span>
                             }
                             else if (overdueDays > 0)
                             {
-                                <span class="badge bg-warning text-dark">เกินกำหนดมาแล้ว @overdueDays วัน</span>
+                                <span class="badge bg-warning text-dark">เน€เธเธดเธเธเธณเธซเธเธ”เธกเธฒเนเธฅเนเธง @overdueDays เธงเธฑเธ</span>
                             }
                             else
                             {
-                                <span class="badge bg-light text-secondary border">ยังไม่ถึงกำหนด</span>
+                                <span class="badge bg-light text-secondary border">เธขเธฑเธเนเธกเนเธ–เธถเธเธเธณเธซเธเธ”</span>
                             }
                         </td>
                         <td class="text-end fw-bold text-success">@b.TotalAmount.ToString("N2")</td>
                         <td class="text-center">
                             @if (b.IsFullyPaid)
                             {
-                                <span class="badge bg-success">ชำระครบแล้ว</span>
+                                <span class="badge bg-success">เธเธณเธฃเธฐเธเธฃเธเนเธฅเนเธง</span>
                             }
                             else if (debtStatus == DebtStatus.BadDebt)
                             {
-                                <span class="badge bg-danger">หนี้สูญ</span>
+                                <span class="badge bg-danger">เธซเธเธตเนเธชเธนเธ</span>
                             }
                             else if (debtStatus == DebtStatus.Cancelled)
                             {
-                                <span class="badge bg-dark">ยกเลิกบิล</span>
+                                <span class="badge bg-dark">เธขเธเน€เธฅเธดเธเธเธดเธฅ</span>
                             }
                             else if (debtStatus == DebtStatus.Installment)
                             {
-                                <span class="badge bg-primary">ผ่อนชำระ</span>
+                                <span class="badge bg-primary">เธเนเธญเธเธเธณเธฃเธฐ</span>
                             }
                             else if (debtStatus == DebtStatus.Postponed)
                             {
-                                <span class="badge bg-warning text-dark">เลื่อนนัดชำระ</span>
+                                <span class="badge bg-warning text-dark">เน€เธฅเธทเนเธญเธเธเธฑเธ”เธเธณเธฃเธฐ</span>
                             }
                             else if (debtStatus == DebtStatus.WaitingGoods)
                             {
-                                <span class="badge bg-info text-dark">รอสินค้า</span>
+                                <span class="badge bg-info text-dark">เธฃเธญเธชเธดเธเธเนเธฒ</span>
                             }
                             else if (debtStatus == DebtStatus.Delivering)
                             {
-                                <span class="badge bg-secondary">บิลอยู่จัดส่ง</span>
+                                <span class="badge bg-secondary">เธเธดเธฅเธญเธขเธนเนเธเธฑเธ”เธชเนเธ</span>
                             }
                             else if (debtStatus == DebtStatus.ReturnPending)
                             {
-                                <span class="badge bg-danger bg-opacity-75">รอออกใบลดหนี้</span>
+                                <span class="badge bg-danger bg-opacity-75">เธฃเธญเธญเธญเธเนเธเธฅเธ”เธซเธเธตเน</span>
                             }
                             else if (debtStatus == DebtStatus.ReturnIssued)
                             {
-                                <span class="badge bg-success bg-opacity-75">ออกใบลดหนี้แล้ว</span>
+                                <span class="badge bg-success bg-opacity-75">เธญเธญเธเนเธเธฅเธ”เธซเธเธตเนเนเธฅเนเธง</span>
                             }
                             else if (isOverdue120)
                             {
-                                <span class="badge bg-danger">ค้างชำระ > 120 วัน</span>
+                                <span class="badge bg-danger">เธเนเธฒเธเธเธณเธฃเธฐ > 120 เธงเธฑเธ</span>
                             }
                             else if (isOverdue)
                             {
-                                <span class="badge bg-warning text-dark">เกินกำหนดชำระ</span>
+                                <span class="badge bg-warning text-dark">เน€เธเธดเธเธเธณเธซเธเธ”เธเธณเธฃเธฐ</span>
                             }
                             else
                             {
-                                <span class="badge bg-secondary">รอชำระ</span>
+                                <span class="badge bg-secondary">เธฃเธญเธเธณเธฃเธฐ</span>
                             }
                         </td>
                         <td><span class="badge bg-light text-dark border">@b.SalesRep</span></td>
                         <td class="text-center actions-col">
-                             <a href="/SalesBill/Detail?id=@Uri.EscapeDataString(b.BillNo)" class="btn btn-sm btn-outline-primary shadow-sm" title="ดูรายละเอียดบิล">
-                                 <i class="bi bi-eye"></i> ดูบิล
+                             <a href="/SalesBill/Detail?id=@Uri.EscapeDataString(b.BillNo)" class="btn btn-sm btn-outline-primary shadow-sm" title="เธ”เธนเธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”เธเธดเธฅ">
+                                 <i class="bi bi-eye"></i> เธ”เธนเธเธดเธฅ
                              </a>
                             @if (canDelete)
                             {
                                 <button type="button" class="btn btn-sm btn-outline-danger ms-1 btn-delete-bill"
                                     data-billno="@b.BillNo"
                                     data-amount="@b.TotalAmount.ToString("N2")"
-                                    title="ลบบิลนี้">
+                                    title="เธฅเธเธเธดเธฅเธเธตเน">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             }
@@ -338,7 +332,7 @@ const allProvincesMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(allP
 function onRegionChange() {
     const reg = document.getElementById('region-select').value;
     const pSel = document.getElementById('province-select');
-    pSel.innerHTML = '<option value="">-- ทุกจังหวัด --</option>';
+    pSel.innerHTML = '<option value="">-- เธ—เธธเธเธเธฑเธเธซเธงเธฑเธ” --</option>';
     let provList = [];
     if (!reg) {
         Object.values(allProvincesMap).forEach(list => {
@@ -361,21 +355,21 @@ function onRegionChange() {
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-danger" style="border-radius:14px;">
             <div class="modal-header bg-danger text-white" style="border-radius:14px 14px 0 0;">
-                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>ยืนยันการลบบิลขาย</h5>
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>เธขเธทเธเธขเธฑเธเธเธฒเธฃเธฅเธเธเธดเธฅเธเธฒเธข</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p class="mb-2">คุณกำลังจะลบ <strong>บิลเลขที่ <span id="modal-billno" class="text-danger"></span></strong></p>
-                <p class="text-muted small mb-3">ยอดเงิน: <strong id="modal-amount" class="text-success"></strong> บาท</p>
-                <div class="alert alert-warning py-2 small"><i class="bi bi-shield-lock me-1"></i>กรุณายืนยันตัวตนด้วยรหัสผ่านของคุณก่อนลบ</div>
-                <label class="form-label fw-bold">รหัสผ่านของคุณ <span class="text-danger">*</span></label>
-                <input type="password" id="delete-password" class="form-control" placeholder="ใส่รหัสผ่านของคุณ..." />
+                <p class="mb-2">เธเธธเธ“เธเธณเธฅเธฑเธเธเธฐเธฅเธ <strong>เธเธดเธฅเน€เธฅเธเธ—เธตเน <span id="modal-billno" class="text-danger"></span></strong></p>
+                <p class="text-muted small mb-3">เธขเธญเธ”เน€เธเธดเธ: <strong id="modal-amount" class="text-success"></strong> เธเธฒเธ—</p>
+                <div class="alert alert-warning py-2 small"><i class="bi bi-shield-lock me-1"></i>เธเธฃเธธเธ“เธฒเธขเธทเธเธขเธฑเธเธ•เธฑเธงเธ•เธเธ”เนเธงเธขเธฃเธซเธฑเธชเธเนเธฒเธเธเธญเธเธเธธเธ“เธเนเธญเธเธฅเธ</div>
+                <label class="form-label fw-bold">เธฃเธซเธฑเธชเธเนเธฒเธเธเธญเธเธเธธเธ“ <span class="text-danger">*</span></label>
+                <input type="password" id="delete-password" class="form-control" placeholder="เนเธชเนเธฃเธซเธฑเธชเธเนเธฒเธเธเธญเธเธเธธเธ“..." />
                 <div id="delete-error" class="text-danger small mt-2 d-none"></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">เธขเธเน€เธฅเธดเธ</button>
                 <button type="button" class="btn btn-danger fw-bold" id="btn-confirm-delete">
-                    <i class="bi bi-trash me-1"></i>ยืนยันลบบิล
+                    <i class="bi bi-trash me-1"></i>เธขเธทเธเธขเธฑเธเธฅเธเธเธดเธฅ
                 </button>
             </div>
         </div>
@@ -404,12 +398,12 @@ function onRegionChange() {
         const password = document.getElementById('delete-password').value;
         const errEl = document.getElementById('delete-error');
         if (!password) {
-            errEl.textContent = 'กรุณาใส่รหัสผ่าน';
+            errEl.textContent = 'เธเธฃเธธเธ“เธฒเนเธชเนเธฃเธซเธฑเธชเธเนเธฒเธ';
             errEl.classList.remove('d-none');
             return;
         }
         this.disabled = true;
-        this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังลบ...';
+        this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>เธเธณเธฅเธฑเธเธฅเธ...';
 
         const tokenEl = document.querySelector('input[name="__RequestVerificationToken"]');
         const token = tokenEl ? tokenEl.value : '';
@@ -451,11 +445,12 @@ function onRegionChange() {
                 errEl.classList.remove('d-none');
             }
         } catch(ex) {
-            errEl.textContent = 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง';
+            errEl.textContent = 'เน€เธเธดเธ”เธเนเธญเธเธดเธ”เธเธฅเธฒเธ” เธเธฃเธธเธ“เธฒเธฅเธญเธเนเธซเธกเนเธญเธตเธเธเธฃเธฑเนเธ';
             errEl.classList.remove('d-none');
         }
         this.disabled = false;
-        this.innerHTML = '<i class="bi bi-trash me-1"></i>ยืนยันลบบิล';
+        this.innerHTML = '<i class="bi bi-trash me-1"></i>เธขเธทเธเธขเธฑเธเธฅเธเธเธดเธฅ';
     });
 })();
 </script>
+

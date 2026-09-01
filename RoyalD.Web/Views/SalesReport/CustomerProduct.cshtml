@@ -95,18 +95,12 @@
     </div>
 </div>
 
-@{
-    var totalAmount = Model.Items.Sum(i => i.TotalAmount);
-    var totalQty = Model.Items.Sum(i => i.Qty);
-}
+
 
 <div class="card shadow-sm border-0">
     <div class="card-header d-flex justify-content-between align-items-center py-2" style="background:#f8fafc;">
         <span class="fw-bold text-success"><i class="bi bi-table me-1"></i> ผลลัพธ์ทั้งหมด <strong>@Model.Items.Count</strong> รายการ</span>
-        <span class="text-muted small fw-semibold">
-            ยอดรวม: <strong class="text-success">@totalAmount.ToString("N2")</strong> บาท |
-            จำนวน: <strong class="text-primary">@totalQty.ToString("N0")</strong> หน่วย
-        </span>
+        
     </div>
     <div class="card-body p-0">
         <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
@@ -119,15 +113,14 @@
                         <th class="text-start">ชื่อลูกค้า</th>
                         <th class="text-start">รหัสสินค้า : ชื่อสินค้า</th>
                         <th>ราคา/หน่วย</th>
-                        <th>จำนวน</th>
-                        <th>ยอดรวม</th>
+                        <th>เครดิต(วัน)</th>
                         <th>ผู้แทนขาย</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (!Model.Items.Any())
                     {
-                        <tr><td colspan="9" class="text-center text-muted py-4">
+                        <tr><td colspan="8" class="text-center text-muted py-4">
                             <i class="bi bi-search me-2 fs-4"></i><br/>
                             ไม่พบข้อมูล — ลองพิมพ์คำค้นหาในช่องด้านบน
                         </td></tr>
@@ -146,8 +139,7 @@
                                     <span class="badge bg-light text-dark border me-1">@item.ProductCode</span>@item.ProductName
                                 </td>
                                 <td class="text-end">@item.Price.ToString("N2")</td>
-                                <td class="text-center">@item.Qty.ToString("N0")</td>
-                                <td class="text-end fw-bold text-primary">@item.TotalAmount.ToString("N2")</td>
+                                <td class="text-center">@item.Credit</td>
                                 <td class="text-center">@item.SalesRep</td>
                             </tr>
                         }
@@ -157,3 +149,5 @@
         </div>
     </div>
 </div>
+
+
