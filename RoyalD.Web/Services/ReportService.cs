@@ -796,9 +796,8 @@ namespace RoyalD.Web.Services
             vm.Items = grouped;
             return vm;
         }
-    }
 
-            public async Task<byte[]> ExportCustomerProductExcelAsync(CustomerProductViewModel data)
+        public async Task<byte[]> ExportCustomerProductExcelAsync(CustomerProductViewModel data)
         {
             using var pkg = new OfficeOpenXml.ExcelPackage();
             var ws = pkg.Workbook.Worksheets.Add("CustomerSales");
@@ -828,6 +827,7 @@ namespace RoyalD.Web.Services
             ws.Cells[ws.Dimension.Address].AutoFitColumns();
             return await pkg.GetAsByteArrayAsync();
         }
+    }
 
     public class CustomerProductViewModel
     {
