@@ -1,4 +1,4 @@
-﻿@using RoyalD.Web.Services
+@using RoyalD.Web.Services
 @model RoyalD.Web.Services.ProductDetailsReportViewModel
 @{
     ViewData["Title"] = "3. รายการขายสินค้าจำนวนและราคาของแต่ละผู้แทน";
@@ -7,107 +7,45 @@
     var reps = Model.SalesReps;
     bool isAdmin = User.IsInRole("admin");
     var canDownloadClaim = ViewContext.HttpContext.User.FindFirst("CanDownload")?.Value;
-    bool canDownload = isAdmin || canDownloadClaim == "true";
+    bool isSalesRepRole = User.HasClaim(c => c.Type == "Position" && (c.Value.Contains("ผู้แทน") || c.Value.Contains("พนักงานขาย"))) && !isAdmin;
+    bool canDownload = (isAdmin || canDownloadClaim == "true") && !isSalesRepRole;
 }
 
 <style>
 /* Sub-Tabs Nav - Soft Mint Green Theme */
 .sales-subnav {
-    display: flex;
-    gap: 10px;
-    background: #ecfdf5;
-    padding: 8px;
-    border-radius: 14px;
-    margin-bottom: 20px;
-    border: 1px solid #a7f3d0;
+    display: flex; gap: 10px; background: #ecfdf5; padding: 8px;
+    border-radius: 14px; margin-bottom: 20px; border: 1px solid #a7f3d0;
 }
 .sales-subnav .subnav-item {
-    flex: 1;
-    text-align: center;
-    padding: 12px 18px;
-    font-weight: 800;
-    font-size: 1.02rem;
-    color: #065f46;
-    border-radius: 10px;
-    text-decoration: none;
-    transition: all .2s ease-in-out;
+    flex: 1; text-align: center; padding: 12px 18px; font-weight: 800;
+    font-size: 1.02rem; color: #065f46; border-radius: 10px;
+    text-decoration: none; transition: all .2s ease-in-out;
 }
-.sales-subnav .subnav-item:hover {
-    background: rgba(255,255,255,0.9);
-    color: #059669;
-    transform: translateY(-1px);
-}
-.sales-subnav .subnav-item.active {
-    background: #059669;
-    color: white;
-    box-shadow: 0 4px 15px rgba(5,150,105,0.3);
-}
+.sales-subnav .subnav-item:hover { background: rgba(255,255,255,0.9); color: #059669; transform: translateY(-1px); }
+.sales-subnav .subnav-item.active { background: #059669; color: white; box-shadow: 0 4px 15px rgba(5,150,105,0.3); }
 
 /* Product Movement Table */
-.prod-table-wrap {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    border-radius: 12px;
-    box-shadow: 0 4px 18px rgba(0,0,0,0.06);
-    background: white;
-    margin-bottom: 24px;
-}
-.prod-table {
-    width: 100%;
-    min-width: 950px;
-    border-collapse: collapse;
-    font-size: 0.94rem;
-}
-.prod-table th {
-    background: #1e293b !important;
-    color: white !important;
-    padding: 12px 14px;
-    border: 1px solid #334155;
-    white-space: nowrap;
-    font-size: 0.98rem;
-}
-.prod-table td {
-    padding: 11px 14px;
-    border: 1px solid #e9ecef;
-    vertical-align: middle;
-}
-
-.rep-group-header {
-    background: linear-gradient(135deg, #065f46 0%, #059669 50%, #10b981 100%);
-    color: white;
-    padding: 14px 20px;
-    border-radius: 12px 12px 0 0;
-    font-weight: 800;
-    font-size: 1.18rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.month-sub-header {
-    background: #ecfdf5;
-    color: #065f46;
-    padding: 10px 18px;
-    font-weight: 800;
-    font-size: 1.02rem;
-    border-left: 5px solid #059669;
-}
+.prod-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; box-shadow: 0 4px 18px rgba(0,0,0,0.06); background: white; margin-bottom: 24px; }
+.prod-table { width: 100%; min-width: 950px; border-collapse: collapse; font-size: 0.94rem; }
+.prod-table th { background: #1e293b !important; color: white !important; padding: 12px 14px; border: 1px solid #334155; white-space: nowrap; font-size: 0.98rem; }
+.prod-table td { padding: 11px 14px; border: 1px solid #e9ecef; vertical-align: middle; }
+.rep-group-header { background: linear-gradient(135deg, #065f46 0%, #059669 50%, #10b981 100%); color: white; padding: 14px 20px; border-radius: 12px 12px 0 0; font-weight: 800; font-size: 1.18rem; display: flex; justify-content: space-between; align-items: center; }
+.month-sub-header { background: #ecfdf5; color: #065f46; padding: 10px 18px; font-weight: 800; font-size: 1.02rem; border-left: 5px solid #059669; }
 
 /* Delivering Strike-through style */
-.delivering-strike {
-    text-decoration: line-through;
-    opacity: 0.60;
-    color: #888;
-}
-.badge-delivering {
-    background: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeeba;
-    font-size: 0.78rem;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 6px;
-    text-decoration: none !important;
-}
+.delivering-strike { text-decoration: line-through; opacity: 0.60; color: #888; }
+.badge-delivering { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; font-size: 0.78rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; text-decoration: none !important; }
+
+/* Unit Cards */
+.unit-card { border-radius:16px; padding:18px 16px; box-shadow:0 4px 20px rgba(0,0,0,.07); text-align:center; transition:transform .2s; }
+.unit-card:hover { transform:translateY(-3px); }
+.unit-icon { font-size:2rem; margin-bottom:6px; }
+.unit-label { font-size:.8rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.5px; }
+.unit-value { font-size:1.8rem; font-weight:900; line-height:1.1; }
+.unit-sub { font-size:.75rem; color:#94a3b8; margin-top:4px; }
+.prod-chart-card { background:white; border-radius:14px; box-shadow:0 4px 18px rgba(0,0,0,.08); padding:20px; margin-bottom:24px; }
+.insight-card { background:linear-gradient(135deg,#f0fdfa 0%,#f8fafc 100%); border:1px solid #ccfbf1; border-left:5px solid #0d9488; border-radius:12px; padding:14px 18px; box-shadow:0 2px 10px rgba(15,118,110,0.06); line-height:1.65; }
 
 @@media print {
     .no-print, .sales-subnav, nav, .btn, .filter-card, .export-bar { display: none !important; }
@@ -119,9 +57,6 @@
 }
 </style>
 
-@{
-    bool isSRep = User.HasClaim(c => c.Type == "Position" && (c.Value.Contains("ผู้แทน") || c.Value.Contains("พนักงานขาย"))) && !User.HasClaim(c => c.Type == "Role" && c.Value == "Admin");
-}
 <!-- Sub-Tabs Navigation Header -->
 <div class="sales-subnav no-print">
     <a href="/SalesReport/Summary" class="subnav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Summary" || ViewContext.RouteData.Values["action"]?.ToString() == "Sales" ? "active" : "")">
@@ -133,7 +68,7 @@
     <a href="/SalesReport/ProductDetails" class="subnav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetails" ? "active" : "")">
         <i class="bi bi-box-seam me-2"></i> 3. รายละเอียดสินค้าที่ขาย (Product Details)
     </a>
-    @if (!isSRep)
+    @if (!isSalesRepRole)
     {
         <a href="/SalesReport/Compare" class="subnav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Compare" ? "active" : "")">
             <i class="bi bi-people me-2"></i> 4. กราฟเปรียบเทียบผู้แทนขาย
@@ -207,6 +142,83 @@
         </form>
     </div>
 </div>
+
+@{
+    var allProductsForChart = Model.RepReports
+        .SelectMany(r => r.MonthlyMovements)
+        .SelectMany(m => m.Products)
+        .Where(p => !p.IsAllDelivering)
+        .GroupBy(p => new { Name = p.ProductName.Trim(), Unit = (p.Unit ?? "").Trim() })
+        .Select(g => new { Name = g.Key.Name, Unit = g.Key.Unit, TotalQty = g.Sum(x => x.NetQty) })
+        .OrderByDescending(x => x.TotalQty)
+        .Take(15)
+        .ToList();
+
+    var unitCounts = new Dictionary<string, decimal> { ["ซอง"] = 0, ["ลัง"] = 0, ["แพ็ค"] = 0, ["ขวด"] = 0 };
+    foreach (var rep in Model.RepReports)
+    {
+        foreach (var mo in rep.MonthlyMovements)
+        {
+            foreach (var prod in mo.Products.Where(p => !p.IsAllDelivering))
+            {
+                var u = (prod.Unit ?? "").Trim().ToLower();
+                if (u == "ซอง") unitCounts["ซอง"] += prod.NetQty;
+                else if (u == "ลัง") unitCounts["ลัง"] += prod.NetQty;
+                else if (u.Contains("แพ็ค") || u.Contains("แพค") || u == "pack") unitCounts["แพ็ค"] += prod.NetQty;
+                else if (u == "ขวด" || u == "bottle") unitCounts["ขวด"] += prod.NetQty;
+            }
+        }
+    }
+}
+
+<!-- Unit Volume Infographic Cards -->
+<div class="row g-3 mb-4 no-print" id="unit-cards">
+    <div class="col-6 col-md-3">
+        <div class="unit-card" style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border-left:5px solid #f59e0b;">
+            <div class="unit-icon">📩</div>
+            <div class="unit-label">ยอดขาย (ซอง)</div>
+            <div class="unit-value" style="color:#d97706;">@unitCounts["ซอง"].ToString("N0")</div>
+            <div class="unit-sub">ซองที่ขายได้ทั้งหมด</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="unit-card" style="background:linear-gradient(135deg,#ede9fe,#f5f3ff);border-left:5px solid #8b5cf6;">
+            <div class="unit-icon">📦</div>
+            <div class="unit-label">ยอดขาย (ลัง)</div>
+            <div class="unit-value" style="color:#7c3aed;">@unitCounts["ลัง"].ToString("N0")</div>
+            <div class="unit-sub">ลังที่ขายได้ทั้งหมด</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="unit-card" style="background:linear-gradient(135deg,#dbeafe,#eff6ff);border-left:5px solid #3b82f6;">
+            <div class="unit-icon">🗂️</div>
+            <div class="unit-label">ยอดขาย (แพ็ค)</div>
+            <div class="unit-value" style="color:#1d4ed8;">@unitCounts["แพ็ค"].ToString("N0")</div>
+            <div class="unit-sub">แพ็คที่ขายได้ทั้งหมด</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="unit-card" style="background:linear-gradient(135deg,#dcfce7,#f0fdf4);border-left:5px solid #22c55e;">
+            <div class="unit-icon">🍶</div>
+            <div class="unit-label">ยอดขาย (ขวด)</div>
+            <div class="unit-value" style="color:#15803d;">@unitCounts["ขวด"].ToString("N0")</div>
+            <div class="unit-sub">ขวดที่ขายได้ทั้งหมด</div>
+        </div>
+    </div>
+</div>
+
+@if (allProductsForChart.Any())
+{
+    <div class="prod-chart-card no-print">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="fw-bold" style="color:#1a1a2e;font-size:1.05rem;">
+                <i class="bi bi-bar-chart-fill text-primary"></i> กราฟแท่งจัดอันดับสินค้าขายดี (Top @allProductsForChart.Count รายการ)
+            </span>
+        </div>
+        <canvas id="productBarChart" height="@(Math.Max(allProductsForChart.Count * 30, 200))"></canvas>
+        <div class="insight-card mt-3" id="product-insight-box"></div>
+    </div>
+}
 
 <!-- ================= REPORT CONTENT ================= -->
 <div id="product-capture-area">
@@ -383,8 +395,65 @@ else
 </div>
 
 @section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
+const productChartData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(allProductsForChart.Select(p => new { name = p.Name, unit = p.Unit, qty = p.TotalQty }).ToList()));
+
+if (productChartData && productChartData.length > 0) {
+    const productBarEl = document.getElementById('productBarChart');
+    if (productBarEl) {
+        const unitColors = { 'ซอง':'rgba(245,158,11,0.85)', 'ลัง':'rgba(139,92,246,0.85)', 'แพ็ค':'rgba(59,130,246,0.85)', 'ขวด':'rgba(34,197,94,0.85)' };
+        const bgColors = productChartData.map(p => unitColors[p.unit] || 'rgba(100,116,139,0.85)');
+        const bColors = productChartData.map(p => (unitColors[p.unit] || 'rgba(100,116,139,0.85)').replace('0.85', '1'));
+        
+        new Chart(productBarEl, {
+            type: 'bar',
+            data: {
+                labels: productChartData.map(p => p.name.length > 25 ? p.name.substring(0, 25) + '...' : p.name),
+                datasets: [{
+                    label: 'ปริมาณที่ขายได้ (รวม)',
+                    data: productChartData.map(p => p.qty),
+                    backgroundColor: bgColors,
+                    borderColor: bColors,
+                    borderWidth: 1.5,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => {
+                                const p = productChartData[ctx.dataIndex];
+                                return '  ปริมาณที่ขายได้: ' + ctx.parsed.x.toLocaleString('th-TH') + ' ' + p.unit;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+                    y: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Generate Insight Box
+        const insightBox = document.getElementById('product-insight-box');
+        if (insightBox) {
+            const top = productChartData[0];
+            const unitSummary = {};
+            productChartData.forEach(p => { unitSummary[p.unit] = (unitSummary[p.unit] || 0) + p.qty; });
+            const topUnit = Object.entries(unitSummary).sort((a,b)=>b[1]-a[1])[0];
+            insightBox.innerHTML = `<i class="bi bi-lightbulb-fill text-warning me-1"></i> <b>วิเคราะห์สินค้าขายดี:</b> สินค้าที่ขายได้มากที่สุดคือ <b>${top.name}</b> (${top.qty.toLocaleString('th-TH')} ${top.unit}) | หน่วยนับที่ขายออกมากที่สุดคือ <b>${topUnit[0]}</b> (จำนวนรวม ${topUnit[1].toLocaleString('th-TH')} ${topUnit[0]})`;
+        }
+    }
+}
+
 function downloadScreenCapture(elementId) {
     const target = document.getElementById(elementId);
     if (!target) return;
