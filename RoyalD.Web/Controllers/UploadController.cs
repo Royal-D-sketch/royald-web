@@ -17,6 +17,7 @@ namespace RoyalD.Web.Controllers
             _db = db;
         }
 
+        [HttpGet] public async Task<IActionResult> CleanGarbage() { var g = _db.SalesBills.Where(b => b.BillNo.Length > 25); _db.SalesBills.RemoveRange(g); await _db.SaveChangesAsync(); return Content("Cleaned " + g.Count()); }
         public IActionResult Index() => View();
 
         [AllowAnonymous]
