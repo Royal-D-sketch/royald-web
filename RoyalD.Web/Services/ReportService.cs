@@ -769,6 +769,7 @@ namespace RoyalD.Web.Services
             var items = await query.ToListAsync();
 
             var grouped = items.GroupBy(i => new { 
+                    CustCode = i.SalesBill.CustomerCode,
                     Cust = i.SalesBill.CustomerName, 
                     Rep = i.SalesBill.SalesRep, 
                     Code = i.ProductCode, 
@@ -778,6 +779,7 @@ namespace RoyalD.Web.Services
                 })
                 .Select(g => new CustomerProductItem
                 {
+                    CustomerCode = g.Key.CustCode ?? "",
                     CustomerName = g.Key.Cust ?? "",
                     SalesRep = g.Key.Rep ?? "",
                     ProductCode = g.Key.Code ?? "",
@@ -807,6 +809,7 @@ namespace RoyalD.Web.Services
 
     public class CustomerProductItem
     {
+        public string CustomerCode { get; set; } = "";
         public string CustomerName { get; set; } = "";
         public string SalesRep { get; set; } = "";
         public string ProductCode { get; set; } = "";

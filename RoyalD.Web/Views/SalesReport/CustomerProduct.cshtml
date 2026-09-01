@@ -38,7 +38,7 @@
             </div>
             <div class="col-md-3">
                 <label class="form-label fw-bold">ผู้แทนขาย (Sales Rep)</label>
-                <select name="rep" class="form-select">
+                <select name="rep" class="form-select select2-searchable">
                     <option value="">-- ทุกคน --</option>
                     @foreach (var r in Model.AllReps)
                     {
@@ -90,7 +90,7 @@
                                 <td class="text-center">@(idx++)</td>
                                 @if(item.CustomerName != lastCust)
                                 {
-                                    <td class="text-start fw-bold text-success">@item.CustomerName</td>
+                                    <td class="text-start fw-bold text-success">@item.CustomerCode : @item.CustomerName</td>
                                     lastCust = item.CustomerName;
                                 }
                                 else
