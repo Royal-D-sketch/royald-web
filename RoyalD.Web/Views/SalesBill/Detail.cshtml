@@ -1,4 +1,4 @@
-﻿@model RoyalD.Web.Models.SalesBill
+@model RoyalD.Web.Models.SalesBill
 @{
     ViewData["Title"] = $"รายละเอียดบิล {Model.BillNo}";
     bool canDelete = ViewBag.CanDeleteSalesBill == true;
@@ -88,7 +88,14 @@
         <div class="card-body p-4">
             <div class="text-center mb-3 position-relative">
                 <h5 class="fw-bold" style="color:#0f766e;">บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด (สำนักงานใหญ่)</h5>
-                <h6 class="text-muted fw-semibold">ใบส่งสินค้า / Tax Invoice</h6>
+                @if (vatShortLabel == "NOVAT")
+                {
+                    <h6 class="text-muted fw-semibold">ใบส่งสินค้า (Delivery Order / Invoice)</h6>
+                }
+                else
+                {
+                    <h6 class="text-muted fw-semibold">ใบกำกับภาษี / ใบส่งสินค้า (Tax Invoice)</h6>
+                }
                 <div class="position-absolute top-0 end-0">
                     @{
                         string bannerText = vatShortLabel == "NOVAT" ? "[ เอกสารทั่วไป - NO VAT ]" : "[ ใบกำกับภาษี/ใบเสร็จรับเงิน - VAT ]";

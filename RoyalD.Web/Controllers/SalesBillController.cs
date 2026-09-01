@@ -264,6 +264,7 @@ if (!string.IsNullOrEmpty(poSearch))
                 q = q.Where(b => b.PoNumber.Contains(poSearch));
 
             var total = await q.CountAsync();
+            var totalAmount = await q.SumAsync(b => b.TotalAmount);
             var bills = await q
                 .OrderByDescending(b => b.BillDate)
                 .Skip((page - 1) * pageSize)
@@ -334,6 +335,7 @@ if (!string.IsNullOrEmpty(poSearch))
             ViewBag.Page = page;
             ViewBag.TotalPages = (int)Math.Ceiling(total / (double)pageSize);
             ViewBag.TotalCount = total;
+            ViewBag.TotalAmount = totalAmount;
             ViewBag.DebtDict = debtDict;
             ViewBag.CanDeleteSalesBill = currentUser != null && (currentUser.Role == "admin" || currentUser.CanDeleteSalesBill);
 
@@ -360,6 +362,49 @@ if (!string.IsNullOrEmpty(poSearch))
             ViewBag.Debt = debt;
 
             return View(bill);
+        }
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> VerifyAndDeleteBill([FromForm] string id, [FromForm] string password)
+        {
+            var currentUser = await _db.Users.FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            bool canDelete = currentUser != null && (currentUser.Role == "admin" || currentUser.CanDeleteSalesBill);
+            if (!canDelete)
+                return Json(new { success = false, message = "คุณไม่มีสิทธิ์ลบบิลขาย" });
+
+            bool passwordOk = false;
+            if (!string.IsNullOrWhiteSpace(password))
+            {
+                var hashed = Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(password)));
+                passwordOk = (hashed == currentUser!.PasswordHash);
+                if (!passwordOk) passwordOk = (password == currentUser!.PasswordHash);
+            }
+            if (!passwordOk)
+                return Json(new { success = false, message = "รหัสผ่านไม่ถูกต้อง" });
+
+            var bill = await _db.SalesBills.Include(b => b.Items).FirstOrDefaultAsync(b => b.BillNo == id);
+            if (bill == null)
+                return Json(new { success = false, message = "ไม่พบบิลขายเลขที่ " + id });
+
+            var billNo = bill.BillNo;
+            var customerName = bill.CustomerName;
+            var amount = bill.TotalAmount;
+
+            _db.SalesBillItems.RemoveRange(bill.Items);
+            _db.SalesBills.Remove(bill);
+
+            _db.AuditLogs.Add(new AuditLog
+            {
+                Username = User.Identity?.Name ?? "",
+                Action = "DELETE_SALES_BILL",
+                Detail = $"Deleted Sales Bill {billNo} (Customer: {customerName}, Amount: {amount:N2}) via password confirmation",
+                IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
+            });
+
+            await _db.SaveChangesAsync();
+            _cache.Remove("all_salesbills_reps");
+            _cache.Remove("all_salesbills_months");
+
+            return Json(new { success = true, message = $"ลบบิลขายเลขที่ {billNo} เรียบร้อยแล้ว", billNo = billNo, amount = amount });
         }
 
         [HttpPost, ValidateAntiForgeryToken]

@@ -1,4 +1,4 @@
-﻿@using RoyalD.Web.Models
+@using RoyalD.Web.Models
 @model List<RoyalD.Web.Models.SalesBill>
 @{
     ViewData["Title"] = "รายการบิลขาย";
@@ -163,6 +163,23 @@
     </form>
 </div>
 
+<!-- Summary Card -->
+<div class="row g-3 mb-3 no-print" id="summary-bar">
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center py-3 px-2" style="border-radius:12px; background:linear-gradient(135deg,#f0fdfa,#ccfbf1);">
+            <div class="fs-6 text-muted mb-1">📋 จำนวนบิล</div>
+            <div class="fw-bold fs-4 text-primary" id="summary-count">@ViewBag.TotalCount?.ToString("N0")</div>
+            <div class="small text-muted">รายการ</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center py-3 px-2" style="border-radius:12px; background:linear-gradient(135deg,#fefce8,#fef08a);">
+            <div class="fs-6 text-muted mb-1">💰 ยอดเงินรวม</div>
+            <div class="fw-bold fs-4 text-success" id="summary-amount">@((ViewBag.TotalAmount as decimal? ?? 0m).ToString("N2"))</div>
+            <div class="small text-muted">บาท</div>
+        </div>
+    </div>
+</div>
 <!-- Table Grid -->
 @if (!Model.Any()) {
     <div class="card p-5 text-center text-muted">
@@ -285,13 +302,12 @@
                              </a>
                             @if (canDelete)
                             {
-                                <form asp-controller="SalesBill" asp-action="DeleteBill" method="post" class="d-inline" onsubmit="return confirm('ยืนยันการลบบิลขายเลขที่ @b.BillNo ออกจากระบบหรือไม่?');">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="id" value="@b.BillNo" />
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="ลบบิลนี้">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
+                                <button type="button" class="btn btn-sm btn-outline-danger ms-1 btn-delete-bill"
+                                    data-billno="@b.BillNo"
+                                    data-amount="@b.TotalAmount.ToString("N2")"
+                                    title="ลบบิลนี้">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             }
                         </td>
                     </tr>
@@ -339,5 +355,107 @@ function onRegionChange() {
     });
 }
 </script>
+@Html.AntiForgeryToken()
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteBillModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-danger" style="border-radius:14px;">
+            <div class="modal-header bg-danger text-white" style="border-radius:14px 14px 0 0;">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>ยืนยันการลบบิลขาย</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">คุณกำลังจะลบ <strong>บิลเลขที่ <span id="modal-billno" class="text-danger"></span></strong></p>
+                <p class="text-muted small mb-3">ยอดเงิน: <strong id="modal-amount" class="text-success"></strong> บาท</p>
+                <div class="alert alert-warning py-2 small"><i class="bi bi-shield-lock me-1"></i>กรุณายืนยันตัวตนด้วยรหัสผ่านของคุณก่อนลบ</div>
+                <label class="form-label fw-bold">รหัสผ่านของคุณ <span class="text-danger">*</span></label>
+                <input type="password" id="delete-password" class="form-control" placeholder="ใส่รหัสผ่านของคุณ..." />
+                <div id="delete-error" class="text-danger small mt-2 d-none"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                <button type="button" class="btn btn-danger fw-bold" id="btn-confirm-delete">
+                    <i class="bi bi-trash me-1"></i>ยืนยันลบบิล
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
+<script>
+(function() {
+    let pendingBillNo = null;
+    let pendingRow = null;
 
+    document.body.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-delete-bill');
+        if (!btn) return;
+        pendingBillNo = btn.dataset.billno;
+        pendingRow = btn.closest('tr');
+        document.getElementById('modal-billno').textContent = pendingBillNo;
+        document.getElementById('modal-amount').textContent = btn.dataset.amount;
+        document.getElementById('delete-password').value = '';
+        document.getElementById('delete-error').classList.add('d-none');
+        var modal = new bootstrap.Modal(document.getElementById('deleteBillModal'));
+        modal.show();
+    });
+
+    document.getElementById('btn-confirm-delete').addEventListener('click', async function() {
+        const password = document.getElementById('delete-password').value;
+        const errEl = document.getElementById('delete-error');
+        if (!password) {
+            errEl.textContent = 'กรุณาใส่รหัสผ่าน';
+            errEl.classList.remove('d-none');
+            return;
+        }
+        this.disabled = true;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังลบ...';
+
+        const tokenEl = document.querySelector('input[name="__RequestVerificationToken"]');
+        const token = tokenEl ? tokenEl.value : '';
+
+        const body = new URLSearchParams();
+        body.append('id', pendingBillNo);
+        body.append('password', password);
+        body.append('__RequestVerificationToken', token);
+
+        try {
+            const resp = await fetch('/SalesBill/VerifyAndDeleteBill', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body.toString()
+            });
+            const result = await resp.json();
+            if (result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('deleteBillModal')).hide();
+                if (pendingRow) pendingRow.remove();
+                const countEl = document.getElementById('summary-count');
+                const amountEl = document.getElementById('summary-amount');
+                if (countEl) {
+                    let cnt = parseInt(countEl.textContent.replace(/,/g,'')) - 1;
+                    countEl.textContent = cnt.toLocaleString('th-TH');
+                }
+                if (amountEl) {
+                    let cur = parseFloat(amountEl.textContent.replace(/,/g,''));
+                    let newAmt = cur - result.amount;
+                    amountEl.textContent = newAmt.toLocaleString('th-TH', {minimumFractionDigits:2, maximumFractionDigits:2});
+                }
+                const toast = document.createElement('div');
+                toast.className = 'alert alert-success position-fixed bottom-0 end-0 m-3 shadow';
+                toast.style.zIndex = 9999;
+                toast.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>' + result.message;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            } else {
+                errEl.textContent = result.message;
+                errEl.classList.remove('d-none');
+            }
+        } catch(ex) {
+            errEl.textContent = 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง';
+            errEl.classList.remove('d-none');
+        }
+        this.disabled = false;
+        this.innerHTML = '<i class="bi bi-trash me-1"></i>ยืนยันลบบิล';
+    });
+})();
+</script>
