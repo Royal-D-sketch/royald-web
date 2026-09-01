@@ -1,13 +1,13 @@
 @using RoyalD.Web.Services
 @model RoyalD.Web.Services.ProductDetailsReportViewModel
 @{
-    ViewData["Title"] = "3. รายการขายสินค้าจำนวนและราคาของแต่ละผู้แทน";
+    ViewData["Title"] = "3. เธฃเธฒเธขเธเธฒเธฃเธเธฒเธขเธชเธดเธเธเนเธฒเธเธณเธเธงเธเนเธฅเธฐเธฃเธฒเธเธฒเธเธญเธเนเธ•เนเธฅเธฐเธเธนเนเนเธ—เธ";
     var months = Model.Months;
     var monthKeys = Model.MonthKeys;
     var reps = Model.SalesReps;
     bool isAdmin = User.IsInRole("admin");
     var canDownloadClaim = ViewContext.HttpContext.User.FindFirst("CanDownload")?.Value;
-    bool isSalesRepRole = User.HasClaim(c => c.Type == "Position" && (c.Value.Contains("ผู้แทน") || c.Value.Contains("พนักงานขาย"))) && !isAdmin;
+    bool isSalesRepRole = User.HasClaim(c => c.Type == "Position" && (c.Value.Contains("เธเธนเนเนเธ—เธ") || c.Value.Contains("เธเธเธฑเธเธเธฒเธเธเธฒเธข"))) && !isAdmin;
     bool canDownload = (isAdmin || canDownloadClaim == "true") && !isSalesRepRole;
 }
 
@@ -60,18 +60,18 @@
 <!-- Sub-Tabs Navigation Header -->
 <div class="sales-subnav no-print">
     <a href="/SalesReport/Summary" class="subnav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Summary" || ViewContext.RouteData.Values["action"]?.ToString() == "Sales" ? "active" : "")">
-        <i class="bi bi-table me-2"></i> 1. สรุปยอดขาย-ยอดเก็บเงิน (Pivot Matrix)
+        <i class="bi bi-table me-2"></i> 1. เธชเธฃเธธเธเธขเธญเธ”เธเธฒเธข-เธขเธญเธ”เน€เธเนเธเน€เธเธดเธ (Pivot Matrix)
     </a>
     <a href="/SalesReport/Charts" class="subnav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Charts" ? "active" : "")">
-        <i class="bi bi-bar-chart-line me-2"></i> 2. กราฟผลงานรายผู้แทน (Charts)
+        <i class="bi bi-bar-chart-line me-2"></i> 2. เธเธฃเธฒเธเธเธฅเธเธฒเธเธฃเธฒเธขเธเธนเนเนเธ—เธ (Charts)
     </a>
     <a href="/SalesReport/ProductDetails" class="subnav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetails" ? "active" : "")">
-        <i class="bi bi-box-seam me-2"></i> 3. รายละเอียดสินค้าที่ขาย (Product Details)
+        <i class="bi bi-box-seam me-2"></i> 3. เธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”เธชเธดเธเธเนเธฒเธ—เธตเนเธเธฒเธข (Product Details)
     </a>
     @if (!isSalesRepRole)
     {
         <a href="/SalesReport/Compare" class="subnav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Compare" ? "active" : "")">
-            <i class="bi bi-people me-2"></i> 4. กราฟเปรียบเทียบผู้แทนขาย
+            <i class="bi bi-people me-2"></i> 4. เธเธฃเธฒเธเน€เธเธฃเธตเธขเธเน€เธ—เธตเธขเธเธเธนเนเนเธ—เธเธเธฒเธข
         </a>
     }
 </div>
@@ -80,22 +80,22 @@
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 export-bar">
     <div>
         <h3 class="mb-1 fw-bold" style="color:#065f46;">
-            <i class="bi bi-boxes" style="color:#059669;"></i> รายการขายสินค้า จำนวนและราคาของแต่ละผู้แทน (Product Movement)
+            <i class="bi bi-boxes" style="color:#059669;"></i> เธฃเธฒเธขเธเธฒเธฃเธเธฒเธขเธชเธดเธเธเนเธฒ เธเธณเธเธงเธเนเธฅเธฐเธฃเธฒเธเธฒเธเธญเธเนเธ•เนเธฅเธฐเธเธนเนเนเธ—เธ (Product Movement)
         </h3>
-        <span class="text-muted fw-semibold">แจกแจงตาม ผู้แทนขาย &gt; แยกรายเดือน &gt; รายละเอียดสินค้า </span>
+        <span class="text-muted fw-semibold">เนเธเธเนเธเธเธ•เธฒเธก เธเธนเนเนเธ—เธเธเธฒเธข &gt; เนเธขเธเธฃเธฒเธขเน€เธ”เธทเธญเธ &gt; เธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”เธชเธดเธเธเนเธฒ </span>
     </div>
     
     @if (canDownload)
     {
         <div class="d-flex gap-2 no-print">
-            <button onclick="window.print()" class="btn btn-outline-danger btn-sm fw-bold px-3 py-2 shadow-sm" title="สั่งพิมพ์เป็นเอกสาร PDF">
-                <i class="bi bi-file-earmark-pdf me-1"></i> 📥 Export to PDF
+            <button onclick="window.print()" class="btn btn-outline-danger btn-sm fw-bold px-3 py-2 shadow-sm" title="เธชเธฑเนเธเธเธดเธกเธเนเน€เธเนเธเน€เธญเธเธชเธฒเธฃ PDF">
+                <i class="bi bi-file-earmark-pdf me-1"></i> ๐“ฅ Export to PDF
             </button>
-            <a href="/SalesReport/ExportProductDetailsExcel@(Context.Request.QueryString)" class="btn btn-sm fw-bold px-3 py-2 shadow-sm text-white" title="ดาวน์โหลดไฟล์ Excel" style="background:#059669; border-color:#059669;">
-                <i class="bi bi-file-earmark-excel me-1"></i> 📊 Export to Excel (.xlsx)
+            <a href="/SalesReport/ExportProductDetailsExcel@(Context.Request.QueryString)" class="btn btn-sm fw-bold px-3 py-2 shadow-sm text-white" title="เธ”เธฒเธงเธเนเนเธซเธฅเธ”เนเธเธฅเน Excel" style="background:#059669; border-color:#059669;">
+                <i class="bi bi-file-earmark-excel me-1"></i> ๐“ Export to Excel (.xlsx)
             </a>
-            <button onclick="downloadScreenCapture('product-details-area')" class="btn btn-outline-success btn-sm fw-bold px-3 py-2 shadow-sm" title="บันทึกภาพตารางความละเอียดสูง">
-                <i class="bi bi-image me-1"></i> 🖼️ Download Image (PNG)
+            <button onclick="downloadScreenCapture('product-details-area')" class="btn btn-outline-success btn-sm fw-bold px-3 py-2 shadow-sm" title="เธเธฑเธเธ—เธถเธเธ เธฒเธเธ•เธฒเธฃเธฒเธเธเธงเธฒเธกเธฅเธฐเน€เธญเธตเธขเธ”เธชเธนเธ">
+                <i class="bi bi-image me-1"></i> ๐–ผ๏ธ Download Image (PNG)
             </button>
         </div>
     }
@@ -106,9 +106,9 @@
     <div class="card-body py-2">
         <form method="get" class="row g-2 align-items-end">
             <div class="col-md-4">
-                <label class="form-label small fw-bold text-primary mb-1">👤 เลือกผู้แทนขาย</label>
+                <label class="form-label small fw-bold text-primary mb-1">๐‘ค เน€เธฅเธทเธญเธเธเธนเนเนเธ—เธเธเธฒเธข</label>
                 <select name="salesRep" class="form-select form-select-sm">
-                    <option value="">-- ผู้แทนขายทุกคน --</option>
+                    <option value="">-- เธเธนเนเนเธ—เธเธเธฒเธขเธ—เธธเธเธเธ --</option>
                     @foreach (var r in reps)
                     {
                         if (r == Model.SelectedSalesRep) { <option value="@r" selected>@r</option> }
@@ -117,9 +117,9 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label small fw-bold text-primary mb-1">📅 เลือกเดือน</label>
+                <label class="form-label small fw-bold text-primary mb-1">๐“… เน€เธฅเธทเธญเธเน€เธ”เธทเธญเธ</label>
                 <select name="month" class="form-select form-select-sm">
-                    <option value="">-- ทุกเดือน (ม.ค. - ส.ค. 69) --</option>
+                    <option value="">-- เธ—เธธเธเน€เธ”เธทเธญเธ (เธก.เธ. - เธช.เธ. 69) --</option>
                     @for (int mi = 0; mi < monthKeys.Count; mi++)
                     {
                         var mk = monthKeys[mi];
@@ -131,12 +131,12 @@
             </div>
             <div class="col-md-2">
                 <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">
-                    <i class="bi bi-filter"></i> กรองข้อมูล
+                    <i class="bi bi-filter"></i> เธเธฃเธญเธเธเนเธญเธกเธนเธฅ
                 </button>
             </div>
             <div class="col-md-2">
                 <a href="/SalesReport/ProductDetails" class="btn btn-outline-secondary btn-sm w-100">
-                    <i class="bi bi-x-circle"></i> ล้างตัวกรอง
+                    <i class="bi bi-x-circle"></i> เธฅเนเธฒเธเธ•เธฑเธงเธเธฃเธญเธ
                 </a>
             </div>
         </form>
@@ -154,7 +154,7 @@
         .Take(15)
         .ToList();
 
-    var unitCounts = new Dictionary<string, decimal> { ["ซอง"] = 0, ["ลัง"] = 0, ["แพ็ค"] = 0, ["ขวด"] = 0 };
+    var unitCounts = new Dictionary<string, decimal> { ["เธเธญเธ"] = 0, ["เธฅเธฑเธ"] = 0, ["เนเธเนเธ"] = 0, ["เธเธงเธ”"] = 0 };
     foreach (var rep in Model.RepReports)
     {
         foreach (var mo in rep.MonthlyMovements)
@@ -162,10 +162,10 @@
             foreach (var prod in mo.Products.Where(p => !p.IsAllDelivering))
             {
                 var u = (prod.Unit ?? "").Trim().ToLower();
-                if (u == "ซอง") unitCounts["ซอง"] += prod.NetQty;
-                else if (u == "ลัง") unitCounts["ลัง"] += prod.NetQty;
-                else if (u.Contains("แพ็ค") || u.Contains("แพค") || u == "pack") unitCounts["แพ็ค"] += prod.NetQty;
-                else if (u == "ขวด" || u == "bottle") unitCounts["ขวด"] += prod.NetQty;
+                if (u == "เธเธญเธ") unitCounts["เธเธญเธ"] += prod.NetQty;
+                else if (u == "เธฅเธฑเธ") unitCounts["เธฅเธฑเธ"] += prod.NetQty;
+                else if (u.Contains("เนเธเนเธ") || u.Contains("เนเธเธ") || u == "pack") unitCounts["เนเธเนเธ"] += prod.NetQty;
+                else if (u == "เธเธงเธ”" || u == "bottle") unitCounts["เธเธงเธ”"] += prod.NetQty;
             }
         }
     }
@@ -175,48 +175,84 @@
 <div class="row g-3 mb-4 no-print" id="unit-cards">
     <div class="col-6 col-md-3">
         <div class="unit-card" style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border-left:5px solid #f59e0b;">
-            <div class="unit-icon">📩</div>
-            <div class="unit-label">ยอดขาย (ซอง)</div>
-            <div class="unit-value" style="color:#d97706;">@unitCounts["ซอง"].ToString("N0")</div>
-            <div class="unit-sub">ซองที่ขายได้ทั้งหมด</div>
+            <div class="unit-icon">๐“ฉ</div>
+            <div class="unit-label">เธขเธญเธ”เธเธฒเธข (เธเธญเธ)</div>
+            <div class="unit-value" style="color:#d97706;">@unitCounts["เธเธญเธ"].ToString("N0")</div>
+            <div class="unit-sub">เธเธญเธเธ—เธตเนเธเธฒเธขเนเธ”เนเธ—เธฑเนเธเธซเธกเธ”</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="unit-card" style="background:linear-gradient(135deg,#ede9fe,#f5f3ff);border-left:5px solid #8b5cf6;">
-            <div class="unit-icon">📦</div>
-            <div class="unit-label">ยอดขาย (ลัง)</div>
-            <div class="unit-value" style="color:#7c3aed;">@unitCounts["ลัง"].ToString("N0")</div>
-            <div class="unit-sub">ลังที่ขายได้ทั้งหมด</div>
+            <div class="unit-icon">๐“ฆ</div>
+            <div class="unit-label">เธขเธญเธ”เธเธฒเธข (เธฅเธฑเธ)</div>
+            <div class="unit-value" style="color:#7c3aed;">@unitCounts["เธฅเธฑเธ"].ToString("N0")</div>
+            <div class="unit-sub">เธฅเธฑเธเธ—เธตเนเธเธฒเธขเนเธ”เนเธ—เธฑเนเธเธซเธกเธ”</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="unit-card" style="background:linear-gradient(135deg,#dbeafe,#eff6ff);border-left:5px solid #3b82f6;">
-            <div class="unit-icon">🗂️</div>
-            <div class="unit-label">ยอดขาย (แพ็ค)</div>
-            <div class="unit-value" style="color:#1d4ed8;">@unitCounts["แพ็ค"].ToString("N0")</div>
-            <div class="unit-sub">แพ็คที่ขายได้ทั้งหมด</div>
+            <div class="unit-icon">๐—๏ธ</div>
+            <div class="unit-label">เธขเธญเธ”เธเธฒเธข (เนเธเนเธ)</div>
+            <div class="unit-value" style="color:#1d4ed8;">@unitCounts["เนเธเนเธ"].ToString("N0")</div>
+            <div class="unit-sub">เนเธเนเธเธ—เธตเนเธเธฒเธขเนเธ”เนเธ—เธฑเนเธเธซเธกเธ”</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="unit-card" style="background:linear-gradient(135deg,#dcfce7,#f0fdf4);border-left:5px solid #22c55e;">
-            <div class="unit-icon">🍶</div>
-            <div class="unit-label">ยอดขาย (ขวด)</div>
-            <div class="unit-value" style="color:#15803d;">@unitCounts["ขวด"].ToString("N0")</div>
-            <div class="unit-sub">ขวดที่ขายได้ทั้งหมด</div>
+            <div class="unit-icon">๐ถ</div>
+            <div class="unit-label">เธขเธญเธ”เธเธฒเธข (เธเธงเธ”)</div>
+            <div class="unit-value" style="color:#15803d;">@unitCounts["เธเธงเธ”"].ToString("N0")</div>
+            <div class="unit-sub">เธเธงเธ”เธ—เธตเนเธเธฒเธขเนเธ”เนเธ—เธฑเนเธเธซเธกเธ”</div>
         </div>
     </div>
 </div>
 
 @if (allProductsForChart.Any())
 {
-    <div class="prod-chart-card no-print">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <span class="fw-bold" style="color:#1a1a2e;font-size:1.05rem;">
-                <i class="bi bi-bar-chart-fill text-primary"></i> กราฟแท่งจัดอันดับสินค้าขายดี (Top @allProductsForChart.Count รายการ)
-            </span>
+    var top5 = allProductsForChart.Take(5).ToList();
+    var top10 = allProductsForChart.Take(10).ToList();
+    var maxQty = top10.Any() ? top10.Max(p => p.TotalQty) : 1;
+    
+    <div class="row mb-4 no-print align-items-stretch">
+        <div class="col-md-5">
+            <div class="prod-chart-card h-100 mb-0 d-flex flex-column">
+                <div class="fw-bold mb-3" style="color:#1a1a2e;font-size:1.05rem;">
+                    <i class="bi bi-pie-chart-fill text-primary"></i> สัดส่วนสินค้าขายดี (Top 5)
+                </div>
+                <div style="position:relative; flex-grow:1; display:flex; justify-content:center; align-items:center; min-height:220px;">
+                    <canvas id="top5Doughnut"></canvas>
+                </div>
+                <div class="insight-card mt-auto" id="product-insight-box"></div>
+            </div>
         </div>
-        <canvas id="productBarChart" height="@(Math.Max(allProductsForChart.Count * 30, 200))"></canvas>
-        <div class="insight-card mt-3" id="product-insight-box"></div>
+        <div class="col-md-7">
+            <div class="prod-chart-card h-100 mb-0">
+                <div class="fw-bold mb-4" style="color:#1a1a2e;font-size:1.05rem;">
+                    <i class="bi bi-list-ol text-success"></i> 10 อันดับสินค้าขายดีที่สุด (จำแนกตามหน่วย)
+                </div>
+                <div class="top-products-list">
+                    @for(int i=0; i<top10.Count; i++) {
+                        var p = top10[i];
+                        double pct = (double)(p.TotalQty * 100M / maxQty);
+                        string color = "#6c757d"; // default gray
+                        if (p.Unit == "ซอง") color = "#f59e0b";
+                        else if (p.Unit == "ลัง") color = "#8b5cf6";
+                        else if (p.Unit.Contains("แพ็ค") || p.Unit.Contains("แพค")) color = "#3b82f6";
+                        else if (p.Unit == "ขวด") color = "#22c55e";
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between small fw-bold mb-1">
+                                <span class="text-truncate" style="max-width:75%; color:#334155;">@(i+1). @p.Name</span>
+                                <span style="color:@color;">@p.TotalQty.ToString("N0") <small class="text-muted">@p.Unit</small></span>
+                            </div>
+                            <div class="progress" style="height:8px; border-radius:4px; background:#f1f5f9;">
+                                <div class="progress-bar" style="width:@pct%; background-color:@color; border-radius:4px;"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
     </div>
 }
 
@@ -226,7 +262,7 @@
 {
     <div class="text-center py-5 text-muted bg-white rounded shadow-sm">
         <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
-        ไม่พบข้อมูลรายการขายสินค้าที่ตรงกับเงื่อนไข
+        เนเธกเนเธเธเธเนเธญเธกเธนเธฅเธฃเธฒเธขเธเธฒเธฃเธเธฒเธขเธชเธดเธเธเนเธฒเธ—เธตเนเธ•เธฃเธเธเธฑเธเน€เธเธทเนเธญเธเนเธ
     </div>
 }
 else
@@ -237,23 +273,23 @@ else
             <!-- Rep Header -->
             <div class="rep-group-header">
                 <div>
-                    <i class="bi bi-person-fill text-warning me-2"></i>ผู้แทนขาย: @repReport.SalesRep
+                    <i class="bi bi-person-fill text-warning me-2"></i>เธเธนเนเนเธ—เธเธเธฒเธข: @repReport.SalesRep
                 </div>
                 <div class="fs-6 fw-normal">
-                    ยอดขายสุทธิรวม: <strong class="text-warning fs-5">@repReport.TotalNetSales.ToString("N0")</strong> บาท 
-                    <small class="opacity-75">(@repReport.TotalNetQty.ToString("N0") ชิ้น/กล่อง)</small>
+                    เธขเธญเธ”เธเธฒเธขเธชเธธเธ—เธเธดเธฃเธงเธก: <strong class="text-warning fs-5">@repReport.TotalNetSales.ToString("N0")</strong> เธเธฒเธ— 
+                    <small class="opacity-75">(@repReport.TotalNetQty.ToString("N0") เธเธดเนเธ/เธเธฅเนเธญเธ)</small>
                 </div>
             </div>
 
             @foreach (var monthGroup in repReport.MonthlyMovements)
             {
                 <div class="month-sub-header d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-calendar-event me-2"></i>ประจำเดือน: @monthGroup.MonthNameThai</span>
+                    <span><i class="bi bi-calendar-event me-2"></i>เธเธฃเธฐเธเธณเน€เธ”เธทเธญเธ: @monthGroup.MonthNameThai</span>
                     <span class="small">
-                        ยอดขายสุทธิเดือนนี้: <strong class="text-success fs-6">@monthGroup.MonthNetAmount.ToString("N0")</strong> บาท
+                        เธขเธญเธ”เธเธฒเธขเธชเธธเธ—เธเธดเน€เธ”เธทเธญเธเธเธตเน: <strong class="text-success fs-6">@monthGroup.MonthNetAmount.ToString("N0")</strong> เธเธฒเธ—
                         @if (monthGroup.MonthDeliveringDeduction > 0)
                         {
-                            <span class="text-muted ms-2">(หักบิลอยู่จัดส่ง -@monthGroup.MonthDeliveringDeduction.ToString("N0") บ.)</span>
+                            <span class="text-muted ms-2">(เธซเธฑเธเธเธดเธฅเธญเธขเธนเนเธเธฑเธ”เธชเนเธ -@monthGroup.MonthDeliveringDeduction.ToString("N0") เธ.)</span>
                         }
                     </span>
                 </div>
@@ -263,10 +299,10 @@ else
                         <thead>
                             <tr>
                                 <th style="width:45px;" class="text-center">#</th>
-                                <th style="min-width:340px;">1. รหัสสินค้า และ ชื่อสินค้า</th>
-                                <th style="width:170px;" class="text-end">2. จำนวนขายรวม (หน่วย)</th>
-                                <th style="width:170px;" class="text-end">3. ราคาต่อหน่วย (บาท)</th>
-                                <th style="width:200px;" class="text-end">4. ยอดเงินรวมสุทธิ (บาท)</th>
+                                <th style="min-width:340px;">1. เธฃเธซเธฑเธชเธชเธดเธเธเนเธฒ เนเธฅเธฐ เธเธทเนเธญเธชเธดเธเธเนเธฒ</th>
+                                <th style="width:170px;" class="text-end">2. เธเธณเธเธงเธเธเธฒเธขเธฃเธงเธก (เธซเธเนเธงเธข)</th>
+                                <th style="width:170px;" class="text-end">3. เธฃเธฒเธเธฒเธ•เนเธญเธซเธเนเธงเธข (เธเธฒเธ—)</th>
+                                <th style="width:200px;" class="text-end">4. เธขเธญเธ”เน€เธเธดเธเธฃเธงเธกเธชเธธเธ—เธเธด (เธเธฒเธ—)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -279,7 +315,7 @@ else
                                 <tr class="@(isDelivering ? "table-light" : "")">
                                     <td class="text-center text-muted">@(pIdx++)</td>
                                     
-                                    <!-- 1. รหัส และ ชื่อสินค้า -->
+                                    <!-- 1. เธฃเธซเธฑเธช เนเธฅเธฐ เธเธทเนเธญเธชเธดเธเธเนเธฒ -->
                                     <td>
                                         <div class="fw-bold @(isDelivering ? "delivering-strike" : "text-dark")" style="font-size:1rem;">
                                             <span class="badge bg-secondary me-1">@prod.ProductCode</span>
@@ -288,18 +324,18 @@ else
                                         @if (isDelivering)
                                         {
                                             <div class="badge-delivering mt-1 d-inline-block">
-                                                🚚 บิลอยู่จัดส่ง — ขีดฆ่าไม่รวมยอดขาย (-@prod.TotalAmount.ToString("N0") บ.)
+                                                ๐ เธเธดเธฅเธญเธขเธนเนเธเธฑเธ”เธชเนเธ โ€” เธเธตเธ”เธเนเธฒเนเธกเนเธฃเธงเธกเธขเธญเธ”เธเธฒเธข (-@prod.TotalAmount.ToString("N0") เธ.)
                                             </div>
                                         }
                                         else if (hasPartialDelivering)
                                         {
                                             <div class="badge-delivering mt-1 d-inline-block">
-                                                🚚 รวมบิลอยู่จัดส่ง @prod.DeliveringQty.ToString("N0") @prod.Unit (หักลบ -@prod.DeliveringAmount.ToString("N0") บ.)
+                                                ๐ เธฃเธงเธกเธเธดเธฅเธญเธขเธนเนเธเธฑเธ”เธชเนเธ @prod.DeliveringQty.ToString("N0") @prod.Unit (เธซเธฑเธเธฅเธ -@prod.DeliveringAmount.ToString("N0") เธ.)
                                             </div>
                                         }
                                     </td>
 
-                                    <!-- 2. จำนวนขาย -->
+                                    <!-- 2. เธเธณเธเธงเธเธเธฒเธข -->
                                     <td class="text-end @(isDelivering ? "delivering-strike" : "fw-bold text-dark")" style="font-size:0.98rem;">
                                         @if (isDelivering)
                                         {
@@ -311,12 +347,12 @@ else
                                         }
                                     </td>
 
-                                    <!-- 3. ราคาเฉลี่ย -->
+                                    <!-- 3. เธฃเธฒเธเธฒเน€เธเธฅเธตเนเธข -->
                                     <td class="text-end text-muted fw-semibold">
                                         @prod.Price.ToString("N2")
                                     </td>
 
-                                    <!-- 4. ยอดเงินรวมภาษีสุทธิ -->
+                                    <!-- 4. เธขเธญเธ”เน€เธเธดเธเธฃเธงเธกเธ เธฒเธฉเธตเธชเธธเธ—เธเธด -->
                                     <td class="text-end @(isDelivering ? "delivering-strike" : "fw-bold text-primary")" style="font-size:1.05rem;">
                                         @if (isDelivering)
                                         {
@@ -333,14 +369,14 @@ else
                         <tfoot class="table-light fw-bold" style="border-top:2px solid #dee2e6;">
                             <tr>
                                 <td colspan="2" class="text-end fs-6">
-                                    รวมสุทธิเดือน @monthGroup.MonthNameThai
+                                    เธฃเธงเธกเธชเธธเธ—เธเธดเน€เธ”เธทเธญเธ @monthGroup.MonthNameThai
                                 </td>
                                 <td class="text-end text-dark fs-6">
                                     @monthGroup.MonthNetQty.ToString("N0")
                                 </td>
                                 <td class="text-end text-muted">-</td>
                                 <td class="text-end text-success" style="font-size:1.15rem;">
-                                    @monthGroup.MonthNetAmount.ToString("N0") บ.
+                                    @monthGroup.MonthNetAmount.ToString("N0") เธ.
                                 </td>
                             </tr>
                         </tfoot>
@@ -357,12 +393,12 @@ else
     <div class="card-body py-2">
         <div class="row align-items-center">
             <div class="col-md-6">
-                <span class="fw-bold text-dark"><i class="bi bi-pen me-1"></i> ตัวเลือกการแสดงผลช่องลงนามท้ายรายงาน:</span>
+                <span class="fw-bold text-dark"><i class="bi bi-pen me-1"></i> เธ•เธฑเธงเน€เธฅเธทเธญเธเธเธฒเธฃเนเธชเธ”เธเธเธฅเธเนเธญเธเธฅเธเธเธฒเธกเธ—เนเธฒเธขเธฃเธฒเธขเธเธฒเธ:</span>
             </div>
             <div class="col-md-6 d-flex justify-content-end gap-3">
                 <div class="form-check form-switch">
                     <input class="form-check-input" type="checkbox" id="toggle-sig" checked onchange="toggleSignatures()">
-                    <label class="form-check-label small fw-bold" for="toggle-sig">แสดงช่องลงนาม 4 ฝ่าย</label>
+                    <label class="form-check-label small fw-bold" for="toggle-sig">เนเธชเธ”เธเธเนเธญเธเธฅเธเธเธฒเธก 4 เธเนเธฒเธข</label>
                 </div>
             </div>
         </div>
@@ -373,23 +409,23 @@ else
     <div class="row text-center mt-3 pt-3" style="border-top: 1.5px dashed #ccc;">
         <div class="col-3">
             <div style="border-bottom: 1px solid #333; margin: 45px 15px 6px;">&nbsp;</div>
-            <p class="mb-0 fw-bold" style="font-size:0.95rem;">(ผู้รายงาน)</p>
-            <small class="text-muted">วันที่ ...... / ...... / ..........</small>
+            <p class="mb-0 fw-bold" style="font-size:0.95rem;">(เธเธนเนเธฃเธฒเธขเธเธฒเธ)</p>
+            <small class="text-muted">เธงเธฑเธเธ—เธตเน ...... / ...... / ..........</small>
         </div>
         <div class="col-3">
             <div style="border-bottom: 1px solid #333; margin: 45px 15px 6px;">&nbsp;</div>
-            <p class="mb-0 fw-bold" style="font-size:0.95rem;">(ผู้ตรวจสอบ)</p>
-            <small class="text-muted">วันที่ ...... / ...... / ..........</small>
+            <p class="mb-0 fw-bold" style="font-size:0.95rem;">(เธเธนเนเธ•เธฃเธงเธเธชเธญเธ)</p>
+            <small class="text-muted">เธงเธฑเธเธ—เธตเน ...... / ...... / ..........</small>
         </div>
         <div class="col-3">
             <div style="border-bottom: 1px solid #333; margin: 45px 15px 6px;">&nbsp;</div>
-            <p class="mb-0 fw-bold" style="font-size:0.95rem;">(ผู้มีอำนาจลงนาม)</p>
-            <small class="text-muted">วันที่ ...... / ...... / ..........</small>
+            <p class="mb-0 fw-bold" style="font-size:0.95rem;">(เธเธนเนเธกเธตเธญเธณเธเธฒเธเธฅเธเธเธฒเธก)</p>
+            <small class="text-muted">เธงเธฑเธเธ—เธตเน ...... / ...... / ..........</small>
         </div>
         <div class="col-3">
             <div style="border-bottom: 1px solid #333; margin: 45px 15px 6px;">&nbsp;</div>
-            <p class="mb-0 fw-bold" style="font-size:0.95rem;">(ผู้แทนขาย)</p>
-            <small class="text-muted">วันที่ ...... / ...... / ..........</small>
+            <p class="mb-0 fw-bold" style="font-size:0.95rem;">(เธเธนเนเนเธ—เธเธเธฒเธข)</p>
+            <small class="text-muted">เธงเธฑเธเธ—เธตเน ...... / ...... / ..........</small>
         </div>
     </div>
 </div>
@@ -401,38 +437,54 @@ else
 const productChartData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(allProductsForChart.Select(p => new { name = p.Name, unit = p.Unit, qty = p.TotalQty }).ToList()));
 
 if (productChartData && productChartData.length > 0) {
-    const productBarEl = document.getElementById('productBarChart');
-    if (productBarEl) {
-        const unitColors = { 'ซอง':'rgba(245,158,11,0.85)', 'ลัง':'rgba(139,92,246,0.85)', 'แพ็ค':'rgba(59,130,246,0.85)', 'ขวด':'rgba(34,197,94,0.85)' };
-        const bgColors = productChartData.map(p => unitColors[p.unit] || 'rgba(100,116,139,0.85)');
-        const bColors = productChartData.map(p => (unitColors[p.unit] || 'rgba(100,116,139,0.85)').replace('0.85', '1'));
+    const top5Data = productChartData.slice(0, 5);
+    const top5El = document.getElementById('top5Doughnut');
+    
+    if (top5El) {
+        const unitColors = { 'ซอง':'#f59e0b', 'ลัง':'#8b5cf6', 'แพ็ค':'#3b82f6', 'ขวด':'#22c55e' };
+        const bgColors = top5Data.map(p => unitColors[p.unit] || '#94a3b8');
         
-        new Chart(productBarEl, {
-            type: 'bar',
+        new Chart(top5El, {
+            type: 'doughnut',
             data: {
-                labels: productChartData.map(p => p.name.length > 25 ? p.name.substring(0, 25) + '...' : p.name),
+                labels: top5Data.map(p => p.name.length > 15 ? p.name.substring(0, 15) + '...' : p.name),
                 datasets: [{
-                    label: 'ปริมาณที่ขายได้ (รวม)',
-                    data: productChartData.map(p => p.qty),
+                    data: top5Data.map(p => p.qty),
                     backgroundColor: bgColors,
-                    borderColor: bColors,
-                    borderWidth: 1.5,
-                    borderRadius: 6
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 4
                 }]
             },
             options: {
-                indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
+                cutout: '65%',
                 plugins: {
-                    legend: { display: false },
+                    legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } },
                     tooltip: {
                         callbacks: {
                             label: ctx => {
-                                const p = productChartData[ctx.dataIndex];
-                                return '  ปริมาณที่ขายได้: ' + ctx.parsed.x.toLocaleString('th-TH') + ' ' + p.unit;
+                                const p = top5Data[ctx.dataIndex];
+                                return ' ' + p.qty.toLocaleString('th-TH') + ' ' + p.unit;
                             }
                         }
+                    }
+                }
+            }
+        });
+
+        // Generate Insight Box
+        const insightBox = document.getElementById('product-insight-box');
+        if (insightBox) {
+            const top = top5Data[0];
+            const unitSummary = {};
+            productChartData.forEach(p => { unitSummary[p.unit] = (unitSummary[p.unit] || 0) + p.qty; });
+            const topUnit = Object.entries(unitSummary).sort((a,b)=>b[1]-a[1])[0];
+            insightBox.innerHTML = `<i class="bi bi-star-fill text-warning me-1"></i> สินค้ายอดนิยมอันดับ 1 คือ <b>${top.name}</b> ยอดขายรวม <span class="text-success">${top.qty.toLocaleString('th-TH')} ${top.unit}</span>`;
+        }
+    }
+}
                     }
                 },
                 scales: {
@@ -449,7 +501,7 @@ if (productChartData && productChartData.length > 0) {
             const unitSummary = {};
             productChartData.forEach(p => { unitSummary[p.unit] = (unitSummary[p.unit] || 0) + p.qty; });
             const topUnit = Object.entries(unitSummary).sort((a,b)=>b[1]-a[1])[0];
-            insightBox.innerHTML = `<i class="bi bi-lightbulb-fill text-warning me-1"></i> <b>วิเคราะห์สินค้าขายดี:</b> สินค้าที่ขายได้มากที่สุดคือ <b>${top.name}</b> (${top.qty.toLocaleString('th-TH')} ${top.unit}) | หน่วยนับที่ขายออกมากที่สุดคือ <b>${topUnit[0]}</b> (จำนวนรวม ${topUnit[1].toLocaleString('th-TH')} ${topUnit[0]})`;
+            insightBox.innerHTML = `<i class="bi bi-lightbulb-fill text-warning me-1"></i> <b>เธงเธดเน€เธเธฃเธฒเธฐเธซเนเธชเธดเธเธเนเธฒเธเธฒเธขเธ”เธต:</b> เธชเธดเธเธเนเธฒเธ—เธตเนเธเธฒเธขเนเธ”เนเธกเธฒเธเธ—เธตเนเธชเธธเธ”เธเธทเธญ <b>${top.name}</b> (${top.qty.toLocaleString('th-TH')} ${top.unit}) | เธซเธเนเธงเธขเธเธฑเธเธ—เธตเนเธเธฒเธขเธญเธญเธเธกเธฒเธเธ—เธตเนเธชเธธเธ”เธเธทเธญ <b>${topUnit[0]}</b> (เธเธณเธเธงเธเธฃเธงเธก ${topUnit[1].toLocaleString('th-TH')} ${topUnit[0]})`;
         }
     }
 }

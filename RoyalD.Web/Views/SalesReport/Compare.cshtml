@@ -1,8 +1,8 @@
-﻿@model RoyalD.Web.Services.AnnualPerformanceViewModel
+@model RoyalD.Web.Services.AnnualPerformanceViewModel
 @{
     ViewData["Title"] = "เปรียบเทียบผลงานผู้แทนขายรายเดือน";
-    bool isSRep = User.HasClaim(c => c.Type == "Position" && (c.Value.Contains("ผู้แทน") || c.Value.Contains("พนักงานขาย"))) && !User.HasClaim(c => c.Type == "Role" && c.Value == "Admin");
-    bool canDownload = (User.HasClaim(c => c.Type == "Role" && c.Value == "Admin") 
+    bool isSRep = User.HasClaim(c => c.Type == "Position" && (c.Value.Contains("ผู้แทน") || c.Value.Contains("พนักงานขาย"))) && !User.IsInRole("admin");
+    bool canDownload = (User.IsInRole("admin") 
                         || User.HasClaim(c => c.Type == "Position" && (c.Value.ToLower().Contains("manager") || c.Value.Contains("ผู้จัดการ"))) 
                         || User.HasClaim(c => c.Type == "CanDownload" && c.Value == "true")) 
                         && !isSRep;
