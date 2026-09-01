@@ -110,13 +110,7 @@
                                 <td class="text-center">@item.SalesRep</td>
                             </tr>
                         }
-                        <tr class="bg-light fw-bold" style="font-size:1.1rem;">
-                            <td colspan="4" class="text-end text-success">รวมยอดเงินทั้งหมด (Total Amount)</td>
-                            <td class="text-end text-success"></td>
-                            <td class="text-end text-success">@Model.Items.Sum(x => x.Qty).ToString("N0")</td>
-                            <td class="text-end text-success">@Model.Items.Sum(x => x.TotalAmount).ToString("N2")</td>
-                            <td></td>
-                        </tr>
+                        
                     }
                 </tbody>
             </table>
