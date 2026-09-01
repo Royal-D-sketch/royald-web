@@ -38,6 +38,13 @@ namespace RoyalD.Web.Controllers
             return View(data);
         }
 
+        // Screen 4: Customer Product Details
+        public async Task<IActionResult> CustomerProduct(string? rep = null, string? month = null, DateTime? date = null)
+        {
+            var vm = await _svc.GetCustomerProductReportAsync(rep, month, date);
+            return View(vm);
+        }
+
         // Export Actions
         public async Task<IActionResult> ExportSummaryExcel()
         {

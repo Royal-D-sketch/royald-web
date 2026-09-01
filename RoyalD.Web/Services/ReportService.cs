@@ -731,5 +731,89 @@ namespace RoyalD.Web.Services
             }
             return result;
         }
+        public async Task<CustomerProductViewModel> GetCustomerProductReportAsync(string? selectedRep, string? selectedMonth, DateTime? selectedDate)
+        {
+            var vm = new CustomerProductViewModel
+            {
+                SelectedRep = selectedRep,
+                SelectedMonth = selectedMonth,
+                SelectedDate = selectedDate,
+                AllReps = await _db.SalesBills.Where(b => b.SalesRep != null && b.SalesRep != "").Select(b => b.SalesRep).Distinct().OrderBy(x => x).ToListAsync(),
+                AllMonths = StandardMonthsMap.Keys.ToList()
+            };
+
+            var query = _db.SalesBillItems
+                .Include(i => i.SalesBill)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(selectedRep))
+                query = query.Where(i => i.SalesBill.SalesRep == selectedRep);
+
+            if (selectedDate.HasValue)
+                query = query.Where(i => i.SalesBill.BillDate.Date == selectedDate.Value.Date);
+
+            if (!string.IsNullOrEmpty(selectedMonth))
+            {
+                if (DateTime.TryParse(selectedMonth + "-01", out var mDate))
+                {
+                    var startOfMonth = new DateTime(mDate.Year, mDate.Month, 1);
+                    var endOfMonth = startOfMonth.AddMonths(1);
+                    query = query.Where(i => i.SalesBill.SourceMonth == selectedMonth || (i.SalesBill.BillDate >= startOfMonth && i.SalesBill.BillDate < endOfMonth));
+                }
+                else
+                {
+                    query = query.Where(i => i.SalesBill.SourceMonth == selectedMonth);
+                }
+            }
+
+            var items = await query.ToListAsync();
+
+            var grouped = items.GroupBy(i => new { 
+                    Cust = i.SalesBill.CustomerName, 
+                    Rep = i.SalesBill.SalesRep, 
+                    Code = i.ProductCode, 
+                    Name = i.ProductName, 
+                    Price = i.Price,
+                    Unit = i.Unit
+                })
+                .Select(g => new CustomerProductItem
+                {
+                    CustomerName = g.Key.Cust ?? "",
+                    SalesRep = g.Key.Rep ?? "",
+                    ProductCode = g.Key.Code ?? "",
+                    ProductName = g.Key.Name ?? "",
+                    Price = g.Key.Price,
+                    Unit = g.Key.Unit ?? "",
+                    Qty = g.Sum(x => x.Qty),
+                    TotalAmount = g.Sum(x => x.Amount)
+                })
+                .OrderBy(x => x.CustomerName).ThenBy(x => x.ProductName)
+                .ToList();
+
+            vm.Items = grouped;
+            return vm;
+        }
+    }
+
+    public class CustomerProductViewModel
+    {
+        public string? SelectedRep { get; set; }
+        public string? SelectedMonth { get; set; }
+        public DateTime? SelectedDate { get; set; }
+        public List<string> AllReps { get; set; } = new();
+        public List<string> AllMonths { get; set; } = new();
+        public List<CustomerProductItem> Items { get; set; } = new();
+    }
+
+    public class CustomerProductItem
+    {
+        public string CustomerName { get; set; } = "";
+        public string SalesRep { get; set; } = "";
+        public string ProductCode { get; set; } = "";
+        public string ProductName { get; set; } = "";
+        public decimal Price { get; set; }
+        public decimal Qty { get; set; }
+        public string Unit { get; set; } = "";
+        public decimal TotalAmount { get; set; }
     }
 }
