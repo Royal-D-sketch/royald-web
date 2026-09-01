@@ -203,7 +203,7 @@ namespace RoyalD.Web.Services
                 var row = new SalesRepPivotRow { SalesRep = rep };
                 foreach (var mk in monthKeys)
                 {
-                    var mBills = bills.Where(b => b.SalesRep == rep && (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM") == mk)).Cast<dynamic>().ToList();
+                    var mBills = bills.Where(b => b.SalesRep == rep && (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) == mk)).Cast<dynamic>().ToList();
                     row.MonthlyData.Add(CalcMonth(mBills, mk));
                 }
                 vm.RepRows.Add(row);
@@ -215,7 +215,7 @@ namespace RoyalD.Web.Services
 
             foreach (var mk in monthKeys)
             {
-                var mBills = bills.Where(b => (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM") == mk)).Cast<dynamic>().ToList();
+                var mBills = bills.Where(b => (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) == mk)).Cast<dynamic>().ToList();
                 var cMonth = CalcMonth(mBills, mk);
                 totalRow.MonthlyData.Add(cMonth);
                 overallRep.MonthlyData.Add(cMonth);
@@ -264,8 +264,8 @@ namespace RoyalD.Web.Services
                 foreach (var mk in monthKeys)
                 {
                     var mBills = isOverall 
-                        ? bills.Where(b => (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM") == mk)).ToList()
-                        : bills.Where(b => b.SalesRep == repName && (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM") == mk)).ToList();
+                        ? bills.Where(b => (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) == mk)).ToList()
+                        : bills.Where(b => b.SalesRep == repName && (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) == mk)).ToList();
 
                     decimal mSales = mBills.Sum(b => b.TotalAmount);
                     decimal mOutstanding = 0m;
@@ -388,7 +388,7 @@ namespace RoyalD.Web.Services
 
                 foreach (var mk in targetMonths)
                 {
-                    var repMonthBills = bills.Where(b => b.SalesRep == rep && (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM") == mk)).Select(b => b.BillNo).ToHashSet();
+                    var repMonthBills = bills.Where(b => b.SalesRep == rep && (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) == mk)).Select(b => b.BillNo).ToHashSet();
                     if (!repMonthBills.Any()) continue;
 
                     var monthItems = items.Where(i => repMonthBills.Contains(i.BillNo)).ToList();
