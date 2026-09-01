@@ -84,7 +84,7 @@
                         <th>ลำดับ</th>
                         <th class="text-start">รหัสลูกค้า</th>
                         <th class="text-start">ชื่อลูกค้า</th>
-                        <th class="text-start">ชื่อสินค้า</th>
+                        <th class="text-start">รหัสสินค้า : ชื่อสินค้า</th>
                         <th>ราคาต่อหน่วย</th>
                         <th>ชื่อผู้แทนขาย</th>
                     </tr>
@@ -113,7 +113,7 @@
                                     <td class="text-start text-muted text-center"><i class="bi bi-arrow-return-right"></i></td>
                                     <td class="text-start text-muted text-center"><i class="bi bi-arrow-return-right"></i></td>
                                 }
-                                <td class="text-start">@item.ProductName</td>
+                                <td class="text-start">@item.ProductCode : @item.ProductName</td>
                                 <td class="text-end fw-bold">@item.Price.ToString("N2")</td>
                                 <td class="text-center">@item.SalesRep</td>
                             </tr>
