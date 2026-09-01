@@ -1,4 +1,4 @@
-@using System.Security.Claims
+﻿@using System.Security.Claims
 @{
     bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
     bool isMasterAdmin = isAdmin;
@@ -95,6 +95,7 @@
     }
 
     @RenderSection("Styles", required: false)
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 </head>
 <body>
 @if (User.Identity?.IsAuthenticated == true)
@@ -638,5 +639,14 @@ else
             </text>
         }
     </script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $(".select2-searchable").select2({
+            theme: "classic",
+            width: "100%"
+        });
+    });
+</script>
 </body>
 </html>
