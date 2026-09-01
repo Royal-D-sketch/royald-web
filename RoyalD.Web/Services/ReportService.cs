@@ -744,7 +744,8 @@ namespace RoyalD.Web.Services
 
             var query = _db.SalesBillItems
                 .Include(i => i.SalesBill)
-                .AsQueryable();
+                .AsQueryable()
+                .Where(i => i.Price > 0);
 
             if (!string.IsNullOrEmpty(selectedRep))
                 query = query.Where(i => i.SalesBill.SalesRep == selectedRep);
@@ -767,28 +768,43 @@ namespace RoyalD.Web.Services
             }
 
             var items = await query.ToListAsync();
+            var allCustomers = await _db.Customers.ToDictionaryAsync(c => c.CustomerCode ?? "", c => c.Name ?? "");
 
             var grouped = items.GroupBy(i => new { 
-                    Month = string.IsNullOrEmpty(i.SalesBill.SourceMonth) ? i.SalesBill.BillDate.ToString("MM/yyyy", System.Globalization.CultureInfo.InvariantCulture) : i.SalesBill.SourceMonth,
                     CustCode = i.SalesBill.CustomerCode,
                     Cust = i.SalesBill.CustomerName, 
                     Rep = i.SalesBill.SalesRep, 
                     Code = i.ProductCode, 
                     Name = i.ProductName, 
-                    Price = i.Price,
-                    Unit = i.Unit
+                    Price = i.Price
                 })
-                .Select(g => new CustomerProductItem
-                {
-                    CustomerCode = g.Key.CustCode ?? "",
-                    CustomerName = g.Key.Cust ?? "",
-                    SalesRep = g.Key.Rep ?? "",
-                    ProductCode = g.Key.Code ?? "",
-                    ProductName = g.Key.Name ?? "",
-                    Price = g.Key.Price,
-                    Unit = g.Key.Unit ?? "",
-                    Qty = g.Sum(x => x.Qty),
-                    TotalAmount = g.Sum(x => x.Amount)
+                .Select(g => {
+                    var months = g.Select(x => string.IsNullOrEmpty(x.SalesBill.SourceMonth) ? x.SalesBill.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) : x.SalesBill.SourceMonth)
+                                  .Distinct()
+                                  .OrderBy(m => m)
+                                  .ToList();
+                    string monthDisplay = "";
+                    if (months.Count == 1) monthDisplay = months[0];
+                    else if (months.Count > 1) monthDisplay = months.First() + " ถึง " + months.Last();
+                    
+                    string cName = g.Key.Cust ?? "";
+                    if (string.IsNullOrWhiteSpace(cName) && allCustomers.TryGetValue(g.Key.CustCode ?? "", out var dbName))
+                    {
+                        cName = dbName;
+                    }
+                    
+                    return new CustomerProductItem
+                    {
+                        Month = monthDisplay,
+                        CustomerCode = g.Key.CustCode ?? "",
+                        CustomerName = cName,
+                        SalesRep = g.Key.Rep ?? "",
+                        ProductCode = g.Key.Code ?? "",
+                        ProductName = g.Key.Name ?? "",
+                        Price = g.Key.Price,
+                        Qty = g.Sum(x => x.Qty),
+                        TotalAmount = g.Sum(x => x.Amount)
+                    };
                 })
                 .OrderBy(x => x.CustomerName).ThenBy(x => x.ProductName)
                 .ToList();
