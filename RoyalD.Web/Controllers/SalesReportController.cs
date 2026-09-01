@@ -51,6 +51,22 @@ namespace RoyalD.Web.Controllers
             var data = await _svc.GetAnnualPerformanceAsync();
             return View(data);
         }
+                public async Task<IActionResult> CustomerPurchaseSummary(string salesRep, string month)
+        {
+            bool isAdmin = User.IsInRole("admin");
+            bool isSalesRepRole = User.HasClaim(c => c.Type == "Position" && (c.Value.Contains("ผู้แทน") || c.Value.Contains("พนักงานขาย"))) && !isAdmin;
+            
+            if (isSalesRepRole)
+            {
+                // Lock filter to own name
+                var nameClaim = User.FindFirst("FullName")?.Value ?? User.Identity?.Name;
+                salesRep = nameClaim;
+            }
+
+            var vm = await _svc.GetCustomerPurchaseSummaryAsync(salesRep, month);
+            return View(vm);
+        }
+
         // Export Actions
         public async Task<IActionResult> ExportSummaryExcel()
         {
@@ -80,7 +96,7 @@ namespace RoyalD.Web.Controllers
         {
             var data = await _svc.GetCustomerProductReportAsync(rep, month, date, q);
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("ลำดับ,เดือน,รหัสลูกค้า,ชื่อลูกค้า,รหัสสินค้า,ชื่อสินค้า,ราคาต่อหน่วย,เครดิต(วัน),ชื่อผู้แทนขาย");
+            sb.AppendLine("เธฅเธณเธ”เธฑเธ,เน€เธ”เธทเธญเธ,เธฃเธซเธฑเธชเธฅเธนเธเธเนเธฒ,เธเธทเนเธญเธฅเธนเธเธเนเธฒ,เธฃเธซเธฑเธชเธชเธดเธเธเนเธฒ,เธเธทเนเธญเธชเธดเธเธเนเธฒ,เธฃเธฒเธเธฒเธ•เนเธญเธซเธเนเธงเธข,เน€เธเธฃเธ”เธดเธ•(เธงเธฑเธ),เธเธทเนเธญเธเธนเนเนเธ—เธเธเธฒเธข");
             int idx = 1;
             foreach (var item in data.Items)
             {

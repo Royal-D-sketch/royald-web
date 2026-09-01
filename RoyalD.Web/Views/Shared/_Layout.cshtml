@@ -349,6 +349,10 @@
                            href="/SalesReport/Summary">
                             <i class="bi bi-graph-up-arrow"></i> รายงานผู้แทนขาย
                         </a>
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && ViewContext.RouteData.Values["action"]?.ToString() == "CustomerPurchaseSummary" ? "active" : "")"
+                           href="/SalesReport/CustomerPurchaseSummary">
+                            <i class="bi bi-person-lines-fill"></i> สรุปการซื้อรายลูกค้า
+                        </a>
                     }
                 }
 

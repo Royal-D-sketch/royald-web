@@ -19,7 +19,7 @@ namespace RoyalD.Web.Services
     public class MonthlySummaryItem
     {
         public string MonthKey { get; set; } = string.Empty; // e.g. "2026-01"
-        public string MonthNameThai { get; set; } = string.Empty; // e.g. "ม.ค. 69"
+        public string MonthNameThai { get; set; } = string.Empty; // e.g. "เน€เธเธ.เน€เธย. 69"
         public decimal TotalSales { get; set; }
         public decimal TotalCollected { get; set; }
         public decimal Outstanding { get; set; }
@@ -122,14 +122,14 @@ namespace RoyalD.Web.Services
 
         private static readonly Dictionary<string, string> StandardMonthsMap = new()
         {
-            ["2026-01"] = "ม.ค. 69",
-            ["2026-02"] = "ก.พ. 69",
-            ["2026-03"] = "มี.ค. 69",
-            ["2026-04"] = "เม.ย. 69",
-            ["2026-05"] = "พ.ค. 69",
-            ["2026-06"] = "มิ.ย. 69",
-            ["2026-07"] = "ก.ค. 69",
-            ["2026-08"] = "ส.ค. 69 (1-20 ส.ค.)"
+            ["2026-01"] = "เน€เธเธ.เน€เธย. 69",
+            ["2026-02"] = "เน€เธย.เน€เธย. 69",
+            ["2026-03"] = "เน€เธเธเน€เธเธ•.เน€เธย. 69",
+            ["2026-04"] = "เน€เธโฌเน€เธเธ.เน€เธเธ. 69",
+            ["2026-05"] = "เน€เธย.เน€เธย. 69",
+            ["2026-06"] = "เน€เธเธเน€เธเธ”.เน€เธเธ. 69",
+            ["2026-07"] = "เน€เธย.เน€เธย. 69",
+            ["2026-08"] = "เน€เธเธ.เน€เธย. 69 (1-20 เน€เธเธ.เน€เธย.)"
         };
 
         // 1. Pivot Matrix Report (Summary)
@@ -143,7 +143,7 @@ namespace RoyalD.Web.Services
                     b.BillNo,
                     b.BillDate,
                     b.SourceMonth,
-                    SalesRep = string.IsNullOrEmpty(b.SalesRep) ? "ไม่ระบุ" : b.SalesRep,
+                    SalesRep = string.IsNullOrEmpty(b.SalesRep) ? "เน€เธยเน€เธเธเน€เธยเน€เธเธเน€เธเธเน€เธยเน€เธเธ" : b.SalesRep,
                     b.TotalAmount
                 }).ToListAsync();
 
@@ -159,7 +159,7 @@ namespace RoyalD.Web.Services
             var debtDict = debts.GroupBy(d => d.BillNo).ToDictionary(g => g.Key, g => g.First());
 
             var allReps = bills.Select(b => b.SalesRep)
-                .Where(r => !string.IsNullOrEmpty(r) && r != "ไม่ระบุ")
+                .Where(r => !string.IsNullOrEmpty(r) && r != "เน€เธยเน€เธเธเน€เธยเน€เธเธเน€เธเธเน€เธยเน€เธเธ")
                 .Distinct()
                 .OrderBy(r => r)
                 .ToList();
@@ -210,8 +210,8 @@ namespace RoyalD.Web.Services
             }
 
             // Total Company row
-            var totalRow = new SalesRepPivotRow { SalesRep = "รวมทั้งบริษัท (Total)" };
-            var overallRep = new SalesRepMonthlyReport { SalesRep = "ภาพรวมผู้แทนทุกคน" };
+            var totalRow = new SalesRepPivotRow { SalesRep = "เน€เธเธเน€เธเธเน€เธเธเน€เธโ€”เน€เธเธ‘เน€เธยเน€เธยเน€เธยเน€เธเธเน€เธเธ”เน€เธเธเน€เธเธ‘เน€เธโ€” (Total)" };
+            var overallRep = new SalesRepMonthlyReport { SalesRep = "เน€เธย เน€เธเธ’เน€เธยเน€เธเธเน€เธเธเน€เธเธเน€เธยเน€เธเธเน€เธยเน€เธยเน€เธโ€”เน€เธยเน€เธโ€”เน€เธเธเน€เธยเน€เธยเน€เธย" };
 
             foreach (var mk in monthKeys)
             {
@@ -237,7 +237,7 @@ namespace RoyalD.Web.Services
                     b.BillNo, 
                     b.BillDate, 
                     b.SourceMonth,
-                    SalesRep = string.IsNullOrEmpty(b.SalesRep) ? "ไม่ระบุ" : b.SalesRep, 
+                    SalesRep = string.IsNullOrEmpty(b.SalesRep) ? "เน€เธยเน€เธเธเน€เธยเน€เธเธเน€เธเธเน€เธยเน€เธเธ" : b.SalesRep, 
                     b.TotalAmount 
                 }).ToListAsync();
 
@@ -253,7 +253,7 @@ namespace RoyalD.Web.Services
             var debtDict = debts.GroupBy(d => d.BillNo).ToDictionary(g => g.Key, g => g.First());
 
             var allReps = bills.Select(b => b.SalesRep)
-                .Where(r => !string.IsNullOrEmpty(r) && r != "ไม่ระบุ")
+                .Where(r => !string.IsNullOrEmpty(r) && r != "เน€เธยเน€เธเธเน€เธยเน€เธเธเน€เธเธเน€เธยเน€เธเธ")
                 .Distinct()
                 .OrderBy(r => r)
                 .ToList();
@@ -301,7 +301,7 @@ namespace RoyalD.Web.Services
             {
                 MonthKeys = monthKeys,
                 Months = monthLabels,
-                OverallCompany = BuildReport("ภาพรวมผู้แทนทุกคน", true)
+                OverallCompany = BuildReport("เน€เธย เน€เธเธ’เน€เธยเน€เธเธเน€เธเธเน€เธเธเน€เธยเน€เธเธเน€เธยเน€เธยเน€เธโ€”เน€เธยเน€เธโ€”เน€เธเธเน€เธยเน€เธยเน€เธย", true)
             };
 
             foreach (var r in allReps)
@@ -339,7 +339,7 @@ namespace RoyalD.Web.Services
                     b.BillNo,
                     b.BillDate,
                     b.SourceMonth,
-                    SalesRep = string.IsNullOrEmpty(b.SalesRep) ? "ไม่ระบุ" : b.SalesRep
+                    SalesRep = string.IsNullOrEmpty(b.SalesRep) ? "เน€เธยเน€เธเธเน€เธยเน€เธเธเน€เธเธเน€เธยเน€เธเธ" : b.SalesRep
                 }).ToListAsync();
 
             var billNos = bills.Select(b => b.BillNo).Distinct().ToList();
@@ -440,25 +440,25 @@ namespace RoyalD.Web.Services
         {
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             using var pkg = new ExcelPackage();
-            var ws = pkg.Workbook.Worksheets.Add("สรุปยอดขาย-ยอดเก็บรายเดือน");
+            var ws = pkg.Workbook.Worksheets.Add("เน€เธเธเน€เธเธเน€เธเธเน€เธยเน€เธเธเน€เธเธเน€เธโ€เน€เธยเน€เธเธ’เน€เธเธ-เน€เธเธเน€เธเธเน€เธโ€เน€เธโฌเน€เธยเน€เธยเน€เธยเน€เธเธเน€เธเธ’เน€เธเธเน€เธโฌเน€เธโ€เน€เธเธ—เน€เธเธเน€เธย");
 
-            ws.Cells["A1"].Value = "บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด";
+            ws.Cells["A1"].Value = "เน€เธยเน€เธเธเน€เธเธ”เน€เธเธเน€เธเธ‘เน€เธโ€” เน€เธเธเน€เธเธเน€เธยเน€เธเธเน€เธเธ…-เน€เธโ€เน€เธเธ• (เน€เธยเน€เธโ€”เน€เธเธเน€เธยเน€เธเธ…เน€เธยเน€เธโ€เน€เธย) เน€เธยเน€เธเธ“เน€เธยเน€เธเธ‘เน€เธโ€";
             ws.Cells["A1:J1"].Merge = true;
             ws.Cells["A1"].Style.Font.Bold = true;
             ws.Cells["A1"].Style.Font.Size = 14;
             ws.Cells["A1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-            ws.Cells["A2"].Value = "รายงานสรุปยอดขายและประสิทธิภาพการเก็บเงินรายผู้แทน (ม.ค. - ส.ค. 2569)";
+            ws.Cells["A2"].Value = "เน€เธเธเน€เธเธ’เน€เธเธเน€เธยเน€เธเธ’เน€เธยเน€เธเธเน€เธเธเน€เธเธเน€เธยเน€เธเธเน€เธเธเน€เธโ€เน€เธยเน€เธเธ’เน€เธเธเน€เธยเน€เธเธ…เน€เธเธเน€เธยเน€เธเธเน€เธเธเน€เธเธเน€เธเธ”เน€เธโ€”เน€เธยเน€เธเธ”เน€เธย เน€เธเธ’เน€เธยเน€เธยเน€เธเธ’เน€เธเธเน€เธโฌเน€เธยเน€เธยเน€เธยเน€เธโฌเน€เธยเน€เธเธ”เน€เธยเน€เธเธเน€เธเธ’เน€เธเธเน€เธยเน€เธเธเน€เธยเน€เธยเน€เธโ€”เน€เธย (เน€เธเธ.เน€เธย. - เน€เธเธ.เน€เธย. 2569)";
             ws.Cells["A2:J2"].Merge = true;
             ws.Cells["A2"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
             int row = 4;
-            ws.Cells[row, 1].Value = "ผู้แทนขาย";
+            ws.Cells[row, 1].Value = "เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธโ€”เน€เธยเน€เธยเน€เธเธ’เน€เธเธ";
             for (int mi = 0; mi < vm.Months.Count; mi++)
             {
                 ws.Cells[row, mi + 2].Value = vm.Months[mi];
             }
-            ws.Cells[row, vm.Months.Count + 2].Value = "รวมทั้งสิ้น (YTD)";
+            ws.Cells[row, vm.Months.Count + 2].Value = "เน€เธเธเน€เธเธเน€เธเธเน€เธโ€”เน€เธเธ‘เน€เธยเน€เธยเน€เธเธเน€เธเธ”เน€เธยเน€เธย (YTD)";
             ws.Cells[row, 1, row, vm.Months.Count + 2].Style.Font.Bold = true;
             ws.Cells[row, 1, row, vm.Months.Count + 2].Style.Fill.PatternType = ExcelFillStyle.Solid;
             ws.Cells[row, 1, row, vm.Months.Count + 2].Style.Fill.BackgroundColor.SetColor(Color.FromArgb(26, 41, 66));
@@ -472,26 +472,26 @@ namespace RoyalD.Web.Services
                 for (int mi = 0; mi < rep.MonthlyData.Count; mi++)
                 {
                     var m = rep.MonthlyData[mi];
-                    ws.Cells[row, mi + 2].Value = $"ขาย: {m.TotalSales:N0}\nเก็บ: {m.TotalCollected:N0}\nค้าง: {m.Outstanding:N0}\n({m.CollectionRate}%)";
+                    ws.Cells[row, mi + 2].Value = $"เน€เธยเน€เธเธ’เน€เธเธ: {m.TotalSales:N0}\nเน€เธโฌเน€เธยเน€เธยเน€เธย: {m.TotalCollected:N0}\nเน€เธยเน€เธยเน€เธเธ’เน€เธย: {m.Outstanding:N0}\n({m.CollectionRate}%)";
                     ws.Cells[row, mi + 2].Style.WrapText = true;
                 }
-                ws.Cells[row, rep.MonthlyData.Count + 2].Value = $"ขาย: {rep.TotalSales:N0}\nเก็บ: {rep.TotalCollected:N0}\nค้าง: {rep.TotalOutstanding:N0}\n({rep.OverallCollectionRate}%)";
+                ws.Cells[row, rep.MonthlyData.Count + 2].Value = $"เน€เธยเน€เธเธ’เน€เธเธ: {rep.TotalSales:N0}\nเน€เธโฌเน€เธยเน€เธยเน€เธย: {rep.TotalCollected:N0}\nเน€เธยเน€เธยเน€เธเธ’เน€เธย: {rep.TotalOutstanding:N0}\n({rep.OverallCollectionRate}%)";
                 ws.Cells[row, rep.MonthlyData.Count + 2].Style.WrapText = true;
                 ws.Cells[row, rep.MonthlyData.Count + 2].Style.Font.Bold = true;
             }
 
             // Total row
             row++;
-            ws.Cells[row, 1].Value = "รวมทั้งบริษัท (Total)";
+            ws.Cells[row, 1].Value = "เน€เธเธเน€เธเธเน€เธเธเน€เธโ€”เน€เธเธ‘เน€เธยเน€เธยเน€เธยเน€เธเธเน€เธเธ”เน€เธเธเน€เธเธ‘เน€เธโ€” (Total)";
             ws.Cells[row, 1].Style.Font.Bold = true;
             for (int mi = 0; mi < vm.TotalCompany.MonthlyData.Count; mi++)
             {
                 var m = vm.TotalCompany.MonthlyData[mi];
-                ws.Cells[row, mi + 2].Value = $"ขาย: {m.TotalSales:N0}\nเก็บ: {m.TotalCollected:N0}\nค้าง: {m.Outstanding:N0}\n({m.CollectionRate}%)";
+                ws.Cells[row, mi + 2].Value = $"เน€เธยเน€เธเธ’เน€เธเธ: {m.TotalSales:N0}\nเน€เธโฌเน€เธยเน€เธยเน€เธย: {m.TotalCollected:N0}\nเน€เธยเน€เธยเน€เธเธ’เน€เธย: {m.Outstanding:N0}\n({m.CollectionRate}%)";
                 ws.Cells[row, mi + 2].Style.WrapText = true;
                 ws.Cells[row, mi + 2].Style.Font.Bold = true;
             }
-            ws.Cells[row, vm.TotalCompany.MonthlyData.Count + 2].Value = $"ขาย: {vm.TotalCompany.TotalSales:N0}\nเก็บ: {vm.TotalCompany.TotalCollected:N0}\nค้าง: {vm.TotalCompany.TotalOutstanding:N0}\n({vm.TotalCompany.OverallCollectionRate}%)";
+            ws.Cells[row, vm.TotalCompany.MonthlyData.Count + 2].Value = $"เน€เธยเน€เธเธ’เน€เธเธ: {vm.TotalCompany.TotalSales:N0}\nเน€เธโฌเน€เธยเน€เธยเน€เธย: {vm.TotalCompany.TotalCollected:N0}\nเน€เธยเน€เธยเน€เธเธ’เน€เธย: {vm.TotalCompany.TotalOutstanding:N0}\n({vm.TotalCompany.OverallCollectionRate}%)";
             ws.Cells[row, vm.TotalCompany.MonthlyData.Count + 2].Style.WrapText = true;
             ws.Cells[row, vm.TotalCompany.MonthlyData.Count + 2].Style.Font.Bold = true;
 
@@ -504,20 +504,20 @@ namespace RoyalD.Web.Services
         {
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             using var pkg = new ExcelPackage();
-            var ws = pkg.Workbook.Worksheets.Add("รายละเอียดสินค้าที่ขาย");
+            var ws = pkg.Workbook.Worksheets.Add("เน€เธเธเน€เธเธ’เน€เธเธเน€เธเธ…เน€เธเธเน€เธโฌเน€เธเธเน€เธเธ•เน€เธเธเน€เธโ€เน€เธเธเน€เธเธ”เน€เธยเน€เธยเน€เธยเน€เธเธ’เน€เธโ€”เน€เธเธ•เน€เธยเน€เธยเน€เธเธ’เน€เธเธ");
 
-            ws.Cells["A1"].Value = "บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด";
+            ws.Cells["A1"].Value = "เน€เธยเน€เธเธเน€เธเธ”เน€เธเธเน€เธเธ‘เน€เธโ€” เน€เธเธเน€เธเธเน€เธยเน€เธเธเน€เธเธ…-เน€เธโ€เน€เธเธ• (เน€เธยเน€เธโ€”เน€เธเธเน€เธยเน€เธเธ…เน€เธยเน€เธโ€เน€เธย) เน€เธยเน€เธเธ“เน€เธยเน€เธเธ‘เน€เธโ€";
             ws.Cells["A1:G1"].Merge = true;
             ws.Cells["A1"].Style.Font.Bold = true;
             ws.Cells["A1"].Style.Font.Size = 14;
             ws.Cells["A1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-            ws.Cells["A2"].Value = "รายงานการเคลื่อนไหวสินค้าแยกตามผู้แทนขายและรายเดือน";
+            ws.Cells["A2"].Value = "เน€เธเธเน€เธเธ’เน€เธเธเน€เธยเน€เธเธ’เน€เธยเน€เธยเน€เธเธ’เน€เธเธเน€เธโฌเน€เธยเน€เธเธ…เน€เธเธ—เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธเธเน€เธเธเน€เธเธเน€เธเธ”เน€เธยเน€เธยเน€เธยเน€เธเธ’เน€เธยเน€เธเธเน€เธยเน€เธโ€ขเน€เธเธ’เน€เธเธเน€เธยเน€เธเธเน€เธยเน€เธยเน€เธโ€”เน€เธยเน€เธยเน€เธเธ’เน€เธเธเน€เธยเน€เธเธ…เน€เธเธเน€เธเธเน€เธเธ’เน€เธเธเน€เธโฌเน€เธโ€เน€เธเธ—เน€เธเธเน€เธย";
             ws.Cells["A2:G2"].Merge = true;
             ws.Cells["A2"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
             int row = 4;
-            string[] headers = { "ผู้แทนขาย", "เดือน", "รหัสสินค้า", "ชื่อสินค้า", "จำนวนขายสุทธิ (หน่วย)", "ราคาต่อหน่วย", "ยอดเงินสุทธิ (บาท)" };
+            string[] headers = { "เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธโ€”เน€เธยเน€เธยเน€เธเธ’เน€เธเธ", "เน€เธโฌเน€เธโ€เน€เธเธ—เน€เธเธเน€เธย", "เน€เธเธเน€เธเธเน€เธเธ‘เน€เธเธเน€เธเธเน€เธเธ”เน€เธยเน€เธยเน€เธยเน€เธเธ’", "เน€เธยเน€เธเธ—เน€เธยเน€เธเธเน€เธเธเน€เธเธ”เน€เธยเน€เธยเน€เธยเน€เธเธ’", "เน€เธยเน€เธเธ“เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธเธ’เน€เธเธเน€เธเธเน€เธเธเน€เธโ€”เน€เธยเน€เธเธ” (เน€เธเธเน€เธยเน€เธยเน€เธเธเน€เธเธ)", "เน€เธเธเน€เธเธ’เน€เธยเน€เธเธ’เน€เธโ€ขเน€เธยเน€เธเธเน€เธเธเน€เธยเน€เธยเน€เธเธเน€เธเธ", "เน€เธเธเน€เธเธเน€เธโ€เน€เธโฌเน€เธยเน€เธเธ”เน€เธยเน€เธเธเน€เธเธเน€เธโ€”เน€เธยเน€เธเธ” (เน€เธยเน€เธเธ’เน€เธโ€”)" };
             for (int c = 0; c < headers.Length; c++)
             {
                 ws.Cells[row, c + 1].Value = headers[c];
@@ -591,7 +591,7 @@ namespace RoyalD.Web.Services
 
             return allReps.Select(rep => new SalesReportData
             {
-                SalesRep = rep ?? "ไม่ระบุ",
+                SalesRep = rep ?? "เน€เธยเน€เธเธเน€เธยเน€เธเธเน€เธเธเน€เธยเน€เธเธ",
                 TotalSales = sales.FirstOrDefault(s => s.SalesRep == rep)?.Total ?? 0,
                 TotalCollected = collected.FirstOrDefault(c => c.SalesRep == rep)?.Total ?? 0,
                 Outstanding = outstanding.FirstOrDefault(o => o.SalesRep == rep)?.Total ?? 0
@@ -602,25 +602,25 @@ namespace RoyalD.Web.Services
         {
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             using var pkg = new ExcelPackage();
-            var ws = pkg.Workbook.Worksheets.Add("รายงานผู้แทนขาย");
+            var ws = pkg.Workbook.Worksheets.Add("เน€เธเธเน€เธเธ’เน€เธเธเน€เธยเน€เธเธ’เน€เธยเน€เธยเน€เธเธเน€เธยเน€เธยเน€เธโ€”เน€เธยเน€เธยเน€เธเธ’เน€เธเธ");
 
-            ws.Cells["A1"].Value = "บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด";
+            ws.Cells["A1"].Value = "เน€เธยเน€เธเธเน€เธเธ”เน€เธเธเน€เธเธ‘เน€เธโ€” เน€เธเธเน€เธเธเน€เธยเน€เธเธเน€เธเธ…-เน€เธโ€เน€เธเธ• (เน€เธยเน€เธโ€”เน€เธเธเน€เธยเน€เธเธ…เน€เธยเน€เธโ€เน€เธย) เน€เธยเน€เธเธ“เน€เธยเน€เธเธ‘เน€เธโ€";
             ws.Cells["A1:G1"].Merge = true;
             ws.Cells["A1"].Style.Font.Bold = true;
             ws.Cells["A1"].Style.Font.Size = 14;
             ws.Cells["A1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-            ws.Cells["A2"].Value = "รายงานยอดขาย-เก็บเงิน-หนี้คงค้าง แยกตามผู้แทนขาย";
+            ws.Cells["A2"].Value = "เน€เธเธเน€เธเธ’เน€เธเธเน€เธยเน€เธเธ’เน€เธยเน€เธเธเน€เธเธเน€เธโ€เน€เธยเน€เธเธ’เน€เธเธ-เน€เธโฌเน€เธยเน€เธยเน€เธยเน€เธโฌเน€เธยเน€เธเธ”เน€เธย-เน€เธเธเน€เธยเน€เธเธ•เน€เธยเน€เธยเน€เธยเน€เธยเน€เธยเน€เธเธ’เน€เธย เน€เธยเน€เธเธเน€เธยเน€เธโ€ขเน€เธเธ’เน€เธเธเน€เธยเน€เธเธเน€เธยเน€เธยเน€เธโ€”เน€เธยเน€เธยเน€เธเธ’เน€เธเธ";
             ws.Cells["A2:G2"].Merge = true;
             ws.Cells["A2"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
             string period = (from.HasValue && to.HasValue) ?
-                $"วันที่ {from:dd/MM/yyyy} ถึง {to:dd/MM/yyyy}" : "ทั้งหมด";
-            ws.Cells["A3"].Value = $"ช่วงเวลา: {period}";
+                $"เน€เธเธเน€เธเธ‘เน€เธยเน€เธโ€”เน€เธเธ•เน€เธย {from:dd/MM/yyyy} เน€เธโ€“เน€เธเธ–เน€เธย {to:dd/MM/yyyy}" : "เน€เธโ€”เน€เธเธ‘เน€เธยเน€เธยเน€เธเธเน€เธเธเน€เธโ€";
+            ws.Cells["A3"].Value = $"เน€เธยเน€เธยเน€เธเธเน€เธยเน€เธโฌเน€เธเธเน€เธเธ…เน€เธเธ’: {period}";
             ws.Cells["A3:F3"].Merge = true;
 
             int row = 5;
-            string[] headers = { "ลำดับ", "ผู้แทนขาย", "ยอดขาย (บาท)", "ยอดเก็บได้ (บาท)", "หนี้คงค้าง (บาท)", "% เก็บได้" };
+            string[] headers = { "เน€เธเธ…เน€เธเธ“เน€เธโ€เน€เธเธ‘เน€เธย", "เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธโ€”เน€เธยเน€เธยเน€เธเธ’เน€เธเธ", "เน€เธเธเน€เธเธเน€เธโ€เน€เธยเน€เธเธ’เน€เธเธ (เน€เธยเน€เธเธ’เน€เธโ€”)", "เน€เธเธเน€เธเธเน€เธโ€เน€เธโฌเน€เธยเน€เธยเน€เธยเน€เธยเน€เธโ€เน€เธย (เน€เธยเน€เธเธ’เน€เธโ€”)", "เน€เธเธเน€เธยเน€เธเธ•เน€เธยเน€เธยเน€เธยเน€เธยเน€เธยเน€เธเธ’เน€เธย (เน€เธยเน€เธเธ’เน€เธโ€”)", "% เน€เธโฌเน€เธยเน€เธยเน€เธยเน€เธยเน€เธโ€เน€เธย" };
             for (int c = 0; c < headers.Length; c++)
             {
                 ws.Cells[row, c + 1].Value = headers[c];
@@ -652,7 +652,7 @@ namespace RoyalD.Web.Services
 
             row++;
             ws.Cells[row, 1, row, 2].Merge = true;
-            ws.Cells[row, 1].Value = "รวมทั้งหมด";
+            ws.Cells[row, 1].Value = "เน€เธเธเน€เธเธเน€เธเธเน€เธโ€”เน€เธเธ‘เน€เธยเน€เธยเน€เธเธเน€เธเธเน€เธโ€";
             ws.Cells[row, 1].Style.Font.Bold = true;
             ws.Cells[row, 3].Value = data.Sum(d => d.TotalSales);
             ws.Cells[row, 4].Value = data.Sum(d => d.TotalCollected);
@@ -661,12 +661,12 @@ namespace RoyalD.Web.Services
             ws.Cells[row, 3, row, 5].Style.Font.Bold = true;
 
             row += 2;
-            string[] sigTitles = { "ผู้รายงาน", "ผู้ตรวจสอบ", "ผู้มีอำนาจ", "ผู้แทนขาย" };
+            string[] sigTitles = { "เน€เธยเน€เธเธเน€เธยเน€เธเธเน€เธเธ’เน€เธเธเน€เธยเน€เธเธ’เน€เธย", "เน€เธยเน€เธเธเน€เธยเน€เธโ€ขเน€เธเธเน€เธเธเน€เธยเน€เธเธเน€เธเธเน€เธย", "เน€เธยเน€เธเธเน€เธยเน€เธเธเน€เธเธ•เน€เธเธเน€เธเธ“เน€เธยเน€เธเธ’เน€เธย", "เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธโ€”เน€เธยเน€เธยเน€เธเธ’เน€เธเธ" };
             for (int s = 0; s < 4; s++)
             {
                 int col = s * 2 + 1;
                 ws.Cells[row + 2, col].Value = $"({sigTitles[s]})";
-                ws.Cells[row + 3, col].Value = $"วันที่.........................";
+                ws.Cells[row + 3, col].Value = $"เน€เธเธเน€เธเธ‘เน€เธยเน€เธโ€”เน€เธเธ•เน€เธย.........................";
             }
 
             ws.Cells[ws.Dimension.Address].AutoFitColumns();
@@ -707,7 +707,7 @@ namespace RoyalD.Web.Services
                             ProductCode = pp.ProductCode,
                             ProductName = pp.ProductName,
                             Qty = pp.Quantity,
-                            Unit = matchedItem?.Unit ?? "ชิ้น",
+                            Unit = matchedItem?.Unit ?? "เน€เธยเน€เธเธ”เน€เธยเน€เธย",
                             Price = matchedItem?.Price ?? 0,
                             Amount = (matchedItem?.Price ?? 0) * pp.Quantity
                         });
@@ -848,7 +848,7 @@ namespace RoyalD.Web.Services
             var ws = pkg.Workbook.Worksheets.Add("CustomerSales");
 
             // Headers
-            var headers = new[] { "ลำดับ", "เดือน", "รหัสลูกค้า", "ชื่อลูกค้า", "รหัสสินค้า : ชื่อสินค้า", "ราคาต่อหน่วย", "เครดิต(วัน)", "ชื่อผู้แทนขาย" };
+            var headers = new[] { "เน€เธเธ…เน€เธเธ“เน€เธโ€เน€เธเธ‘เน€เธย", "เน€เธโฌเน€เธโ€เน€เธเธ—เน€เธเธเน€เธย", "เน€เธเธเน€เธเธเน€เธเธ‘เน€เธเธเน€เธเธ…เน€เธเธเน€เธยเน€เธยเน€เธยเน€เธเธ’", "เน€เธยเน€เธเธ—เน€เธยเน€เธเธเน€เธเธ…เน€เธเธเน€เธยเน€เธยเน€เธยเน€เธเธ’", "เน€เธเธเน€เธเธเน€เธเธ‘เน€เธเธเน€เธเธเน€เธเธ”เน€เธยเน€เธยเน€เธยเน€เธเธ’ : เน€เธยเน€เธเธ—เน€เธยเน€เธเธเน€เธเธเน€เธเธ”เน€เธยเน€เธยเน€เธยเน€เธเธ’", "เน€เธเธเน€เธเธ’เน€เธยเน€เธเธ’เน€เธโ€ขเน€เธยเน€เธเธเน€เธเธเน€เธยเน€เธยเน€เธเธเน€เธเธ", "เน€เธโฌเน€เธยเน€เธเธเน€เธโ€เน€เธเธ”เน€เธโ€ข(เน€เธเธเน€เธเธ‘เน€เธย)", "เน€เธยเน€เธเธ—เน€เธยเน€เธเธเน€เธยเน€เธเธเน€เธยเน€เธยเน€เธโ€”เน€เธยเน€เธยเน€เธเธ’เน€เธเธ" };
             for (int i = 0; i < headers.Length; i++)
             {
                 ws.Cells[1, i + 1].Value = headers[i];
@@ -872,6 +872,65 @@ namespace RoyalD.Web.Services
 
             ws.Cells[ws.Dimension.Address].AutoFitColumns();
             return await pkg.GetAsByteArrayAsync();
+        }
+        public async Task<CustomerPurchaseSummaryViewModel> GetCustomerPurchaseSummaryAsync(string selectedRep, string selectedMonth)
+        {
+            var vm = new CustomerPurchaseSummaryViewModel();
+            vm.MonthKeys = StandardMonthsMap.Keys.ToList();
+            vm.Months = StandardMonthsMap.Values.ToList();
+            vm.SalesReps = await _db.SalesBills.Where(b => b.SalesRep != null && b.SalesRep != "").Select(b => b.SalesRep).Distinct().OrderBy(x => x).ToListAsync();
+            vm.SelectedSalesRep = selectedRep;
+            vm.SelectedMonth = selectedMonth;
+            // Query SalesBillItems directly (Price > 0 excludes free/bonus items)
+            var itemQuery = _db.SalesBillItems
+                .Include(i => i.SalesBill)
+                .Where(i => i.Price > 0)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(selectedRep))
+                itemQuery = itemQuery.Where(i => i.SalesBill.SalesRep == selectedRep);
+
+            if (!string.IsNullOrEmpty(selectedMonth))
+            {
+                if (DateTime.TryParse(selectedMonth + "-01", out var mDate))
+                {
+                    var startOfMonth = new DateTime(mDate.Year, mDate.Month, 1);
+                    var endOfMonth = startOfMonth.AddMonths(1);
+                    itemQuery = itemQuery.Where(i => i.SalesBill.SourceMonth == selectedMonth ||
+                        (i.SalesBill.BillDate >= startOfMonth && i.SalesBill.BillDate < endOfMonth));
+                }
+                else
+                {
+                    itemQuery = itemQuery.Where(i => i.SalesBill.SourceMonth == selectedMonth);
+                }
+            }
+
+            var allItems = await itemQuery.ToListAsync();
+
+            // Group by Customer + Product + UnitPrice (price split logic - separate rows per price)
+            vm.Rows = allItems
+                .GroupBy(x => new {
+                    CustomerId = x.SalesBill.CustomerCode ?? "",
+                    CustomerName = x.SalesBill.CustomerName ?? "",
+                    ProductCode = x.ProductCode ?? "",
+                    ProductName = x.ProductName ?? "",
+                    Unit = x.Unit ?? "",
+                    UnitPrice = x.Price
+                })
+                .Select(g => new CustomerPurchaseSummaryRow {
+                    CustomerId = g.Key.CustomerId,
+                    CustomerName = g.Key.CustomerName,
+                    ProductCode = g.Key.ProductCode,
+                    ProductName = g.Key.ProductName,
+                    Unit = g.Key.Unit,
+                    UnitPrice = g.Key.UnitPrice,
+                    Quantity = g.Sum(x => x.Qty),
+                    Amount = g.Sum(x => x.Qty * x.Price)
+                })
+                .OrderBy(r => r.CustomerId).ThenBy(r => r.ProductCode).ThenBy(r => r.UnitPrice)
+                .ToList();
+
+            return vm;
         }
     }
 
@@ -899,5 +958,26 @@ namespace RoyalD.Web.Services
         public decimal Qty { get; set; }
         public string Unit { get; set; } = "";
         public decimal TotalAmount { get; set; }
+    }
+    public class CustomerPurchaseSummaryRow
+    {
+        public string CustomerId { get; set; } = "";
+        public string CustomerName { get; set; } = "";
+        public string ProductCode { get; set; } = "";
+        public string ProductName { get; set; } = "";
+        public decimal Quantity { get; set; }
+        public string Unit { get; set; } = "";
+        public decimal UnitPrice { get; set; }
+        public decimal Amount { get; set; }
+    }
+
+    public class CustomerPurchaseSummaryViewModel
+    {
+        public List<string> Months { get; set; } = new();
+        public List<string> MonthKeys { get; set; } = new();
+        public List<string> SalesReps { get; set; } = new();
+        public string SelectedMonth { get; set; } = "";
+        public string SelectedSalesRep { get; set; } = "";
+        public List<CustomerPurchaseSummaryRow> Rows { get; set; } = new();
     }
 }
