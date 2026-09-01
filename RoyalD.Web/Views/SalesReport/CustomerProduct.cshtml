@@ -1,0 +1,132 @@
+﻿@using RoyalD.Web.Services
+@model RoyalD.Web.Services.CustomerProductViewModel
+@{
+    ViewData["Title"] = "4. รายการขายรายร้านค้า";
+}
+
+<style>
+.sales-subnav {
+    display: flex; gap: 10px; background: #ecfdf5; padding: 8px; border-radius: 14px; margin-bottom: 20px; border: 1px solid #a7f3d0;
+}
+.sales-subnav .subnav-item {
+    flex: 1; text-align: center; padding: 12px 18px; font-weight: 800; font-size: 1.02rem; color: #065f46; border-radius: 10px; text-decoration: none; transition: all .2s ease-in-out;
+}
+.sales-subnav .subnav-item:hover { background: rgba(255,255,255,0.9); color: #059669; transform: translateY(-1px); }
+.sales-subnav .subnav-item.active { background: #059669; color: white; box-shadow: 0 4px 15px rgba(5,150,105,0.3); }
+
+.report-table th { background-color: #065f46 !important; color: #fff !important; white-space: nowrap; text-align: center; }
+.report-table td { vertical-align: middle; }
+.report-table tbody tr:hover { background-color: #f1f8f5; }
+</style>
+
+<div class="sales-subnav no-print">
+    <a href="/SalesReport/Summary" class="subnav-item"><i class="bi bi-table me-2"></i> 1. สรุปยอดขาย-ยอดเก็บรายเดือน</a>
+    <a href="/SalesReport/Charts" class="subnav-item"><i class="bi bi-bar-chart-line me-2"></i> 2. กราฟวิเคราะห์ผลงาน</a>
+    <a href="/SalesReport/ProductDetails" class="subnav-item"><i class="bi bi-box-seam me-2"></i> 3. รายละเอียดสินค้าที่ขาย</a>
+    <a href="/SalesReport/CustomerProduct" class="subnav-item active"><i class="bi bi-shop me-2"></i> 4. รายการขายรายร้านค้า</a>
+</div>
+
+<div class="card shadow-sm border-0 mb-4 no-print">
+    <div class="card-body bg-light rounded">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label fw-bold">ระบุวันที่ (Date)</label>
+                <input type="date" name="date" class="form-control" value="@Model.SelectedDate?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">เลือกเดือน (Month)</label>
+                <select name="month" class="form-select">
+                    <option value="">-- ดูทั้งหมด / ดูตามวันที่ --</option>
+                    @foreach (var m in Model.AllMonths)
+                    {
+                        if (Model.SelectedMonth == m.Key)
+                        {
+                            <option value="@m.Key" selected>@m.Value</option>
+                        }
+                        else
+                        {
+                            <option value="@m.Key">@m.Value</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">ผู้แทนขาย (Sales Rep)</label>
+                <select name="rep" class="form-select">
+                    <option value="">-- ทุกคน --</option>
+                    @foreach (var r in Model.AllReps)
+                    {
+                        if (Model.SelectedRep == r)
+                        {
+                            <option value="@r" selected>@r</option>
+                        }
+                        else
+                        {
+                            <option value="@r">@r</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100 fw-bold"><i class="bi bi-search me-1"></i> ค้นหา</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover report-table mb-0">
+                <thead>
+                    <tr>
+                        <th>ลำดับ</th>
+                        <th class="text-start">ร้านค้า (Customer)</th>
+                        <th class="text-start">สินค้า (Product)</th>
+                        <th>ราคาขาย (บาท)</th>
+                        <th>จำนวน</th>
+                        <th>รวมเงิน (บาท)</th>
+                        <th>ผู้แทนขาย</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Items.Any())
+                    {
+                        <tr><td colspan="7" class="text-center text-muted py-4">ไม่พบข้อมูลการขายตามเงื่อนไขที่ระบุ</td></tr>
+                    }
+                    else
+                    {
+                        int idx = 1;
+                        string lastCust = "";
+                        foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td class="text-center">@(idx++)</td>
+                                @if(item.CustomerName != lastCust)
+                                {
+                                    <td class="text-start fw-bold text-success">@item.CustomerName</td>
+                                    lastCust = item.CustomerName;
+                                }
+                                else
+                                {
+                                    <td class="text-start text-muted" style="padding-left: 20px;"><i class="bi bi-arrow-return-right"></i></td>
+                                }
+                                <td class="text-start">@item.ProductCode : @item.ProductName</td>
+                                <td class="text-end fw-bold">@item.Price.ToString("N2")</td>
+                                <td class="text-end">@item.Qty.ToString("N0") @item.Unit</td>
+                                <td class="text-end fw-bold text-primary">@item.TotalAmount.ToString("N2")</td>
+                                <td class="text-center">@item.SalesRep</td>
+                            </tr>
+                        }
+                        <tr class="bg-light fw-bold" style="font-size:1.1rem;">
+                            <td colspan="4" class="text-end text-success">รวมยอดเงินทั้งหมด (Total Amount)</td>
+                            <td class="text-end text-success">@Model.Items.Sum(x => x.Qty).ToString("N0")</td>
+                            <td class="text-end text-success">@Model.Items.Sum(x => x.TotalAmount).ToString("N2")</td>
+                            <td></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

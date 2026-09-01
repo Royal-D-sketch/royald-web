@@ -739,7 +739,7 @@ namespace RoyalD.Web.Services
                 SelectedMonth = selectedMonth,
                 SelectedDate = selectedDate,
                 AllReps = await _db.SalesBills.Where(b => b.SalesRep != null && b.SalesRep != "").Select(b => b.SalesRep).Distinct().OrderBy(x => x).ToListAsync(),
-                AllMonths = StandardMonthsMap.Keys.ToList()
+                AllMonths = StandardMonthsMap
             };
 
             var query = _db.SalesBillItems
@@ -801,7 +801,7 @@ namespace RoyalD.Web.Services
         public string? SelectedMonth { get; set; }
         public DateTime? SelectedDate { get; set; }
         public List<string> AllReps { get; set; } = new();
-        public List<string> AllMonths { get; set; } = new();
+        public Dictionary<string, string> AllMonths { get; set; } = new();
         public List<CustomerProductItem> Items { get; set; } = new();
     }
 
