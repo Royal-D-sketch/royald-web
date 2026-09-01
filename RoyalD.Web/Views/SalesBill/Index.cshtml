@@ -133,19 +133,18 @@
         {
             <div class="col-md-2">
                 <label class="form-label small fw-bold text-primary mb-1">👔 ผู้แทนขาย</label>
-                <input type="text" list="salesBillRepList" name="salesRep" class="form-control form-control-sm"
-                       placeholder="ทุกผู้แทน" value="@ViewBag.SalesRep" />
-                <datalist id="salesBillRepList">
-                    <option value="">-- ทุกผู้แทน --</option>
-                    @foreach (var s in (ViewBag.SalesReps as List<string> ?? new())) {
-                        <option value="@s">@s</option>
-                    }
-                </datalist>
+                <select name="salesRep" class="form-select form-select-sm select2-searchable">
+                      <option value="">-- ทุกผู้แทน --</option>
+                      @foreach (var s in (ViewBag.SalesReps as List<string> ?? new())) {
+                          if (s == ViewBag.SalesRep) { <option value="@s" selected>@s</option> }
+                          else { <option value="@s">@s</option> }
+                      }
+                  </select>
             </div>
         }
         <div class="col-md-2">
             <label class="form-label small fw-bold text-primary mb-1">📅 แฟ้มเดือน</label>
-            <select name="month" class="form-select form-select-sm">
+            <select name="month" class="form-select form-select-sm select2-searchable">
                 <option value="">-- ทุกเดือน --</option>
                 @foreach (var m in (ViewBag.Months as List<string> ?? new())) {
                     if (m == ViewBag.Month) { <option value="@m" selected>@m</option> }
