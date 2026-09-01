@@ -83,15 +83,15 @@
                     else
                     {
                         int idx = 1;
-                        string lastCust = "";
+                        string? lastCustCode = null;
                         foreach (var item in Model.Items)
                         {
                             <tr>
                                 <td class="text-center">@(idx++)</td>
-                                @if(item.CustomerName != lastCust)
+                                @if(item.CustomerCode != lastCustCode)
                                 {
                                     <td class="text-start fw-bold text-success">@item.CustomerCode : @item.CustomerName</td>
-                                    lastCust = item.CustomerName;
+                                    lastCustCode = item.CustomerCode;
                                 }
                                 else
                                 {
