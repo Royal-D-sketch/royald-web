@@ -1,4 +1,4 @@
-@using RoyalD.Web.Services
+﻿@using RoyalD.Web.Services
 @model RoyalD.Web.Services.CustomerProductViewModel
 @{
     ViewData["Title"] = "รายการขายรายลูกค้า";
@@ -79,6 +79,7 @@
                       <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                         <li><a class="dropdown-item" href="#" onclick="window.print();"><i class="bi bi-file-pdf text-danger"></i> PDF / พิมพ์</a></li>
                         <li><a class="dropdown-item" href="/SalesReport/ExportCustomerProductExcel?rep=@(Model.SelectedRep)&month=@(Model.SelectedMonth)&date=@(Model.SelectedDate?.ToString("yyyy-MM-dd"))&q=@(Model.SearchQuery)"><i class="bi bi-file-earmark-excel text-success"></i> Excel</a></li>
+                        <li><a class="dropdown-item" href="/SalesReport/ExportCustomerProductCsv?rep=@(Model.SelectedRep)&month=@(Model.SelectedMonth)&date=@(Model.SelectedDate?.ToString("yyyy-MM-dd"))&q=@(Model.SearchQuery)"><i class="bi bi-filetype-csv text-primary"></i> CSV</a></li>
                       </ul>
                     </div>
                 }
