@@ -17,8 +17,8 @@
     <div class="card-body bg-light rounded">
         <form method="get" class="row g-3 align-items-end">
                         <div class="col-md-3">
-                <label class="form-label fw-bold">ค้นหารหัส/ชื่อ ลูกค้าและสินค้า</label>
-                <input type="text" name="q" class="form-control" placeholder="ค้นหา..." value="@Model.SearchQuery" />
+                <label class="form-label fw-bold" style="font-size: 0.9em;">รหัสลูกค้า/ชื่อลูกค้า/รหัสสินค้า/ชื่อสินค้า</label>
+                <input type="text" name="q" class="form-control" placeholder="พิมพ์บางส่วน เช่น รอแยล..." value="@Model.SearchQuery" />
             </div><div class="col-md-2">
                 <label class="form-label fw-bold">ระบุวันที่</label>
                 <input type="date" name="date" class="form-control" value="@Model.SelectedDate?.ToString("yyyy-MM-dd")" />
