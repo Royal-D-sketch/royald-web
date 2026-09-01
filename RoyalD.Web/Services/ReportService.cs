@@ -769,7 +769,21 @@ namespace RoyalD.Web.Services
             }
 
             var items = await query.ToListAsync();
+            
             var allCustomers = await _db.Customers.ToDictionaryAsync(c => c.CustomerCode ?? "", c => c.Name ?? "");
+            var billCustomers = await _db.SalesBills
+                .Where(b => !string.IsNullOrEmpty(b.CustomerCode) && !string.IsNullOrEmpty(b.CustomerName))
+                .Select(b => new { b.CustomerCode, b.CustomerName })
+                .Distinct()
+                .ToListAsync();
+            foreach(var bc in billCustomers)
+            {
+                if (!string.IsNullOrEmpty(bc.CustomerCode) && !allCustomers.ContainsKey(bc.CustomerCode))
+                {
+                    allCustomers[bc.CustomerCode] = bc.CustomerName ?? "";
+                }
+            }
+
 
             var grouped = items.GroupBy(i => new { 
                     CustCode = i.SalesBill.CustomerCode,
