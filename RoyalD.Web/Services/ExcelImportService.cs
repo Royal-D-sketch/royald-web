@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -384,7 +384,7 @@ namespace RoyalD.Web.Services
 
                 // Check if Column 1 (index 0) starts with digits and slash, or starts with 'R'
                 bool startsWithR = col0.StartsWith("R", StringComparison.OrdinalIgnoreCase);
-                bool isNoVatSlash = col0.Length > 0 && char.IsDigit(col0[0]) && col0.Contains("/");
+                bool isNoVatSlash = col0.Length > 0 && char.IsDigit(col0[0]) && col0.Contains("/") && col0.Split((char)47).Length == 2 && col0.Length < 15;
                 bool isBillHeader = (startsWithR || isNoVatSlash) && tbl.Columns.Count > 1 && !string.IsNullOrWhiteSpace(row[1]?.ToString());
 
                 if (isBillHeader)
