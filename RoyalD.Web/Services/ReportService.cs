@@ -769,7 +769,19 @@ namespace RoyalD.Web.Services
             }
 
             var items = await query.ToListAsync();
-            
+
+            // Apply search query (in-memory filter)
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                var qLower = q.Trim().ToLower();
+                items = items.Where(i =>
+                    (i.SalesBill.CustomerCode != null && i.SalesBill.CustomerCode.ToLower().Contains(qLower)) ||
+                    (i.SalesBill.CustomerName != null && i.SalesBill.CustomerName.ToLower().Contains(qLower)) ||
+                    (i.ProductCode != null && i.ProductCode.ToLower().Contains(qLower)) ||
+                    (i.ProductName != null && i.ProductName.ToLower().Contains(qLower))
+                ).ToList();
+            }
+
             var allCustomers = await _db.Customers.ToDictionaryAsync(c => c.CustomerCode ?? "", c => c.Name ?? "");
             var billCustomers = await _db.SalesBills
                 .Where(b => !string.IsNullOrEmpty(b.CustomerCode) && !string.IsNullOrEmpty(b.CustomerName))
