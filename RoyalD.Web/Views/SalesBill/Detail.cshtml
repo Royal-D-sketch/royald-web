@@ -79,7 +79,7 @@
             <i class="bi bi-check-circle-fill fs-4 me-2"></i> ชำระครบแล้ว
             @if (!string.IsNullOrEmpty(Model.ReceiptNo))
             {
-                <span class="fs-6 fw-normal ms-2">(ใบเสร็จ: @Model.ReceiptNo วันที่: @(Model.ReceiptDate?.ToString("dd MMM yyyy", new System.Globalization.CultureInfo("th-TH"))))</span>
+                <span class="fs-6 fw-normal ms-2">(ใบเสร็จ: @Model.ReceiptNo วันที่: @(Model.ReceiptDate?.ToString("dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture)))</span>
             }
         </div>
     }
@@ -109,7 +109,7 @@
                 <div class="col-md-6">
                     <table class="table table-borderless table-sm mb-0">
                         <tr><td class="fw-semibold text-muted" width="140">เลขที่บิล:</td><td><strong class="text-primary fs-6">@Model.BillNo</strong></td></tr>
-                        <tr><td class="fw-semibold text-muted">วันที่บิล:</td><td>@Model.BillDate.ToString("dd MMM yyyy", new System.Globalization.CultureInfo("th-TH"))</td></tr>
+                        <tr><td class="fw-semibold text-muted">วันที่บิล:</td><td>@Model.BillDate.ToString("dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture)</td></tr>
                         <tr><td class="fw-semibold text-muted">ใบสั่งซื้อเลขที่:</td><td><strong class="text-dark">@(!string.IsNullOrEmpty(Model.PoNumber) ? Model.PoNumber : "-")</strong></td></tr>
                         <tr><td class="fw-semibold text-muted">เครดิตเทอม:</td><td><span class="badge bg-info text-dark border">@Model.Credit วัน</span></td></tr>
                         <tr><td class="fw-semibold text-muted">ผู้แทนขาย:</td><td><span class="badge bg-info-subtle text-info-emphasis border">@Model.SalesRep</span></td></tr>

@@ -205,7 +205,7 @@
                         <td class="fw-bold text-primary">
                             @b.BillNo
                         </td>
-                        <td>@b.BillDate.ToString("dd MMM yyyy", new System.Globalization.CultureInfo("th-TH"))</td>
+                        <td>@b.BillDate.ToString("dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture)</td>
                         <td>@(!string.IsNullOrEmpty(b.PoNumber) ? b.PoNumber : "-")</td>
                         <td><code>@b.CustomerCode</code></td>
                         <td class="fw-semibold text-dark text-wrap" style="max-width:200px;">@b.CustomerName</td>
@@ -213,7 +213,7 @@
                         <td>@(!string.IsNullOrEmpty(b.Province) ? b.Province : "-")</td>
                         <td class="text-center">
                             <span class="badge bg-info text-dark">@b.Credit วัน</span>
-                        </td><td class="text-center">@b.BillDate.AddDays(b.Credit).ToString("dd MMM yyyy", new System.Globalization.CultureInfo("th-TH"))</td>
+                        </td><td class="text-center">@b.BillDate.AddDays(b.Credit).ToString("dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture)</td>
                         <td class="text-center">
                             @if (b.IsFullyPaid)
                             {
