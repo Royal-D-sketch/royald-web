@@ -336,7 +336,36 @@ function initChartsFor(key) {
     const d = reportsData[key];
     if (!d) return;
 
-    const barEl = document.getElementById('barChart-' + key);
+    // Auto-generate description
+    const descBox = document.getElementById("desc-box-" + key);
+    if (descBox && !descBox.dataset.generated) {
+        let totalSales = d.sales.reduce((a,b) => a+b, 0);
+        let maxSale = Math.max(...d.sales);
+        let maxMonthIdx = d.sales.indexOf(maxSale);
+        let maxMonth = monthsLabels[maxMonthIdx] || "";
+        
+        let validRates = d.rates.filter(r => r > 0);
+        let avgRate = validRates.length > 0 ? (validRates.reduce((a,b) => a+b, 0) / validRates.length) : 0;
+        
+        let text = `<b>สรุปผลงาน:</b><br>`;
+        text += `• ยอดขายสะสมตลอดช่วงเวลา: <b>${totalSales.toLocaleString("th-TH")} บาท</b><br>`;
+        if (maxSale > 0) {
+            text += `• ทำยอดขายได้สูงสุดในเดือน: <b>${maxMonth}</b> (${maxSale.toLocaleString("th-TH")} บาท)<br>`;
+        }
+        text += `• ประสิทธิภาพการเก็บเงินเฉลี่ยอยู่ที่: <b>${avgRate.toFixed(1)}%</b><br>`;
+        
+        if (avgRate >= 85) {
+            text += `• <b>วิเคราะห์:</b> ภาพรวมการจัดเก็บหนี้อยู่ในเกณฑ์ดีมาก (ผ่านเกณฑ์มาตรฐาน 85%) ขอให้รักษามาตรฐานนี้ไว้`;
+        } else if (avgRate >= 50) {
+            text += `• <b>วิเคราะห์:</b> การจัดเก็บหนี้อยู่ในเกณฑ์ปานกลาง ควรเน้นติดตามหนี้ค้างชำระเพิ่มเติมเพื่อให้ถึงเป้าหมาย 85%`;
+        } else {
+            text += `• <b>วิเคราะห์:</b> ประสิทธิภาพการจัดเก็บหนี้ค่อนข้างต่ำ ควรเร่งดำเนินการตรวจสอบและติดตามหนี้ค้างชำระอย่างเร่งด่วน`;
+        }
+        descBox.innerHTML = text;
+        descBox.dataset.generated = "true";
+    }
+
+    const barEl = document.getElementById("barChart-" + key);
     if (barEl) {
         chartInstances['bar-' + key] = new Chart(barEl, {
             type: 'bar',
