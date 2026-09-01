@@ -201,11 +201,16 @@ namespace RoyalD.Web.Controllers
             {
                 if (status == "paid") q = q.Where(b => b.IsFullyPaid);
                 else if (status == "unpaid") q = q.Where(b => !b.IsFullyPaid);
-                else if (status == "overdue120")
-                {
-                    var cutoff120 = DateTime.Today.AddDays(-120);
-                    q = q.Where(b => !b.IsFullyPaid && b.BillDate <= cutoff120);
-                }
+                else if (status == "overdue_under_120")
+                  {
+                      var today = DateTime.Today;
+                      q = q.Where(b => !b.IsFullyPaid && b.BillDate.AddDays(b.Credit) < today && b.BillDate.AddDays(b.Credit + 120) >= today);
+                  }
+                  else if (status == "overdue120")
+                  {
+                      var today = DateTime.Today;
+                      q = q.Where(b => !b.IsFullyPaid && b.BillDate.AddDays(b.Credit + 120) < today);
+                  }
                 else if (status == "installment")
                 {
                     var installBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Installment).Select(d => d.BillNo);
@@ -485,11 +490,16 @@ if (!string.IsNullOrEmpty(poSearch))
             {
                 if (status == "paid") q = q.Where(b => b.IsFullyPaid);
                 else if (status == "unpaid") q = q.Where(b => !b.IsFullyPaid);
-                else if (status == "overdue120")
-                {
-                    var cutoff120 = DateTime.Today.AddDays(-120);
-                    q = q.Where(b => !b.IsFullyPaid && b.BillDate <= cutoff120);
-                }
+                else if (status == "overdue_under_120")
+                  {
+                      var today = DateTime.Today;
+                      q = q.Where(b => !b.IsFullyPaid && b.BillDate.AddDays(b.Credit) < today && b.BillDate.AddDays(b.Credit + 120) >= today);
+                  }
+                  else if (status == "overdue120")
+                  {
+                      var today = DateTime.Today;
+                      q = q.Where(b => !b.IsFullyPaid && b.BillDate.AddDays(b.Credit + 120) < today);
+                  }
                 else if (status == "installment")
                 {
                     var installBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Installment).Select(d => d.BillNo);
