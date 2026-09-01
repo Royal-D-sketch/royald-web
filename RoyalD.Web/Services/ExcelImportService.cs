@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -79,6 +79,9 @@ namespace RoyalD.Web.Services
                     ex.SourceMonth = sourceMonth != null && sourceMonth.Length > 10 ? sourceMonth.Substring(0, 10) : (sourceMonth ?? "");
                     
                     ex.PoNumber = b.PoNumber != null && b.PoNumber.Length > 100 ? b.PoNumber.Substring(0, 100) : (b.PoNumber ?? "");
+                    
+                    _db.SalesBillItems.RemoveRange(ex.Items);
+                    ex.Items = b.Items ?? new List<SalesBillItem>();
                     
                     updated++;
                 }
