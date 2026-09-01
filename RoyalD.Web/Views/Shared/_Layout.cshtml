@@ -163,6 +163,10 @@
                         <i class="bi bi-receipt"></i> รายการบิลขาย
                     </a>
                     <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "WaitingGoods" ? "active" : "")"
+                       href="/SalesReport/CustomerProduct">
+                        <i class="bi bi-shop"></i> รายการขายรายร้านค้า
+                    </a>
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "WaitingGoods" ? "active" : "")"
                        href="/Report/WaitingGoods">
                         <i class="bi bi-box-seam"></i> บิลรอเอกสาร/รอสินค้า
                     </a>
