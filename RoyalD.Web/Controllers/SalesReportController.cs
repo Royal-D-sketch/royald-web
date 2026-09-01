@@ -45,6 +45,12 @@ namespace RoyalD.Web.Controllers
             return View(vm);
         }
 
+        // Screen 5: Compare Sales Reps
+        public async Task<IActionResult> Compare()
+        {
+            var data = await _svc.GetAnnualPerformanceAsync();
+            return View(data);
+        }
         // Export Actions
         public async Task<IActionResult> ExportSummaryExcel()
         {

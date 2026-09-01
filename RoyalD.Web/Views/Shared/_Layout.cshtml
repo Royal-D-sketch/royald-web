@@ -299,6 +299,13 @@
                     <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "ReturnNotes" ? "active" : "")"
                        href="/Report/ReturnNotes">
                         <i class="bi bi-arrow-return-left"></i> รับคืนสินค้า
+                    @if (hasCancel)
+                    {
+                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Cancelled" ? "active" : "")"
+                           href="/Debtor/Cancelled">
+                            <i class="bi bi-trash3"></i> บิลยกเลิก (30 วัน)
+                        </a>
+                    }
                     </a>
                 }
 
@@ -317,13 +324,6 @@
                         <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "History" ? "active" : "")"
                            href="/Debtor/History">
                             <i class="bi bi-clock-history"></i> ประวัติชำระครบ
-                        </a>
-                    }
-                    @if (hasCancel)
-                    {
-                        <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Cancelled" ? "active" : "")"
-                           href="/Debtor/Cancelled">
-                            <i class="bi bi-trash3"></i> บิลยกเลิก (30 วัน)
                         </a>
                     }
                     <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "BadDebt" ? "active" : "")"

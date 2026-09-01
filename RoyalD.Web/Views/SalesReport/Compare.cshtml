@@ -1,0 +1,335 @@
+﻿@model RoyalD.Web.Services.AnnualPerformanceViewModel
+@{
+    ViewData["Title"] = "เปรียบเทียบผลงานผู้แทนขายรายเดือน";
+    bool isSRep = User.HasClaim(c => c.Type == "Position" && (c.Value.Contains("ผู้แทน") || c.Value.Contains("พนักงานขาย"))) && !User.HasClaim(c => c.Type == "Role" && c.Value == "Admin");
+    bool canDownload = (User.HasClaim(c => c.Type == "Role" && c.Value == "Admin") 
+                        || User.HasClaim(c => c.Type == "Position" && (c.Value.ToLower().Contains("manager") || c.Value.Contains("ผู้จัดการ"))) 
+                        || User.HasClaim(c => c.Type == "CanDownload" && c.Value == "true")) 
+                        && !isSRep;
+}
+
+<style>
+.sales-subnav {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+.sales-subnav .subnav-item {
+    padding: 12px 20px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: bold;
+    color: #4b5563;
+    background: white;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+.sales-subnav .subnav-item:hover {
+    background: rgba(255,255,255,0.9);
+    color: #059669;
+    transform: translateY(-1px);
+}
+.sales-subnav .subnav-item.active {
+    background: #059669;
+    color: white;
+    box-shadow: 0 4px 15px rgba(5,150,105,0.3);
+}
+
+.chart-card {
+    border-radius: 14px;
+    border: none;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+    background: white;
+    padding: 22px;
+}
+
+@@media print {
+    .no-print, .sales-subnav, nav, .btn, .export-bar { display: none !important; }
+    body { font-size: 10pt; background: #fff !important; }
+    .chart-card { break-inside: avoid; page-break-inside: avoid; }
+}
+
+.select2-container--bootstrap-5 .select2-selection {
+    border: 2px solid #10b981;
+    border-radius: 10px;
+}
+</style>
+
+<!-- Sub-Tabs Navigation Header -->
+<div class="sales-subnav no-print">
+    <a href="/SalesReport/Summary" class="subnav-item">
+        <i class="bi bi-table me-2"></i> 1. สรุปยอดขาย-ยอดเก็บเงิน (Pivot Matrix)
+    </a>
+    <a href="/SalesReport/Charts" class="subnav-item">
+        <i class="bi bi-bar-chart-line me-2"></i> 2. กราฟผลงานรายผู้แทน (Charts)
+    </a>
+    <a href="/SalesReport/ProductDetails" class="subnav-item">
+        <i class="bi bi-box-seam me-2"></i> 3. รายละเอียดสินค้าที่ขาย (Product Details)
+    </a>
+    @if (!isSRep)
+    {
+        <a href="/SalesReport/Compare" class="subnav-item active">
+            <i class="bi bi-people me-2"></i> 4. กราฟเปรียบเทียบผู้แทนขาย
+        </a>
+    }
+</div>
+
+<!-- Header Title & Export Toolbar -->
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 export-bar">
+    <div>
+        <h3 class="mb-1 fw-bold" style="color:#065f46;">
+            <i class="bi bi-graph-up-arrow" style="color:#059669;"></i> กราฟเปรียบเทียบผลงานผู้แทนขายรายเดือน
+        </h3>
+        <span class="text-muted fw-semibold">เลือกผู้แทนขายเพื่อเปรียบเทียบยอดขายและการเก็บเงินแบบ Multi-select</span>
+    </div>
+    
+    @if (canDownload)
+    {
+        <div class="d-flex gap-2 no-print">
+            <button onclick="downloadScreenCapture('chart-capture-area')" class="btn btn-outline-success btn-sm fw-bold px-3 py-2 shadow-sm" title="บันทึกภาพกราฟความละเอียดสูง">
+                <i class="bi bi-image me-1"></i> บันทึกเป็นรูปภาพ (PNG)
+            </button>
+        </div>
+    }
+</div>
+
+@if (isSRep)
+{
+    <div class="alert alert-danger fw-bold">
+        <i class="bi bi-lock-fill me-2"></i> คุณไม่มีสิทธิ์เข้าถึงหน้านี้
+    </div>
+}
+else
+{
+    <!-- Rep Selector -->
+    <div class="card border-0 shadow-sm mb-4 no-print" style="background: #f0fdf4; border: 1.5px solid #a7f3d0 !important; border-radius: 14px;">
+        <div class="card-body py-3 px-4">
+            <div class="row align-items-center g-3">
+                <div class="col-md-auto">
+                    <span class="fw-bold" style="color: #065f46; font-size: 1.05rem;">
+                        <i class="bi bi-funnel-fill me-1 text-success"></i> เลือกผู้แทนขาย (Multi-select):
+                    </span>
+                </div>
+                <div class="col-md-6">
+                    <select class="form-select select2-multi" id="compareRepDropdown" multiple="multiple" style="width:100%;">
+                        @for (int rIdx = 0; rIdx < Model.RepReports.Count; rIdx++)
+                        {
+                            <option value="@rIdx">@Model.RepReports[rIdx].SalesRep</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-auto">
+                    <button class="btn btn-success shadow-sm fw-bold px-4" onclick="updateCompareChart()">
+                        <i class="bi bi-arrow-repeat me-1"></i> เปรียบเทียบ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="chart-capture-area">
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <div class="chart-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="fw-bold" style="color:#1a1a2e; font-size:1.1rem;">
+                            <i class="bi bi-bar-chart-fill text-primary me-2"></i> เปรียบเทียบยอดขาย (Total Sales) รายเดือน
+                        </span>
+                        <select class="form-select form-select-sm w-auto d-inline-block no-print shadow-sm" id="chartTypeSelect" onchange="updateCompareChart()">
+                            <option value="bar">Bar Chart</option>
+                            <option value="line">Line Chart</option>
+                        </select>
+                    </div>
+                    <canvas id="compareSalesChart" height="90"></canvas>
+                    
+                    <div class="insight-card mt-4" id="dynamicInsightBox" style="display:none;">
+                        <div class="d-flex align-items-center mb-1">
+                            <span class="insight-badge"><i class="bi bi-robot"></i> วิเคราะห์แนวโน้มรายเดือนอัตโนมัติ</span>
+                        </div>
+                        <p class="insight-text mb-0" id="dynamicInsightText"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @section Scripts {
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+        
+        <script>
+        const monthsLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Months));
+        const allRepsData = {
+            @for (int rIdx = 0; rIdx < Model.RepReports.Count; rIdx++)
+            {
+                var rep = Model.RepReports[rIdx];
+                <text>
+                "@rIdx": {
+                    name: "@Html.Raw(rep.SalesRep)",
+                    sales: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.TotalSales).ToList())),
+                    collected: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.TotalCollected).ToList()))
+                }
+                </text>
+                if (rIdx < Model.RepReports.Count - 1) { <text>,</text> }
+            }
+        };
+
+        const colors = [
+            '#0d6efd', '#198754', '#dc3545', '#ffc107', '#0dcaf0', 
+            '#6610f2', '#fd7e14', '#20c997', '#d63384', '#6f42c1'
+        ];
+
+        let compareChartInstance = null;
+
+        $(document).ready(function() {
+            $('#compareRepDropdown').select2({
+                placeholder: "เลือกผู้แทนขายที่ต้องการเปรียบเทียบ (เลือกได้มากกว่า 1)",
+                allowClear: true,
+                
+            });
+            
+            // Select first 2 reps by default to show something
+            if (Object.keys(allRepsData).length > 1) {
+                $('#compareRepDropdown').val(['0', '1']).trigger('change');
+            } else if (Object.keys(allRepsData).length === 1) {
+                $('#compareRepDropdown').val(['0']).trigger('change');
+            }
+            
+            setTimeout(updateCompareChart, 200);
+        });
+
+        function updateCompareChart() {
+            const selectedIdxs = $('#compareRepDropdown').val();
+            if (!selectedIdxs || selectedIdxs.length === 0) {
+                if (compareChartInstance) {
+                    compareChartInstance.destroy();
+                    compareChartInstance = null;
+                }
+                document.getElementById('dynamicInsightBox').style.display = 'none';
+                return;
+            }
+
+            const chartType = document.getElementById('chartTypeSelect').value;
+            const datasets = [];
+            
+            let bestRepTotal = { name: '', total: 0 };
+            let insights = [];
+
+            selectedIdxs.forEach((idx, i) => {
+                const rep = allRepsData[idx];
+                const color = colors[i % colors.length];
+                
+                datasets.push({
+                    label: rep.name,
+                    data: rep.sales,
+                    backgroundColor: chartType === 'bar' ? color : 'transparent',
+                    borderColor: color,
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: false,
+                    borderRadius: chartType === 'bar' ? 4 : 0
+                });
+                
+                const totalSales = rep.sales.reduce((a,b) => a+b, 0);
+                if (totalSales > bestRepTotal.total) {
+                    bestRepTotal = { name: rep.name, total: totalSales };
+                }
+            });
+
+            if (compareChartInstance) {
+                compareChartInstance.destroy();
+            }
+
+            const ctx = document.getElementById('compareSalesChart').getContext('2d');
+            compareChartInstance = new Chart(ctx, {
+                type: chartType,
+                data: {
+                    labels: monthsLabels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { weight: 'bold', size: 13 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString('th-TH') + ' บาท'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+                                    if (value >= 1000) return (value / 1000).toFixed(0) + 'k';
+                                    return value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Generate Insights
+            generateInsights(selectedIdxs, bestRepTotal);
+        }
+        
+        function generateInsights(selectedIdxs, bestRepTotal) {
+            const box = document.getElementById('dynamicInsightBox');
+            const textEl = document.getElementById('dynamicInsightText');
+            
+            if (selectedIdxs.length < 2) {
+                box.style.display = 'none';
+                return;
+            }
+            
+            box.style.display = 'block';
+            let insightHtml = `<i class="bi bi-lightbulb-fill text-warning me-1"></i> `;
+            
+            insightHtml += `จากการเปรียบเทียบผู้แทนขาย <b>${selectedIdxs.length}</b> ท่าน พบว่า <strong class="text-success">[${bestRepTotal.name}]</strong> มียอดขายสะสมรวมสูงที่สุดที่ <b>${bestRepTotal.total.toLocaleString('th-TH')}</b> บาท `;
+            
+            // Find who had the best single month
+            let bestSingleMonth = { name: '', sales: 0, month: '' };
+            
+            selectedIdxs.forEach((idx) => {
+                const rep = allRepsData[idx];
+                rep.sales.forEach((sale, mIdx) => {
+                    if (sale > bestSingleMonth.sales) {
+                        bestSingleMonth = { name: rep.name, sales: sale, month: monthsLabels[mIdx] };
+                    }
+                });
+            });
+            
+            if (bestSingleMonth.sales > 0 && bestSingleMonth.name !== bestRepTotal.name) {
+                insightHtml += `ในขณะที่ <strong class="text-primary">[${bestSingleMonth.name}]</strong> สามารถทำยอดขายได้สูงที่สุดในเดือน <b>${bestSingleMonth.month}</b> (${bestSingleMonth.sales.toLocaleString('th-TH')} บาท) `;
+            }
+            
+            textEl.innerHTML = insightHtml;
+        }
+
+        function downloadScreenCapture(elementId) {
+            const target = document.getElementById(elementId);
+            if (!target) return;
+            html2canvas(target, { scale: 2, useCORS: true }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'CompareChart_' + new Date().toISOString().slice(0,10) + '.png';
+                link.href = canvas.toDataURL('image/png', 1.0);
+                link.click();
+            });
+        }
+        </script>
+    }
+}
+
+
+
