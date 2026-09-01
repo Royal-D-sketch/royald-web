@@ -17,7 +17,7 @@ namespace RoyalD.Web.Controllers
             _db = db;
         }
 
-        [HttpGet] public async Task<IActionResult> CleanGarbage() { var g = _db.SalesBills.Where(b => b.BillNo.Length > 25); _db.SalesBills.RemoveRange(g); await _db.SaveChangesAsync(); return Content("Cleaned " + g.Count()); }
+        [HttpGet] public async Task<IActionResult> CleanGarbage() { var g = _db.SalesBills.Where(b => !b.BillNo.StartsWith("R") && !b.BillNo.StartsWith("SO") && !b.BillNo.StartsWith("IV") && !b.BillNo.StartsWith("63") && !b.BillNo.StartsWith("64") && !b.BillNo.StartsWith("65")); _db.SalesBills.RemoveRange(g); await _db.SaveChangesAsync(); return Content("Cleaned " + g.Count()); }
         public IActionResult Index() => View();
 
         [AllowAnonymous]
