@@ -97,22 +97,12 @@
                     else
                     {
                         int idx = 1;
-                        string? lastCustCode = null;
                         foreach (var item in Model.Items)
                         {
                             <tr>
                                 <td class="text-center">@(idx++)</td>
-                                @if(item.CustomerCode != lastCustCode)
-                                {
-                                    <td class="text-start fw-bold text-success">@item.CustomerCode</td>
-                                    <td class="text-start fw-bold text-success">@item.CustomerName</td>
-                                    lastCustCode = item.CustomerCode;
-                                }
-                                else
-                                {
-                                    <td class="text-start text-muted text-center"><i class="bi bi-arrow-return-right"></i></td>
-                                    <td class="text-start text-muted text-center"><i class="bi bi-arrow-return-right"></i></td>
-                                }
+                                <td class="text-start fw-bold text-success">@item.CustomerCode</td>
+                                <td class="text-start fw-bold text-success">@item.CustomerName</td>
                                 <td class="text-start">@item.ProductCode : @item.ProductName</td>
                                 <td class="text-end fw-bold">@item.Price.ToString("N2")</td>
                                 <td class="text-center">@item.SalesRep</td>
