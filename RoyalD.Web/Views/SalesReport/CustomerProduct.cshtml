@@ -5,26 +5,12 @@
 }
 
 <style>
-.sales-subnav {
-    display: flex; gap: 10px; background: #ecfdf5; padding: 8px; border-radius: 14px; margin-bottom: 20px; border: 1px solid #a7f3d0;
-}
-.sales-subnav .subnav-item {
-    flex: 1; text-align: center; padding: 12px 18px; font-weight: 800; font-size: 1.02rem; color: #065f46; border-radius: 10px; text-decoration: none; transition: all .2s ease-in-out;
-}
-.sales-subnav .subnav-item:hover { background: rgba(255,255,255,0.9); color: #059669; transform: translateY(-1px); }
-.sales-subnav .subnav-item.active { background: #059669; color: white; box-shadow: 0 4px 15px rgba(5,150,105,0.3); }
-
 .report-table th { background-color: #065f46 !important; color: #fff !important; white-space: nowrap; text-align: center; }
 .report-table td { vertical-align: middle; }
 .report-table tbody tr:hover { background-color: #f1f8f5; }
 </style>
 
-<div class="sales-subnav no-print">
-    <a href="/SalesReport/Summary" class="subnav-item"><i class="bi bi-table me-2"></i> 1. สรุปยอดขาย-ยอดเก็บรายเดือน</a>
-    <a href="/SalesReport/Charts" class="subnav-item"><i class="bi bi-bar-chart-line me-2"></i> 2. กราฟวิเคราะห์ผลงาน</a>
-    <a href="/SalesReport/ProductDetails" class="subnav-item"><i class="bi bi-box-seam me-2"></i> 3. รายละเอียดสินค้าที่ขาย</a>
-    <a href="/SalesReport/CustomerProduct" class="subnav-item active"><i class="bi bi-shop me-2"></i> 4. รายการขายรายร้านค้า</a>
-</div>
+
 
 <div class="card shadow-sm border-0 mb-4 no-print">
     <div class="card-body bg-light rounded">
