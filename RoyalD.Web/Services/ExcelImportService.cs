@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -68,6 +68,7 @@ namespace RoyalD.Web.Services
             {
                 if (existingBills.TryGetValue(b.BillNo, out var ex))
                 {
+                    ex.BillDate = b.BillDate;
                     ex.CustomerName = b.CustomerName != null && b.CustomerName.Length > 100 ? b.CustomerName.Substring(0, 100) : (b.CustomerName ?? "");
                     ex.District = b.District != null && b.District.Length > 100 ? b.District.Substring(0, 100) : (b.District ?? "");
                     ex.Province = b.Province != null && b.Province.Length > 100 ? b.Province.Substring(0, 100) : (b.Province ?? "");
@@ -130,7 +131,8 @@ namespace RoyalD.Web.Services
                     if (skipDuplicates) { skipped++; continue; }
                     if (updateDuplicates)
                     {
-                        ex.CustomerName = b.CustomerName != null && b.CustomerName.Length > 100 ? b.CustomerName.Substring(0, 100) : (b.CustomerName ?? "");
+                        ex.BillDate = b.BillDate;
+                    ex.CustomerName = b.CustomerName != null && b.CustomerName.Length > 100 ? b.CustomerName.Substring(0, 100) : (b.CustomerName ?? "");
                         ex.District = b.District != null && b.District.Length > 100 ? b.District.Substring(0, 100) : (b.District ?? "");
                         ex.Province = b.Province != null && b.Province.Length > 100 ? b.Province.Substring(0, 100) : (b.Province ?? "");
                         ex.SalesRep = b.SalesRep != null && b.SalesRep.Length > 100 ? b.SalesRep.Substring(0, 100) : (b.SalesRep ?? "");
