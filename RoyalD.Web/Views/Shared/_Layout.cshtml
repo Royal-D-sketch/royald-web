@@ -1,4 +1,4 @@
-﻿@using System.Security.Claims
+@using System.Security.Claims
 @{
     bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
     bool isMasterAdmin = isAdmin;
@@ -281,14 +281,14 @@
                     </a>
                 }
 
-                @if (hasBill)
+                @if (hasBill || hasCancel)
                 {
                     <div class="nav-section">บิลขาย</div>
                     <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesBill" ? "active" : "")"
                        href="/SalesBill">
                         <i class="bi bi-receipt"></i> รายการบิลขาย
                     </a>
-                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "WaitingGoods" ? "active" : "")"
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && ViewContext.RouteData.Values["action"]?.ToString() == "CustomerProduct" ? "active" : "")"
                        href="/SalesReport/CustomerProduct">
                         <i class="bi bi-shop"></i> รายการขายรายลูกค้า
                     </a>
@@ -299,6 +299,7 @@
                     <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "ReturnNotes" ? "active" : "")"
                        href="/Report/ReturnNotes">
                         <i class="bi bi-arrow-return-left"></i> รับคืนสินค้า
+                    </a>
                     @if (hasCancel)
                     {
                         <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Cancelled" ? "active" : "")"
@@ -306,16 +307,15 @@
                             <i class="bi bi-trash3"></i> บิลยกเลิก (30 วัน)
                         </a>
                     }
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "PaidHistory" ? "active" : "")"
+                       href="/Report/PaidHistory">
+                        <i class="bi bi-check2-all"></i> ประวัติชำระครบ
                     </a>
                 }
 
-                @if (hasDebt || hasHist || hasCancel)
+                @if (hasDebt || hasHist)
                 {
                     <div class="nav-section">ลูกหนี้</div>
-                    <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Installment" ? "active" : "")"
-                       href="/Debtor/Installment">
-                        <i class="bi bi-credit-card-fill" style="color:#d97706;"></i> ลูกค้าผ่อนชำระ
-                    </a>
                     @if (hasDebt)
                     {
                         <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Debtor" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
@@ -323,6 +323,10 @@
                             <i class="bi bi-credit-card-2-front"></i> การ์ดลูกหนี้
                         </a>
                     }
+                    <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Installment" ? "active" : "")"
+                       href="/Debtor/Installment">
+                        <i class="bi bi-credit-card-fill" style="color:#d97706;"></i> ลูกค้าผ่อนชำระ
+                    </a>
                     @if (hasHist)
                     {
                         <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "History" ? "active" : "")"
@@ -341,15 +345,11 @@
                     <div class="nav-section">รายงาน</div>
                     @if (hasRep)
                     {
-                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "Sales" ? "active" : "")"
-                           href="/Report/Sales">
-                            <i class="bi bi-bar-chart-grouped"></i> รายงานผู้แทนขาย
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && (ViewContext.RouteData.Values["action"]?.ToString() == "Summary" || ViewContext.RouteData.Values["action"]?.ToString() == "Charts" || ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetails" || ViewContext.RouteData.Values["action"]?.ToString() == "Compare") ? "active" : "")"
+                           href="/SalesReport/Summary">
+                            <i class="bi bi-graph-up-arrow"></i> รายงานผู้แทนขาย
                         </a>
                     }
-                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "PaidHistory" ? "active" : "")"
-                       href="/Report/PaidHistory">
-                        <i class="bi bi-check2-all"></i> ประวัติชำระครบ
-                    </a>
                 }
 
                 @if (hasUpload || hasUsers || hasAudit)
@@ -847,4 +847,3 @@ else
 </script>
 </body>
 </html>
-

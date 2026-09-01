@@ -1,4 +1,4 @@
-﻿using RoyalD.Web.Models;
+using RoyalD.Web.Models;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
@@ -71,7 +71,6 @@ namespace RoyalD.Web.Services
         public string ProductCode { get; set; } = string.Empty;
         public string ProductName { get; set; } = string.Empty;
         public decimal Price { get; set; }
-        public int Credit { get; set; }
         public string Unit { get; set; } = string.Empty;
         public decimal TotalQty { get; set; }
         public decimal AvgPrice => TotalQty > 0 ? Math.Round(TotalAmount / TotalQty, 2) : 0m;
@@ -831,7 +830,9 @@ namespace RoyalD.Web.Services
                         ProductCode = g.Key.Code ?? "",
                         ProductName = g.Key.Name ?? "",
                         Price = g.Key.Price,
-                        Credit = g.First().SalesBill.Credit
+                        Credit = g.First().SalesBill.Credit,
+                        Qty = g.Sum(x => x.Qty),
+                        TotalAmount = g.Sum(x => x.Amount)
                     };
                 })
                 .OrderBy(x => x.CustomerName).ThenBy(x => x.ProductName)
@@ -862,7 +863,7 @@ namespace RoyalD.Web.Services
                 ws.Cells[row, 2].Value = item.Month;
                 ws.Cells[row, 3].Value = item.CustomerCode;
                 ws.Cells[row, 4].Value = item.CustomerName;
-                ws.Cells[row, 5].Value = item.ProductCode + " : " + item.ProductName;
+                ws.Cells[row, 5].Value = $"{item.ProductCode} : {item.ProductName}";
                 ws.Cells[row, 6].Value = item.Price;
                 ws.Cells[row, 7].Value = item.Credit;
                 ws.Cells[row, 8].Value = item.SalesRep;
@@ -900,4 +901,3 @@ namespace RoyalD.Web.Services
         public decimal TotalAmount { get; set; }
     }
 }
-
