@@ -87,14 +87,13 @@
                         <th class="text-start">ชื่อลูกค้า</th>
                         <th class="text-start">รหัสสินค้า : ชื่อสินค้า</th>
                         <th>ราคาต่อหน่วย</th>
-                        <th>หน่วย</th>
                         <th>ชื่อผู้แทนขาย</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (!Model.Items.Any())
                     {
-                        <tr><td colspan="8" class="text-center text-muted py-4">ไม่พบข้อมูลการขายตามเงื่อนไขที่ระบุ</td></tr>
+                        <tr><td colspan="7" class="text-center text-muted py-4">ไม่พบข้อมูลการขายตามเงื่อนไขที่ระบุ</td></tr>
                     }
                     else
                     {
@@ -108,7 +107,6 @@
                                 <td class="text-start fw-bold text-success">@item.CustomerName</td>
                                 <td class="text-start">@item.ProductCode : @item.ProductName</td>
                                 <td class="text-end fw-bold">@item.Price.ToString("N2")</td>
-                                <td class="text-end">@item.Qty.ToString("N0") @item.Unit</td>
                                 <td class="text-center">@item.SalesRep</td>
                             </tr>
                         }

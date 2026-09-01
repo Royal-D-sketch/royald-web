@@ -804,7 +804,7 @@ namespace RoyalD.Web.Services
             var ws = pkg.Workbook.Worksheets.Add("CustomerSales");
 
             // Headers
-            var headers = new[] { "ลำดับ", "เดือน", "รหัสลูกค้า", "ชื่อลูกค้า", "รหัสสินค้า : ชื่อสินค้า", "ราคาต่อหน่วย", "หน่วย", "ชื่อผู้แทนขาย" };
+            var headers = new[] { "ลำดับ", "เดือน", "รหัสลูกค้า", "ชื่อลูกค้า", "รหัสสินค้า : ชื่อสินค้า", "ราคาต่อหน่วย", "ชื่อผู้แทนขาย" };
             for (int i = 0; i < headers.Length; i++)
             {
                 ws.Cells[1, i + 1].Value = headers[i];
@@ -821,8 +821,7 @@ namespace RoyalD.Web.Services
                 ws.Cells[row, 4].Value = item.CustomerName;
                 ws.Cells[row, 5].Value = item.ProductCode + " : " + item.ProductName;
                 ws.Cells[row, 6].Value = item.Price;
-                ws.Cells[row, 7].Value = item.Qty.ToString("N0") + " " + item.Unit;
-                ws.Cells[row, 8].Value = item.SalesRep;
+                ws.Cells[row, 7].Value = item.SalesRep;
                 row++;
             }
 
