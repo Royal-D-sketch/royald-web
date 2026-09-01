@@ -1,0 +1,159 @@
+﻿@model List<RoyalD.Web.Models.OutstandingDebt>
+@using RoyalD.Web.Models
+@{
+    ViewData["Title"] = "ลูกค้าผ่อนชำระ";
+    var today = DateTime.Today;
+    bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
+    var salesReps = ViewBag.SalesReps as List<string> ?? new();
+}
+
+@section Styles {
+<style>
+.debt-card-container { background: #f8fafc; }
+.table-hover tbody tr:hover { background-color: #fefce8; }
+@@media print {
+    body * { visibility: hidden; }
+    .debt-card-container, .debt-card-container * { visibility: visible; }
+    .debt-card-container { position: absolute; left: 0; top: 0; width: 100%; }
+    .btn, form, .input-group, .no-print { display: none !important; }
+}
+</style>
+}
+
+<div class="debt-card-container p-3 rounded-4 shadow-sm bg-white">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold mb-1" style="color:#d97706;"><i class="bi bi-credit-card-fill me-2"></i>ลูกค้าผ่อนชำระ</h2>
+            <p class="text-muted mb-0">รายการบิลที่มีสถานะ "ผ่อนชำระ" (Installment) — ประวัติการผ่อนชำระครบทุกรายการ</p>
+        </div>
+        <div class="d-flex gap-2 no-print">
+            <button onclick="window.print()" class="btn btn-outline-danger btn-sm fw-bold px-3">
+                <i class="bi bi-printer me-1"></i> พิมพ์
+            </button>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-3 no-print" style="background:#fffbeb; border: 1.5px solid #fde68a !important; border-radius:12px;">
+        <div class="card-body py-2 px-3">
+            <form method="get" action="/Debtor/Installment" class="row g-2 align-items-end">
+                <div class="col-md-5">
+                    <input type="text" name="search" class="form-control" placeholder="ค้นหา ชื่อลูกค้า / เลขที่บิล / รหัสลูกค้า..." value="@ViewBag.Search" />
+                </div>
+                <div class="col-md-4">
+                    <select name="salesRep" class="form-select select2-searchable">
+                        <option value="">-- ทุกผู้แทน --</option>
+                        @foreach (var r in salesReps)
+                        {
+                            if (ViewBag.SalesRep as string == r) { <option value="@r" selected>@r</option> }
+                            else { <option value="@r">@r</option> }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-warning w-100 fw-bold"><i class="bi bi-search me-1"></i> ค้นหา</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @{
+        decimal grandTotal = Model.Sum(d => d.OriginalAmount);
+        decimal totalPaid = Model.Sum(d => d.OriginalAmount - d.RemainingAmount);
+        decimal totalRemain = Model.Sum(d => d.RemainingAmount);
+    }
+    <div class="row g-2 mb-3">
+        <div class="col-md-4">
+            <div class="rounded-3 p-2 text-center fw-bold" style="background:#fef9c3;">
+                <small class="d-block text-muted">จำนวนบิล</small>
+                <span class="fs-5 text-warning">@Model.Count บิล</span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="rounded-3 p-2 text-center fw-bold" style="background:#d1fae5;">
+                <small class="d-block text-muted">ชำระไปแล้ว</small>
+                <span class="fs-5 text-success">@totalPaid.ToString("N2") บาท</span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="rounded-3 p-2 text-center fw-bold" style="background:#fce7f3;">
+                <small class="d-block text-muted">ยอดคงเหลือรวม</small>
+                <span class="fs-5 text-danger">@totalRemain.ToString("N2") บาท</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive" style="max-height: 580px; overflow-y:auto;">
+        <table class="table table-sm table-bordered table-hover mb-0">
+            <thead style="background:#d97706; color:white; position:sticky; top:0; z-index:10;">
+                <tr>
+                    <th>#</th>
+                    <th>วันที่บิล</th>
+                    <th>เลขที่บิล</th>
+                    <th>รหัสลูกค้า</th>
+                    <th>ชื่อลูกค้า</th>
+                    <th class="text-end">ยอดตามบิล</th>
+                    <th>ผู้แทนขาย</th>
+                    <th>วันที่ผ่อน</th>
+                    <th class="text-end">ยอดผ่อน</th>
+                    <th class="text-end">ยอดคงเหลือ</th>
+                    <th>เลขที่ใบเสร็จ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="11" class="text-center text-muted py-4">ไม่พบข้อมูลลูกค้าผ่อนชำระ</td></tr>
+                }
+                else
+                {
+                    int idx = 1;
+                    foreach (var d in Model)
+                    {
+                        decimal paid = d.OriginalAmount - d.RemainingAmount;
+                        var lastPayment = d.PaymentRecords?.OrderByDescending(p => p.PaidDate).FirstOrDefault();
+                        string latestPayDate = lastPayment != null ? lastPayment.PaidDate.ToString("dd/MM/yyyy") : "-";
+                        decimal latestPayAmount = lastPayment?.PaidAmount ?? 0m;
+                        
+                        <tr>
+                            <td class="text-center text-muted">@(idx++)</td>
+                            <td class="text-center">@d.BillDate.ToString("dd/MM/yy")</td>
+                            <td>
+                                <a href="/Debtor/Detail/@d.BillNo" class="fw-bold text-primary" style="white-space:nowrap;">
+                                    @d.BillNo
+                                </a>
+                            </td>
+                            <td class="text-muted">@d.CustomerCode</td>
+                            <td class="fw-bold">@d.CustomerName</td>
+                            <td class="text-end fw-bold">@d.OriginalAmount.ToString("N2")</td>
+                            <td class="text-center">@d.SalesRep</td>
+                            <td class="text-center">@latestPayDate</td>
+                            <td class="text-end text-success fw-bold">
+                                @(latestPayAmount > 0 ? latestPayAmount.ToString("N2") : "-")
+                            </td>
+                            <td class="text-end fw-bold @(d.RemainingAmount > 0 ? "text-danger" : "text-success")">
+                                @d.RemainingAmount.ToString("N2")
+                            </td>
+                            <td class="text-center text-muted small">@(string.IsNullOrEmpty(d.ReceiptNo) ? "-" : d.ReceiptNo)</td>
+                        </tr>
+                        
+                        @if (d.PaymentRecords != null && d.PaymentRecords.Count > 1)
+                        {
+                            foreach (var p in d.PaymentRecords.OrderByDescending(x => x.PaidDate).Skip(1))
+                            {
+                                <tr style="background:#fffde7; font-size:0.88em;">
+                                    <td></td>
+                                    <td colspan="5" class="text-end text-muted ps-4">└ รายการผ่อน @p.PaidDate.ToString("dd/MM/yyyy")</td>
+                                    <td></td>
+                                    <td class="text-center text-muted">@p.PaidDate.ToString("dd/MM/yy")</td>
+                                    <td class="text-end text-success">@p.PaidAmount.ToString("N2")</td>
+                                    <td colspan="2"></td>
+                                </tr>
+                            }
+                        }
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+

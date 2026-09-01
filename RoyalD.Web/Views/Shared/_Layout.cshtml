@@ -312,6 +312,10 @@
                 @if (hasDebt || hasHist || hasCancel)
                 {
                     <div class="nav-section">ลูกหนี้</div>
+                    <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Installment" ? "active" : "")"
+                       href="/Debtor/Installment">
+                        <i class="bi bi-credit-card-fill" style="color:#d97706;"></i> ลูกค้าผ่อนชำระ
+                    </a>
                     @if (hasDebt)
                     {
                         <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Debtor" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
@@ -843,3 +847,4 @@ else
 </script>
 </body>
 </html>
+

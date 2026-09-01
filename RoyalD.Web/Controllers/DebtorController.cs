@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -91,7 +91,7 @@ namespace RoyalD.Web.Controllers
                 debts = debts.Where(d => d.Status == parsedStatus).ToList();
             }
             
-            // กรองบิลที่ชำระครบแล้วและเลย 1 วัน (ย้ายไปประวัติ)
+            // เธเธฃเธญเธเธเธดเธฅเธ—เธตเนเธเธณเธฃเธฐเธเธฃเธเนเธฅเนเธงเนเธฅเธฐเน€เธฅเธข 1 เธงเธฑเธ (เธขเนเธฒเธขเนเธเธเธฃเธฐเธงเธฑเธ•เธด)
             debts = debts.Where(d => 
             {
                 if (d.RemainingAmount <= 0 || d.FullyPaidDate.HasValue || 
@@ -100,7 +100,7 @@ namespace RoyalD.Web.Controllers
                     var dateToCheck = d.ReceiptDate ?? d.FullyPaidDate ?? d.PaidDate;
                     if (dateToCheck.HasValue && dateToCheck.Value.Date < DateTime.Today)
                     {
-                        return false; // กรองออก เพราะเก่ากว่า 1 วัน
+                        return false; // เธเธฃเธญเธเธญเธญเธ เน€เธเธฃเธฒเธฐเน€เธเนเธฒเธเธงเนเธฒ 1 เธงเธฑเธ
                     }
                 }
                 return true;
@@ -134,7 +134,7 @@ namespace RoyalD.Web.Controllers
 
             var creditOptions = new List<string>();
             if (rawCredits.Any(c => c == 0 || c == 7))
-                creditOptions.Add("0_7"); // เงินสด / 7 วัน
+                creditOptions.Add("0_7"); // เน€เธเธดเธเธชเธ” / 7 เธงเธฑเธ
             foreach (var c in rawCredits.Where(c => c != 0 && c != 7))
             {
                 creditOptions.Add(c.ToString());
@@ -182,7 +182,7 @@ namespace RoyalD.Web.Controllers
                 .Where(s => !string.IsNullOrWhiteSpace(s) &&
                             !s.Contains("5%") &&
                             !s.Contains("page", StringComparison.OrdinalIgnoreCase) &&
-                            !s.Contains("หน้า", StringComparison.OrdinalIgnoreCase) &&
+                            !s.Contains("เธซเธเนเธฒ", StringComparison.OrdinalIgnoreCase) &&
                             !s.All(char.IsDigit))
                 .OrderBy(s => s)
                 .ToList();
@@ -208,7 +208,7 @@ namespace RoyalD.Web.Controllers
             }
 
             string pos = (currentUser?.Position ?? "").Trim();
-            bool isSalesRepPos = pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย");
+            bool isSalesRepPos = pos == "เธเธนเนเนเธ—เธเธเธฒเธข" || pos == "เธเธเธฑเธเธเธฒเธเธเธฒเธข" || pos.Contains("เธเธนเนเนเธ—เธ") || pos.Contains("เธเธเธฑเธเธเธฒเธเธเธฒเธข");
             bool canDownload = !isSalesRepPos && (currentUser?.Role == "admin" || currentUser?.CanDownload == true);
 
             ViewBag.CreditOptions = creditOptions;
@@ -236,7 +236,7 @@ namespace RoyalD.Web.Controllers
         {
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             string pos = (currentUser?.Position ?? "").Trim();
-            bool isSalesRepPos = pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย");
+            bool isSalesRepPos = pos == "เธเธนเนเนเธ—เธเธเธฒเธข" || pos == "เธเธเธฑเธเธเธฒเธเธเธฒเธข" || pos.Contains("เธเธนเนเนเธ—เธ") || pos.Contains("เธเธเธฑเธเธเธฒเธเธเธฒเธข");
             bool canDownload = !isSalesRepPos && (currentUser?.Role == "admin" || currentUser?.CanDownload == true);
             if (!canDownload) return Forbid();
 
@@ -324,7 +324,7 @@ namespace RoyalD.Web.Controllers
         {
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             string pos = (currentUser?.Position ?? "").Trim();
-            bool isSalesRepPos = pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย");
+            bool isSalesRepPos = pos == "เธเธนเนเนเธ—เธเธเธฒเธข" || pos == "เธเธเธฑเธเธเธฒเธเธเธฒเธข" || pos.Contains("เธเธนเนเนเธ—เธ") || pos.Contains("เธเธเธฑเธเธเธฒเธเธเธฒเธข");
             bool canDownload = !isSalesRepPos && (currentUser?.Role == "admin" || currentUser?.CanDownload == true);
             if (!canDownload) return Forbid();
 
@@ -353,7 +353,7 @@ namespace RoyalD.Web.Controllers
 
             var csv = new System.Text.StringBuilder();
             csv.Append('\uFEFF');
-            csv.AppendLine("เลขที่บิล,วันที่บิล,ครบกำหนด,รหัสลูกค้า,ชื่อลูกค้า,อำเภอ,จังหวัด,ผู้แทนขาย,ยอดเดิม,ยอดคงค้าง,สถานะ,เลขที่ใบเสร็จ,วันที่รับเงิน");
+            csv.AppendLine("เน€เธฅเธเธ—เธตเนเธเธดเธฅ,เธงเธฑเธเธ—เธตเนเธเธดเธฅ,เธเธฃเธเธเธณเธซเธเธ”,เธฃเธซเธฑเธชเธฅเธนเธเธเนเธฒ,เธเธทเนเธญเธฅเธนเธเธเนเธฒ,เธญเธณเน€เธ เธญ,เธเธฑเธเธซเธงเธฑเธ”,เธเธนเนเนเธ—เธเธเธฒเธข,เธขเธญเธ”เน€เธ”เธดเธก,เธขเธญเธ”เธเธเธเนเธฒเธ,เธชเธ–เธฒเธเธฐ,เน€เธฅเธเธ—เธตเนเนเธเน€เธชเธฃเนเธ,เธงเธฑเธเธ—เธตเนเธฃเธฑเธเน€เธเธดเธ");
 
             foreach (var d in debts)
             {
@@ -378,7 +378,7 @@ namespace RoyalD.Web.Controllers
         {
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             string pos = (currentUser?.Position ?? "").Trim();
-            bool isSalesRepPos = pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย");
+            bool isSalesRepPos = pos == "เธเธนเนเนเธ—เธเธเธฒเธข" || pos == "เธเธเธฑเธเธเธฒเธเธเธฒเธข" || pos.Contains("เธเธนเนเนเธ—เธ") || pos.Contains("เธเธเธฑเธเธเธฒเธเธเธฒเธข");
             bool canDownload = !isSalesRepPos && (currentUser?.Role == "admin" || currentUser?.CanDownload == true);
             if (!canDownload)
             {
@@ -483,7 +483,7 @@ namespace RoyalD.Web.Controllers
             bool canDelete = currentUser != null && (currentUser.Role == "admin" || currentUser.CanDeleteDebtor);
             if (!canDelete)
             {
-                TempData["Error"] = "คุณไม่มีสิทธิ์ในการลบการ์ดลูกหนี้";
+                TempData["Error"] = "เธเธธเธ“เนเธกเนเธกเธตเธชเธดเธ—เธเธดเนเนเธเธเธฒเธฃเธฅเธเธเธฒเธฃเนเธ”เธฅเธนเธเธซเธเธตเน";
                 return RedirectToAction("Index");
             }
 
@@ -508,11 +508,11 @@ namespace RoyalD.Web.Controllers
             await _db.SaveChangesAsync();
             _cache.Remove("all_debtor_reps");
             _cache.Remove("all_debtor_credits");
-            TempData["Success"] = $"ลบการ์ดลูกหนี้เลขที่บิล {billNo} เรียบร้อยแล้ว";
+            TempData["Success"] = $"เธฅเธเธเธฒเธฃเนเธ”เธฅเธนเธเธซเธเธตเนเน€เธฅเธเธ—เธตเนเธเธดเธฅ {billNo} เน€เธฃเธตเธขเธเธฃเนเธญเธขเนเธฅเนเธง";
             return RedirectToAction("Index");
         }
 
-        public async Task<IActionResult> History(string? search, string? salesRep)
+        public async Task<IActionResult> History(string? search, string? salesRep, DateTime? fromDate = null, DateTime? toDate = null, string? dateType = null)
         {
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             bool isRestricted = currentUser != null && currentUser.Role != "admin";
@@ -526,6 +526,9 @@ namespace RoyalD.Web.Controllers
             }
 
             var debts = await _svc.GetPaidHistoryAsync(search, salesRep, userAllowedRegion, userAllowedProvinces, userAllowedDistricts);
+            if (fromDate.HasValue) { if (dateType == "bill") debts = debts.Where(d => d.BillDate >= fromDate.Value.Date).ToList(); else debts = debts.Where(d => (d.ReceiptDate ?? d.FullyPaidDate ?? d.PaidDate) >= fromDate.Value.Date).ToList(); }
+            if (toDate.HasValue) { if (dateType == "bill") debts = debts.Where(d => d.BillDate <= toDate.Value.Date.AddDays(1).AddTicks(-1)).ToList(); else debts = debts.Where(d => (d.ReceiptDate ?? d.FullyPaidDate ?? d.PaidDate) <= toDate.Value.Date.AddDays(1).AddTicks(-1)).ToList(); }
+            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd"); ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd"); ViewBag.DateType = dateType;
             
             // Backfill missing or invalid Customer Code/Name for the same ReceiptNo
             var receiptGroups = debts.Where(d => !string.IsNullOrEmpty(d.ReceiptNo)).GroupBy(d => d.ReceiptNo);
@@ -620,7 +623,7 @@ namespace RoyalD.Web.Controllers
 
             if (amount <= 0 || amount > debt.RemainingAmount)
             {
-                TempData["Error"] = "ยอดชำระไม่ถูกต้อง (ต้องมากกว่า 0 และไม่เกินยอดคงค้าง)";
+                TempData["Error"] = "เธขเธญเธ”เธเธณเธฃเธฐเนเธกเนเธ–เธนเธเธ•เนเธญเธ (เธ•เนเธญเธเธกเธฒเธเธเธงเนเธฒ 0 เนเธฅเธฐเนเธกเนเน€เธเธดเธเธขเธญเธ”เธเธเธเนเธฒเธ)";
                 return RedirectToAction("Detail", new { id = billNo });
             }
 
@@ -683,7 +686,7 @@ namespace RoyalD.Web.Controllers
             });
 
             await _db.SaveChangesAsync();
-            TempData["Success"] = $"บันทึกการรับชำระเงิน {amount:N2} บาท สำเร็จแล้ว";
+            TempData["Success"] = $"เธเธฑเธเธ—เธถเธเธเธฒเธฃเธฃเธฑเธเธเธณเธฃเธฐเน€เธเธดเธ {amount:N2} เธเธฒเธ— เธชเธณเน€เธฃเนเธเนเธฅเนเธง";
             return RedirectToAction("Detail", new { id = billNo });
         }
 
@@ -709,7 +712,7 @@ namespace RoyalD.Web.Controllers
             bool canChangeStatus = currentUser != null && (currentUser.Role == "admin" || currentUser.CanChangeDebtStatus);
             if (!canChangeStatus)
             {
-                TempData["Error"] = "คุณไม่มีสิทธิ์ในการเปลี่ยนสถานะหนี้";
+                TempData["Error"] = "เธเธธเธ“เนเธกเนเธกเธตเธชเธดเธ—เธเธดเนเนเธเธเธฒเธฃเน€เธเธฅเธตเนเธขเธเธชเธ–เธฒเธเธฐเธซเธเธตเน";
                 return RedirectToAction("Detail", new { id = billNo });
             }
 
@@ -732,14 +735,14 @@ namespace RoyalD.Web.Controllers
             {
                 debt.WaitingGoodsDate = waitingGoodsDate ?? DateTime.Today;
 
-                // ลบรายการสินค้าค้างส่งเดิมของบิลนี้ออกก่อนบันทึกใหม่
+                // เธฅเธเธฃเธฒเธขเธเธฒเธฃเธชเธดเธเธเนเธฒเธเนเธฒเธเธชเนเธเน€เธ”เธดเธกเธเธญเธเธเธดเธฅเธเธตเนเธญเธญเธเธเนเธญเธเธเธฑเธเธ—เธถเธเนเธซเธกเน
                 var oldPending = await _db.PendingProducts.Where(p => p.OutstandingDebtId == debt.Id || p.BillNo == debt.BillNo).ToListAsync();
                 if (oldPending.Any())
                 {
                     _db.PendingProducts.RemoveRange(oldPending);
                 }
 
-                // บันทึกรายการสินค้าค้างส่งที่เลือกจากบิล
+                // เธเธฑเธเธ—เธถเธเธฃเธฒเธขเธเธฒเธฃเธชเธดเธเธเนเธฒเธเนเธฒเธเธชเนเธเธ—เธตเนเน€เธฅเธทเธญเธเธเธฒเธเธเธดเธฅ
                 var savedPendingList = new List<string>();
                 if (waitingProductCodes != null && waitingProductCodes.Any())
                 {
@@ -781,8 +784,8 @@ namespace RoyalD.Web.Controllers
                     }
                 }
 
-                // สร้างข้อความสรุปสินค้าค้างส่งลงใน Note
-                string pendingSummary = savedPendingList.Count > 0 ? $"รอสินค้า: {string.Join(", ", savedPendingList)}" : "";
+                // เธชเธฃเนเธฒเธเธเนเธญเธเธงเธฒเธกเธชเธฃเธธเธเธชเธดเธเธเนเธฒเธเนเธฒเธเธชเนเธเธฅเธเนเธ Note
+                string pendingSummary = savedPendingList.Count > 0 ? $"เธฃเธญเธชเธดเธเธเนเธฒ: {string.Join(", ", savedPendingList)}" : "";
                 if (!string.IsNullOrEmpty(note))
                 {
                     debt.Note = string.IsNullOrEmpty(pendingSummary) ? note : $"{pendingSummary} | {note}";
@@ -815,7 +818,7 @@ namespace RoyalD.Web.Controllers
                 debt.CancelledDate = DateTime.Today;
             }
 
-            // ถ้าเปลี่ยนเป็นสถานะอื่นที่ไม่ใช่ WaitingGoods ให้เคลียร์ PendingProducts และ WaitingGoodsDate
+            // เธ–เนเธฒเน€เธเธฅเธตเนเธขเธเน€เธเนเธเธชเธ–เธฒเธเธฐเธญเธทเนเธเธ—เธตเนเนเธกเนเนเธเน WaitingGoods เนเธซเนเน€เธเธฅเธตเธขเธฃเน PendingProducts เนเธฅเธฐ WaitingGoodsDate
             if (status != DebtStatus.WaitingGoods)
             {
                 var oldPending = await _db.PendingProducts.Where(p => p.OutstandingDebtId == debt.Id || p.BillNo == debt.BillNo).ToListAsync();
@@ -866,7 +869,7 @@ namespace RoyalD.Web.Controllers
             });
 
             await _db.SaveChangesAsync();
-            TempData["Success"] = $"อัปเดตสถานะเป็น '{status.ToThaiString()}' เรียบร้อยแล้ว";
+            TempData["Success"] = $"เธญเธฑเธเน€เธ”เธ•เธชเธ–เธฒเธเธฐเน€เธเนเธ '{status.ToThaiString()}' เน€เธฃเธตเธขเธเธฃเนเธญเธขเนเธฅเนเธง";
             return RedirectToAction("Detail", new { id = billNo });
         }
 
@@ -876,10 +879,10 @@ namespace RoyalD.Web.Controllers
             var debt = await _db.OutstandingDebts.FindAsync(id);
             if (debt == null) return NotFound();
 
-            // รหัสผ่านสำหรับการแก้ไขใบเสร็จ (ตามที่ร้องขอ)
+            // เธฃเธซเธฑเธชเธเนเธฒเธเธชเธณเธซเธฃเธฑเธเธเธฒเธฃเนเธเนเนเธเนเธเน€เธชเธฃเนเธ (เธ•เธฒเธกเธ—เธตเนเธฃเนเธญเธเธเธญ)
             if (password != "029030445Rd*")
             {
-                TempData["Error"] = "รหัสผ่านไม่ถูกต้อง ไม่สามารถแก้ไขข้อมูลใบเสร็จได้";
+                TempData["Error"] = "เธฃเธซเธฑเธชเธเนเธฒเธเนเธกเนเธ–เธนเธเธ•เนเธญเธ เนเธกเนเธชเธฒเธกเธฒเธฃเธ–เนเธเนเนเธเธเนเธญเธกเธนเธฅเนเธเน€เธชเธฃเนเธเนเธ”เน";
                 return RedirectToAction("Detail", new { id = debt.BillNo });
             }
 
@@ -889,7 +892,7 @@ namespace RoyalD.Web.Controllers
             debt.ReceiptNo = receiptNo ?? "";
             debt.ReceiptDate = receiptDate;
 
-            // หากมีการระบุเลขที่ใบเสร็จ ถือว่าชำระครบ
+            // เธซเธฒเธเธกเธตเธเธฒเธฃเธฃเธฐเธเธธเน€เธฅเธเธ—เธตเนเนเธเน€เธชเธฃเนเธ เธ–เธทเธญเธงเนเธฒเธเธณเธฃเธฐเธเธฃเธ
             if (!string.IsNullOrEmpty(receiptNo))
             {
                 debt.RemainingAmount = 0;
@@ -899,7 +902,7 @@ namespace RoyalD.Web.Controllers
             }
             else
             {
-                // หากลบเลขที่ใบเสร็จออก (คืนสถานะค้างชำระ)
+                // เธซเธฒเธเธฅเธเน€เธฅเธเธ—เธตเนเนเธเน€เธชเธฃเนเธเธญเธญเธ (เธเธทเธเธชเธ–เธฒเธเธฐเธเนเธฒเธเธเธณเธฃเธฐ)
                 debt.RemainingAmount = debt.OriginalAmount;
                 debt.Status = DebtStatus.Outstanding;
                 debt.FullyPaidDate = null;
@@ -916,8 +919,36 @@ namespace RoyalD.Web.Controllers
             });
 
             await _db.SaveChangesAsync();
-            TempData["Success"] = "อัปเดตข้อมูลใบเสร็จรับเงินสำเร็จ";
+            TempData["Success"] = "เธญเธฑเธเน€เธ”เธ•เธเนเธญเธกเธนเธฅเนเธเน€เธชเธฃเนเธเธฃเธฑเธเน€เธเธดเธเธชเธณเน€เธฃเนเธ";
             return RedirectToAction("Detail", new { id = debt.BillNo });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Installment(string? search, string? salesRep)
+        {
+            var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            bool isRestricted = currentUser != null && currentUser.Role != "admin";
+            string? userAllowedRegion = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedRegion) ? currentUser.AllowedRegion : null;
+            string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
+            string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
+            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode)) salesRep = currentUser.SalesRepCode;
+
+            var q = _db.OutstandingDebts
+                .Include(d => d.PaymentRecords)
+                .Where(d => d.Status == DebtStatus.Installment);
+
+            if (!string.IsNullOrEmpty(userAllowedRegion)) q = q.Where(d => d.Province != null && d.Province.Contains(userAllowedRegion));
+            if (!string.IsNullOrEmpty(salesRep)) q = q.Where(d => d.SalesRep != null && d.SalesRep.Contains(salesRep));
+            if (!string.IsNullOrEmpty(search))
+                q = q.Where(d => d.CustomerName.Contains(search) || d.BillNo.Contains(search) || d.CustomerCode.Contains(search));
+
+            var debts = await q.OrderByDescending(d => d.BillDate).ToListAsync();
+            ViewBag.Search = search;
+            ViewBag.SalesRep = salesRep;
+            ViewBag.SalesReps = await _db.OutstandingDebts.AsNoTracking()
+                .Where(d => d.Status == DebtStatus.Installment)
+                .Select(d => d.SalesRep).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s).ToListAsync();
+            return View(debts);
         }
         [HttpGet]
         public async Task<IActionResult> BadDebt(string? search, string? salesRep)
@@ -978,6 +1009,8 @@ namespace RoyalD.Web.Controllers
         }
     }
 }
+
+
 
 
 

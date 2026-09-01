@@ -3,8 +3,9 @@
 @{
     ViewData["Title"] = "รายการขายรายลูกค้า";
     bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
+    bool isSalesRep = User.HasClaim(c => c.Type == "Position" && (c.Value.Contains("ผู้แทน") || c.Value.Contains("พนักงานขาย"))) && !isAdmin;
     var canDownloadClaim = ViewContext.HttpContext.User.FindFirst("CanDownload")?.Value;
-    bool canDownload = isAdmin || canDownloadClaim == "True";
+    bool canDownload = (isAdmin || canDownloadClaim == "True") && !isSalesRep;
 }
 
 <style>
@@ -19,38 +20,57 @@
 }
 .report-table td { vertical-align: middle; }
 .report-table tbody tr:hover { background-color: #f1f8f5; }
-
+.smart-search-box {
+    border: 2px solid #059669;
+    border-radius: 12px;
+    padding: 8px 16px;
+    font-size: 1rem;
+    transition: box-shadow 0.2s;
+}
+.smart-search-box:focus {
+    box-shadow: 0 0 0 3px rgba(5,150,105,0.2);
+    outline: none;
+}
 </style>
 
-<div class="card shadow-sm border-0 mb-4 no-print">
-    <div class="card-body bg-light rounded">
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h3 class="mb-1 fw-bold" style="color:#065f46;">
+            <i class="bi bi-shop" style="color:#059669;"></i> รายการขายรายลูกค้า
+        </h3>
+        <span class="text-muted small">ค้นหาสินค้าที่ขายแยกตามลูกค้า รหัสสินค้า และชื่อสินค้า</span>
+    </div>
+    @if (canDownload)
+    {
+        <div class="d-flex gap-2 no-print">
+            <div class="dropdown">
+                <button class="btn btn-success dropdown-toggle fw-bold px-3" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-download"></i> ดาวน์โหลด
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="window.print();"><i class="bi bi-file-pdf text-danger"></i> PDF / พิมพ์</a></li>
+                    <li><a class="dropdown-item" href="/SalesReport/ExportCustomerProductExcel?rep=@(Model.SelectedRep)&q=@(Model.SearchQuery)"><i class="bi bi-file-earmark-excel text-success"></i> Excel</a></li>
+                    <li><a class="dropdown-item" href="/SalesReport/ExportCustomerProductCsv?rep=@(Model.SelectedRep)&q=@(Model.SearchQuery)"><i class="bi bi-filetype-csv text-primary"></i> CSV</a></li>
+                </ul>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="card shadow-sm border-0 mb-4 no-print" style="border: 1.5px solid #a7f3d0 !important; background:#f0fdf4; border-radius:14px;">
+    <div class="card-body py-3 px-4">
         <form method="get" class="row g-3 align-items-end">
-                        <div class="col-md-3">
-                <label class="form-label fw-bold" style="font-size: 0.9em;">รหัสลูกค้า/ชื่อลูกค้า/รหัสสินค้า/ชื่อสินค้า</label>
-                <input type="text" name="q" class="form-control" placeholder="พิมพ์บางส่วน เช่น รอแยล..." value="@Model.SearchQuery" />
-            </div><div class="col-md-2">
-                <label class="form-label fw-bold">ระบุวันที่</label>
-                <input type="date" name="date" class="form-control" value="@Model.SelectedDate?.ToString("yyyy-MM-dd")" />
+            <div class="col-md-6">
+                <label class="form-label fw-bold text-success">
+                    <i class="bi bi-search me-1"></i> ค้นหาอัจฉริยะ (ชื่อลูกค้า / รหัสลูกค้า / ชื่อสินค้า / รหัสสินค้า)
+                </label>
+                <input type="text" name="q" class="form-control smart-search-box" 
+                    placeholder="พิมพ์คำค้นหา เช่น ชื่อลูกค้า, รหัส, ชื่อสินค้า... (ผสมคำพ่วงกันได้)"
+                    value="@Model.SearchQuery" autofocus autocomplete="off" />
+                <small class="text-muted">ตัวอย่าง: "สมหมาย ข้าว" หรือ "740114" หรือ "A001 หมู"</small>
             </div>
-            <div class="col-md-3">
-                <label class="form-label fw-bold">เลือกเดือน</label>
-                <select name="month" class="form-select">
-                    <option value="">-- ดูทั้งหมด / ดูตามวันที่ --</option>
-                    @foreach (var m in Model.AllMonths)
-                    {
-                        if (Model.SelectedMonth == m.Key)
-                        {
-                            <option value="@m.Key" selected>@m.Value</option>
-                        }
-                        else
-                        {
-                            <option value="@m.Key">@m.Value</option>
-                        }
-                    }
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label fw-bold">ผู้แทนขาย (Sales Rep)</label>
+            <div class="col-md-4">
+                <label class="form-label fw-bold text-success"><i class="bi bi-person me-1"></i> ผู้แทนขาย</label>
                 <select name="rep" class="form-select select2-searchable">
                     <option value="">-- ทุกคน --</option>
                     @foreach (var r in Model.AllReps)
@@ -67,46 +87,50 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100 fw-bold"><i class="bi bi-search me-1"></i> ค้นหา</button>
-            </div>
-            <div class="col-md-2 text-end">
-                @if (canDownload)
-                {
-                    <div class="dropdown">
-                      <button class="btn btn-success dropdown-toggle w-100" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-download"></i> ดาวน์โหลด
-                      </button>
-                      <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        <li><a class="dropdown-item" href="#" onclick="window.print();"><i class="bi bi-file-pdf text-danger"></i> PDF / พิมพ์</a></li>
-                        <li><a class="dropdown-item" href="/SalesReport/ExportCustomerProductExcel?rep=@(Model.SelectedRep)&month=@(Model.SelectedMonth)&date=@(Model.SelectedDate?.ToString("yyyy-MM-dd"))&q=@(Model.SearchQuery)"><i class="bi bi-file-earmark-excel text-success"></i> Excel</a></li>
-                        <li><a class="dropdown-item" href="/SalesReport/ExportCustomerProductCsv?rep=@(Model.SelectedRep)&month=@(Model.SelectedMonth)&date=@(Model.SelectedDate?.ToString("yyyy-MM-dd"))&q=@(Model.SearchQuery)"><i class="bi bi-filetype-csv text-primary"></i> CSV</a></li>
-                      </ul>
-                    </div>
-                }
+                <button type="submit" class="btn btn-success w-100 fw-bold shadow-sm">
+                    <i class="bi bi-search me-1"></i> ค้นหา
+                </button>
             </div>
         </form>
     </div>
 </div>
 
+@{
+    var totalAmount = Model.Items.Sum(i => i.TotalAmount);
+    var totalQty = Model.Items.Sum(i => i.Qty);
+}
+
 <div class="card shadow-sm border-0">
+    <div class="card-header d-flex justify-content-between align-items-center py-2" style="background:#f8fafc;">
+        <span class="fw-bold text-success"><i class="bi bi-table me-1"></i> ผลลัพธ์ทั้งหมด <strong>@Model.Items.Count</strong> รายการ</span>
+        <span class="text-muted small fw-semibold">
+            ยอดรวม: <strong class="text-success">@totalAmount.ToString("N2")</strong> บาท |
+            จำนวน: <strong class="text-primary">@totalQty.ToString("N0")</strong> หน่วย
+        </span>
+    </div>
     <div class="card-body p-0">
-        <div class="table-responsive" style="max-height: 620px; overflow-y: auto;">
+        <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
             <table class="table table-bordered table-hover report-table mb-0">
                 <thead>
                     <tr>
-                        <th>ลำดับ</th>
-                        <th class="text-center">เดือน</th>
+                        <th>#</th>
+                        <th>เดือน</th>
                         <th class="text-start">รหัสลูกค้า</th>
                         <th class="text-start">ชื่อลูกค้า</th>
                         <th class="text-start">รหัสสินค้า : ชื่อสินค้า</th>
-                        <th>ราคาต่อหน่วย</th>
-                        <th>ชื่อผู้แทนขาย</th>
+                        <th>ราคา/หน่วย</th>
+                        <th>จำนวน</th>
+                        <th>ยอดรวม</th>
+                        <th>ผู้แทนขาย</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (!Model.Items.Any())
                     {
-                        <tr><td colspan="7" class="text-center text-muted py-4">ไม่พบข้อมูลการขายตามเงื่อนไขที่ระบุ</td></tr>
+                        <tr><td colspan="9" class="text-center text-muted py-4">
+                            <i class="bi bi-search me-2 fs-4"></i><br/>
+                            ไม่พบข้อมูล — ลองพิมพ์คำค้นหาในช่องด้านบน
+                        </td></tr>
                     }
                     else
                     {
@@ -114,16 +138,19 @@
                         foreach (var item in Model.Items)
                         {
                             <tr>
-                                <td class="text-center">@(idx++)</td>
+                                <td class="text-center text-muted">@(idx++)</td>
                                 <td class="text-center text-muted">@item.Month</td>
                                 <td class="text-start fw-bold text-success">@item.CustomerCode</td>
-                                <td class="text-start fw-bold text-success">@item.CustomerName</td>
-                                <td class="text-start">@item.ProductCode : @item.ProductName</td>
-                                <td class="text-end fw-bold">@item.Price.ToString("N2")</td>
+                                <td class="text-start fw-bold">@item.CustomerName</td>
+                                <td class="text-start">
+                                    <span class="badge bg-light text-dark border me-1">@item.ProductCode</span>@item.ProductName
+                                </td>
+                                <td class="text-end">@item.Price.ToString("N2")</td>
+                                <td class="text-center">@item.Qty.ToString("N0")</td>
+                                <td class="text-end fw-bold text-primary">@item.TotalAmount.ToString("N2")</td>
                                 <td class="text-center">@item.SalesRep</td>
                             </tr>
                         }
-                        
                     }
                 </tbody>
             </table>

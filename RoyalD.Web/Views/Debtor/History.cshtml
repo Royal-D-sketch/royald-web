@@ -23,6 +23,54 @@
 }
 
 <div class="debt-card-container p-4 rounded-4 shadow-sm bg-white">
+        <div class="card border-0 shadow-sm mb-3 no-print" style="background:#f0f9ff; border: 1.5px solid #bae6fd !important; border-radius:12px;">
+        <div class="card-body py-2 px-3">
+            <form method="get" action="/Debtor/History" class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <input type="text" name="search" class="form-control" placeholder="ค้นหา ชื่อ / บิล / ใบเสร็จ..." value="@ViewBag.Search" />
+                </div>
+                <div class="col-md-3">
+                    <select name="salesRep" class="form-select">
+                        <option value="">-- ทุกผู้แทน --</option>
+                        @{ var __histReps = ViewBag.SalesReps as List<string> ?? new List<string>(); }
+                        @foreach (var r in __histReps)
+                        {
+                            if (ViewBag.SalesRep as string == r) { <option value="@r" selected>@r</option> }
+                            else { <option value="@r">@r</option> }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="dateType" class="form-select form-select-sm">
+                        @if ((ViewBag.DateType as string) != "bill") { <option value="receipt" selected>กรองตามวันที่ใบเสร็จ</option> } else { <option value="receipt">กรองตามวันที่ใบเสร็จ</option> }
+                        @if ((ViewBag.DateType as string) == "bill") { <option value="bill" selected>กรองตามวันที่บิล</option> } else { <option value="bill">กรองตามวันที่บิล</option> }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">ตั้งแต่</span>
+                        <input type="date" name="fromDate" class="form-control" value="@ViewBag.FromDate" />
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">ถึง</span>
+                        <input type="date" name="toDate" class="form-control" value="@ViewBag.ToDate" />
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100 fw-bold btn-sm"><i class="bi bi-search me-1"></i> ค้นหา</button>
+                </div>
+                @if (!string.IsNullOrEmpty(ViewBag.FromDate as string) || !string.IsNullOrEmpty(ViewBag.ToDate as string))
+                {
+                    <div class="col-md-2">
+                        <a href="/Debtor/History" class="btn btn-outline-secondary w-100 btn-sm"><i class="bi bi-x me-1"></i> ล้างตัวกรอง</a>
+                    </div>
+                }
+            </form>
+        </div>
+    </div>
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold mb-1" style="color:#0f766e;"><i class="bi bi-clock-history"></i> ประวัติชำระครบแล้ว</h2>
@@ -134,3 +182,4 @@
     }
 </script>
 }
+

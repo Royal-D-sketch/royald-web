@@ -1,60 +1,82 @@
-﻿@model List<RoyalD.Web.Models.OutstandingDebt>
+@model List<RoyalD.Web.Models.OutstandingDebt>
+@using RoyalD.Web.Models
 @{
     ViewData["Title"] = "รายงานหนี้สูญ";
     decimal totalAmount = Model.Sum(d => d.BadDebtAmount ?? d.RemainingAmount);
+    bool isAdmin = User.IsInRole("admin") || User.Identity?.Name?.ToLower() == "admin";
+    bool isSalesRep = User.HasClaim(c => c.Type == "Position" && (c.Value.Contains("ผู้แทน") || c.Value.Contains("พนักงานขาย"))) && !isAdmin;
+    bool canDownload = (isAdmin || User.HasClaim(c => c.Type == "CanDownload" && c.Value == "true")) && !isSalesRep;
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+@section Styles {
+<style>
+.table thead th {
+    background-color: #7f1d1d;
+    color: white;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+@@media print {
+    body * { visibility: hidden; }
+    .main-content, .main-content * { visibility: visible; }
+    .no-print { display: none !important; }
+}
+.attach-thumb { max-height: 80px; border-radius:6px; cursor:pointer; border:1px solid #ddd; }
+</style>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <div>
-        <h2 class="mb-1 fw-bold text-danger">
-            <i class="bi bi-exclamation-octagon"></i> รายงานหนี้สูญ
-        </h2>
-        <p class="text-muted mb-0 small">
-            รายการลูกหนี้ที่ถูกบันทึกเป็นหนี้สูญ
-        </p>
+        <h2 class="mb-1 fw-bold text-danger"><i class="bi bi-exclamation-octagon me-2"></i>รายงานหนี้สูญ</h2>
+        <p class="text-muted mb-0 small">รายการบิลที่บันทึกสถานะหนี้สูญ — Sync จากการ์ดลูกหนี้อัตโนมัติ</p>
     </div>
-    <div class="d-flex gap-2">
-        <!-- Optional: Add Export buttons if needed later -->
-        <a href="/Debtor" class="btn btn-outline-secondary d-flex align-items-center">
-            <i class="bi bi-arrow-left me-1"></i> กลับหน้ารวมลูกหนี้
+    <div class="d-flex gap-2 no-print">
+        @if (canDownload)
+        {
+            <button onclick="window.print()" class="btn btn-outline-danger fw-bold px-3">
+                <i class="bi bi-printer me-1"></i> พิมพ์รายงาน
+            </button>
+        }
+        <a href="/Debtor" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> กลับ
         </a>
     </div>
 </div>
 
-<div class="filter-card p-3 mb-4">
-    <form method="get" action="/Debtor/BadDebt">
-        <div class="row g-2 align-items-end">
+<div class="card border-0 shadow-sm mb-3 no-print" style="background:#fff5f5; border: 1.5px solid #fca5a5 !important; border-radius:12px;">
+    <div class="card-body py-2 px-3">
+        <form method="get" action="/Debtor/BadDebt" class="row g-2 align-items-end">
             <div class="col-md-4">
-                <label class="form-label small fw-bold text-primary mb-1">🔍 ค้นหาบิล/ลูกค้า</label>
-                <input type="text" name="search" class="form-control" placeholder="รหัสลูกค้า / เลขที่บิล / ชื่อ..." value="@ViewBag.Search"/>
+                <input type="text" name="search" class="form-control" placeholder="ชื่อลูกค้า / เลขที่บิล / รหัสลูกค้า..." value="@ViewBag.Search" />
             </div>
             @if (ViewBag.IsRestricted == true)
             {
                 <div class="col-md-3">
-                    <label class="form-label small fw-bold text-primary mb-1">👔 ผู้แทนขาย</label>
-                    <input type="text" class="form-control bg-light fw-bold text-primary" value="@ViewBag.SalesRep" readonly />
+                    <input type="text" class="form-control bg-light fw-bold text-danger" value="@ViewBag.SalesRep" readonly />
                     <input type="hidden" name="salesRep" value="@ViewBag.SalesRep" />
                 </div>
             }
             else
             {
                 <div class="col-md-3">
-                    <label class="form-label small fw-bold text-primary mb-1">👔 ผู้แทนขาย</label>
                     <select name="salesRep" class="form-select">
                         <option value="">-- ทุกผู้แทน --</option>
-                        @foreach (var s in (ViewBag.SalesReps as List<string> ?? new())) {
-                            if (s == ViewBag.SalesRep) { <option value="@s" selected>@s</option> }
+                        @foreach (var s in (ViewBag.SalesReps as List<string> ?? new()))
+                        {
+                            if (s == ViewBag.SalesRep as string) { <option value="@s" selected>@s</option> }
                             else { <option value="@s">@s</option> }
                         }
                     </select>
                 </div>
             }
             <div class="col-md-3 d-flex gap-2">
-                <button type="submit" class="btn btn-primary w-100 fw-bold"><i class="bi bi-filter"></i> กรอง</button>
+                <button type="submit" class="btn btn-danger w-100 fw-bold"><i class="bi bi-filter me-1"></i> กรอง</button>
                 <a href="/Debtor/BadDebt" class="btn btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i></a>
             </div>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
 
 @if (!Model.Any())
@@ -66,47 +88,111 @@
 }
 else
 {
-    <div class="card shadow-sm p-3 table-responsive">
-        <div class="mb-3 d-flex justify-content-between align-items-center">
-            <span class="badge bg-danger fs-6">@Model.Count รายการ</span>
-            <span class="fw-bold fs-5 text-danger">ยอดรวมหนี้สูญ: @totalAmount.ToString("N2") บาท</span>
+    <div class="row g-2 mb-3">
+        <div class="col-md-4">
+            <div class="rounded-3 p-2 text-center fw-bold" style="background:#fee2e2;">
+                <small class="d-block text-muted">จำนวนบิลหนี้สูญ</small>
+                <span class="fs-5 text-danger">@Model.Count บิล</span>
+            </div>
         </div>
-        <table class="table table-hover table-sm align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th>วันที่บิล</th>
-                    <th>เลขที่บิล</th>
-                    <th>รหัสลูกค้า</th>
-                    <th style="max-width:200px;">ชื่อลูกค้า</th>
-                    <th>ผู้แทนขาย</th>
-                    <th class="text-end">จำนวนเงิน</th>
-                    <th style="width:250px;">หมายเหตุ</th>
-                    <th class="text-center">จัดการ</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td>@item.BillDate.ToString("dd/MM/yyyy")</td>
-                        <td><a href="/SalesBill/Detail?id=@Uri.EscapeDataString(item.BillNo)" class="fw-bold text-decoration-none">@item.BillNo</a></td>
-                        <td><code>@item.CustomerCode</code></td>
-                        <td class="text-truncate" style="max-width:200px;">@item.CustomerName</td>
-                        <td><span class="badge bg-light text-dark border">@item.SalesRep</span></td>
-                        <td class="text-end fw-bold text-danger">@((item.BadDebtAmount ?? item.RemainingAmount).ToString("N2"))</td>
-                        <td>
-                            <div class="small text-muted text-wrap" style="max-width:250px; overflow-wrap: break-word;">
-                                @(string.IsNullOrEmpty(item.Note) ? "-" : item.Note)
-                            </div>
-                        </td>
-                        <td class="text-center">
-                            <a href="/Debtor/Detail?id=@item.Id" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-eye"></i> ดูรายละเอียด
-                            </a>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+        <div class="col-md-4">
+            <div class="rounded-3 p-2 text-center fw-bold" style="background:#fee2e2;">
+                <small class="d-block text-muted">ยอดหนี้สูญรวม</small>
+                <span class="fs-5 text-danger">@totalAmount.ToString("N2") บาท</span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="rounded-3 p-2 text-center fw-bold" style="background:#f3f4f6;">
+                <small class="d-block text-muted">ผู้แทนที่มีหนี้สูญ</small>
+                <span class="fs-5 text-secondary">@Model.Select(d => d.SalesRep).Distinct().Count() คน</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive" style="max-height:580px; overflow-y:auto;">
+                <table class="table table-hover table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>วันที่บิล</th>
+                            <th>เลขที่บิล</th>
+                            <th>รหัสลูกค้า</th>
+                            <th>ชื่อลูกค้า</th>
+                            <th>ผู้แทนขาย</th>
+                            <th class="text-end">ยอดหนี้สูญ</th>
+                            <th>วันที่บันทึก</th>
+                            <th>หมายเหตุ</th>
+                            <th class="text-center">ไฟล์/รูป</th>
+                            <th class="text-center no-print">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="text-muted text-center">@(Model.IndexOf(item)+1)</td>
+                                <td class="text-center">@item.BillDate.ToString("dd/MM/yy")</td>
+                                <td>
+                                    <a href="/Debtor/Detail/@item.BillNo" class="fw-bold text-decoration-none text-danger">
+                                        @item.BillNo
+                                    </a>
+                                </td>
+                                <td><code>@item.CustomerCode</code></td>
+                                <td class="fw-bold">@item.CustomerName</td>
+                                <td><span class="badge bg-light text-dark border">@item.SalesRep</span></td>
+                                <td class="text-end fw-bold text-danger">
+                                    @((item.BadDebtAmount ?? item.RemainingAmount).ToString("N2"))
+                                </td>
+                                <td class="text-center text-muted small">
+                                    @(item.BadDebtDate.HasValue ? item.BadDebtDate.Value.ToString("dd/MM/yyyy") : item.BillDate.ToString("dd/MM/yyyy"))
+                                </td>
+                                <td>
+                                    <div class="small text-wrap" style="max-width:200px; overflow-wrap:break-word;">
+                                        @(string.IsNullOrEmpty(item.Note) ? "-" : item.Note)
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    @if (item.Attachments != null && item.Attachments.Any())
+                                    {
+                                        @foreach (var att in item.Attachments.Take(2))
+                                        {
+                                            var ext = System.IO.Path.GetExtension(att.FilePath ?? "").ToLower();
+                                            if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".gif")
+                                            {
+                                                <a href="@att.FilePath" target="_blank">
+                                                    <img src="@att.FilePath" class="attach-thumb me-1" alt="แนบไฟล์" />
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <a href="@att.FilePath" target="_blank" class="btn btn-sm btn-outline-secondary me-1">
+                                                    <i class="bi bi-file-earmark-text"></i>
+                                                </a>
+                                            }
+                                        }
+                                        if (item.Attachments.Count > 2)
+                                        {
+                                            <span class="badge bg-light text-muted">+@(item.Attachments.Count - 2)</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">-</span>
+                                    }
+                                </td>
+                                <td class="text-center no-print">
+                                    <a href="/Debtor/Detail/@item.BillNo" class="btn btn-sm btn-outline-primary me-1" title="ดูรายละเอียด">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 }
+
