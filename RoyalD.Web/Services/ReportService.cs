@@ -731,10 +731,11 @@ namespace RoyalD.Web.Services
             }
             return result;
         }
-        public async Task<CustomerProductViewModel> GetCustomerProductReportAsync(string? selectedRep, string? selectedMonth, DateTime? selectedDate)
+        public async Task<CustomerProductViewModel> GetCustomerProductReportAsync(string? selectedRep, string? selectedMonth, DateTime? selectedDate, string? q = null)
         {
             var vm = new CustomerProductViewModel
             {
+                SearchQuery = q,
                 SelectedRep = selectedRep,
                 SelectedMonth = selectedMonth,
                 SelectedDate = selectedDate,
@@ -779,13 +780,14 @@ namespace RoyalD.Web.Services
                     Price = i.Price
                 })
                 .Select(g => {
-                    var months = g.Select(x => string.IsNullOrEmpty(x.SalesBill.SourceMonth) ? x.SalesBill.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) : x.SalesBill.SourceMonth)
-                                  .Distinct()
-                                  .OrderBy(m => m)
-                                  .ToList();
+                    var uniqueMonths = g.Select(x => new { x.SalesBill.BillDate.Year, x.SalesBill.BillDate.Month })
+                                        .Distinct()
+                                        .OrderBy(m => m.Year).ThenBy(m => m.Month)
+                                        .Select(m => $"{m.Month:D2}/{m.Year}")
+                                        .ToList();
                     string monthDisplay = "";
-                    if (months.Count == 1) monthDisplay = months[0];
-                    else if (months.Count > 1) monthDisplay = months.First() + " ถึง " + months.Last();
+                    if (uniqueMonths.Count == 1) monthDisplay = uniqueMonths[0];
+                    else if (uniqueMonths.Count > 1) monthDisplay = uniqueMonths.First() + "-" + uniqueMonths.Last();
                     
                     string cName = g.Key.Cust ?? "";
                     if (string.IsNullOrWhiteSpace(cName) && allCustomers.TryGetValue(g.Key.CustCode ?? "", out var dbName))
@@ -847,6 +849,7 @@ namespace RoyalD.Web.Services
 
     public class CustomerProductViewModel
     {
+        public string? SearchQuery { get; set; }
         public string? SelectedRep { get; set; }
         public string? SelectedMonth { get; set; }
         public DateTime? SelectedDate { get; set; }

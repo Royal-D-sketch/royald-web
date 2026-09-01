@@ -39,9 +39,9 @@ namespace RoyalD.Web.Controllers
         }
 
         // Screen 4: Customer Product Details
-        public async Task<IActionResult> CustomerProduct(string? rep = null, string? month = null, DateTime? date = null)
+        public async Task<IActionResult> CustomerProduct(string? rep = null, string? month = null, DateTime? date = null, string? q = null)
         {
-            var vm = await _svc.GetCustomerProductReportAsync(rep, month, date);
+            var vm = await _svc.GetCustomerProductReportAsync(rep, month, date, q);
             return View(vm);
         }
 
@@ -54,9 +54,9 @@ namespace RoyalD.Web.Controllers
                 $"SalesReport_Matrix_{DateTime.Now:yyyyMMdd}.xlsx");
         }
 
-                public async Task<IActionResult> ExportCustomerProductExcel(string? rep = null, string? month = null, DateTime? date = null)
+                public async Task<IActionResult> ExportCustomerProductExcel(string? rep = null, string? month = null, DateTime? date = null, string? q = null)
         {
-            var data = await _svc.GetCustomerProductReportAsync(rep, month, date);
+            var data = await _svc.GetCustomerProductReportAsync(rep, month, date, q);
             var bytes = await _svc.ExportCustomerProductExcelAsync(data);
             return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 $"CustomerProduct_{DateTime.Now:yyyyMMdd}.xlsx");

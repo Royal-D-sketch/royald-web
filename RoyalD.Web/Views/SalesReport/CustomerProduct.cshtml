@@ -16,7 +16,10 @@
 <div class="card shadow-sm border-0 mb-4 no-print">
     <div class="card-body bg-light rounded">
         <form method="get" class="row g-3 align-items-end">
-            <div class="col-md-2">
+                        <div class="col-md-3">
+                <label class="form-label fw-bold">ค้นหารหัส/ชื่อ ลูกค้าและสินค้า</label>
+                <input type="text" name="q" class="form-control" placeholder="ค้นหา..." value="@Model.SearchQuery" />
+            </div>`r`n            <div class="col-md-2">
                 <label class="form-label fw-bold">ระบุวันที่</label>
                 <input type="date" name="date" class="form-control" value="@Model.SelectedDate?.ToString("yyyy-MM-dd")" />
             </div>
@@ -66,7 +69,7 @@
                       </button>
                       <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                         <li><a class="dropdown-item" href="#" onclick="window.print();"><i class="bi bi-file-pdf text-danger"></i> PDF / พิมพ์</a></li>
-                        <li><a class="dropdown-item" href="/SalesReport/ExportCustomerProductExcel?rep=@(Model.SelectedRep)&month=@(Model.SelectedMonth)&date=@(Model.SelectedDate?.ToString("yyyy-MM-dd"))"><i class="bi bi-file-earmark-excel text-success"></i> Excel</a></li>
+                        <li><a class="dropdown-item" href="/SalesReport/ExportCustomerProductExcel?rep=@(Model.SelectedRep)&month=@(Model.SelectedMonth)&date=@(Model.SelectedDate?.ToString("yyyy-MM-dd"))&q=@(Model.SearchQuery)"><i class="bi bi-file-earmark-excel text-success"></i> Excel</a></li>
                       </ul>
                     </div>
                 }
