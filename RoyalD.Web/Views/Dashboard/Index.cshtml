@@ -1,4 +1,4 @@
-@model List<RoyalD.Web.Models.OutstandingDebt>
+﻿@model List<RoyalD.Web.Models.OutstandingDebt>
 @{
     ViewData["Title"] = "Accounts Receivable Dashboard";
     var summary = ViewBag.Summary as RoyalD.Web.Models.DashboardSummary;
@@ -190,6 +190,23 @@ body { font-family: 'Sarabun', 'Prompt', sans-serif !important; }
     </div>
 </div>
 
+
+
+<!-- ===== EXECUTIVE INSIGHT 1: สรุปภาพรวมหนี้ค้างชำระ ===== -->
+@{
+    decimal totalOut = ViewBag.TotalOutstanding as decimal? ?? 0m;
+    decimal lessThan120 = ViewBag.OutstandingLessThan120Amount as decimal? ?? 0m;
+    decimal over120 = ViewBag.OutstandingOver120Amount as decimal? ?? 0m;
+    decimal pctLessThan120 = totalOut > 0 ? Math.Round(lessThan120 / totalOut * 100m, 1) : 0m;
+}
+<div class="insight-card mb-4">
+    <div class="d-flex align-items-center mb-1">
+        <span class="insight-badge"><i class="bi bi-robot"></i> สรุปภาพรวมหนี้สำหรับผู้บริหาร</span>
+    </div>
+    <p class="insight-text">
+        ปัจจุบันบริษัทมียอดหนี้ค้างชำระรวมอยู่ที่ <strong class="text-primary">@totalOut.ToString("N2")</strong> บาท โดยมีหนี้ปกติที่ค้างไม่เกิน 120 วัน จำนวน <strong class="text-success">@lessThan120.ToString("N2")</strong> บาท (คิดเป็น <strong>@pctLessThan120%</strong>) และมีส่วนที่เกินกำหนดชำระ 120 วัน ที่ฝ่ายบัญชีและผู้แทนขายต้องเร่งติดตามร่วมกันจำนวน <strong class="text-danger">@over120.ToString("N2")</strong> บาท
+    </p>
+</div>
 <!-- ===== COMPARISON CARDS (กทม. vs ต่างจังหวัด) ===== -->
 @if (summary != null)
 {
@@ -319,6 +336,16 @@ body { font-family: 'Sarabun', 'Prompt', sans-serif !important; }
             </div>
         </div>
     </div>
+
+    <!-- ===== EXECUTIVE INSIGHT 2: สรุปโครงสร้างหนี้ตามพื้นที่ ===== -->
+    <div class="insight-card blue-theme mb-4">
+        <div class="d-flex align-items-center mb-1">
+            <span class="insight-badge blue"><i class="bi bi-geo-alt-fill"></i> สรุปโครงสร้างหนี้ตามพื้นที่</span>
+        </div>
+        <p class="insight-text">
+            สรุปโครงสร้างหนี้ตามพื้นที่: หนี้ฝั่งกรุงเทพฯ (เครดิตสด/7วัน) ควบคุมได้ดีมาก มียอดค้างรวมเพียง <strong class="text-primary">@summary.Bangkok.OutstandingTotal.TotalAmount.ToString("N2")</strong> บาท ส่วนหนี้หลักของบริษัทไปกองอยู่ที่ลูกค้าต่างจังหวัด สูงถึง <strong class="text-danger">@summary.Upcountry.OutstandingTotal.TotalAmount.ToString("N2")</strong> บาท และมีส่วนที่เกินดิว 120 วัน อยู่ถึง <strong class="text-danger">@summary.Upcountry.Over120Days.TotalAmount.ToString("N2")</strong> บาท ขอให้ทีมผู้แทนต่างจังหวัดกวดขันการเก็บเงินในกลุ่มนี้เป็นพิเศษ
+        </p>
+    </div>
 }
 
 <!-- ===== CHARTS ROW ===== -->
@@ -343,6 +370,17 @@ body { font-family: 'Sarabun', 'Prompt', sans-serif !important; }
     </div>
 </div>
 
+
+
+<!-- ===== EXECUTIVE INSIGHT 3: สรุปสถานะหนี้และหนี้สูญ ===== -->
+<div class="insight-card gray-theme mb-4">
+    <div class="d-flex align-items-center mb-1">
+        <span class="insight-badge warning"><i class="bi bi-pie-chart-fill"></i> สรุปสถานะหนี้และแนวทางหนี้สูญ</span>
+    </div>
+    <p class="insight-text">
+        แผนภูมิแสดงสัดส่วนหนี้ค้างชำระและผ่อนชำระตามดิวปกติ ส่วนเคสที่ถูกปรับสถานะเป็น 'หนี้สูญ' ระบบได้ทำการดึงข้อมูลและรูปภาพหลักฐานจากโปรแกรมบัญชี CD มาล็อกไว้ที่เมนูรายงานหนี้สูญเรียบร้อยแล้ว เพื่อส่งต่อให้ฝ่ายกฎหมายดำเนินการได้ทันที
+    </p>
+</div>
 <!-- ===== OVERDUE TABLE ===== -->
 <div class="chart-card mb-3">
     <div class="d-flex justify-content-between align-items-center mb-3">

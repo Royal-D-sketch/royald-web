@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>ระบบลูกหนี้ บริษัท รอแยล-ดี (ไทยแลนด์) — เข้าสู่ระบบ</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f766e 0%, #1a2942 100%);
+            min-height: 100vh;
+            font-family: 'Sarabun', sans-serif;
+        }
+        .login-card {
+            border-radius: 20px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+            max-width: 460px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: #ffffff;
+        }
+        .logo-circle {
+            width: 85px; height: 85px;
+            background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 16px;
+            box-shadow: 0 8px 20px rgba(13,148,136,0.35);
+        }
+        .form-control:focus {
+            border-color: #0d9488;
+            box-shadow: 0 0 0 0.25rem rgba(13,148,136,0.25);
+        }
+        .btn-teal {
+            background: #0d9488;
+            color: #ffffff;
+            border: none;
+            transition: all 0.2s ease;
+        }
+        .btn-teal:hover {
+            background: #0f766e;
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+        .gps-box {
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 16px;
+            font-size: 0.88rem;
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="d-flex align-items-center justify-content-center p-3">
+<div class="login-card card p-4 w-100">
+    <div class="text-center mb-4">
+        <div class="logo-circle">
+            <i class="bi bi-building text-white fs-1"></i>
+        </div>
+        <h3 class="fw-bold mb-1" style="color:#0f766e;">ระบบลูกหนี้</h3>
+        <h5 class="fw-bold text-dark mb-1">บริษัท รอแยล-ดี (ไทยแลนด์)</h5>
+        <small class="text-muted fw-semibold">ระบบติดตามบิลขายและการชำระเงิน (Cloud Production)</small>
+    </div>
+
+    <!-- GPS Status Notice -->
+    <div id="gps-status-box" class="gps-box alert alert-warning mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <div class="spinner-border spinner-border-sm text-warning" role="status" id="gps-spinner"></div>
+            <i class="bi bi-geo-alt-fill text-danger fs-5 d-none" id="gps-icon-warn"></i>
+            <i class="bi bi-check-circle-fill text-success fs-5 d-none" id="gps-icon-ok"></i>
+            <span id="gps-status-text" class="fw-semibold">กำลังตรวจสอบพิกัดตำแหน่ง GPS...</span>
+        </div>
+        <div id="gps-help-text" class="small text-muted mt-1">
+            ระบบกำหนดให้ต้องอนุญาตพิกัดตำแหน่ง (GPS Location) จึงจะสามารถเข้าใช้งานได้
+        </div>
+    </div>
+
+
+
+
+    <form method="post" id="login-form" onsubmit="return validateGpsBeforeSubmit(event)" action="/Account/Login?returnUrl=%2FUpload">
+        
+        <!-- Hidden geolocation fields -->
+        <input type="hidden" name="lat" id="lat-field" value=""/>
+        <input type="hidden" name="lng" id="lng-field" value=""/>
+        <input type="hidden" name="locationName" id="location-name-field" value=""/>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold small text-muted">ชื่อผู้ใช้งาน (Username)</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-muted"></i></span>
+                <input type="text" name="username" class="form-control" placeholder="กรอกชื่อผู้ใช้งาน" required autofocus autocomplete="username" value=""/>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="form-label fw-bold small text-muted">รหัสผ่าน (Password)</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
+                <input type="password" name="password" id="pwd" class="form-control" placeholder="กรอกรหัสผ่าน" required autocomplete="current-password"/>
+                <button type="button" class="btn btn-outline-secondary" onclick="togglePwd()">
+                    <i class="bi bi-eye" id="eye-icon"></i>
+                </button>
+            </div>
+        </div>
+
+        <button type="submit" id="submit-btn" class="btn btn-teal w-100 py-2 fs-6 fw-bold shadow-sm" style="border-radius:10px;" disabled>
+            <i class="bi bi-box-arrow-in-right me-1"></i> เข้าสู่ระบบ
+        </button>
+    <input name="__RequestVerificationToken" type="hidden" value="CfDJ8DkBQUL45YNIkopVgyNerDuA-uA4PsEOgu1GU-KhFs8AS_bul2F3rJsFZALwJfuyubP_IV9WI__2RJg8AD6ki1ZY4BAaT5ANmMMvOXhlNkxHja1KGC67-UjgYwQhAOlf_dEZn1K7Z3iWbQpfr5kkhL8" /></form>
+
+    <div class="text-center mt-3" id="gps-retry-block" style="display:none;">
+        <button type="button" class="btn btn-outline-primary btn-sm" onclick="requestLocationPermission()">
+            <i class="bi bi-geo-alt"></i> กดเพื่ออนุญาตเข้าถึงตำแหน่ง GPS อีกครั้ง
+        </button>
+    </div>
+
+    <hr class="my-4"/>
+    <div class="text-center text-muted small">
+        <i class="bi bi-shield-lock text-success"></i> ระบบความปลอดภัยระดับองค์กร บันทึกพิกัดและเวลาใช้งานทุกครั้ง
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function togglePwd() {
+    var pwd = document.getElementById('pwd');
+    var icon = document.getElementById('eye-icon');
+    if (pwd.type === 'password') { pwd.type = 'text'; icon.className = 'bi bi-eye-slash'; }
+    else { pwd.type = 'password'; icon.className = 'bi bi-eye'; }
+}
+
+let hasGps = false;
+
+function requestLocationPermission() {
+    const box = document.getElementById('gps-status-box');
+    const spinner = document.getElementById('gps-spinner');
+    const iconWarn = document.getElementById('gps-icon-warn');
+    const iconOk = document.getElementById('gps-icon-ok');
+    const statusText = document.getElementById('gps-status-text');
+    const helpText = document.getElementById('gps-help-text');
+    const submitBtn = document.getElementById('submit-btn');
+    const retryBlock = document.getElementById('gps-retry-block');
+
+    spinner.classList.remove('d-none');
+    iconWarn.classList.add('d-none');
+    iconOk.classList.add('d-none');
+    box.className = 'gps-box alert alert-warning mb-3';
+    statusText.innerText = 'กำลังขออนุญาตเข้าถึงตำแหน่ง GPS...';
+    helpText.innerText = 'กรุณากด "อนุญาต (Allow)" บนหน้าต่างแจ้งเตือนของเบราว์เซอร์';
+
+    if (!navigator.geolocation) {
+        spinner.classList.add('d-none');
+        iconWarn.classList.remove('d-none');
+        box.className = 'gps-box alert alert-danger mb-3';
+        statusText.innerText = 'เบราว์เซอร์นี้ไม่รองรับการระบุตำแหน่ง GPS';
+        helpText.innerText = 'กรุณาใช้งานผ่าน Chrome, Edge หรือ Safari';
+        retryBlock.style.display = 'block';
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        async function(pos) {
+            hasGps = true;
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            document.getElementById('lat-field').value = lat;
+            document.getElementById('lng-field').value = lng;
+
+            spinner.classList.remove('d-none');
+            statusText.innerText = 'กำลังระบุชื่ออำเภอและจังหวัด...';
+
+            let detectedLocation = '';
+
+            // 1. ลองดึงจาก BigDataCloud Reverse Geocoding API (แม่นยำสูง รวดเร็ว และรองรับภาษาไทย)
+            try {
+                const bdcRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=th`, { signal: AbortSignal.timeout(3500) });
+                if (bdcRes.ok) {
+                    const bdcData = await bdcRes.json();
+                    const district = bdcData.locality || bdcData.city || '';
+                    const prov = bdcData.principalSubdivision || '';
+                    if (prov) {
+                        detectedLocation = (district && district !== prov ? (district.startsWith('อ.') || district.startsWith('เขต') ? district : (prov.includes('กรุงเทพ') ? 'เขต' : 'อ.') + district) + ' ' : '') + 
+                                           (prov.startsWith('จ.') || prov.includes('กรุงเทพ') ? prov : 'จ.' + prov);
+                    }
+                }
+            } catch(e) {}
+
+            // 2. ถ้ายังไม่ได้ ลองดึงจาก OpenStreetMap Nominatim
+            if (!detectedLocation) {
+                try {
+                    const osmRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14&addressdetails=1&accept-language=th`, { signal: AbortSignal.timeout(3500) });
+                    if (osmRes.ok) {
+                        const osmData = await osmRes.json();
+                        if (osmData && osmData.address) {
+                            const district = osmData.address.city_district || osmData.address.district || osmData.address.suburb || osmData.address.town || osmData.address.county || '';
+                            const prov = osmData.address.province || osmData.address.state || '';
+                            if (prov) {
+                                detectedLocation = (district ? (district + ' ') : '') + (prov.startsWith('จ.') || prov.includes('กรุงเทพ') ? prov : 'จ.' + prov);
+                            }
+                        }
+                    }
+                } catch(e) {}
+            }
+
+            // 3. Fallback หากไม่มีเน็ตเวิร์กภายนอก
+            if (!detectedLocation) {
+                detectedLocation = resolveLocationName(lat, lng);
+            }
+
+            document.getElementById('location-name-field').value = detectedLocation;
+            
+            spinner.classList.add('d-none');
+            iconWarn.classList.add('d-none');
+            iconOk.classList.remove('d-none');
+            box.className = 'gps-box alert alert-success mb-3';
+            statusText.innerText = 'ระบุตำแหน่งที่ตั้งสำเร็จ พร้อมเข้าสู่ระบบ';
+            helpText.innerHTML = `📍 ตำแหน่งของคุณ: <strong class="text-success">${detectedLocation}</strong> <small class="text-muted">(${lat.toFixed(4)}, ${lng.toFixed(4)})</small>`;
+            submitBtn.disabled = false;
+            retryBlock.style.display = 'none';
+        },
+        function(err) {
+            hasGps = false;
+            spinner.classList.add('d-none');
+            iconWarn.classList.remove('d-none');
+            iconOk.classList.add('d-none');
+            box.className = 'gps-box alert alert-danger mb-3';
+            submitBtn.disabled = true;
+            retryBlock.style.display = 'block';
+
+            if (err.code === 1) { // PERMISSION_DENIED
+                statusText.innerText = '⚠️ ไม่อนุญาตให้เข้าถึงตำแหน่งที่ตั้ง';
+                helpText.innerText = 'คุณต้องกด "อนุญาต (Allow)" การเข้าถึงตำแหน่งที่ตั้ง จึงจะสามารถเข้าสู่ระบบได้';
+            } else if (err.code === 2) { // POSITION_UNAVAILABLE
+                statusText.innerText = '⚠️ ไม่สามารถระบุตำแหน่งที่ตั้งได้';
+                helpText.innerText = 'กรุณาเปิดบริการ Location Services ในอุปกรณ์ของคุณ';
+            } else {
+                statusText.innerText = '⚠️ หมดเวลาการค้นหาตำแหน่งที่ตั้ง';
+                helpText.innerText = 'กรุณากดปุ่มลองใหม่อีกครั้ง';
+            }
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+}
+
+function resolveLocationName(lat, lng) {
+    if (lat >= 13.70 && lat <= 13.90 && lng >= 100.40 && lng <= 100.75) return 'กรุงเทพมหานคร';
+    if (lat >= 13.85 && lat <= 14.10 && lng >= 100.30 && lng <= 100.60) return 'จ.นนทบุรี';
+    if (lat >= 13.95 && lat <= 14.20 && lng >= 100.45 && lng <= 100.85) return 'จ.ปทุมธานี';
+    if (lat >= 13.45 && lat < 13.65 && lng >= 100.50 && lng <= 100.90) return 'จ.สมุทรปราการ';
+    if (lat >= 13.45 && lat <= 13.65 && lng >= 100.15 && lng < 100.45) return 'จ.สมุทรสาคร';
+    if (lat >= 13.70 && lat <= 14.10 && lng >= 99.90 && lng < 100.35) return 'จ.นครปฐม';
+    if (lat >= 12.50 && lat <= 13.50 && lng >= 100.80 && lng <= 101.50) return 'จ.ชลบุรี';
+    if (lat >= 18.50 && lat <= 19.50 && lng >= 98.50 && lng <= 99.50) return 'จ.เชียงใหม่';
+    if (lat >= 16.00 && lat <= 17.00 && lng >= 102.50 && lng <= 103.20) return 'จ.ขอนแก่น';
+    if (lat >= 14.50 && lat <= 15.50 && lng >= 101.50 && lng <= 102.50) return 'จ.นครราชสีมา';
+    if (lat >= 6.80 && lat <= 7.30 && lng >= 100.40 && lng <= 100.80) return 'จ.สงขลา (หาดใหญ่)';
+    if (lat >= 7.75 && lat <= 8.20 && lng >= 98.25 && lng <= 98.45) return 'จ.ภูเก็ต';
+    return 'ประเทศไทย';
+}
+
+function validateGpsBeforeSubmit(e) {
+    if (!hasGps || !document.getElementById('lat-field').value) {
+        e.preventDefault();
+        alert('⚠️ จำเป็นต้องอนุญาตการระบุตำแหน่งที่ตั้ง (GPS Location) จึงจะสามารถเข้าสู่ระบบได้ กรุณากดอนุญาตตำแหน่งในเบราว์เซอร์');
+        requestLocationPermission();
+        return false;
+    }
+    return true;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    requestLocationPermission();
+});
+</script>
+</body>
+</html>

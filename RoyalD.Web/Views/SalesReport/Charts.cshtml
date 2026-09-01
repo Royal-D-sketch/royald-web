@@ -201,14 +201,7 @@
             </div>
         </div>
 
-        <div class="chart-card mt-3">
-            <div class="d-flex justify-content-between align-items-center mb-2 no-print">
-                <span class="fw-bold" style="color:#1a1a2e; font-size:1.05rem;">
-                    <i class="bi bi-chat-left-text-fill text-primary"></i> คำบรรยายเพื่อนำเสนอ
-                </span>
-            </div>
-            <div contenteditable="true" style="min-height: 100px; padding: 15px; border: 1px dashed #ccc; border-radius: 8px; font-size: 1.1rem; outline: none; background: #fdfdfd;"></div>
-        </div>
+
 
         <div class="row g-3 mb-4">
             <!-- Chart 1: Grouped Bar Chart -->
@@ -222,7 +215,14 @@
                             <i class="bi bi-download"></i> PNG
                         </button>
                     </div>
-                    <canvas id="barChart-@key" height="135"></canvas>
+                                        <canvas id="barChart-@key" height="135"></canvas>
+                    <!-- ===== EXECUTIVE INSIGHT 4: ยอดขาย vs เงินที่เก็บได้ ===== -->
+                    <div class="insight-card mt-3">
+                        <p class="insight-text">
+                            <i class="bi bi-lightbulb-fill text-warning me-1"></i>
+                            ภาพรวมรายได้สะสมรายเดือน: ยอดขายของบริษัทอยู่ในเกณฑ์ที่เสถียร และมีแนวโน้มที่ดีเนื่องจากยอดเรียกเก็บเงินสดจริง (แท่งสีเขียว) มีสัดส่วนขยับเข้าใกล้แท่งยอดขายมากขึ้น สะท้อนถึงประสิทธิภาพการติดตามหนี้ที่รวดเร็วขึ้น
+                        </p>
+                    </div>
                 </div>
             </div>
             <!-- Chart 2: Trendline -->
@@ -236,19 +236,19 @@
                             <i class="bi bi-download"></i> PNG
                         </button>
                     </div>
-                    <canvas id="lineChart-@key" height="135"></canvas>
+                                        <canvas id="lineChart-@key" height="135"></canvas>
+                    <!-- ===== EXECUTIVE INSIGHT 6: ประสิทธิภาพการเก็บเงินและสภาพคล่อง ===== -->
+                    <div class="insight-card mt-3">
+                        <p class="insight-text">
+                            <i class="bi bi-graph-up-arrow text-success me-1"></i>
+                            สรุปประสิทธิภาพการเก็บเงินรวมของบริษัทในรอบช่วงเวลานี้ คิดเป็น <strong class="text-warning">@data.OverallCollectionRate%</strong> ยอดเงินสดไหลเข้าจริงคือ <strong class="text-success">@data.TotalCollected.ToString("N2")</strong> บาท โครงสร้างกระแสเงินสดและสภาพคล่องของบริษัทยังคงอยู่ในเกณฑ์ที่ปลอดภัยและมีความคล่องตัวสูง
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="chart-card mt-3">
-            <div class="d-flex justify-content-between align-items-center mb-2 no-print">
-                <span class="fw-bold" style="color:#1a1a2e; font-size:1.05rem;">
-                    <i class="bi bi-chat-left-text-fill text-primary"></i> คำบรรยายเพื่อนำเสนอ
-                </span>
-            </div>
-            <div contenteditable="true" style="min-height: 100px; padding: 15px; border: 1px dashed #ccc; border-radius: 8px; font-size: 1.1rem; outline: none; background: #fdfdfd;"></div>
-        </div>
+
     }
 }
 
@@ -267,14 +267,7 @@
             </div>
         </div>
 
-        <div class="chart-card mt-3">
-            <div class="d-flex justify-content-between align-items-center mb-2 no-print">
-                <span class="fw-bold" style="color:#1a1a2e; font-size:1.05rem;">
-                    <i class="bi bi-chat-left-text-fill text-primary"></i> คำบรรยายเพื่อนำเสนอ
-                </span>
-            </div>
-            <div contenteditable="true" style="min-height: 100px; padding: 15px; border: 1px dashed #ccc; border-radius: 8px; font-size: 1.1rem; outline: none; background: #fdfdfd;"></div>
-        </div>
+
     </div>
 </div>
 

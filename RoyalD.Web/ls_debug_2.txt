@@ -1,0 +1,7 @@
+﻿STDOUT:
+total 2368
+-rw-r--r-- 1 root root 2422176 Sep  1 02:23 รายละเอียดบิลขายเดือน 1.69.csv
+
+
+STDERR:
+

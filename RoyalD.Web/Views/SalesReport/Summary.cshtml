@@ -258,7 +258,24 @@
         </div>
     </div>
 
-    <!-- ================= DYNAMIC MONTHLY MATRIX TABLE ================= -->
+    
+
+    <!-- ===== EXECUTIVE INSIGHT 5: อันดับผลงานผู้แทนขาย ===== -->
+    @{
+        var topRep = allReps.OrderByDescending(r => r.TotalSales).FirstOrDefault();
+        string topRepName = topRep?.SalesRep ?? "-";
+        decimal topRepSales = topRep?.TotalSales ?? 0m;
+        decimal topRepRate = topRep?.OverallCollectionRate ?? 0m;
+    }
+    <div class="insight-card mb-3">
+        <div class="d-flex align-items-center mb-1">
+            <span class="insight-badge"><i class="bi bi-trophy-fill"></i> แผนภูมิและจัดอันดับผลงานผู้แทนขายยอดเยี่ยม</span>
+        </div>
+        <p class="insight-text">
+            แผนภูมิจดอันดับผลงานผู้แทนขาย (เรียงจากมากไปน้อยจากซ้ายไปขวา): ผู้แทนขายที่ทำยอดขายสะสมได้สูงที่สุดอันดับ 1 ในรอบนี้คือ <strong class="text-success">@topRepName</strong> ทำยอดขายได้ <strong class="text-primary">@topRepSales.ToString("N2")</strong> บาท และมีเปอร์เซ็นต์เรียกเก็บเงินสำเร็จ (Collection Rate) อยู่ที่ <strong class="text-warning">@topRepRate%</strong>
+        </p>
+    </div>
+<!-- ================= DYNAMIC MONTHLY MATRIX TABLE ================= -->
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
             <span class="fw-bold text-dark" id="matrixTitle">
@@ -355,7 +372,14 @@
                         <i class="bi bi-download"></i> PNG
                     </button>
                 </div>
-                <canvas id="summaryBarChart" height="135"></canvas>
+                                <canvas id="summaryBarChart" height="135"></canvas>
+                <!-- ===== EXECUTIVE INSIGHT 4: ยอดขาย vs เงินที่เก็บได้ ===== -->
+                <div class="insight-card mt-3">
+                    <p class="insight-text">
+                        <i class="bi bi-lightbulb-fill text-warning me-1"></i>
+                        ภาพรวมรายได้สะสมรายเดือน: ยอดขายของบริษัทอยู่ในเกณฑ์ที่เสถียร และมีแนวโน้มที่ดีเนื่องจากยอดเรียกเก็บเงินสดจริง (แท่งสีเขียว) มีสัดส่วนขยับเข้าใกล้แท่งยอดขายมากขึ้น สะท้อนถึงประสิทธิภาพการติดตามหนี้ที่รวดเร็วขึ้น
+                    </p>
+                </div>
             </div>
         </div>
         <!-- Chart 2: Trendline -->
@@ -369,7 +393,14 @@
                         <i class="bi bi-download"></i> PNG
                     </button>
                 </div>
-                <canvas id="summaryLineChart" height="135"></canvas>
+                                <canvas id="summaryLineChart" height="135"></canvas>
+                <!-- ===== EXECUTIVE INSIGHT 6: ประสิทธิภาพการเก็บเงินและสภาพคล่อง ===== -->
+                <div class="insight-card mt-3">
+                    <p class="insight-text">
+                        <i class="bi bi-graph-up-arrow text-success me-1"></i>
+                        สรุปประสิทธิภาพการเก็บเงินรวมของบริษัทในรอบช่วงเวลานี้ คิดเป็น <strong class="text-warning">@overall.OverallCollectionRate%</strong> ยอดเงินสดไหลเข้าจริงคือ <strong class="text-success">@overall.TotalCollected.ToString("N2")</strong> บาท โครงสร้างกระแสเงินสดและสภาพคล่องของบริษัทยังคงอยู่ในเกณฑ์ที่ปลอดภัยและมีความคล่องตัวสูง
+                    </p>
+                </div>
             </div>
         </div>
     </div>

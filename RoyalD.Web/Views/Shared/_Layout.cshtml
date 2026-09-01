@@ -12,8 +12,10 @@
     // 1. แอดมิน (Admin) -> ปลดล็อค 100% ไม่มีลายน้ำ และสามารถแคปจอ/ดาวน์โหลดได้ตลอดเวลา
     // 2. ตำแหน่งผู้แทนขาย (Sales Rep) -> ถูกล็อกความปลอดภัยเสมอ (มีลายน้ำ และห้ามแคปจอ/ห้ามดาวน์โหลด)
     // 3. ตำแหน่งอื่นๆ (ผู้บริหาร, พนักงาน, หัวหน้างาน, บัญชี ฯลฯ) -> ถ้าแอดมินติ๊กอนุญาต ก็จะไม่มีลายน้ำ และแคปจอ/ดาวน์โหลดได้ตามปกติ
-    bool canDownload = isMasterAdmin || (!isSalesRep && canDownloadClaim == "true");
-    bool canScreenCapture = isMasterAdmin || (!isSalesRep && canCaptureClaim == "true");
+    var roleClaim = ViewContext.HttpContext.User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+    bool isManager = positionClaim.Contains("ผู้จัดการ") || positionClaim.ToLower().Contains("manager") || roleClaim.ToLower() == "manager";
+    bool canDownload = (isMasterAdmin || isManager || canDownloadClaim == "true") && !isSalesRep;
+    bool canScreenCapture = (isMasterAdmin || isManager || canCaptureClaim == "true") && !isSalesRep;
 
     var allowedPagesList = allowedPagesClaim.Split(',', StringSplitOptions.RemoveEmptyEntries)
                                            .Select(p => p.Trim().ToLower())
@@ -82,6 +84,68 @@
         .btn-outline-primary:hover { background-color: #0d9488 !important; color: #fff !important; }
         .table-primary { --bs-table-bg: #ccfbf1; --bs-table-color: #115e59; border-color: #99f6e4; }
         .sidebar .nav-link:hover, .sidebar .nav-link.active { background: #0d9488 !important; color: #fff; }
+
+        /* Automated Executive Summary Insight Boxes */
+        .insight-card {
+            background: linear-gradient(135deg, #f0fdfa 0%, #f8fafc 100%);
+            border: 1px solid #ccfbf1;
+            border-left: 5px solid #0d9488;
+            border-radius: 12px;
+            padding: 14px 18px;
+            box-shadow: 0 2px 10px rgba(15, 118, 110, 0.06);
+            line-height: 1.65;
+            position: relative;
+        }
+        .insight-card.blue-theme {
+            background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
+            border: 1px solid #bfdbfe;
+            border-left: 5px solid #3b82f6;
+        }
+        .insight-card.gray-theme {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1px solid #e2e8f0;
+            border-left: 5px solid #64748b;
+        }
+        .insight-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 6px;
+            background: #0d9488;
+            color: #ffffff;
+        }
+        .insight-badge.blue {
+            background: #2563eb;
+        }
+        .insight-badge.warning {
+            background: #d97706;
+        }
+        .insight-text {
+            color: #1e293b;
+            font-size: 1.02rem;
+            font-weight: 500;
+            margin-bottom: 0;
+        }
+        .insight-text strong {
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .insight-text strong.text-primary {
+            color: #0d9488 !important;
+        }
+        .insight-text strong.text-danger {
+            color: #dc2626 !important;
+        }
+        .insight-text strong.text-success {
+            color: #16a34a !important;
+        }
+        .insight-text strong.text-warning {
+            color: #d97706 !important;
+        }
     </style>
 
     @if (!canDownload)
@@ -91,7 +155,69 @@
             .btn-export, [href*="Export"], [onclick*="Export"], [onclick*="downloadScreenCapture"], [onclick*="print"] {
                 display: none !important;
             }
-        </style>
+
+        /* Automated Executive Summary Insight Boxes */
+        .insight-card {
+            background: linear-gradient(135deg, #f0fdfa 0%, #f8fafc 100%);
+            border: 1px solid #ccfbf1;
+            border-left: 5px solid #0d9488;
+            border-radius: 12px;
+            padding: 14px 18px;
+            box-shadow: 0 2px 10px rgba(15, 118, 110, 0.06);
+            line-height: 1.65;
+            position: relative;
+        }
+        .insight-card.blue-theme {
+            background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
+            border: 1px solid #bfdbfe;
+            border-left: 5px solid #3b82f6;
+        }
+        .insight-card.gray-theme {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1px solid #e2e8f0;
+            border-left: 5px solid #64748b;
+        }
+        .insight-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 6px;
+            background: #0d9488;
+            color: #ffffff;
+        }
+        .insight-badge.blue {
+            background: #2563eb;
+        }
+        .insight-badge.warning {
+            background: #d97706;
+        }
+        .insight-text {
+            color: #1e293b;
+            font-size: 1.02rem;
+            font-weight: 500;
+            margin-bottom: 0;
+        }
+        .insight-text strong {
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .insight-text strong.text-primary {
+            color: #0d9488 !important;
+        }
+        .insight-text strong.text-danger {
+            color: #dc2626 !important;
+        }
+        .insight-text strong.text-success {
+            color: #16a34a !important;
+        }
+        .insight-text strong.text-warning {
+            color: #d97706 !important;
+        }
+    </style>
     }
 
     @RenderSection("Styles", required: false)
@@ -434,7 +560,69 @@ else
             background-repeat: repeat;
             display: block;
         }
-        </style>
+
+        /* Automated Executive Summary Insight Boxes */
+        .insight-card {
+            background: linear-gradient(135deg, #f0fdfa 0%, #f8fafc 100%);
+            border: 1px solid #ccfbf1;
+            border-left: 5px solid #0d9488;
+            border-radius: 12px;
+            padding: 14px 18px;
+            box-shadow: 0 2px 10px rgba(15, 118, 110, 0.06);
+            line-height: 1.65;
+            position: relative;
+        }
+        .insight-card.blue-theme {
+            background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
+            border: 1px solid #bfdbfe;
+            border-left: 5px solid #3b82f6;
+        }
+        .insight-card.gray-theme {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1px solid #e2e8f0;
+            border-left: 5px solid #64748b;
+        }
+        .insight-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 6px;
+            background: #0d9488;
+            color: #ffffff;
+        }
+        .insight-badge.blue {
+            background: #2563eb;
+        }
+        .insight-badge.warning {
+            background: #d97706;
+        }
+        .insight-text {
+            color: #1e293b;
+            font-size: 1.02rem;
+            font-weight: 500;
+            margin-bottom: 0;
+        }
+        .insight-text strong {
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .insight-text strong.text-primary {
+            color: #0d9488 !important;
+        }
+        .insight-text strong.text-danger {
+            color: #dc2626 !important;
+        }
+        .insight-text strong.text-success {
+            color: #16a34a !important;
+        }
+        .insight-text strong.text-warning {
+            color: #d97706 !important;
+        }
+    </style>
         
         <canvas id="watermarkCanvas" width="450" height="250" style="display:none;"></canvas>
         <div class="security-watermark-overlay" id="watermarkOverlay"></div>

@@ -1,4 +1,4 @@
-@model IEnumerable<RoyalD.Web.Models.OutstandingDebt>
+﻿@model IEnumerable<RoyalD.Web.Models.OutstandingDebt>
 @using RoyalD.Web.Models
 
 @{
@@ -84,6 +84,23 @@
                 <canvas id="barChart" height="250"></canvas>
             </div>
         </div>
+    </div>
+
+    <!-- Executive Insight: อันดับผลงานผู้แทนขาย -->
+    @{
+        var topHomeRep = repStats.OrderByDescending(r => r.TotalSales).FirstOrDefault();
+        string topHomeRepName = topHomeRep != null ? topHomeRep.SalesRepName : "-";
+        decimal topHomeRepSales = topHomeRep != null ? topHomeRep.TotalSales : 0m;
+        decimal topHomeRepCollected = topHomeRep != null ? topHomeRep.TotalCollected : 0m;
+        decimal topHomeRepRate = topHomeRepSales > 0 ? Math.Round(topHomeRepCollected / topHomeRepSales * 100m, 1) : 0m;
+    }
+    <div class="insight-card mb-3">
+        <div class="d-flex align-items-center mb-1">
+            <span class="insight-badge"><i class="bi bi-trophy-fill"></i> อันดับผลงานยอดขายอันดับ 1</span>
+        </div>
+        <p class="insight-text">
+            แผนภูมิจดอันดับผลงานผู้แทนขาย: ผู้แทนขายที่ทำยอดขายสะสมได้สูงที่สุดอันดับ 1 ในรอบนี้คือ <strong class="text-success">@topHomeRepName</strong> ทำยอดขายได้ <strong class="text-primary">&#3647; @topHomeRepSales.ToString("N2")</strong> บาท และมีเปอร์เซ็นต์เรียกเก็บเงินสำเร็จ (Collection Rate) อยู่ที่ <strong class="text-warning">@topHomeRepRate%</strong>
+        </p>
     </div>
 
     <!-- Section 4: Sales Rep Table -->

@@ -1,0 +1,6 @@
+﻿STDOUT:
+0
+
+
+STDERR:
+
