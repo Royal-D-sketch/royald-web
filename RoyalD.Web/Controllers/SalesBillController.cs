@@ -19,7 +19,30 @@ namespace RoyalD.Web.Controllers
             _cache = cache;
         }
 
-                [AllowAnonymous]
+        [AllowAnonymous]
+        [HttpGet("FixCustomerName")]
+        public async Task<IActionResult> FixCustomerName(string code = "740114", string name = "น.ส.วารินทร์ อภิวัฒนเบญญา")
+        {
+            var bills = await _db.SalesBills.Where(b => b.CustomerCode == code && (string.IsNullOrEmpty(b.CustomerName) || b.CustomerName == "-")).ToListAsync();
+            foreach (var b in bills) { b.CustomerName = name; }
+            
+            var debts = await _db.OutstandingDebts.Where(d => d.CustomerCode == code && (string.IsNullOrEmpty(d.CustomerName) || d.CustomerName == "-")).ToListAsync();
+            foreach (var d in debts) { d.CustomerName = name; }
+            
+            int changes = await _db.SaveChangesAsync();
+            return Content($"Fixed {bills.Count} bills and {debts.Count} debts for code {code}. Total DB changes: {changes}");
+        }
+
+        [AllowAnonymous]
+        [HttpGet("FindMissingNames")]
+        public async Task<IActionResult> FindMissingNames()
+        {
+            var missingBills = await _db.SalesBills.Where(b => string.IsNullOrEmpty(b.CustomerName) || b.CustomerName == "-").Select(b => b.CustomerCode).Distinct().ToListAsync();
+            var missingDebts = await _db.OutstandingDebts.Where(d => string.IsNullOrEmpty(d.CustomerName) || d.CustomerName == "-").Select(d => d.CustomerCode).Distinct().ToListAsync();
+            var allMissing = missingBills.Union(missingDebts).Distinct().ToList();
+            return Json(new { missingCodes = allMissing });
+        }
+        [AllowAnonymous]
         [HttpGet("CheckCustomer/{code}")]
         public async Task<IActionResult> CheckCustomer(string code)
         {
