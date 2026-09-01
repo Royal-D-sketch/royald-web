@@ -82,14 +82,15 @@ namespace RoyalD.Web.Services
                     ex.PoNumber = b.PoNumber != null && b.PoNumber.Length > 100 ? b.PoNumber.Substring(0, 100) : (b.PoNumber ?? "");
                     
                     _db.SalesBillItems.RemoveRange(ex.Items);
-                    ex.Items = b.Items ?? new List<SalesBillItem>();
+                    if (b.Items != null) { foreach(var i in b.Items) i.BillNo = b.BillNo; }
+                      ex.Items = b.Items ?? new List<SalesBillItem>();
                     
                     updated++;
                 }
                 else
                 {
-                    _db.SalesBills.Add(new SalesBill
-                    {
+                    if (b.Items != null) { foreach(var i in b.Items) i.BillNo = b.BillNo; }
+                      _db.SalesBills.Add(new SalesBill {
                         BillNo = b.BillNo != null && b.BillNo.Length > 50 ? b.BillNo.Substring(0, 50) : (b.BillNo ?? ""),
                         BillDate = b.BillDate,
                         CustomerCode = b.CustomerCode != null && b.CustomerCode.Length > 20 ? b.CustomerCode.Substring(0, 20) : (b.CustomerCode ?? ""),
@@ -145,15 +146,16 @@ namespace RoyalD.Web.Services
                         ex.PoNumber = b.PoNumber != null && b.PoNumber.Length > 100 ? b.PoNumber.Substring(0, 100) : (b.PoNumber ?? "");
                         
                         _db.SalesBillItems.RemoveRange(ex.Items);
-                        ex.Items = b.Items ?? new List<SalesBillItem>();
+                        if (b.Items != null) { foreach(var i in b.Items) i.BillNo = b.BillNo; }
+                      ex.Items = b.Items ?? new List<SalesBillItem>();
                         
                         updated++;
                     }
                 }
                 else
                 {
-                    _db.SalesBills.Add(new SalesBill
-                    {
+                    if (b.Items != null) { foreach(var i in b.Items) i.BillNo = b.BillNo; }
+                      _db.SalesBills.Add(new SalesBill {
                         BillNo = b.BillNo != null && b.BillNo.Length > 50 ? b.BillNo.Substring(0, 50) : (b.BillNo ?? ""),
                         BillDate = b.BillDate,
                         CustomerCode = b.CustomerCode != null && b.CustomerCode.Length > 20 ? b.CustomerCode.Substring(0, 20) : (b.CustomerCode ?? ""),
@@ -502,7 +504,8 @@ namespace RoyalD.Web.Services
                         Discount = discount,
                         Amount = amt
                     };
-                    currentItems.Add(item);
+                    item.BillNo = currentBillNo;
+                      currentItems.Add(item);
                     if (currentTotal == 0)
                     {
                         currentTotal += amt; // fallback if no "เธฃเธงเธกเธ—เธฑเนเธเธชเธดเนเธ" row has set it yet
