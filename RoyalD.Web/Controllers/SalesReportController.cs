@@ -54,6 +54,14 @@ namespace RoyalD.Web.Controllers
                 $"SalesReport_Matrix_{DateTime.Now:yyyyMMdd}.xlsx");
         }
 
+                public async Task<IActionResult> ExportCustomerProductExcel(string? rep = null, string? month = null, DateTime? date = null)
+        {
+            var data = await _svc.GetCustomerProductReportAsync(rep, month, date);
+            var bytes = await _svc.ExportCustomerProductExcelAsync(data);
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"CustomerProduct_{DateTime.Now:yyyyMMdd}.xlsx");
+        }
+
         public async Task<IActionResult> ExportProductDetailsExcel(string? salesRep = null, string? month = null)
         {
             var data = await _svc.GetProductDetailsReportAsync(salesRep, month);

@@ -1,7 +1,10 @@
 ﻿@using RoyalD.Web.Services
 @model RoyalD.Web.Services.CustomerProductViewModel
 @{
-    ViewData["Title"] = "4. รายการขายรายร้านค้า";
+    ViewData["Title"] = "รายการขายรายลูกค้า";
+    bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
+    var canDownloadClaim = ViewContext.HttpContext.User.FindFirst("CanDownload")?.Value;
+    bool canDownload = isAdmin || canDownloadClaim == "True";
 }
 
 <style>
@@ -10,17 +13,15 @@
 .report-table tbody tr:hover { background-color: #f1f8f5; }
 </style>
 
-
-
 <div class="card shadow-sm border-0 mb-4 no-print">
     <div class="card-body bg-light rounded">
         <form method="get" class="row g-3 align-items-end">
-            <div class="col-md-3">
-                <label class="form-label fw-bold">ระบุวันที่ (Date)</label>
+            <div class="col-md-2">
+                <label class="form-label fw-bold">ระบุวันที่</label>
                 <input type="date" name="date" class="form-control" value="@Model.SelectedDate?.ToString("yyyy-MM-dd")" />
             </div>
             <div class="col-md-3">
-                <label class="form-label fw-bold">เลือกเดือน (Month)</label>
+                <label class="form-label fw-bold">เลือกเดือน</label>
                 <select name="month" class="form-select">
                     <option value="">-- ดูทั้งหมด / ดูตามวันที่ --</option>
                     @foreach (var m in Model.AllMonths)
@@ -53,8 +54,22 @@
                     }
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <button type="submit" class="btn btn-primary w-100 fw-bold"><i class="bi bi-search me-1"></i> ค้นหา</button>
+            </div>
+            <div class="col-md-2 text-end">
+                @if (canDownload)
+                {
+                    <div class="dropdown">
+                      <button class="btn btn-success dropdown-toggle w-100" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-download"></i> ดาวน์โหลด
+                      </button>
+                      <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        <li><a class="dropdown-item" href="#" onclick="window.print();"><i class="bi bi-file-pdf text-danger"></i> PDF / พิมพ์</a></li>
+                        <li><a class="dropdown-item" href="/SalesReport/ExportCustomerProductExcel?rep=@(Model.SelectedRep)&month=@(Model.SelectedMonth)&date=@(Model.SelectedDate?.ToString("yyyy-MM-dd"))"><i class="bi bi-file-earmark-excel text-success"></i> Excel</a></li>
+                      </ul>
+                    </div>
+                }
             </div>
         </form>
     </div>
@@ -67,18 +82,19 @@
                 <thead>
                     <tr>
                         <th>ลำดับ</th>
-                        <th class="text-start">ร้านค้า (Customer)</th>
-                        <th class="text-start">สินค้า (Product)</th>
-                        <th>ราคาขาย (บาท)</th>
-                        <th>จำนวน</th>
+                        <th class="text-start">รหัสลูกค้า</th>
+                        <th class="text-start">ชื่อลูกค้า</th>
+                        <th class="text-start">ชื่อสินค้า</th>
+                        <th>ราคาต่อหน่วย</th>
+                        <th>หน่วย</th>
                         <th>รวมเงิน (บาท)</th>
-                        <th>ผู้แทนขาย</th>
+                        <th>ชื่อผู้แทนขาย</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (!Model.Items.Any())
                     {
-                        <tr><td colspan="7" class="text-center text-muted py-4">ไม่พบข้อมูลการขายตามเงื่อนไขที่ระบุ</td></tr>
+                        <tr><td colspan="8" class="text-center text-muted py-4">ไม่พบข้อมูลการขายตามเงื่อนไขที่ระบุ</td></tr>
                     }
                     else
                     {
@@ -90,12 +106,14 @@
                                 <td class="text-center">@(idx++)</td>
                                 @if(item.CustomerCode != lastCustCode)
                                 {
-                                    <td class="text-start fw-bold text-success">@item.CustomerCode : @item.CustomerName</td>
+                                    <td class="text-start fw-bold text-success">@item.CustomerCode</td>
+                                    <td class="text-start fw-bold text-success">@item.CustomerName</td>
                                     lastCustCode = item.CustomerCode;
                                 }
                                 else
                                 {
-                                    <td class="text-start text-muted" style="padding-left: 20px;"><i class="bi bi-arrow-return-right"></i></td>
+                                    <td class="text-start text-muted text-center"><i class="bi bi-arrow-return-right"></i></td>
+                                    <td class="text-start text-muted text-center"><i class="bi bi-arrow-return-right"></i></td>
                                 }
                                 <td class="text-start">@item.ProductCode : @item.ProductName</td>
                                 <td class="text-end fw-bold">@item.Price.ToString("N2")</td>
@@ -106,6 +124,7 @@
                         }
                         <tr class="bg-light fw-bold" style="font-size:1.1rem;">
                             <td colspan="4" class="text-end text-success">รวมยอดเงินทั้งหมด (Total Amount)</td>
+                            <td class="text-end text-success"></td>
                             <td class="text-end text-success">@Model.Items.Sum(x => x.Qty).ToString("N0")</td>
                             <td class="text-end text-success">@Model.Items.Sum(x => x.TotalAmount).ToString("N2")</td>
                             <td></td>

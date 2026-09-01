@@ -797,6 +797,40 @@ namespace RoyalD.Web.Services
         }
     }
 
+            public async Task<byte[]> ExportCustomerProductExcelAsync(CustomerProductViewModel data)
+        {
+            using var pkg = new OfficeOpenXml.ExcelPackage();
+            var ws = pkg.Workbook.Worksheets.Add("CustomerSales");
+
+            // Headers
+            var headers = new[] { "ลำดับ", "รหัสลูกค้า", "ชื่อลูกค้า", "รหัสสินค้า", "ชื่อสินค้า", "ราคาต่อหน่วย", "จำนวน", "หน่วย", "รวมเงิน", "ผู้แทนขาย" };
+            for (int i = 0; i < headers.Length; i++)
+            {
+                ws.Cells[1, i + 1].Value = headers[i];
+                ws.Cells[1, i + 1].Style.Font.Bold = true;
+            }
+
+            int row = 2;
+            int idx = 1;
+            foreach (var item in data.Items)
+            {
+                ws.Cells[row, 1].Value = idx++;
+                ws.Cells[row, 2].Value = item.CustomerCode;
+                ws.Cells[row, 3].Value = item.CustomerName;
+                ws.Cells[row, 4].Value = item.ProductCode;
+                ws.Cells[row, 5].Value = item.ProductName;
+                ws.Cells[row, 6].Value = item.Price;
+                ws.Cells[row, 7].Value = item.Qty;
+                ws.Cells[row, 8].Value = item.Unit;
+                ws.Cells[row, 9].Value = item.TotalAmount;
+                ws.Cells[row, 10].Value = item.SalesRep;
+                row++;
+            }
+
+            ws.Cells[ws.Dimension.Address].AutoFitColumns();
+            return await pkg.GetAsByteArrayAsync();
+        }
+
     public class CustomerProductViewModel
     {
         public string? SelectedRep { get; set; }
