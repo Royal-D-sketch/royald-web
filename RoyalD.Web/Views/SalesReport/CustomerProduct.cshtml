@@ -86,8 +86,6 @@
                         <th class="text-start">ชื่อลูกค้า</th>
                         <th class="text-start">ชื่อสินค้า</th>
                         <th>ราคาต่อหน่วย</th>
-                        <th>หน่วย</th>
-                        <th>รวมเงิน (บาท)</th>
                         <th>ชื่อผู้แทนขาย</th>
                     </tr>
                 </thead>
@@ -115,10 +113,8 @@
                                     <td class="text-start text-muted text-center"><i class="bi bi-arrow-return-right"></i></td>
                                     <td class="text-start text-muted text-center"><i class="bi bi-arrow-return-right"></i></td>
                                 }
-                                <td class="text-start">@item.ProductCode : @item.ProductName</td>
+                                <td class="text-start">@item.ProductName</td>
                                 <td class="text-end fw-bold">@item.Price.ToString("N2")</td>
-                                <td class="text-end">@item.Qty.ToString("N0") @item.Unit</td>
-                                <td class="text-end fw-bold text-primary">@item.TotalAmount.ToString("N2")</td>
                                 <td class="text-center">@item.SalesRep</td>
                             </tr>
                         }
