@@ -1,4 +1,4 @@
-@using RoyalD.Web.Models
+﻿@using RoyalD.Web.Models
 @model List<RoyalD.Web.Models.SalesBill>
 @{
     ViewData["Title"] = "รายการบิลขาย";
@@ -183,7 +183,7 @@
                     <th>ชื่อลูกค้า</th>
                     <th>เขต/อำเภอ</th>
                     <th>จังหวัด</th>
-                    <th class="text-center">เครดิต</th>
+                    <th class="text-center">เครดิต</th><th class="text-center">ครบกำหนด</th>
                     <th class="header-wrap">อายุลูกหนี้</th>
                     <th class="text-end header-wrap">จำนวนเงินรวม</th>
                     <th class="text-center">สถานะ</th>
@@ -213,7 +213,7 @@
                         <td>@(!string.IsNullOrEmpty(b.Province) ? b.Province : "-")</td>
                         <td class="text-center">
                             <span class="badge bg-info text-dark">@b.Credit วัน</span>
-                        </td>
+                        </td><td class="text-center">@b.BillDate.AddDays(b.Credit).ToString("dd/MM/yyyy")</td>
                         <td class="text-center">
                             @if (b.IsFullyPaid)
                             {
