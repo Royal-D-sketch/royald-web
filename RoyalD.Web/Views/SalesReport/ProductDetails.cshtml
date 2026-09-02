@@ -258,7 +258,35 @@
 
 <!-- ================= REPORT CONTENT ================= -->
 <div id="product-capture-area">
-@if (!Model.RepReports.Any())
+@{
+    var activeReps = Model.RepReports.Where(r => r.TotalNetQty > 0 || r.TotalNetSales > 0).Select(r => r.SalesRep).ToList();
+
+    var allProds = Model.RepReports
+        .SelectMany(r => r.MonthlyMovements)
+        .SelectMany(m => m.Products)
+        .GroupBy(p => new { p.ProductCode, p.ProductName, p.Unit })
+        .Select(g => new {
+            Code = g.Key.ProductCode,
+            Name = g.Key.ProductName,
+            Unit = g.Key.Unit,
+            TotalQty = g.Sum(x => x.NetQty),
+            TotalAmount = g.Sum(x => x.NetAmount)
+        })
+        .Where(x => x.TotalQty > 0 || x.TotalAmount > 0)
+        .OrderByDescending(x => x.TotalAmount)
+        .ToList();
+
+    var repProductSales = new Dictionary<string, Dictionary<string, (decimal Qty, decimal Amount)>>();
+    foreach (var r in Model.RepReports)
+    {
+        repProductSales[r.SalesRep] = r.MonthlyMovements
+            .SelectMany(m => m.Products)
+            .GroupBy(p => p.ProductCode)
+            .ToDictionary(g => g.Key, g => (g.Sum(x => x.NetQty), g.Sum(x => x.NetAmount)));
+    }
+}
+
+@if (!activeReps.Any() || !allProds.Any())
 {
     <div class="text-center py-5 text-muted bg-white rounded shadow-sm">
         <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
@@ -267,124 +295,86 @@
 }
 else
 {
-    @foreach (var repReport in Model.RepReports)
-    {
-        <div class="mb-4">
-            <!-- Rep Header -->
-            <div class="rep-group-header">
-                <div>
-                    <i class="bi bi-person-fill text-warning me-2"></i>ผู้แทนขาย: @repReport.SalesRep
-                </div>
-                <div class="fs-6 fw-normal">
-                    ยอดขายสุทธิรวม: <strong class="text-warning fs-5">@repReport.TotalNetSales.ToString("N0")</strong> บาท 
-                    <small class="opacity-75">(@repReport.TotalNetQty.ToString("N0") ชิ้น/กล่อง)</small>
-                </div>
-            </div>
-
-            @foreach (var monthGroup in repReport.MonthlyMovements)
-            {
-                <div class="month-sub-header d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-calendar-event me-2"></i>ประจำเดือน: @monthGroup.MonthNameThai</span>
-                    <span class="small">
-                        ยอดขายสุทธิเดือนนี้: <strong class="text-success fs-6">@monthGroup.MonthNetAmount.ToString("N0")</strong> บาท
-                        @if (monthGroup.MonthDeliveringDeduction > 0)
-                        {
-                            <span class="text-muted ms-2">(หักบิลอยู่จัดส่ง -@monthGroup.MonthDeliveringDeduction.ToString("N0") บ.)</span>
-                        }
-                    </span>
-                </div>
-
-                <div class="prod-table-wrap">
-                    <table class="table prod-table mb-0">
-                        <thead>
-                            <tr>
-                                <th style="width:45px;" class="text-center">#</th>
-                                <th style="min-width:340px;">1. รหัสสินค้า และ ชื่อสินค้า</th>
-                                <th style="width:170px;" class="text-end">2. จำนวนขายรวม (หน่วย)</th>
-                                <th style="width:170px;" class="text-end">3. ราคาต่อหน่วย (บาท)</th>
-                                <th style="width:200px;" class="text-end">4. ยอดเงินรวมสุทธิ (บาท)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @{int pIdx = 1;}
-                            @foreach (var prod in monthGroup.Products)
-                            {
-                                bool isDelivering = prod.IsAllDelivering;
-                                bool hasPartialDelivering = prod.HasDelivering && !prod.IsAllDelivering;
-
-                                <tr class="@(isDelivering ? "table-light" : "")">
-                                    <td class="text-center text-muted">@(pIdx++)</td>
-                                    
-                                    <!-- 1. รหัส และ ชื่อสินค้า -->
-                                    <td>
-                                        <div class="fw-bold @(isDelivering ? "delivering-strike" : "text-dark")" style="font-size:1rem;">
-                                            <span class="badge bg-secondary me-1">@prod.ProductCode</span>
-                                            @prod.ProductName
-                                        </div>
-                                        @if (isDelivering)
-                                        {
-                                            <div class="badge-delivering mt-1 d-inline-block">
-                                                🚚 บิลอยู่จัดส่ง โ€” ขีดฆ่าไม่รวมยอดขาย (-@prod.TotalAmount.ToString("N0") บ.)
-                                            </div>
-                                        }
-                                        else if (hasPartialDelivering)
-                                        {
-                                            <div class="badge-delivering mt-1 d-inline-block">
-                                                🚚 รวมบิลอยู่จัดส่ง @prod.DeliveringQty.ToString("N0") @prod.Unit (หักลบ -@prod.DeliveringAmount.ToString("N0") บ.)
-                                            </div>
-                                        }
-                                    </td>
-
-                                    <!-- 2. จำนวนขาย -->
-                                    <td class="text-end @(isDelivering ? "delivering-strike" : "fw-bold text-dark")" style="font-size:0.98rem;">
-                                        @if (isDelivering)
-                                        {
-                                            <span>@prod.TotalQty.ToString("N0") @prod.Unit</span>
-                                        }
-                                        else
-                                        {
-                                            <span>@prod.NetQty.ToString("N0") <small class="text-muted">@prod.Unit</small></span>
-                                        }
-                                    </td>
-
-                                    <!-- 3. ราคาเฉลี่ย -->
-                                    <td class="text-end text-muted fw-semibold">
-                                        @prod.Price.ToString("N2")
-                                    </td>
-
-                                    <!-- 4. ยอดเงินรวมภาษีสุทธิ -->
-                                    <td class="text-end @(isDelivering ? "delivering-strike" : "fw-bold text-primary")" style="font-size:1.05rem;">
-                                        @if (isDelivering)
-                                        {
-                                            <span>@prod.TotalAmount.ToString("N0")</span>
-                                        }
-                                        else
-                                        {
-                                            <span>@prod.NetAmount.ToString("N0")</span>
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                        <tfoot class="table-light fw-bold" style="border-top:2px solid #dee2e6;">
-                            <tr>
-                                <td colspan="2" class="text-end fs-6">
-                                    รวมสุทธิเดือน @monthGroup.MonthNameThai
-                                </td>
-                                <td class="text-end text-dark fs-6">
-                                    @monthGroup.MonthNetQty.ToString("N0")
-                                </td>
-                                <td class="text-end text-muted">-</td>
-                                <td class="text-end text-success" style="font-size:1.15rem;">
-                                    @monthGroup.MonthNetAmount.ToString("N0") บ.
-                                </td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            }
+    <div class="prod-table-wrap mb-4">
+        <div class="rep-group-header">
+            <div><i class="bi bi-table text-warning me-2"></i>สรุปรายละเอียดสินค้าขายแยกตามผู้แทน</div>
+            <div class="fs-6 fw-normal">ยอดสุทธิรวมทั้งหมด: <strong class="text-warning fs-5">@allProds.Sum(x => x.TotalAmount).ToString("N2")</strong> บาท</div>
         </div>
-    }
+        <div class="table-responsive">
+            <table class="table prod-table mb-0 table-hover">
+                <thead class="table-dark text-center align-middle">
+                    <tr>
+                        <th rowspan="2" style="width:45px;">#</th>
+                        <th rowspan="2" style="min-width:250px;">รหัส และ ชื่อสินค้า</th>
+                        <th rowspan="2" style="width:70px;">หน่วย</th>
+                        @foreach (var rep in activeReps)
+                        {
+                            <th class="border-start bg-primary bg-gradient">@rep</th>
+                        }
+                        <th class="border-start bg-success bg-gradient">รวมทั้งหมด</th>
+                    </tr>
+                    <tr style="font-size:0.8rem; opacity:0.9;">
+                        @foreach (var rep in activeReps)
+                        {
+                            <th class="border-start fw-normal bg-primary">ปริมาณ<br/>จำนวนเงิน(บ.)</th>
+                        }
+                        <th class="border-start fw-normal bg-success">ปริมาณรวม<br/>จำนวนเงินรวม(บ.)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{int pIdx = 1;}
+                    @foreach (var prod in allProds)
+                    {
+                        <tr>
+                            <td class="text-center text-muted">@(pIdx++)</td>
+                            <td>
+                                <div class="fw-bold text-dark" style="font-size:0.95rem;">
+                                    <span class="badge bg-secondary me-1">@prod.Code</span>@prod.Name
+                                </div>
+                            </td>
+                            <td class="text-center text-muted small">@prod.Unit</td>
+                            
+                            @foreach (var rep in activeReps)
+                            {
+                                var stats = repProductSales.ContainsKey(rep) && repProductSales[rep].ContainsKey(prod.Code) ? repProductSales[rep][prod.Code] : (0m, 0m);
+                                <td class="text-end border-start">
+                                    @if(stats.Item1 > 0 || stats.Item2 > 0) {
+                                        <div class="fw-bold text-primary" style="font-size:0.95rem;">@stats.Item1.ToString("N0")</div>
+                                        <div class="text-muted" style="font-size:0.85rem;">@stats.Item2.ToString("N2")</div>
+                                    } else {
+                                        <span class="text-muted opacity-25">-</span>
+                                    }
+                                </td>
+                            }
+                            
+                            <td class="text-end border-start bg-light">
+                                <div class="fw-bold text-success" style="font-size:1rem;">@prod.TotalQty.ToString("N0")</div>
+                                <div class="text-success opacity-75" style="font-size:0.85rem;">@prod.TotalAmount.ToString("N2")</div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot class="table-light fw-bold" style="border-top:2px solid #dee2e6;">
+                    <tr>
+                        <td colspan="3" class="text-end fs-6">ยอดรวมสุทธิทุกรายการ:</td>
+                        @foreach (var rep in activeReps)
+                        {
+                            var repTotalQty = Model.RepReports.First(r => r.SalesRep == rep).TotalNetQty;
+                            var repTotalAmt = Model.RepReports.First(r => r.SalesRep == rep).TotalNetSales;
+                            <td class="text-end border-start">
+                                <div class="text-primary" style="font-size:1rem;">@repTotalQty.ToString("N0")</div>
+                                <div class="text-dark" style="font-size:0.9rem;">@repTotalAmt.ToString("N2")</div>
+                            </td>
+                        }
+                        <td class="text-end border-start">
+                            <div class="text-success" style="font-size:1.1rem;">@allProds.Sum(x => x.TotalQty).ToString("N0")</div>
+                            <div class="text-dark" style="font-size:0.95rem;">@allProds.Sum(x => x.TotalAmount).ToString("N2")</div>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
 }
 </div>
 
