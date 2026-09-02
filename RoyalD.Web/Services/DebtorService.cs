@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using RoyalD.Web.Models;
@@ -183,12 +183,16 @@ namespace RoyalD.Web.Services
 
         public async Task<List<OutstandingDebt>> GetPaidHistoryAsync(string? search = null, string? salesRep = null, string? userAllowedRegion = null, string? userAllowedProvinces = null, string? userAllowedDistricts = null)
         {
+            var cutoffDate = DateTime.Today.AddDays(-120);
+
+            // 1. Get from OutstandingDebts
             var q = _db.OutstandingDebts
                 .Include(d => d.PaymentRecords)
                 .Include(d => d.Customer)
-                .Where(d => d.Status == DebtStatus.PaidCash 
+                .Where(d => (d.Status == DebtStatus.PaidCash 
                          || d.Status == DebtStatus.PaidTransfer 
-                         || d.Status == DebtStatus.PaidCheck);
+                         || d.Status == DebtStatus.PaidCheck)
+                         && (d.ReceiptDate >= cutoffDate || d.FullyPaidDate >= cutoffDate || d.PaidDate >= cutoffDate));
 
             q = ApplyAreaPermissions(q, userAllowedRegion, userAllowedProvinces, userAllowedDistricts);
 
@@ -200,10 +204,76 @@ namespace RoyalD.Web.Services
             if (!string.IsNullOrEmpty(search))
                 q = q.Where(d => d.CustomerName.Contains(search) || d.BillNo.Contains(search) || d.CustomerCode.Contains(search) || (d.ReceiptNo != null && d.ReceiptNo.Contains(search)));
 
-            var list = await q.OrderByDescending(d => d.FullyPaidDate ?? d.BillDate).ToListAsync();
+            var debtList = await q.ToListAsync();
+            var existingBillNos = new HashSet<string>(debtList.Select(d => d.BillNo), StringComparer.OrdinalIgnoreCase);
+
+            // 2. Get from SalesBills (for fully paid bills without OutstandingDebt records)
+            var qBill = _db.SalesBills.AsNoTracking()
+                .Where(b => b.IsFullyPaid && b.ReceiptDate >= cutoffDate);
+                
+            // Apply Area Permissions to SalesBills
+            if (!string.IsNullOrEmpty(userAllowedRegion) || !string.IsNullOrEmpty(userAllowedProvinces))
+            {
+                var combinedAllowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                if (!string.IsNullOrEmpty(userAllowedRegion))
+                {
+                    var regionMatch = RegionHelper.GetMatchingProvinces(userAllowedRegion);
+                    foreach (var p in regionMatch) combinedAllowed.Add(p);
+                }
+                if (!string.IsNullOrEmpty(userAllowedProvinces))
+                {
+                    var rawList = userAllowedProvinces.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim());
+                    var provMatch = RegionHelper.ExpandProvinceVariants(rawList);
+                    foreach (var p in provMatch) combinedAllowed.Add(p);
+                }
+                qBill = qBill.Where(b => combinedAllowed.Contains(b.Province) || combinedAllowed.Any(p => b.Province.Contains(p)));
+            }
+            if (!string.IsNullOrEmpty(userAllowedDistricts))
+            {
+                var distList = userAllowedDistricts.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(d => d.Trim()).ToList();
+                qBill = qBill.Where(b => distList.Contains(b.District) || distList.Any(d => b.District.Contains(d)));
+            }
             
+            if (!string.IsNullOrEmpty(salesRep))
+            {
+                var normRep = salesRep.Trim().ToLower();
+                qBill = qBill.Where(b => b.SalesRep.ToLower().Contains(normRep));
+            }
+            
+            if (!string.IsNullOrEmpty(search))
+                qBill = qBill.Where(b => b.CustomerName.Contains(search) || b.BillNo.Contains(search) || b.CustomerCode.Contains(search) || (b.ReceiptNo != null && b.ReceiptNo.Contains(search)));
+
+            var billList = await qBill.ToListAsync();
+            
+            // Map SalesBills to OutstandingDebt for display
+            foreach(var b in billList)
+            {
+                if (!existingBillNos.Contains(b.BillNo))
+                {
+                    debtList.Add(new OutstandingDebt
+                    {
+                        BillNo = b.BillNo,
+                        CustomerCode = b.CustomerCode,
+                        CustomerName = b.CustomerName,
+                        Province = b.Province,
+                        District = b.District,
+                        SalesRep = b.SalesRep,
+                        BillDate = b.BillDate,
+                        OriginalAmount = b.TotalAmount,
+                        RemainingAmount = 0,
+                        Status = DebtStatus.PaidCash,
+                        ReceiptNo = b.ReceiptNo,
+                        ReceiptDate = b.ReceiptDate,
+                        FullyPaidDate = b.ReceiptDate
+                    });
+                }
+            }
+
+            var list = debtList.OrderByDescending(d => d.ReceiptDate ?? d.FullyPaidDate ?? d.BillDate).ToList();
+            
+            // Note: we don't need the 'needsSave' backfill logic for fully paid history, but we can keep it for the db ones.
             bool needsSave = false;
-            foreach (var d in list.Where(x => string.IsNullOrEmpty(x.CustomerCode) || string.IsNullOrEmpty(x.CustomerName)))
+            foreach (var d in list.Where(x => x.Id > 0 && (string.IsNullOrEmpty(x.CustomerCode) || string.IsNullOrEmpty(x.CustomerName))))
             {
                 var sb = await _db.SalesBills.FirstOrDefaultAsync(s => s.BillNo == d.BillNo);
                 if (sb != null)
@@ -385,4 +455,5 @@ namespace RoyalD.Web.Services
         }
     }
 }
+
 
