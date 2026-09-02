@@ -38,6 +38,12 @@ namespace RoyalD.Web.Controllers
             return View(data);
         }
 
+        public async Task<IActionResult> ProductDetailsAmount(string? salesRep = null, string? month = null)
+        {
+            var data = await _svc.GetProductDetailsReportAsync(salesRep, month);
+            return View(data);
+        }
+
         // Screen 4: Customer Product Details
         public async Task<IActionResult> CustomerProduct(string? rep = null, string? month = null, DateTime? date = null, string? q = null)
         {
@@ -115,4 +121,5 @@ namespace RoyalD.Web.Controllers
         }
     }
 }
+
 
