@@ -1,13 +1,13 @@
-﻿@using RoyalD.Web.Services
+@using RoyalD.Web.Services
 @model RoyalD.Web.Services.AnnualPerformanceViewModel
 @{
-    ViewData["Title"] = "1. เธฃเธฒเธขเธเธฒเธเธชเธฃเธธเธเธเธฃเธฐเธชเธดเธ—เธเธดเธ เธฒเธเธขเธญเธ”เธเธฒเธขเธเธนเนเนเธ—เธ";
+    ViewData["Title"] = "1. รายงานสรุปประสิทธิภาพยอดขายผู้แทน";
     var months = Model.Months;
     var allReps = Model.RepReports;
     var overall = Model.OverallCompany;
     bool isAdmin = User.IsInRole("admin");
     var canDownloadClaim = ViewContext.HttpContext.User.FindFirst("CanDownload")?.Value;
-    bool isSalesRepRole = User.HasClaim(c => c.Type == "Position" && (c.Value.Contains("เธเธนเนเนเธ—เธ") || c.Value.Contains("เธเธเธฑเธเธเธฒเธเธเธฒเธข"))) && !isAdmin;
+    bool isSalesRepRole = User.HasClaim(c => c.Type == "Position" && (c.Value.Contains("ผู้แทน") || c.Value.Contains("พนักงานขาย"))) && !isAdmin;
     bool canDownload = (isAdmin || canDownloadClaim == "true") && !isSalesRepRole;
 }
 
@@ -49,22 +49,22 @@
 <!-- Sub-Tabs Navigation -->
 <div class="sales-subnav no-print">
     <a href="/SalesReport/Summary" class="subnav-item active">
-        <i class="bi bi-table me-2"></i> 1. เธชเธฃเธธเธเธขเธญเธ”เธเธฒเธข-เธขเธญเธ”เน€เธเนเธเน€เธเธดเธ (Pivot Matrix)
+        <i class="bi bi-table me-2"></i> 1. สรุปยอดขาย-ยอดเก็บเงิน (Pivot Matrix)
     </a>
     <a href="/SalesReport/Charts" class="subnav-item">
-        <i class="bi bi-bar-chart-line me-2"></i> 2. เธเธฃเธฒเธเธเธฅเธเธฒเธเธฃเธฒเธขเธเธนเนเนเธ—เธ (Charts)
+        <i class="bi bi-bar-chart-line me-2"></i> 2. กราฟผลงานรายผู้แทน (Charts)
     </a>
     <a href="/SalesReport/ProductDetails" class="subnav-item">
-        <i class="bi bi-box-seam me-2"></i> 3. เธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”เธชเธดเธเธเนเธฒเธ—เธตเนเธเธฒเธข (Product Details)
+        <i class="bi bi-box-seam me-2"></i> 3. รายละเอียดสินค้าที่ขาย (Product Details)
     </a>
     @if (!isSalesRepRole)
     {
         <a href="/SalesReport/Compare" class="subnav-item">
-            <i class="bi bi-people me-2"></i> 4. เธเธฃเธฒเธเน€เธเธฃเธตเธขเธเน€เธ—เธตเธขเธเธเธนเนเนเธ—เธเธเธฒเธข
+            <i class="bi bi-people me-2"></i> 4. กราฟเปรียบเทียบผู้แทนขาย
         </a>
     }
     <a href="/SalesReport/CustomerPurchaseSummary" class="subnav-item">
-        <i class="bi bi-person-lines-fill me-2"></i> 5. เธชเธฃเธธเธเธเธฒเธฃเธเธทเนเธญเธฃเธฒเธขเธฅเธนเธเธเนเธฒ
+        <i class="bi bi-person-lines-fill me-2"></i> 5. สรุปการซื้อรายลูกค้า
     </a>
 </div>
 
@@ -72,9 +72,9 @@
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 export-bar">
     <div>
         <h3 class="mb-1 fw-bold" style="color:#065f46;">
-            <i class="bi bi-table" style="color:#059669;"></i> Pivot Matrix โ€” เธขเธญเธ”เธเธฒเธข / เธขเธญเธ”เน€เธเนเธ / เธซเธเธตเนเธเนเธฒเธ เธฃเธฒเธขเธเธนเนเนเธ—เธ ร— เธฃเธฒเธขเน€เธ”เธทเธญเธ
+            <i class="bi bi-table" style="color:#059669;"></i> Pivot Matrix — ยอดขาย / ยอดเก็บ / หนี้ค้าง รายผู้แทน × รายเดือน
         </h3>
-        <span class="text-muted fw-semibold">เธเธฃเธญเธเธ”เธนเธเธนเนเนเธ—เธเธฃเธฒเธขเธเธธเธเธเธฅ เธซเธฃเธทเธญเธ เธฒเธเธฃเธงเธกเธ—เธฑเนเธเธเธฃเธดเธฉเธฑเธ— เธเธฃเนเธญเธกเธ•เธฑเธงเธเธตเนเธงเธฑเธ” % เธเธฃเธฐเธชเธดเธ—เธเธดเธ เธฒเธ</span>
+        <span class="text-muted fw-semibold">กรองดูผู้แทนรายบุคคล หรือภาพรวมทั้งบริษัท พร้อมตัวชี้วัด % ประสิทธิภาพ</span>
     </div>
     @if (canDownload)
     {
@@ -98,28 +98,28 @@
         <div class="row align-items-center g-2">
             <div class="col-md-auto">
                 <span class="fw-bold" style="color:#065f46; font-size:0.95rem;">
-                    <i class="bi bi-person-badge-fill me-1 text-success"></i> เน€เธฅเธทเธญเธเธเธนเนเนเธ—เธเธเธฒเธข:
+                    <i class="bi bi-person-badge-fill me-1 text-success"></i> เลือกผู้แทนขาย:
                 </span>
             </div>
             <div class="col-md-4 col-lg-3">
                 <select class="form-select form-select-sm fw-bold shadow-sm" id="repSelectDropdown" onchange="selectRep(this.value)" style="border:2px solid #10b981; border-radius:10px; color:#065f46;">
-                    <option value="overall" selected>๐ข เธ เธฒเธเธฃเธงเธกเธ—เธธเธเธเธ (เธฃเธงเธกเธ—เธฑเนเธเธเธฃเธดเธฉเธฑเธ—)</option>
+                    <option value="overall" selected>🏢 ภาพรวมทุกคน (รวมทั้งบริษัท)</option>
                     @for (int ri = 0; ri < allReps.Count; ri++)
                     {
-                        <option value="@ri">๐‘ค @allReps[ri].SalesRep</option>
+                        <option value="@ri">👤 @allReps[ri].SalesRep</option>
                     }
                 </select>
             </div>
             <div class="col-md-3">
-                <input type="text" class="form-control form-control-sm border-success" id="repQuickSearch" placeholder="เธเธดเธกเธเนเธเธทเนเธญเธเธนเนเนเธ—เธเน€เธเธทเนเธญเธเนเธเธซเธฒ..." oninput="filterRepByName(this.value)" />
+                <input type="text" class="form-control form-control-sm border-success" id="repQuickSearch" placeholder="พิมพ์ชื่อผู้แทนเพื่อค้นหา..." oninput="filterRepByName(this.value)" />
             </div>
             <div class="col-md-auto d-flex gap-1">
-                <button class="btn btn-sm btn-outline-success fw-semibold" onclick="selectPrevRep()" style="border-radius:8px;"><i class="bi bi-chevron-left"></i> เธเนเธญเธเธซเธเนเธฒ</button>
-                <button class="btn btn-sm btn-outline-success fw-semibold" onclick="selectNextRep()" style="border-radius:8px;">เธ–เธฑเธ”เนเธ <i class="bi bi-chevron-right"></i></button>
+                <button class="btn btn-sm btn-outline-success fw-semibold" onclick="selectPrevRep()" style="border-radius:8px;"><i class="bi bi-chevron-left"></i> ก่อนหน้า</button>
+                <button class="btn btn-sm btn-outline-success fw-semibold" onclick="selectNextRep()" style="border-radius:8px;">ถัดไป <i class="bi bi-chevron-right"></i></button>
             </div>
             <div class="col-md text-end">
                 <span class="badge shadow-sm" style="background:#d1fae5; color:#065f46; font-size:0.85rem; padding:6px 12px; border-radius:10px; border:1px solid #a7f3d0;">
-                    <i class="bi bi-people-fill me-1"></i> เธเธนเนเนเธ—เธเธ—เธฑเนเธเธซเธกเธ”: <strong>@allReps.Count</strong> เธ—เนเธฒเธ
+                    <i class="bi bi-people-fill me-1"></i> ผู้แทนทั้งหมด: <strong>@allReps.Count</strong> ท่าน
                 </span>
             </div>
         </div>
@@ -145,7 +145,7 @@
     <div class="card-body py-2">
         <div class="form-check form-switch">
             <input class="form-check-input" type="checkbox" id="toggle-sig" checked onchange="toggleSignatures()">
-            <label class="form-check-label small fw-bold" for="toggle-sig">เนเธชเธ”เธเธเนเธญเธเธฅเธเธเธฒเธก 4 เธเนเธฒเธข</label>
+            <label class="form-check-label small fw-bold" for="toggle-sig">แสดงช่องลงนาม 4 ฝ่าย</label>
         </div>
     </div>
 </div>
@@ -153,23 +153,23 @@
     <div class="row text-center mt-3 pt-3" style="border-top:1.5px dashed #ccc;">
         <div class="col-3">
             <div style="border-bottom:1px solid #333; margin:45px 15px 6px;">&nbsp;</div>
-            <p class="mb-0 fw-bold">(เธเธนเนเธฃเธฒเธขเธเธฒเธ)</p>
-            <small class="text-muted">เธงเธฑเธเธ—เธตเน ...... / ...... / ..........</small>
+            <p class="mb-0 fw-bold">(ผู้รายงาน)</p>
+            <small class="text-muted">วันที่ ...... / ...... / ..........</small>
         </div>
         <div class="col-3">
             <div style="border-bottom:1px solid #333; margin:45px 15px 6px;">&nbsp;</div>
-            <p class="mb-0 fw-bold">(เธเธนเนเธ•เธฃเธงเธเธชเธญเธ)</p>
-            <small class="text-muted">เธงเธฑเธเธ—เธตเน ...... / ...... / ..........</small>
+            <p class="mb-0 fw-bold">(ผู้ตรวจสอบ)</p>
+            <small class="text-muted">วันที่ ...... / ...... / ..........</small>
         </div>
         <div class="col-3">
             <div style="border-bottom:1px solid #333; margin:45px 15px 6px;">&nbsp;</div>
-            <p class="mb-0 fw-bold">(เธเธนเนเธกเธตเธญเธณเธเธฒเธเธฅเธเธเธฒเธก)</p>
-            <small class="text-muted">เธงเธฑเธเธ—เธตเน ...... / ...... / ..........</small>
+            <p class="mb-0 fw-bold">(ผู้มีอำนาจลงนาม)</p>
+            <small class="text-muted">วันที่ ...... / ...... / ..........</small>
         </div>
         <div class="col-3">
             <div style="border-bottom:1px solid #333; margin:45px 15px 6px;">&nbsp;</div>
-            <p class="mb-0 fw-bold">(เธเธนเนเนเธ—เธเธเธฒเธข)</p>
-            <small class="text-muted">เธงเธฑเธเธ—เธตเน ...... / ...... / ..........</small>
+            <p class="mb-0 fw-bold">(ผู้แทนขาย)</p>
+            <small class="text-muted">วันที่ ...... / ...... / ..........</small>
         </div>
     </div>
 </div>
@@ -181,22 +181,22 @@
             <div class="fw-bold" style="font-size:1.1rem; opacity:.85; margin-bottom:4px;">
                 <i class="bi bi-person-badge me-2 text-warning"></i>@data.SalesRep
             </div>
-            <div class="small" style="opacity:.7;">เธชเธฃเธธเธเธขเธญเธ”เธเธฒเธขเนเธฅเธฐเธเธฒเธฃเน€เธเนเธเน€เธเธดเธ เนเธ—เธกเนเนเธฅเธเน 8 เน€เธ”เธทเธญเธ เธเธต 2569</div>
+            <div class="small" style="opacity:.7;">สรุปยอดขายและการเก็บเงิน ไทม์ไลน์ 8 เดือน ปี 2569</div>
         </div>
         
         <div class="matrix-scroll-wrap mb-4">
             <table class="matrix-table" id="tbl-@key">
                 <thead>
                     <tr>
-                        <th style="min-width:180px;">เธฃเธฒเธขเธเธฒเธฃ</th>
+                        <th style="min-width:180px;">รายการ</th>
                         @foreach (var m in Model.Months) { <th class="text-end" style="min-width:120px;">@m</th> }
-                        <th class="text-end" style="min-width:130px; background:#334155 !important;">เธฃเธงเธกเธ—เธฑเนเธเธซเธกเธ”</th>
+                        <th class="text-end" style="min-width:130px; background:#334155 !important;">รวมทั้งหมด</th>
                     </tr>
                 </thead>
                 <tbody>
                     <!-- Row 1: Sales -->
                     <tr id="rowSales-@key">
-                        <td class="rep-row-header"><i class="bi bi-bag-fill text-primary me-1"></i> เธขเธญเธ”เธเธฒเธข (เธเธฒเธ—)</td>
+                        <td class="rep-row-header"><i class="bi bi-bag-fill text-primary me-1"></i> ยอดขาย (บาท)</td>
                         @foreach (var m in data.MonthlyData)
                         {
                             <td class="text-end val-sales">@m.TotalSales.ToString("N0")</td>
@@ -205,7 +205,7 @@
                     </tr>
                     <!-- Row 2: Collected -->
                     <tr id="rowCollected-@key">
-                        <td class="rep-row-header"><i class="bi bi-cash-coin text-success me-1"></i> เธขเธญเธ”เน€เธเนเธเนเธ”เน (เธเธฒเธ—)</td>
+                        <td class="rep-row-header"><i class="bi bi-cash-coin text-success me-1"></i> ยอดเก็บได้ (บาท)</td>
                         @foreach (var m in data.MonthlyData)
                         {
                             <td class="text-end val-collected">@m.TotalCollected.ToString("N0")</td>
@@ -214,7 +214,7 @@
                     </tr>
                     <!-- Row 3: Debt -->
                     <tr id="rowDebt-@key">
-                        <td class="rep-row-header"><i class="bi bi-exclamation-octagon text-danger me-1"></i> เธซเธเธตเนเธเธเธเนเธฒเธ (เธเธฒเธ—)</td>
+                        <td class="rep-row-header"><i class="bi bi-exclamation-octagon text-danger me-1"></i> หนี้คงค้าง (บาท)</td>
                         @foreach (var m in data.MonthlyData)
                         {
                             <td class="text-end val-debt">@m.Outstanding.ToString("N0")</td>
@@ -223,7 +223,7 @@
                     </tr>
                     <!-- Row 4: Rate -->
                     <tr id="rowRate-@key">
-                        <td class="rep-row-header"><i class="bi bi-percent text-warning me-1"></i> % เธเธฃเธฐเธชเธดเธ—เธเธดเธ เธฒเธ</td>
+                        <td class="rep-row-header"><i class="bi bi-percent text-warning me-1"></i> % ประสิทธิภาพ</td>
                         @foreach (var m in data.MonthlyData)
                         {
                             string bc = m.CollectionRate >= 85 ? "pct-good" : (m.CollectionRate >= 50 ? "pct-mid" : "pct-bad");
@@ -245,7 +245,7 @@
             <div class="col-md-7">
                 <div class="chart-card">
                     <div class="fw-bold mb-2" style="color:#1a1a2e; font-size:1.02rem;">
-                        <i class="bi bi-bar-chart-fill text-primary"></i> เธเธฃเธฒเธเนเธ—เนเธ เธขเธญเธ”เธเธฒเธข vs เธขเธญเธ”เน€เธเนเธ vs เธซเธเธตเนเธเนเธฒเธ
+                        <i class="bi bi-bar-chart-fill text-primary"></i> กราฟแท่ง ยอดขาย vs ยอดเก็บ vs หนี้ค้าง
                     </div>
                     <canvas id="barChart-@key" height="130"></canvas>
                     <div class="insight-card mt-3" id="insight-@key"></div>
@@ -254,7 +254,7 @@
             <div class="col-md-5">
                 <div class="chart-card">
                     <div class="fw-bold mb-2" style="color:#1a1a2e; font-size:1.02rem;">
-                        <i class="bi bi-graph-up-arrow text-success"></i> เน€เธชเนเธเนเธเธงเนเธเนเธก % เธเธฃเธฐเธชเธดเธ—เธเธดเธ เธฒเธ
+                        <i class="bi bi-graph-up-arrow text-success"></i> เส้นแนวโน้ม % ประสิทธิภาพ
                     </div>
                     <canvas id="lineChart-@key" height="130"></canvas>
                 </div>
@@ -306,11 +306,11 @@ function initChartsForKey(key) {
         const maxIdx = d.sales.indexOf(maxSale);
         const validRates = d.rates.filter(r => r > 0);
         const avgRate = validRates.length ? (validRates.reduce((a,b) => a+b, 0) / validRates.length) : 0;
-        let txt = `<b>เธชเธฃเธธเธเธเธฅเธเธฒเธ:</b> เธขเธญเธ”เธเธฒเธขเธฃเธงเธก <b>${totalSales.toLocaleString('th-TH')}</b> เธเธฒเธ— | เน€เธ”เธทเธญเธเธ—เธตเนเธ”เธตเธ—เธตเนเธชเธธเธ”เธเธทเธญ <b>${monthsLabels[maxIdx] || ''}</b> (${maxSale.toLocaleString('th-TH')} เธเธฒเธ—)<br>`;
-        txt += `โ€ข เธเธฃเธฐเธชเธดเธ—เธเธดเธ เธฒเธเน€เธเธฅเธตเนเธข <b>${avgRate.toFixed(1)}%</b> `;
-        if (avgRate >= 85) txt += `<span class="text-success fw-bold">(เธเนเธฒเธเน€เธเธ“เธ‘เน 85% โ“)</span>`;
-        else if (avgRate >= 50) txt += `<span class="text-warning fw-bold">(เธเธฒเธเธเธฅเธฒเธ โ€” เธเธงเธฃเน€เธฃเนเธเธ•เธดเธ”เธ•เธฒเธก)</span>`;
-        else txt += `<span class="text-danger fw-bold">(เธ•เนเธณเธเธงเนเธฒเน€เธเธ“เธ‘เน โ€” เธ•เนเธญเธเน€เธฃเนเธเธ”เนเธงเธ โ ๏ธ)</span>`;
+        let txt = `<b>สรุปผลงาน:</b> ยอดขายรวม <b>${totalSales.toLocaleString('th-TH')}</b> บาท | เดือนที่ดีที่สุดคือ <b>${monthsLabels[maxIdx] || ''}</b> (${maxSale.toLocaleString('th-TH')} บาท)<br>`;
+        txt += `• ประสิทธิภาพเฉลี่ย <b>${avgRate.toFixed(1)}%</b> `;
+        if (avgRate >= 85) txt += `<span class="text-success fw-bold">(ผ่านเกณฑ์ 85% ✓)</span>`;
+        else if (avgRate >= 50) txt += `<span class="text-warning fw-bold">(ปานกลาง — ควรเร่งติดตาม)</span>`;
+        else txt += `<span class="text-danger fw-bold">(ต่ำกว่าเกณฑ์ — ต้องเร่งด่วน ⚠️)</span>`;
         insightEl.innerHTML = `<i class="bi bi-lightbulb-fill text-warning me-1"></i> ${txt}`;
         insightEl.dataset.done = '1';
     }
@@ -323,16 +323,16 @@ function initChartsForKey(key) {
             data: {
                 labels: monthsLabels,
                 datasets: [
-                    { label: 'เธขเธญเธ”เธเธฒเธข (เธเธฒเธ—)', data: d.sales, backgroundColor: 'rgba(2,132,199,0.85)', borderColor: '#0284c7', borderWidth:1.5, borderRadius:8, borderSkipped:false },
-                    { label: 'เธขเธญเธ”เน€เธเนเธเนเธ”เน (เธเธฒเธ—)', data: d.collected, backgroundColor: 'rgba(13,148,136,0.85)', borderColor: '#0d9488', borderWidth:1.5, borderRadius:8, borderSkipped:false },
-                    { label: 'เธซเธเธตเนเธเธเธเนเธฒเธ (เธเธฒเธ—)', data: d.debt, backgroundColor: 'rgba(225,29,72,0.85)', borderColor: '#e11d48', borderWidth:1.5, borderRadius:8, borderSkipped:false }
+                    { label: 'ยอดขาย (บาท)', data: d.sales, backgroundColor: 'rgba(2,132,199,0.85)', borderColor: '#0284c7', borderWidth:1.5, borderRadius:8, borderSkipped:false },
+                    { label: 'ยอดเก็บได้ (บาท)', data: d.collected, backgroundColor: 'rgba(13,148,136,0.85)', borderColor: '#0d9488', borderWidth:1.5, borderRadius:8, borderSkipped:false },
+                    { label: 'หนี้คงค้าง (บาท)', data: d.debt, backgroundColor: 'rgba(225,29,72,0.85)', borderColor: '#e11d48', borderWidth:1.5, borderRadius:8, borderSkipped:false }
                 ]
             },
             options: {
                 responsive: true,
                 plugins: {
                     legend: { position: 'top', labels: { font: { weight: 'bold', size: 12 } } },
-                    tooltip: { callbacks: { label: ctx => '  ' + ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString('th-TH') + ' เธเธฒเธ—' } }
+                    tooltip: { callbacks: { label: ctx => '  ' + ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString('th-TH') + ' บาท' } }
                 },
                 scales: { y: { beginAtZero:true, ticks: { callback: v => v >= 1000000 ? (v/1000000).toFixed(1)+'M' : (v/1000).toFixed(0)+'K' } } }
             }
@@ -347,8 +347,8 @@ function initChartsForKey(key) {
             data: {
                 labels: monthsLabels,
                 datasets: [
-                    { label: '% เธเธฃเธฐเธชเธดเธ—เธเธดเธ เธฒเธเธเธฒเธฃเน€เธเนเธเน€เธเธดเธ', data: d.rates, borderColor: '#0d9488', backgroundColor: 'rgba(13,148,136,0.15)', borderWidth:3.5, pointBackgroundColor: d.rates.map(r => r>0 && r<85 ? '#ef4444' : '#0d9488'), pointRadius: d.rates.map(r => r>0 && r<85 ? 8 : 6), fill:true, tension:0.3 },
-                    { label: 'เน€เธเนเธฒเธซเธกเธฒเธขเธกเธฒเธ•เธฃเธเธฒเธ (85%)', data: monthsLabels.map(() => 85), borderColor: '#ef4444', borderWidth:2, borderDash:[7,4], pointRadius:0, fill:false }
+                    { label: '% ประสิทธิภาพการเก็บเงิน', data: d.rates, borderColor: '#0d9488', backgroundColor: 'rgba(13,148,136,0.15)', borderWidth:3.5, pointBackgroundColor: d.rates.map(r => r>0 && r<85 ? '#ef4444' : '#0d9488'), pointRadius: d.rates.map(r => r>0 && r<85 ? 8 : 6), fill:true, tension:0.3 },
+                    { label: 'เป้าหมายมาตรฐาน (85%)', data: monthsLabels.map(() => 85), borderColor: '#ef4444', borderWidth:2, borderDash:[7,4], pointRadius:0, fill:false }
                 ]
             },
             options: {

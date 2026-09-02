@@ -1,13 +1,13 @@
-﻿@using RoyalD.Web.Services
+@using RoyalD.Web.Services
 @model RoyalD.Web.Services.AnnualPerformanceViewModel
 @{
-    ViewData["Title"] = "2. เธเธฃเธฒเธเธเธฅเธเธฒเธเธฃเธฒเธขเธเธนเนเนเธ—เธ (Charts)";
+    ViewData["Title"] = "2. กราฟผลงานรายผู้แทน (Charts)";
     var months = Model.Months;
     var allReps = Model.RepReports;
     var overall = Model.OverallCompany;
     bool isAdmin = User.IsInRole("admin");
     var canDownloadClaim = ViewContext.HttpContext.User.FindFirst("CanDownload")?.Value;
-    bool isSalesRepRole = User.HasClaim(c => c.Type == "Position" && (c.Value.Contains("เธเธนเนเนเธ—เธ") || c.Value.Contains("เธเธเธฑเธเธเธฒเธเธเธฒเธข"))) && !isAdmin;
+    bool isSalesRepRole = User.HasClaim(c => c.Type == "Position" && (c.Value.Contains("ผู้แทน") || c.Value.Contains("พนักงานขาย"))) && !isAdmin;
     bool canDownload = (isAdmin || canDownloadClaim == "true") && !isSalesRepRole;
 }
 
@@ -45,22 +45,22 @@
 <!-- Sub-Tabs Navigation Header -->
 <div class="sales-subnav no-print">
     <a href="/SalesReport/Summary" class="subnav-item">
-        <i class="bi bi-table me-2"></i> 1. เธชเธฃเธธเธเธขเธญเธ”เธเธฒเธข-เธขเธญเธ”เน€เธเนเธเน€เธเธดเธ (Pivot Matrix)
+        <i class="bi bi-table me-2"></i> 1. สรุปยอดขาย-ยอดเก็บเงิน (Pivot Matrix)
     </a>
     <a href="/SalesReport/Charts" class="subnav-item active">
-        <i class="bi bi-bar-chart-line me-2"></i> 2. เธเธฃเธฒเธเธเธฅเธเธฒเธเธฃเธฒเธขเธเธนเนเนเธ—เธ (Charts)
+        <i class="bi bi-bar-chart-line me-2"></i> 2. กราฟผลงานรายผู้แทน (Charts)
     </a>
     <a href="/SalesReport/ProductDetails" class="subnav-item">
-        <i class="bi bi-box-seam me-2"></i> 3. เธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”เธชเธดเธเธเนเธฒเธ—เธตเนเธเธฒเธข (Product Details)
+        <i class="bi bi-box-seam me-2"></i> 3. รายละเอียดสินค้าที่ขาย (Product Details)
     </a>
     @if (!isSalesRepRole)
     {
         <a href="/SalesReport/Compare" class="subnav-item">
-            <i class="bi bi-people me-2"></i> 4. เธเธฃเธฒเธเน€เธเธฃเธตเธขเธเน€เธ—เธตเธขเธเธเธนเนเนเธ—เธเธเธฒเธข
+            <i class="bi bi-people me-2"></i> 4. กราฟเปรียบเทียบผู้แทนขาย
         </a>
     }
     <a href="/SalesReport/CustomerPurchaseSummary" class="subnav-item">
-        <i class="bi bi-person-lines-fill me-2"></i> 5. เธชเธฃเธธเธเธเธฒเธฃเธเธทเนเธญเธฃเธฒเธขเธฅเธนเธเธเนเธฒ
+        <i class="bi bi-person-lines-fill me-2"></i> 5. สรุปการซื้อรายลูกค้า
     </a>
 </div>
 
@@ -68,9 +68,9 @@
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 export-bar">
     <div>
         <h3 class="mb-1 fw-bold" style="color:#065f46;">
-            <i class="bi bi-graph-up" style="color:#059669;"></i> เธเธฃเธฒเธเธเธฅเธเธฒเธเธฃเธฒเธขเธเธธเธเธเธฅ
+            <i class="bi bi-graph-up" style="color:#059669;"></i> กราฟผลงานรายบุคคล
         </h3>
-        <span class="text-muted fw-semibold">เนเธชเธ”เธเธเธฅเนเธเธ Infographic Dashboard เธชเธณเธซเธฃเธฑเธเธ เธฒเธเธฃเธงเธกเนเธฅเธฐเธฃเธฒเธขเธเธธเธเธเธฅ</span>
+        <span class="text-muted fw-semibold">แสดงผลแบบ Infographic Dashboard สำหรับภาพรวมและรายบุคคล</span>
     </div>
     
     @if (canDownload)
@@ -92,19 +92,19 @@
         <div class="row align-items-center g-2">
             <div class="col-md-auto">
                 <span class="fw-bold" style="color:#065f46; font-size:0.95rem;">
-                    <i class="bi bi-person-badge-fill me-1 text-success"></i> เน€เธฅเธทเธญเธเธเธนเนเนเธ—เธเธเธฒเธข:
+                    <i class="bi bi-person-badge-fill me-1 text-success"></i> เลือกผู้แทนขาย:
                 </span>
             </div>
             <div class="col-md-4 col-lg-3">
                 <select class="form-select form-select-sm fw-bold shadow-sm" id="repSelectDropdown" onchange="selectRep(this.value)" style="border:2px solid #10b981; border-radius:10px; color:#065f46;" @(isSalesRepRole ? "disabled" : "")>
-                    @if (!isSalesRepRole) { <option value="overall" selected>๐ข เธ เธฒเธเธฃเธงเธกเธ—เธธเธเธเธ (เธฃเธงเธกเธ—เธฑเนเธเธเธฃเธดเธฉเธฑเธ—)</option> }
+                    @if (!isSalesRepRole) { <option value="overall" selected>🏢 ภาพรวมทุกคน (รวมทั้งบริษัท)</option> }
                     @for (int ri = 0; ri < allReps.Count; ri++)
                     {
                         var repName = allReps[ri].SalesRep;
                         // For sales rep role, select only their own data
                         var currentUserName = User.FindFirst("FullName")?.Value ?? User.Identity.Name;
-                        if (isSalesRepRole && repName == currentUserName) { <option value="@ri" selected>๐‘ค @repName</option> }
-                        else if (!isSalesRepRole) { <option value="@ri">๐‘ค @repName</option> }
+                        if (isSalesRepRole && repName == currentUserName) { <option value="@ri" selected>👤 @repName</option> }
+                        else if (!isSalesRepRole) { <option value="@ri">👤 @repName</option> }
                     }
                 </select>
             </div>
@@ -119,33 +119,33 @@
     <div class="row g-3 mb-4">
         <div class="col-md-3 col-sm-6">
             <div class="kpi-card kpi-sales">
-                <div class="kpi-title">เธขเธญเธ”เธเธฒเธขเธฃเธงเธกเธ—เธฑเนเธเธซเธกเธ” (เธเธฒเธ—)</div>
+                <div class="kpi-title">ยอดขายรวมทั้งหมด (บาท)</div>
                 <div class="kpi-value" id="kpi-sales-val">0</div>
-                <div class="kpi-sub text-muted">เธ•เธฅเธญเธ”เธเนเธงเธ 8 เน€เธ”เธทเธญเธ</div>
+                <div class="kpi-sub text-muted">ตลอดช่วง 8 เดือน</div>
                 <i class="bi bi-bag-fill kpi-icon"></i>
             </div>
         </div>
         <div class="col-md-3 col-sm-6">
             <div class="kpi-card kpi-collect">
-                <div class="kpi-title">เธขเธญเธ”เน€เธเนเธเน€เธเธดเธเธฃเธงเธก (เธเธฒเธ—)</div>
+                <div class="kpi-title">ยอดเก็บเงินรวม (บาท)</div>
                 <div class="kpi-value" id="kpi-collect-val">0</div>
-                <div class="kpi-sub text-muted">เธเธฒเธเธขเธญเธ”เธเธฒเธขเธ—เธฑเนเธเธซเธกเธ”</div>
+                <div class="kpi-sub text-muted">จากยอดขายทั้งหมด</div>
                 <i class="bi bi-cash-coin kpi-icon"></i>
             </div>
         </div>
         <div class="col-md-3 col-sm-6">
             <div class="kpi-card kpi-debt">
-                <div class="kpi-title">เธซเธเธตเนเธเธเธเนเธฒเธเธฃเธงเธก (เธเธฒเธ—)</div>
+                <div class="kpi-title">หนี้คงค้างรวม (บาท)</div>
                 <div class="kpi-value" id="kpi-debt-val">0</div>
-                <div class="kpi-sub text-muted">เธ—เธตเนเธขเธฑเธเน€เธฃเธตเธขเธเน€เธเนเธเนเธกเนเนเธ”เน</div>
+                <div class="kpi-sub text-muted">ที่ยังเรียกเก็บไม่ได้</div>
                 <i class="bi bi-exclamation-octagon-fill kpi-icon"></i>
             </div>
         </div>
         <div class="col-md-3 col-sm-6">
             <div class="kpi-card kpi-rate">
-                <div class="kpi-title">เธเธฃเธฐเธชเธดเธ—เธเธดเธ เธฒเธเธเธฒเธฃเน€เธเนเธเน€เธเธดเธ (%)</div>
+                <div class="kpi-title">ประสิทธิภาพการเก็บเงิน (%)</div>
                 <div class="kpi-value" id="kpi-rate-val">0%</div>
-                <div class="kpi-sub text-muted" id="kpi-rate-sub">เธเธฃเธฐเน€เธกเธดเธเธเธฅ: -</div>
+                <div class="kpi-sub text-muted" id="kpi-rate-sub">ประเมินผล: -</div>
                 <i class="bi bi-speedometer2 kpi-icon"></i>
             </div>
         </div>
@@ -156,7 +156,7 @@
         <div class="col-lg-8">
             <div class="chart-card h-100 mb-0 d-flex flex-column">
                 <div class="chart-header">
-                    <i class="bi bi-bar-chart-fill text-primary me-2"></i> เธเธฃเธฒเธเนเธ—เนเธเน€เธเธฃเธตเธขเธเน€เธ—เธตเธขเธเธขเธญเธ”เธเธฒเธข vs เน€เธเนเธเน€เธเธดเธ vs เธซเธเธตเนเธเธเธเนเธฒเธ
+                    <i class="bi bi-bar-chart-fill text-primary me-2"></i> กราฟแท่งเปรียบเทียบยอดขาย vs เก็บเงิน vs หนี้คงค้าง
                 </div>
                 <div style="position:relative; flex-grow:1; min-height:280px;">
                     <canvas id="mainBarChart"></canvas>
@@ -167,13 +167,13 @@
         <div class="col-lg-4">
             <div class="chart-card h-100 mb-0 d-flex flex-column">
                 <div class="chart-header">
-                    <i class="bi bi-speedometer text-success me-2"></i> เธชเธฑเธ”เธชเนเธงเธเธเธงเธฒเธกเธชเธณเน€เธฃเนเธ
+                    <i class="bi bi-speedometer text-success me-2"></i> สัดส่วนความสำเร็จ
                 </div>
                 <div style="position:relative; flex-grow:1; display:flex; justify-content:center; align-items:center; min-height:220px;">
                     <canvas id="doughnutChart"></canvas>
                 </div>
                 <div class="text-center mt-3 text-muted small fw-bold">
-                    * เธญเธฑเธ•เธฃเธฒเธชเนเธงเธ เน€เธเธฃเธตเธขเธเน€เธ—เธตเธขเธเธขเธญเธ”เน€เธเนเธเนเธ”เนเธเธฑเธเธซเธเธตเนเธเนเธฒเธ
+                    * อัตราส่วน เปรียบเทียบยอดเก็บได้กับหนี้ค้าง
                 </div>
             </div>
         </div>
@@ -183,7 +183,7 @@
         <div class="col-12">
             <div class="chart-card">
                 <div class="chart-header">
-                    <i class="bi bi-graph-up-arrow text-warning me-2"></i> เน€เธชเนเธเนเธเธงเนเธเนเธกเธเธฃเธฐเธชเธดเธ—เธเธดเธ เธฒเธเธเธฒเธฃเน€เธเนเธเน€เธเธดเธ (%) เธฃเธฒเธขเน€เธ”เธทเธญเธ
+                    <i class="bi bi-graph-up-arrow text-warning me-2"></i> เส้นแนวโน้มประสิทธิภาพการเก็บเงิน (%) รายเดือน
                 </div>
                 <div style="position:relative; height:250px;">
                     <canvas id="trendLineChart"></canvas>
@@ -201,7 +201,7 @@
 const monthsLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Months));
 const repsDataStore = {
     "overall": {
-        name: "เธ เธฒเธเธฃเธงเธกเธ—เธฑเนเธเธซเธกเธ”",
+        name: "ภาพรวมทั้งหมด",
         sales: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OverallCompany.MonthlyData.Select(m => m.TotalSales).ToList())),
         collected: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OverallCompany.MonthlyData.Select(m => m.TotalCollected).ToList())),
         debt: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OverallCompany.MonthlyData.Select(m => m.Outstanding).ToList())),
@@ -248,18 +248,18 @@ function updateDashboard(key) {
     const rateEl = document.getElementById('kpi-rate-val');
     const rateSub = document.getElementById('kpi-rate-sub');
     rateEl.innerText = d.totRate + '%';
-    if(d.totRate >= 85) { rateEl.style.color = '#059669'; rateSub.innerHTML = '<span class="text-success">เธเธฃเธฐเน€เธกเธดเธ: เธ”เธตเน€เธขเธตเนเธขเธก เธเนเธฒเธเน€เธเธ“เธ‘เน</span>'; }
-    else if(d.totRate >= 50) { rateEl.style.color = '#d97706'; rateSub.innerHTML = '<span class="text-warning">เธเธฃเธฐเน€เธกเธดเธ: เธเธฒเธเธเธฅเธฒเธ (เน€เธเนเธฒเธฃเธฐเธงเธฑเธ)</span>'; }
-    else { rateEl.style.color = '#e11d48'; rateSub.innerHTML = '<span class="text-danger fw-bold">เธเธฃเธฐเน€เธกเธดเธ: เธ•เนเธณเธเธงเนเธฒเน€เธเธ“เธ‘เน เธ•เนเธญเธเน€เธฃเนเธเธ”เนเธงเธ!</span>'; }
+    if(d.totRate >= 85) { rateEl.style.color = '#059669'; rateSub.innerHTML = '<span class="text-success">ประเมิน: ดีเยี่ยม ผ่านเกณฑ์</span>'; }
+    else if(d.totRate >= 50) { rateEl.style.color = '#d97706'; rateSub.innerHTML = '<span class="text-warning">ประเมิน: ปานกลาง (เฝ้าระวัง)</span>'; }
+    else { rateEl.style.color = '#e11d48'; rateSub.innerHTML = '<span class="text-danger fw-bold">ประเมิน: ต่ำกว่าเกณฑ์ ต้องเร่งด่วน!</span>'; }
 
     // 2. Auto Insight
     const insightEl = document.getElementById('main-insight-box');
     const maxSale = Math.max(...d.sales);
     const maxIdx = d.sales.indexOf(maxSale);
-    let msg = `<b>เธชเธฃเธธเธเธขเธญเธ”เธเธฃเธฐเธเธณเธ•เธฑเธงเธเธนเนเนเธ—เธ (${d.name}):</b> เธขเธญเธ”เธเธฒเธขเธชเธนเธเธชเธธเธ”เน€เธเธดเธ”เธเธถเนเธเนเธเน€เธ”เธทเธญเธ <b>${monthsLabels[maxIdx]}</b> (${maxSale.toLocaleString('th-TH')} เธเธฒเธ—) <br>`;
-    msg += `เธขเธญเธ”เน€เธเนเธเธฃเธงเธก <b>${d.totCol.toLocaleString('th-TH')}</b> เธเธฒเธ— เธเธดเธ”เน€เธเนเธ <b>${d.totRate}%</b> เธเธญเธเธขเธญเธ”เธเธฒเธข `;
-    if(d.totRate < 85) msg += `<span class="text-danger fw-bold">เธเธถเนเธเธขเธฑเธเธ•เนเธณเธเธงเนเธฒเน€เธเนเธฒเธซเธกเธฒเธข 85% เธกเธตเธซเธเธตเนเธเนเธฒเธเธญเธตเธ ${d.totDebt.toLocaleString('th-TH')} เธเธฒเธ— เธ—เธตเนเธ•เนเธญเธเธ•เธดเธ”เธ•เธฒเธก</span>`;
-    else msg += `<span class="text-success fw-bold">เธญเธขเธนเนเนเธเน€เธเธ“เธ‘เนเธ”เธตเน€เธขเธตเนเธขเธก (โฅ 85%)</span>`;
+    let msg = `<b>สรุปยอดประจำตัวผู้แทน (${d.name}):</b> ยอดขายสูงสุดเกิดขึ้นในเดือน <b>${monthsLabels[maxIdx]}</b> (${maxSale.toLocaleString('th-TH')} บาท) <br>`;
+    msg += `ยอดเก็บรวม <b>${d.totCol.toLocaleString('th-TH')}</b> บาท คิดเป็น <b>${d.totRate}%</b> ของยอดขาย `;
+    if(d.totRate < 85) msg += `<span class="text-danger fw-bold">ซึ่งยังต่ำกว่าเป้าหมาย 85% มีหนี้ค้างอีก ${d.totDebt.toLocaleString('th-TH')} บาท ที่ต้องติดตาม</span>`;
+    else msg += `<span class="text-success fw-bold">อยู่ในเกณฑ์ดีเยี่ยม (≥ 85%)</span>`;
     insightEl.innerHTML = `<i class="bi bi-megaphone-fill text-warning me-2"></i> ${msg}`;
 
     // 3. Update Bar Chart
@@ -275,9 +275,9 @@ function updateDashboard(key) {
             data: {
                 labels: monthsLabels,
                 datasets: [
-                    { label: 'เธขเธญเธ”เธเธฒเธข', data: d.sales, backgroundColor: '#38bdf8', borderRadius:4 },
-                    { label: 'เน€เธเนเธเน€เธเธดเธเนเธ”เน', data: d.collected, backgroundColor: '#34d399', borderRadius:4 },
-                    { label: 'เธซเธเธตเนเธเนเธฒเธ', data: d.debt, backgroundColor: '#fb7185', borderRadius:4 }
+                    { label: 'ยอดขาย', data: d.sales, backgroundColor: '#38bdf8', borderRadius:4 },
+                    { label: 'เก็บเงินได้', data: d.collected, backgroundColor: '#34d399', borderRadius:4 },
+                    { label: 'หนี้ค้าง', data: d.debt, backgroundColor: '#fb7185', borderRadius:4 }
                 ]
             },
             options: {
@@ -297,7 +297,7 @@ function updateDashboard(key) {
         doughnutChart = new Chart(ctx2, {
             type: 'doughnut',
             data: {
-                labels: ['เน€เธเนเธเนเธ”เนเธชเธณเน€เธฃเนเธ', 'เธซเธเธตเนเธเธเธเนเธฒเธ'],
+                labels: ['เก็บได้สำเร็จ', 'หนี้คงค้าง'],
                 datasets: [{ data: [d.totCol, d.totDebt], backgroundColor: ['#10b981', '#f43f5e'], borderWidth:2, borderColor:'#fff', hoverOffset:4 }]
             },
             options: {
@@ -318,8 +318,8 @@ function updateDashboard(key) {
             data: {
                 labels: monthsLabels,
                 datasets: [
-                    { label: '% เน€เธเนเธเน€เธเธดเธ', data: d.rates, borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,0.1)', borderWidth:3, pointBackgroundColor:'#f59e0b', pointRadius:5, fill:true, tension:0.4 },
-                    { label: 'เน€เธเธ“เธ‘เน (85%)', data: monthsLabels.map(()=>85), borderColor:'#ef4444', borderDash:[5,5], borderWidth:2, pointRadius:0, fill:false }
+                    { label: '% เก็บเงิน', data: d.rates, borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,0.1)', borderWidth:3, pointBackgroundColor:'#f59e0b', pointRadius:5, fill:true, tension:0.4 },
+                    { label: 'เกณฑ์ (85%)', data: monthsLabels.map(()=>85), borderColor:'#ef4444', borderDash:[5,5], borderWidth:2, pointRadius:0, fill:false }
                 ]
             },
             options: {

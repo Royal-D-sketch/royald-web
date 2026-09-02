@@ -1,10 +1,10 @@
-﻿@using RoyalD.Web.Services
+@using RoyalD.Web.Services
 @model RoyalD.Web.Services.AnnualPerformanceViewModel
 @{
-    ViewData["Title"] = "4. เธเธฃเธฒเธเน€เธเธฃเธตเธขเธเน€เธ—เธตเธขเธเธเธนเนเนเธ—เธเธเธฒเธข (Compare)";
-    bool isSalesRepRole = User.HasClaim(c => c.Type == "Position" && (c.Value.Contains("เธเธนเนเนเธ—เธ") || c.Value.Contains("เธเธเธฑเธเธเธฒเธเธเธฒเธข"))) && !User.IsInRole("admin");
+    ViewData["Title"] = "4. กราฟเปรียบเทียบผู้แทนขาย (Compare)";
+    bool isSalesRepRole = User.HasClaim(c => c.Type == "Position" && (c.Value.Contains("ผู้แทน") || c.Value.Contains("พนักงานขาย"))) && !User.IsInRole("admin");
     bool canDownload = (User.IsInRole("admin") 
-                        || User.HasClaim(c => c.Type == "Position" && (c.Value.ToLower().Contains("manager") || c.Value.Contains("เธเธนเนเธเธฑเธ”"))) 
+                        || User.HasClaim(c => c.Type == "Position" && (c.Value.ToLower().Contains("manager") || c.Value.Contains("ผู้จัด"))) 
                         || User.HasClaim(c => c.Type == "CanDownload" && c.Value == "true")) 
                         && !isSalesRepRole;
 }
@@ -32,22 +32,22 @@
 <!-- Sub-Tabs Navigation Header -->
 <div class="sales-subnav no-print">
     <a href="/SalesReport/Summary" class="subnav-item">
-        <i class="bi bi-table me-2"></i> 1. เธชเธฃเธธเธเธขเธญเธ”เธเธฒเธข-เธขเธญเธ”เน€เธเนเธเน€เธเธดเธ
+        <i class="bi bi-table me-2"></i> 1. สรุปยอดขาย-ยอดเก็บเงิน
     </a>
     <a href="/SalesReport/Charts" class="subnav-item">
-        <i class="bi bi-bar-chart-line me-2"></i> 2. เธเธฃเธฒเธเธเธฅเธเธฒเธเธฃเธฒเธขเธเธนเนเนเธ—เธ
+        <i class="bi bi-bar-chart-line me-2"></i> 2. กราฟผลงานรายผู้แทน
     </a>
     <a href="/SalesReport/ProductDetails" class="subnav-item">
-        <i class="bi bi-box-seam me-2"></i> 3. เธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”เธชเธดเธเธเนเธฒเธ—เธตเนเธเธฒเธข
+        <i class="bi bi-box-seam me-2"></i> 3. รายละเอียดสินค้าที่ขาย
     </a>
     @if (!isSalesRepRole)
     {
         <a href="/SalesReport/Compare" class="subnav-item active">
-            <i class="bi bi-people me-2"></i> 4. เธเธฃเธฒเธเน€เธเธฃเธตเธขเธเน€เธ—เธตเธขเธเธเธนเนเนเธ—เธเธเธฒเธข
+            <i class="bi bi-people me-2"></i> 4. กราฟเปรียบเทียบผู้แทนขาย
         </a>
     }
     <a href="/SalesReport/CustomerPurchaseSummary" class="subnav-item">
-        <i class="bi bi-person-lines-fill me-2"></i> 5. เธชเธฃเธธเธเธเธฒเธฃเธเธทเนเธญเธฃเธฒเธขเธฅเธนเธเธเนเธฒ
+        <i class="bi bi-person-lines-fill me-2"></i> 5. สรุปการซื้อรายลูกค้า
     </a>
 </div>
 
@@ -55,18 +55,18 @@
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 export-bar">
     <div>
         <h3 class="mb-1 fw-bold" style="color:#065f46;">
-            <i class="bi bi-graph-up-arrow" style="color:#059669;"></i> เธเธฃเธฒเธเน€เธเธฃเธตเธขเธเน€เธ—เธตเธขเธเธเธฅเธเธฒเธเธเธนเนเนเธ—เธเธเธฒเธข (Compare)
+            <i class="bi bi-graph-up-arrow" style="color:#059669;"></i> กราฟเปรียบเทียบผลงานผู้แทนขาย (Compare)
         </h3>
-        <span class="text-muted fw-semibold">เน€เธฅเธทเธญเธเธเธนเนเนเธ—เธเธเธฒเธขเธซเธฅเธฒเธขเธเธเน€เธเธทเนเธญเน€เธเธฃเธตเธขเธเน€เธ—เธตเธขเธเธขเธญเธ”เธเธฒเธขเนเธฅเธฐเธเธฒเธฃเน€เธเนเธเน€เธเธดเธเธฃเธฒเธขเน€เธ”เธทเธญเธ</span>
+        <span class="text-muted fw-semibold">เลือกผู้แทนขายหลายคนเพื่อเปรียบเทียบยอดขายและการเก็บเงินรายเดือน</span>
     </div>
     
     @if (canDownload)
     {
         <div class="d-flex gap-2 no-print">
-            <button onclick="downloadScreenCapture('chart-capture-area')" class="btn btn-outline-success btn-sm fw-bold px-3 py-2 shadow-sm" title="เธเธฑเธเธ—เธถเธเธ เธฒเธเธเธฃเธฒเธ">
+            <button onclick="downloadScreenCapture('chart-capture-area')" class="btn btn-outline-success btn-sm fw-bold px-3 py-2 shadow-sm" title="บันทึกภาพกราฟ">
                 <i class="bi bi-image me-1"></i> Download PNG
             </button>
-            <button onclick="window.print()" class="btn btn-outline-danger btn-sm fw-bold px-3 py-2 shadow-sm" title="เธชเธฑเนเธเธเธดเธกเธเนเน€เธเนเธเน€เธญเธเธชเธฒเธฃ PDF">
+            <button onclick="window.print()" class="btn btn-outline-danger btn-sm fw-bold px-3 py-2 shadow-sm" title="สั่งพิมพ์เป็นเอกสาร PDF">
                 <i class="bi bi-file-earmark-pdf me-1"></i> Export PDF
             </button>
         </div>
@@ -78,7 +78,7 @@
     <div class="row align-items-end g-3">
         <div class="col-md-5">
             <label class="form-label fw-bold text-dark mb-1">
-                <i class="bi bi-check2-square text-primary"></i> เน€เธฅเธทเธญเธเธเธนเนเนเธ—เธเธเธฒเธข (เน€เธฅเธทเธญเธเนเธ”เนเธซเธฅเธฒเธขเธเธ)
+                <i class="bi bi-check2-square text-primary"></i> เลือกผู้แทนขาย (เลือกได้หลายคน)
             </label>
             <div class="border bg-white rounded px-3 py-2" style="max-height:160px; overflow-y:auto;">
                 @for(int i=0; i<Model.RepReports.Count; i++)
@@ -92,17 +92,17 @@
                 }
             </div>
             <div class="mt-2 text-end">
-                <button class="btn btn-sm btn-outline-secondary" onclick="document.querySelectorAll('.rep-checkbox').forEach(cb => cb.checked = false); updateCompareChart();">เน€เธเธฅเธตเธขเธฃเนเธ—เธฑเนเธเธซเธกเธ”</button>
-                <button class="btn btn-sm btn-outline-primary" onclick="document.querySelectorAll('.rep-checkbox').forEach(cb => cb.checked = true); updateCompareChart();">เน€เธฅเธทเธญเธเธ—เธฑเนเธเธซเธกเธ”</button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="document.querySelectorAll('.rep-checkbox').forEach(cb => cb.checked = false); updateCompareChart();">เคลียร์ทั้งหมด</button>
+                <button class="btn btn-sm btn-outline-primary" onclick="document.querySelectorAll('.rep-checkbox').forEach(cb => cb.checked = true); updateCompareChart();">เลือกทั้งหมด</button>
             </div>
         </div>
         
         <div class="col-md-4">
             <label class="form-label fw-bold text-dark mb-1">
-                <i class="bi bi-calendar-event text-success"></i> เน€เธฅเธทเธญเธเธเนเธญเธกเธนเธฅเน€เธ”เธทเธญเธเธ—เธตเนเธ•เนเธญเธเธเธฒเธฃ
+                <i class="bi bi-calendar-event text-success"></i> เลือกข้อมูลเดือนที่ต้องการ
             </label>
             <select class="form-select fw-bold shadow-sm" id="monthSelector" onchange="updateCompareChart()" style="border-radius:10px;">
-                <option value="-1">เธ—เธธเธเน€เธ”เธทเธญเธ (เธฃเธงเธกเน€เธเธฅเธตเนเธขเธขเธญเธ”เธฃเธงเธก 8 เน€เธ”เธทเธญเธ)</option>
+                <option value="-1">ทุกเดือน (รวมเฉลี่ยยอดรวม 8 เดือน)</option>
                 @for(int i=0; i<Model.Months.Count; i++)
                 {
                     @if(i==0){<option value="@i" selected>@Model.Months[i]</option>}else{<option value="@i">@Model.Months[i]</option>}
@@ -112,7 +112,7 @@
         
         <div class="col-md-3">
             <div class="p-3 bg-white border rounded text-center h-100 d-flex flex-column justify-content-center shadow-sm">
-                <h6 class="text-muted fw-bold mb-1">เธเธณเธเธงเธเธ—เธตเนเน€เธฅเธทเธญเธ</h6>
+                <h6 class="text-muted fw-bold mb-1">จำนวนที่เลือก</h6>
                 <h2 class="mb-0 text-primary fw-bolder" id="selectedCountDisplay">0</h2>
             </div>
         </div>
@@ -121,7 +121,7 @@
 
 <div id="chart-capture-area">
     <div class="chart-card mb-4">
-        <h5 class="fw-bold mb-4 text-dark text-center" id="chartTitleDisplay">เน€เธเธฃเธตเธขเธเน€เธ—เธตเธขเธเธขเธญเธ”เธเธฒเธขเนเธฅเธฐเธซเธเธตเนเธเธเธเนเธฒเธ</h5>
+        <h5 class="fw-bold mb-4 text-dark text-center" id="chartTitleDisplay">เปรียบเทียบยอดขายและหนี้คงค้าง</h5>
         <div style="position:relative; height:450px;">
             <canvas id="compareBarChart"></canvas>
         </div>
@@ -175,11 +175,11 @@ function updateCompareChart() {
     const mIdx = parseInt(mSelect.value);
     const mName = mSelect.options[mSelect.selectedIndex].text;
     
-    document.getElementById('chartTitleDisplay').innerText = `เน€เธเธฃเธตเธขเธเน€เธ—เธตเธขเธเธขเธญเธ”เธเธฒเธขเนเธฅเธฐเธขเธญเธ”เธซเธเธตเน โ€” ${mName}`;
+    document.getElementById('chartTitleDisplay').innerText = `เปรียบเทียบยอดขายและยอดหนี้ — ${mName}`;
     
     if(selectedIds.length === 0) {
         if(compareChart) compareChart.destroy(); compareChart = null;
-        document.getElementById('compare-insight-box').innerHTML = 'เธเธฃเธธเธ“เธฒเน€เธฅเธทเธญเธเธเธนเนเนเธ—เธเธเธฒเธขเธญเธขเนเธฒเธเธเนเธญเธข 1 เธเธ';
+        document.getElementById('compare-insight-box').innerHTML = 'กรุณาเลือกผู้แทนขายอย่างน้อย 1 คน';
         return;
     }
 
@@ -211,7 +211,7 @@ function updateCompareChart() {
     // Auto insight
     const insightEl = document.getElementById('compare-insight-box');
     if(topSeller) {
-        insightEl.innerHTML = `<i class="bi bi-trophy-fill text-warning me-2"></i> <b>เธงเธดเน€เธเธฃเธฒเธฐเธซเนเธเนเธญเธกเธนเธฅเน€เธเธฃเธตเธขเธเน€เธ—เธตเธขเธ:</b> เนเธเธเนเธงเธเน€เธงเธฅเธฒ <b>${mName}</b> เธเธนเนเธ—เธตเนเธกเธตเธขเธญเธ”เธเธฒเธขเธชเธนเธเธชเธธเธ”เนเธเธเธฅเธธเนเธกเธ—เธตเนเน€เธฅเธทเธญเธเธเธทเธญ <b>${topSeller}</b> (${maxSale.toLocaleString('th-TH')} เธเธฒเธ—)`;
+        insightEl.innerHTML = `<i class="bi bi-trophy-fill text-warning me-2"></i> <b>วิเคราะห์ข้อมูลเปรียบเทียบ:</b> ในช่วงเวลา <b>${mName}</b> ผู้ที่มียอดขายสูงสุดในกลุ่มที่เลือกคือ <b>${topSeller}</b> (${maxSale.toLocaleString('th-TH')} บาท)`;
     }
 
     if (compareChart) {
@@ -226,15 +226,15 @@ function updateCompareChart() {
             data: {
                 labels: labels,
                 datasets: [
-                    { label: 'เธขเธญเธ”เธเธฒเธข', data: salesData, backgroundColor: '#38bdf8', borderRadius:4 },
-                    { label: 'เธซเธเธตเนเธเนเธฒเธ', data: debtData, backgroundColor: '#fb7185', borderRadius:4 }
+                    { label: 'ยอดขาย', data: salesData, backgroundColor: '#38bdf8', borderRadius:4 },
+                    { label: 'หนี้ค้าง', data: debtData, backgroundColor: '#fb7185', borderRadius:4 }
                 ]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
                 plugins: {
                     legend: { position: 'top', labels: { font: { size:14, weight:'bold' } } },
-                    tooltip: { callbacks: { label: c => c.dataset.label + ': ' + c.parsed.y.toLocaleString('th-TH') + ' เธเธฒเธ—' } }
+                    tooltip: { callbacks: { label: c => c.dataset.label + ': ' + c.parsed.y.toLocaleString('th-TH') + ' บาท' } }
                 },
                 scales: {
                     x: { ticks: { font: { size: 12, weight:'bold' } } },
