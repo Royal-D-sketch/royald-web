@@ -1,8 +1,43 @@
-﻿/* Royal-D Debtor System - Custom CSS */
-html { font-size: 15px; }
+/* Royal-D Debtor System - Custom CSS */
+/* ============================================================
+   THAI FONT STACK — Sarabun (Google) → Noto Sans Thai → System
+   ============================================================ */
+html {
+    font-size: 15px;
+}
 
 body {
-    font-family: 'Sarabun', 'Noto Sans Thai', 'TH Sarabun New', sans-serif;
+    /* ลำดับ fallback:
+       1. Sarabun จาก Google Fonts (โหลดผ่าน internet)
+       2. Noto Sans Thai จาก Google Fonts (fallback)
+       3. Leelawadee UI / Tahoma — ฟอนต์ไทยที่ Windows ติดตั้งมาแต่แรก
+       4. system-ui, Arial — fallback สากล (ยังแสดง Thai ได้ถ้า OS support) */
+    font-family:
+        'Sarabun',
+        'Noto Sans Thai',
+        'Leelawadee UI',
+        'Leelawadee',
+        'Tahoma',
+        'Microsoft Sans Serif',
+        'Segoe UI',
+        system-ui,
+        -apple-system,
+        Arial,
+        sans-serif;
+    /* ป้องกันปัญหา font-size ไม่แสดงถูกต้อง */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* ===== Force Thai font ทุก element ===== */
+*, *::before, *::after {
+    font-family: inherit;
+}
+
+/* table, form, button override ถ้า browser reset ค่า */
+table, input, textarea, select, button, .btn {
+    font-family: inherit !important;
 }
 
 /* ===== Debt Aging Highlight ===== */
@@ -25,9 +60,9 @@ body {
 
 /* ===== Pulse animation for critical ===== */
 @keyframes pulse-danger {
-    0% { box-shadow: 0 0 0 0 rgba(139, 0, 0, 0.7); }
-    70% { box-shadow: 0 0 0 8px rgba(139, 0, 0, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(139, 0, 0, 0); }
+    0%   { box-shadow: 0 0 0 0   rgba(139, 0, 0, 0.7); }
+    70%  { box-shadow: 0 0 0 8px rgba(139, 0, 0, 0);   }
+    100% { box-shadow: 0 0 0 0   rgba(139, 0, 0, 0);   }
 }
 .card-aging-critical {
     animation: pulse-danger 2s infinite;
@@ -36,16 +71,19 @@ body {
 /* ===== Scrollbar ===== */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #f1f1f1; }
-::-webkit-scrollbar-thumb { background: #0070B9; border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: #0d9488; border-radius: 3px; }
 
 /* ===== Table ===== */
 .table-sm td, .table-sm th { vertical-align: middle; }
 
 /* ===== Print ===== */
 @media print {
-    .no-print { display: none !important; }
-    .sidebar { display: none !important; }
-    .navbar { display: none !important; }
+    .no-print    { display: none !important; }
+    .sidebar     { display: none !important; }
+    .navbar      { display: none !important; }
     .main-content { margin: 0 !important; padding: 0 !important; }
-    body { font-size: 11pt; }
+    body {
+        font-size: 11pt;
+        font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-serif !important;
+    }
 }
