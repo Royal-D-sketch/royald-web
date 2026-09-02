@@ -609,7 +609,7 @@ else if (overdue120)
                                 <option value="Return" selected="@(debt?.Status == DebtStatus.ReturnIssued || debt?.Status == DebtStatus.ReturnPending)">รับคืนสินค้า (Return)</option>
                                 <option value="Consignment" selected="@(debt?.Status == DebtStatus.Consignment)">สินค้าฝากขาย (Consignment)</option>
                                 <option value="BadDebt" selected="@(debt?.Status == DebtStatus.BadDebt)">หนี้สูญ (Bad Debt)</option>
-                                <option value="Cancelled" style="color:red; font-weight:bold;">❌ บิลนี้ยกเลิก (ย้ายไปบิลยกเลิก 40 วัน)</option>
+                                <option value="Cancelled" style="color:red; font-weight:bold;">❌ บิลนี้ยกเลิก (ย้ายไปบิลยกเลิก 30 วัน)</option>
                             </select>
                         </div>
 
@@ -727,7 +727,7 @@ else if (overdue120)
                             <label class="form-label fw-bold small text-danger">❌ เหตุผลในการยกเลิกบิล</label>
                             <input type="text" name="note" class="form-control mb-2" placeholder="เช่น ลูกค้ายกเลิกคำสั่งซื้อ / ออกบิลซ้ำ" />
                             <small class="text-danger d-block">
-                                * เมื่อยกเลิก บิลจะถูกย้ายไปเก็บที่หน้า "บิลยกเลิก" เป็นเวลา 40 วัน ก่อนจะถูกลบออกจากระบบ
+                                * เมื่อยกเลิก บิลจะถูกย้ายไปเก็บที่หน้า "บิลยกเลิก" เป็นเวลา 30 วัน ก่อนจะถูกลบออกจากระบบ
                             </small>
                         </div>
 
@@ -890,5 +890,6 @@ function syncPayment() {
         onStatusSelectChange();
     });
 </script>
+
 
 
