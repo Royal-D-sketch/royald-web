@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RoyalD.Web.Services;
 
@@ -96,7 +96,7 @@ namespace RoyalD.Web.Controllers
         {
             var data = await _svc.GetCustomerProductReportAsync(rep, month, date, q);
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("เธฅเธณเธ”เธฑเธ,เน€เธ”เธทเธญเธ,เธฃเธซเธฑเธชเธฅเธนเธเธเนเธฒ,เธเธทเนเธญเธฅเธนเธเธเนเธฒ,เธฃเธซเธฑเธชเธชเธดเธเธเนเธฒ,เธเธทเนเธญเธชเธดเธเธเนเธฒ,เธฃเธฒเธเธฒเธ•เนเธญเธซเธเนเธงเธข,เน€เธเธฃเธ”เธดเธ•(เธงเธฑเธ),เธเธทเนเธญเธเธนเนเนเธ—เธเธเธฒเธข");
+            sb.AppendLine("ลำดับ,เดือน,รหัสลูกค้า,ชื่อลูกค้า,รหัสสินค้า,ชื่อสินค้า,ราคาต่อหน่วย,เครดิต(วัน),ชื่อผู้แทนขาย");
             int idx = 1;
             foreach (var item in data.Items)
             {

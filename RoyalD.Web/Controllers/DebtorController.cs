@@ -735,14 +735,14 @@ namespace RoyalD.Web.Controllers
             {
                 debt.WaitingGoodsDate = waitingGoodsDate ?? DateTime.Today;
 
-                // เธฅเธเธฃเธฒเธขเธเธฒเธฃเธชเธดเธเธเนเธฒเธเนเธฒเธเธชเนเธเน€เธ”เธดเธกเธเธญเธเธเธดเธฅเธเธตเนเธญเธญเธเธเนเธญเธเธเธฑเธเธ—เธถเธเนเธซเธกเน
+                // ลบรายการสินค้าค้างส่งเดิมของบิลนี้ออกก่อนบันทึกใหม่
                 var oldPending = await _db.PendingProducts.Where(p => p.OutstandingDebtId == debt.Id || p.BillNo == debt.BillNo).ToListAsync();
                 if (oldPending.Any())
                 {
                     _db.PendingProducts.RemoveRange(oldPending);
                 }
 
-                // เธเธฑเธเธ—เธถเธเธฃเธฒเธขเธเธฒเธฃเธชเธดเธเธเนเธฒเธเนเธฒเธเธชเนเธเธ—เธตเนเน€เธฅเธทเธญเธเธเธฒเธเธเธดเธฅ
+                // บันทึกรายการสินค้าค้างส่งที่เลือกจากบิล
                 var savedPendingList = new List<string>();
                 if (waitingProductCodes != null && waitingProductCodes.Any())
                 {
@@ -784,7 +784,7 @@ namespace RoyalD.Web.Controllers
                     }
                 }
 
-                // เธชเธฃเนเธฒเธเธเนเธญเธเธงเธฒเธกเธชเธฃเธธเธเธชเธดเธเธเนเธฒเธเนเธฒเธเธชเนเธเธฅเธเนเธ Note
+                // สร้างข้อความสรุปสินค้าค้างส่งลงใน Note
                 string pendingSummary = savedPendingList.Count > 0 ? $"เธฃเธญเธชเธดเธเธเนเธฒ: {string.Join(", ", savedPendingList)}" : "";
                 if (!string.IsNullOrEmpty(note))
                 {
@@ -879,7 +879,7 @@ namespace RoyalD.Web.Controllers
             var debt = await _db.OutstandingDebts.FindAsync(id);
             if (debt == null) return NotFound();
 
-            // เธฃเธซเธฑเธชเธเนเธฒเธเธชเธณเธซเธฃเธฑเธเธเธฒเธฃเนเธเนเนเธเนเธเน€เธชเธฃเนเธ (เธ•เธฒเธกเธ—เธตเนเธฃเนเธญเธเธเธญ)
+            // รหัสผ่านสำหรับการแก้ไขใบเสร็จ (ตามที่ร้องขอ)
             if (password != "029030445Rd*")
             {
                 TempData["Error"] = "เธฃเธซเธฑเธชเธเนเธฒเธเนเธกเนเธ–เธนเธเธ•เนเธญเธ เนเธกเนเธชเธฒเธกเธฒเธฃเธ–เนเธเนเนเธเธเนเธญเธกเธนเธฅเนเธเน€เธชเธฃเนเธเนเธ”เน";
@@ -892,7 +892,7 @@ namespace RoyalD.Web.Controllers
             debt.ReceiptNo = receiptNo ?? "";
             debt.ReceiptDate = receiptDate;
 
-            // เธซเธฒเธเธกเธตเธเธฒเธฃเธฃเธฐเธเธธเน€เธฅเธเธ—เธตเนเนเธเน€เธชเธฃเนเธ เธ–เธทเธญเธงเนเธฒเธเธณเธฃเธฐเธเธฃเธ
+            // หากมีการระบุเลขที่ใบเสร็จ ถือว่าชำระครบ
             if (!string.IsNullOrEmpty(receiptNo))
             {
                 debt.RemainingAmount = 0;
@@ -902,7 +902,7 @@ namespace RoyalD.Web.Controllers
             }
             else
             {
-                // เธซเธฒเธเธฅเธเน€เธฅเธเธ—เธตเนเนเธเน€เธชเธฃเนเธเธญเธญเธ (เธเธทเธเธชเธ–เธฒเธเธฐเธเนเธฒเธเธเธณเธฃเธฐ)
+                // หากลบเลขที่ใบเสร็จออก (คืนสถานะค้างชำระ)
                 debt.RemainingAmount = debt.OriginalAmount;
                 debt.Status = DebtStatus.Outstanding;
                 debt.FullyPaidDate = null;
