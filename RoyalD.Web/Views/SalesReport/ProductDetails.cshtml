@@ -89,13 +89,13 @@
     {
         <div class="d-flex gap-2 no-print">
             <button onclick="window.print()" class="btn btn-outline-danger btn-sm fw-bold px-3 py-2 shadow-sm" title="สั่งพิมพ์เป็นเอกสาร PDF">
-                <i class="bi bi-file-earmark-pdf me-1"></i> ๐“ฅ Export to PDF
+                <i class="bi bi-file-earmark-pdf me-1"></i> 📥 Export to PDF
             </button>
             <a href="/SalesReport/ExportProductDetailsExcel@(Context.Request.QueryString)" class="btn btn-sm fw-bold px-3 py-2 shadow-sm text-white" title="ดาวน์โหลดไฟล์ Excel" style="background:#059669; border-color:#059669;">
-                <i class="bi bi-file-earmark-excel me-1"></i> ๐“ Export to Excel (.xlsx)
+                <i class="bi bi-file-earmark-excel me-1"></i> 📊 Export to Excel (.xlsx)
             </a>
             <button onclick="downloadScreenCapture('product-details-area')" class="btn btn-outline-success btn-sm fw-bold px-3 py-2 shadow-sm" title="บันทึกภาพตารางความละเอียดสูง">
-                <i class="bi bi-image me-1"></i> ๐–ผ๏ธ Download Image (PNG)
+                <i class="bi bi-image me-1"></i> 🖼️ Download Image (PNG)
             </button>
         </div>
     }
@@ -106,7 +106,7 @@
     <div class="card-body py-2">
         <form method="get" class="row g-2 align-items-end">
             <div class="col-md-4">
-                <label class="form-label small fw-bold text-primary mb-1">๐‘ค เลือกผู้แทนขาย</label>
+                <label class="form-label small fw-bold text-primary mb-1">👤 เลือกผู้แทนขาย</label>
                 <select name="salesRep" class="form-select form-select-sm">
                     <option value="">-- ผู้แทนขายทุกคน --</option>
                     @foreach (var r in reps)
@@ -117,7 +117,7 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label small fw-bold text-primary mb-1">๐“… เลือกเดือน</label>
+                <label class="form-label small fw-bold text-primary mb-1">📅 เลือกเดือน</label>
                 <select name="month" class="form-select form-select-sm">
                     <option value="">-- ทุกเดือน (ม.ค. - ส.ค. 69) --</option>
                     @for (int mi = 0; mi < monthKeys.Count; mi++)
@@ -175,7 +175,7 @@
 <div class="row g-3 mb-4 no-print" id="unit-cards">
     <div class="col-6 col-md-3">
         <div class="unit-card" style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border-left:5px solid #f59e0b;">
-            <div class="unit-icon">๐“ฉ</div>
+            <div class="unit-icon">📩</div>
             <div class="unit-label">ยอดขาย (ซอง)</div>
             <div class="unit-value" style="color:#d97706;">@unitCounts["ซอง"].ToString("N0")</div>
             <div class="unit-sub">ซองที่ขายได้ทั้งหมด</div>
@@ -183,7 +183,7 @@
     </div>
     <div class="col-6 col-md-3">
         <div class="unit-card" style="background:linear-gradient(135deg,#ede9fe,#f5f3ff);border-left:5px solid #8b5cf6;">
-            <div class="unit-icon">๐“ฆ</div>
+            <div class="unit-icon">📦</div>
             <div class="unit-label">ยอดขาย (ลัง)</div>
             <div class="unit-value" style="color:#7c3aed;">@unitCounts["ลัง"].ToString("N0")</div>
             <div class="unit-sub">ลังที่ขายได้ทั้งหมด</div>
@@ -191,7 +191,7 @@
     </div>
     <div class="col-6 col-md-3">
         <div class="unit-card" style="background:linear-gradient(135deg,#dbeafe,#eff6ff);border-left:5px solid #3b82f6;">
-            <div class="unit-icon">๐—๏ธ</div>
+            <div class="unit-icon">🗂️</div>
             <div class="unit-label">ยอดขาย (แพ็ค)</div>
             <div class="unit-value" style="color:#1d4ed8;">@unitCounts["แพ็ค"].ToString("N0")</div>
             <div class="unit-sub">แพ็คที่ขายได้ทั้งหมด</div>
@@ -199,7 +199,7 @@
     </div>
     <div class="col-6 col-md-3">
         <div class="unit-card" style="background:linear-gradient(135deg,#dcfce7,#f0fdf4);border-left:5px solid #22c55e;">
-            <div class="unit-icon">๐ถ</div>
+            <div class="unit-icon">🍶</div>
             <div class="unit-label">ยอดขาย (ขวด)</div>
             <div class="unit-value" style="color:#15803d;">@unitCounts["ขวด"].ToString("N0")</div>
             <div class="unit-sub">ขวดที่ขายได้ทั้งหมด</div>
@@ -324,13 +324,13 @@ else
                                         @if (isDelivering)
                                         {
                                             <div class="badge-delivering mt-1 d-inline-block">
-                                                ๐ บิลอยู่จัดส่ง โ€” ขีดฆ่าไม่รวมยอดขาย (-@prod.TotalAmount.ToString("N0") บ.)
+                                                🚚 บิลอยู่จัดส่ง โ€” ขีดฆ่าไม่รวมยอดขาย (-@prod.TotalAmount.ToString("N0") บ.)
                                             </div>
                                         }
                                         else if (hasPartialDelivering)
                                         {
                                             <div class="badge-delivering mt-1 d-inline-block">
-                                                ๐ รวมบิลอยู่จัดส่ง @prod.DeliveringQty.ToString("N0") @prod.Unit (หักลบ -@prod.DeliveringAmount.ToString("N0") บ.)
+                                                🚚 รวมบิลอยู่จัดส่ง @prod.DeliveringQty.ToString("N0") @prod.Unit (หักลบ -@prod.DeliveringAmount.ToString("N0") บ.)
                                             </div>
                                         }
                                     </td>
