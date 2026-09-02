@@ -1,4 +1,4 @@
-using RoyalD.Web.Models;
+﻿using RoyalD.Web.Models;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
@@ -148,13 +148,7 @@ namespace RoyalD.Web.Services
                 }).ToListAsync();
 
             var today = DateTime.Today;
-            var debts = await _db.OutstandingDebts
-                .Select(d => new {
-                    d.BillNo,
-                    d.RemainingAmount,
-                    d.DueDate,
-                    d.Status
-                }).ToListAsync();
+            var debts = await _db.OutstandingDebts.Select(d => new { d.BillNo, d.OriginalAmount, d.RemainingAmount, d.DueDate, d.Status, d.ReceiptDate, SalesRep = string.IsNullOrEmpty(d.SalesRep) ? "ไม่ระบุ" : d.SalesRep }).ToListAsync();
 
             var debtDict = debts.GroupBy(d => d.BillNo).ToDictionary(g => g.Key, g => g.First());
 
@@ -178,8 +172,8 @@ namespace RoyalD.Web.Services
                             mOverdue120++;
                     }
                 }
-                decimal mCollected = mSales - mOutstanding;
-                if (mCollected < 0) mCollected = 0;
+                var mCollectedDebts = isOverall ? debts.Where(x => x.ReceiptDate.HasValue && x.ReceiptDate.Value.ToString("yyyy-MM") == mk).ToList() : debts.Where(x => x.SalesRep != null && x.SalesRep.Contains(repName.Trim()) && x.ReceiptDate.HasValue && x.ReceiptDate.Value.ToString("yyyy-MM") == mk).ToList();
+decimal mCollected = mCollectedDebts.Sum(x => x.OriginalAmount - x.RemainingAmount);
 
                 return new MonthlySummaryItem
                 {
@@ -242,13 +236,7 @@ namespace RoyalD.Web.Services
                 }).ToListAsync();
 
             var today = DateTime.Today;
-            var debts = await _db.OutstandingDebts
-                .Select(d => new {
-                    d.BillNo,
-                    d.RemainingAmount,
-                    d.DueDate,
-                    d.Status
-                }).ToListAsync();
+            var debts = await _db.OutstandingDebts.Select(d => new { d.BillNo, d.OriginalAmount, d.RemainingAmount, d.DueDate, d.Status, d.ReceiptDate, SalesRep = string.IsNullOrEmpty(d.SalesRep) ? "ไม่ระบุ" : d.SalesRep }).ToListAsync();
 
             var debtDict = debts.GroupBy(d => d.BillNo).ToDictionary(g => g.Key, g => g.First());
 
@@ -281,8 +269,8 @@ namespace RoyalD.Web.Services
                         }
                     }
 
-                    decimal mCollected = mSales - mOutstanding;
-                    if (mCollected < 0) mCollected = 0;
+                    var mCollectedDebts = isOverall ? debts.Where(x => x.ReceiptDate.HasValue && x.ReceiptDate.Value.ToString("yyyy-MM") == mk).ToList() : debts.Where(x => x.SalesRep != null && x.SalesRep.Contains(repName.Trim()) && x.ReceiptDate.HasValue && x.ReceiptDate.Value.ToString("yyyy-MM") == mk).ToList();
+decimal mCollected = mCollectedDebts.Sum(x => x.OriginalAmount - x.RemainingAmount);
 
                     rep.MonthlyData.Add(new MonthlySummaryItem
                     {
@@ -981,6 +969,7 @@ namespace RoyalD.Web.Services
         public List<CustomerPurchaseSummaryRow> Rows { get; set; } = new();
     }
 }
+
 
 
 
