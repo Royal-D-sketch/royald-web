@@ -151,61 +151,8 @@
         .GroupBy(p => new { Name = p.ProductName.Trim(), Unit = (p.Unit ?? "").Trim() })
         .Select(g => new { Name = g.Key.Name, Unit = g.Key.Unit, TotalQty = g.Sum(x => x.NetQty) })
         .OrderByDescending(x => x.TotalQty)
-        .Take(15)
-        .ToList();
-
-    var unitCounts = new Dictionary<string, decimal> { ["ซอง"] = 0, ["ลัง"] = 0, ["แพ็ค"] = 0, ["ขวด"] = 0 };
-    foreach (var rep in Model.RepReports)
-    {
-        foreach (var mo in rep.MonthlyMovements)
-        {
-            foreach (var prod in mo.Products.Where(p => !p.IsAllDelivering))
-            {
-                var u = (prod.Unit ?? "").Trim().ToLower();
-                if (u == "ซอง") unitCounts["ซอง"] += prod.NetQty;
-                else if (u == "ลัง") unitCounts["ลัง"] += prod.NetQty;
-                else if (u.Contains("แพ็ค") || u.Contains("แพค") || u == "pack") unitCounts["แพ็ค"] += prod.NetQty;
-                else if (u == "ขวด" || u == "bottle") unitCounts["ขวด"] += prod.NetQty;
-            }
-        }
-    }
+        .Take(15).ToList();
 }
-
-<!-- Unit Volume Infographic Cards -->
-<div class="row g-3 mb-4 no-print" id="unit-cards">
-    <div class="col-6 col-md-3">
-        <div class="unit-card" style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border-left:5px solid #f59e0b;">
-            <div class="unit-icon">📩</div>
-            <div class="unit-label">ยอดขาย (ซอง)</div>
-            <div class="unit-value" style="color:#d97706;">@unitCounts["ซอง"].ToString("N0")</div>
-            <div class="unit-sub">ซองที่ขายได้ทั้งหมด</div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="unit-card" style="background:linear-gradient(135deg,#ede9fe,#f5f3ff);border-left:5px solid #8b5cf6;">
-            <div class="unit-icon">📦</div>
-            <div class="unit-label">ยอดขาย (ลัง)</div>
-            <div class="unit-value" style="color:#7c3aed;">@unitCounts["ลัง"].ToString("N0")</div>
-            <div class="unit-sub">ลังที่ขายได้ทั้งหมด</div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="unit-card" style="background:linear-gradient(135deg,#dbeafe,#eff6ff);border-left:5px solid #3b82f6;">
-            <div class="unit-icon">🗂️</div>
-            <div class="unit-label">ยอดขาย (แพ็ค)</div>
-            <div class="unit-value" style="color:#1d4ed8;">@unitCounts["แพ็ค"].ToString("N0")</div>
-            <div class="unit-sub">แพ็คที่ขายได้ทั้งหมด</div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="unit-card" style="background:linear-gradient(135deg,#dcfce7,#f0fdf4);border-left:5px solid #22c55e;">
-            <div class="unit-icon">🍶</div>
-            <div class="unit-label">ยอดขาย (ขวด)</div>
-            <div class="unit-value" style="color:#15803d;">@unitCounts["ขวด"].ToString("N0")</div>
-            <div class="unit-sub">ขวดที่ขายได้ทั้งหมด</div>
-        </div>
-    </div>
-</div>
 
 @if (allProductsForChart.Any())
 {
@@ -513,3 +460,5 @@ function toggleSignatures() {
 }
 </script>
 }
+
+
