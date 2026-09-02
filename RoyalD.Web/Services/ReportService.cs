@@ -345,7 +345,7 @@ namespace RoyalD.Web.Services
             var billNos = bills.Select(b => b.BillNo).Distinct().ToList();
 
             var items = await _db.SalesBillItems
-                .Where(i => billNos.Contains(i.BillNo))
+                .Where(i => billNos.Contains(i.BillNo) && i.Amount > 0 && i.Price > 0 && !i.ProductName.Contains("แถม") && !i.ProductName.Contains("ชดเชย") && !i.ProductName.Contains("พิเศษ"))
                 .Select(i => new {
                     i.BillNo,
                     i.ProductCode,
@@ -981,3 +981,4 @@ namespace RoyalD.Web.Services
         public List<CustomerPurchaseSummaryRow> Rows { get; set; } = new();
     }
 }
+

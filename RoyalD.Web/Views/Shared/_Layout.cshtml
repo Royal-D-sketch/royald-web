@@ -1,4 +1,4 @@
-@using System.Security.Claims
+﻿@using System.Security.Claims
 @{
     bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
     bool isMasterAdmin = isAdmin;
@@ -356,7 +356,7 @@
                     <div class="nav-section">รายงาน</div>
                     @if (hasRep)
                     {
-                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && (ViewContext.RouteData.Values["action"]?.ToString() == "Summary" || ViewContext.RouteData.Values["action"]?.ToString() == "Charts" || ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetails" || ViewContext.RouteData.Values["action"]?.ToString() == "Compare") ? "active" : "")"
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && (ViewContext.RouteData.Values["action"]?.ToString() == "Summary" || ViewContext.RouteData.Values["action"]?.ToString() == "Charts" || ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetails" || ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetailsAmount" || ViewContext.RouteData.Values["action"]?.ToString() == "Compare") ? "active" : "")"
                            href="/SalesReport/Summary">
                             <i class="bi bi-graph-up-arrow"></i> รายงานผู้แทนขาย
                         </a>
@@ -862,3 +862,4 @@ else
 </script>
 </body>
 </html>
+

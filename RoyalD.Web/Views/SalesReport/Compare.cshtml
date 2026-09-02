@@ -1,4 +1,4 @@
-@using RoyalD.Web.Services
+﻿@using RoyalD.Web.Services
 @model RoyalD.Web.Services.AnnualPerformanceViewModel
 @{
     ViewData["Title"] = "4. กราฟเปรียบเทียบผู้แทนขาย (Compare)";
@@ -31,24 +31,24 @@
 
 <!-- Sub-Tabs Navigation Header -->
 <div class="sales-subnav no-print">
-    <a href="/SalesReport/Summary" class="subnav-item">
-        <i class="bi bi-table me-2"></i> 1. สรุปยอดขาย-ยอดเก็บเงิน
+    <a href="/SalesReport/Summary" class="subnav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Summary" || ViewContext.RouteData.Values["action"]?.ToString() == "Sales" ? "active" : "")">
+        <i class="bi bi-table me-2"></i> 1. สรุปยอดขาย
     </a>
-    <a href="/SalesReport/Charts" class="subnav-item">
-        <i class="bi bi-bar-chart-line me-2"></i> 2. กราฟผลงานรายผู้แทน
+    <a href="/SalesReport/Charts" class="subnav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Charts" ? "active" : "")">
+        <i class="bi bi-bar-chart-line me-2"></i> 2. กราฟ
     </a>
-    <a href="/SalesReport/ProductDetails" class="subnav-item">
-        <i class="bi bi-box-seam me-2"></i> 3. รายละเอียดสินค้าที่ขาย
+    <a href="/SalesReport/ProductDetails" class="subnav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetails" ? "active" : "")">
+        <i class="bi bi-box-seam me-2"></i> 3. สินค้าขาย (ปริมาณ)
+    </a>
+    <a href="/SalesReport/ProductDetailsAmount" class="subnav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetailsAmount" ? "active" : "")">
+        <i class="bi bi-currency-dollar me-2"></i> 4. สินค้าขาย (จำนวนเงิน)
     </a>
     @if (!isSalesRepRole)
     {
-        <a href="/SalesReport/Compare" class="subnav-item active">
-            <i class="bi bi-people me-2"></i> 4. กราฟเปรียบเทียบผู้แทนขาย
+        <a href="/SalesReport/Compare" class="subnav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Compare" ? "active" : "")">
+            <i class="bi bi-people me-2"></i> 5. เปรียบเทียบ
         </a>
     }
-    <a href="/SalesReport/CustomerPurchaseSummary" class="subnav-item">
-        <i class="bi bi-person-lines-fill me-2"></i> 5. สรุปการซื้อรายลูกค้า
-    </a>
 </div>
 
 <!-- Header Title & Export Toolbar -->

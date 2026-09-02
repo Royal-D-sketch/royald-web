@@ -1,7 +1,7 @@
 ﻿@using RoyalD.Web.Services
 @model RoyalD.Web.Services.ProductDetailsReportViewModel
 @{
-    ViewData["Title"] = "3. รายละเอียดสินค้าที่ขายได้รายผู้แทน";
+    ViewData["Title"] = "3. รายละเอียดสินค้าที่ขายได้รายผู้แทนเป็นจำนวนเงิน";
     var months = Model.Months;
     var monthKeys = Model.MonthKeys;
     var reps = Model.SalesReps;
@@ -247,8 +247,8 @@ else
 {
     <div class="prod-table-wrap mb-4">
         <div class="rep-group-header">
-            <div><i class="bi bi-table text-warning me-2"></i>รายละเอียดสินค้าที่ขายได้รายผู้แทน (ปริมาณ)</div>
-            <div class="fs-6 fw-normal">รวมปริมาณทั้งหมด: <strong class="text-warning fs-5">@allProds.Sum(x => x.TotalQty).ToString("N0")</strong> หน่วย</div>
+            <div><i class="bi bi-table text-warning me-2"></i>รายละเอียดสินค้าที่ขายได้รายผู้แทนเป็นจำนวนเงิน</div>
+            <div class="fs-6 fw-normal">ยอดสุทธิรวมทั้งหมด: <strong class="text-warning fs-5">@allProds.Sum(x => x.TotalAmount).ToString("N2")</strong> บาท</div>
         </div>
         <div class="table-responsive">
             <table class="table prod-table mb-0 table-hover">
@@ -266,9 +266,9 @@ else
                     <tr style="font-size:0.8rem; opacity:0.9;">
                         @foreach (var rep in activeReps)
                         {
-                            <th class="border-start fw-normal bg-primary">ปริมาณ (หน่วย)</th>
+                            <th class="border-start fw-normal bg-primary">จำนวนเงิน (บ.)</th>
                         }
-                        <th class="border-start fw-normal bg-success">ปริมาณรวม</th>
+                        <th class="border-start fw-normal bg-success">จำนวนเงินรวม</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -288,8 +288,8 @@ else
                             {
                                 var stats = repProductSales.ContainsKey(rep) && repProductSales[rep].ContainsKey(prod.Code) ? repProductSales[rep][prod.Code] : (0m, 0m);
                                 <td class="text-end border-start">
-                                    @if(stats.Item1 > 0) {
-                                    <div class="fw-bold text-primary" style="font-size:0.95rem;">@stats.Item1.ToString("N0")</div>
+                                    @if(stats.Item2 > 0) {
+                                    <div class="fw-bold text-primary" style="font-size:0.95rem;">@stats.Item2.ToString("N2")</div>
                                 } else {
                                         <span class="text-muted opacity-25">-</span>
                                     }
@@ -297,7 +297,7 @@ else
                             }
                             
                             <td class="text-end border-start bg-light">
-                                <div class="fw-bold text-success" style="font-size:1rem;">@prod.TotalQty.ToString("N0")</div>
+                                <div class="fw-bold text-success" style="font-size:1rem;">@prod.TotalAmount.ToString("N2")</div>
                             </td>
                         </tr>
                     }
@@ -310,7 +310,7 @@ else
                             var repTotalQty = Model.RepReports.First(r => r.SalesRep == rep).TotalNetQty;
                             var repTotalAmt = Model.RepReports.First(r => r.SalesRep == rep).TotalNetSales;
                             <td class="text-end border-start">
-                                <div class="text-primary" style="font-size:1rem;">@repTotalQty.ToString("N0")</div>
+                                <div class="text-primary" style="font-size:1rem;">@repTotalAmt.ToString("N2")</div>
                             </td>
                         }
                         <td class="text-end border-start">
