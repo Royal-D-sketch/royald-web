@@ -203,7 +203,7 @@ namespace RoyalD.Web.Services
                 var row = new SalesRepPivotRow { SalesRep = rep };
                 foreach (var mk in monthKeys)
                 {
-                    var mBills = bills.Where(b => (b.SalesRep != null && b.SalesRep.Trim() == rep.Trim()) && (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) == mk)).Cast<dynamic>().ToList();
+                    var mBills = bills.Where(b => (b.SalesRep != null && b.SalesRep.Contains(rep.Trim())) && (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) == mk)).Cast<dynamic>().ToList();
                     row.MonthlyData.Add(CalcMonth(mBills, mk));
                 }
                 vm.RepRows.Add(row);
@@ -265,7 +265,7 @@ namespace RoyalD.Web.Services
                 {
                     var mBills = isOverall 
                         ? bills.Where(b => (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) == mk)).ToList()
-                        : bills.Where(b => (b.SalesRep != null && b.SalesRep.Trim() == repName.Trim()) && (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) == mk)).ToList();
+                        : bills.Where(b => (b.SalesRep != null && b.SalesRep.Contains(repName.Trim())) && (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) == mk)).ToList();
 
                     decimal mSales = mBills.Sum(b => b.TotalAmount);
                     decimal mOutstanding = 0m;
@@ -319,7 +319,7 @@ namespace RoyalD.Web.Services
             var monthLabels = StandardMonthsMap.Values.ToList();
 
             var billQuery = _db.SalesBills.AsNoTracking().AsQueryable();
-            if (!string.IsNullOrEmpty(selectedRep)) { var sRepTrim = selectedRep.Trim(); billQuery = billQuery.Where(b => b.SalesRep != null && b.SalesRep.Trim() == sRepTrim); }
+            if (!string.IsNullOrEmpty(selectedRep)) { var sRepTrim = selectedRep.Trim(); billQuery = billQuery.Where(b => b.SalesRep != null && b.SalesRep.Contains(sRepTrim)); }
             if (!string.IsNullOrEmpty(selectedMonth))
             {
                 if (DateTime.TryParse(selectedMonth + "-01", out var mDate))
@@ -388,7 +388,7 @@ namespace RoyalD.Web.Services
 
                 foreach (var mk in targetMonths)
                 {
-                    var repMonthBills = bills.Where(b => (b.SalesRep != null && b.SalesRep.Trim() == rep.Trim()) && (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) == mk)).Select(b => b.BillNo).ToHashSet();
+                    var repMonthBills = bills.Where(b => (b.SalesRep != null && b.SalesRep.Contains(rep.Trim())) && (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) == mk)).Select(b => b.BillNo).ToHashSet();
                     if (!repMonthBills.Any()) continue;
 
                     var monthItems = items.Where(i => repMonthBills.Contains(i.BillNo)).ToList();
@@ -981,6 +981,8 @@ namespace RoyalD.Web.Services
         public List<CustomerPurchaseSummaryRow> Rows { get; set; } = new();
     }
 }
+
+
 
 
 
