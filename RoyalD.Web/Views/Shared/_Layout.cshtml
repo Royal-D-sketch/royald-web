@@ -318,10 +318,7 @@
                             <i class="bi bi-trash3"></i> บิลยกเลิก (30 วัน)
                         </a>
                     }
-                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "PaidHistory" ? "active" : "")"
-                       href="/Report/PaidHistory">
-                        <i class="bi bi-check2-all"></i> ประวัติชำระครบ
-                    </a>
+                    
                 }
 
                 @if (hasDebt || hasHist)
@@ -862,4 +859,7 @@ else
 </script>
 </body>
 </html>
+
+
+
 
