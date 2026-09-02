@@ -1,579 +1,354 @@
 @using RoyalD.Web.Services
 @model RoyalD.Web.Services.AnnualPerformanceViewModel
 @{
-    ViewData["Title"] = "2. รายงานกราฟแสดงยอดขายแต่ละผู้แทนในแต่ละเดือน";
+    ViewData["Title"] = "2. เธเธฃเธฒเธเธเธฅเธเธฒเธเธฃเธฒเธขเธเธนเนเนเธ—เธ (Charts)";
     var months = Model.Months;
     var allReps = Model.RepReports;
     var overall = Model.OverallCompany;
     bool isAdmin = User.IsInRole("admin");
     var canDownloadClaim = ViewContext.HttpContext.User.FindFirst("CanDownload")?.Value;
-    bool isSalesRepRole = User.HasClaim(c => c.Type == "Position" && (c.Value.Contains("ผู้แทน") || c.Value.Contains("พนักงานขาย"))) && !isAdmin;
+    bool isSalesRepRole = User.HasClaim(c => c.Type == "Position" && (c.Value.Contains("เธเธนเนเนเธ—เธ") || c.Value.Contains("เธเธเธฑเธเธเธฒเธเธเธฒเธข"))) && !isAdmin;
     bool canDownload = (isAdmin || canDownloadClaim == "true") && !isSalesRepRole;
 }
 
 <style>
 /* Sub-Tabs Nav */
-.sales-subnav {
-    display: flex; gap: 10px;
-    background: #ecfdf5; padding: 8px;
-    border-radius: 14px; margin-bottom: 20px;
-    border: 1px solid #a7f3d0;
-}
-.sales-subnav .subnav-item {
-    flex: 1; text-align: center;
-    padding: 12px 18px; font-weight: 800;
-    font-size: 1.02rem; color: #065f46;
-    border-radius: 10px; text-decoration: none;
-    transition: all .2s ease-in-out;
-}
-.sales-subnav .subnav-item:hover { background: rgba(255,255,255,0.9); color: #059669; transform: translateY(-1px); }
-.sales-subnav .subnav-item.active { background: #059669; color: white; box-shadow: 0 4px 15px rgba(5,150,105,0.3); }
+.sales-subnav { display:flex; gap:10px; background:#ecfdf5; padding:8px; border-radius:14px; margin-bottom:20px; border:1px solid #a7f3d0; flex-wrap:wrap; }
+.sales-subnav .subnav-item { flex:1; text-align:center; padding:12px 18px; font-weight:800; font-size:1.02rem; color:#065f46; border-radius:10px; text-decoration:none; transition:all .2s ease-in-out; white-space:nowrap; }
+.sales-subnav .subnav-item:hover { background:rgba(255,255,255,0.9); color:#059669; transform:translateY(-1px); }
+.sales-subnav .subnav-item.active { background:#059669; color:white; box-shadow:0 4px 15px rgba(5,150,105,0.3); }
 
-/* Modern KPI Cards */
-.kpi-card { border-radius:16px; padding:18px 20px; box-shadow:0 4px 20px rgba(0,0,0,.07); display:flex; align-items:center; gap:16px; transition:transform .2s,box-shadow .2s; }
-.kpi-card:hover { transform:translateY(-3px); box-shadow:0 8px 28px rgba(0,0,0,.12); }
-.kpi-card.blue { background:linear-gradient(135deg,#dbeafe 0%,#eff6ff 100%); border-left:5px solid #3b82f6; }
-.kpi-card.green { background:linear-gradient(135deg,#dcfce7 0%,#f0fdf4 100%); border-left:5px solid #22c55e; }
-.kpi-card.red { background:linear-gradient(135deg,#fee2e2 0%,#fff5f5 100%); border-left:5px solid #ef4444; }
-.kpi-icon-wrap { width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.6rem; flex-shrink:0; }
-.kpi-icon-wrap.blue { background:#dbeafe; color:#2563eb; }
-.kpi-icon-wrap.green { background:#dcfce7; color:#16a34a; }
-.kpi-icon-wrap.red { background:#fee2e2; color:#dc2626; }
-.kpi-label { font-size:.82rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.5px; margin-bottom:2px; }
-.kpi-value { font-size:1.45rem; font-weight:900; line-height:1.1; }
-.kpi-value.blue { color:#1d4ed8; }
-.kpi-value.green { color:#15803d; }
-.kpi-value.red { color:#b91c1c; }
-.kpi-sub { font-size:.78rem; color:#94a3b8; margin-top:2px; }
+/* KPI Cards */
+.kpi-card { background:#fff; border-radius:16px; padding:20px; box-shadow:0 4px 15px rgba(0,0,0,0.05); display:flex; flex-direction:column; border:1px solid #e2e8f0; position:relative; overflow:hidden; }
+.kpi-title { font-size:0.95rem; font-weight:700; color:#64748b; margin-bottom:8px; }
+.kpi-value { font-size:1.8rem; font-weight:800; margin-bottom:4px; letter-spacing:-0.5px; }
+.kpi-icon { position:absolute; top:20px; right:20px; font-size:2rem; opacity:0.15; }
+.kpi-sub { font-size:0.85rem; font-weight:600; }
+.kpi-sales { border-bottom:4px solid #0ea5e9; } .kpi-sales .kpi-value { color:#0284c7; } .kpi-sales .kpi-icon { color:#0ea5e9; }
+.kpi-collect { border-bottom:4px solid #10b981; } .kpi-collect .kpi-value { color:#059669; } .kpi-collect .kpi-icon { color:#10b981; }
+.kpi-debt { border-bottom:4px solid #f43f5e; } .kpi-debt .kpi-value { color:#e11d48; } .kpi-debt .kpi-icon { color:#f43f5e; }
+.kpi-rate { border-bottom:4px solid #f59e0b; } .kpi-rate .kpi-value { color:#d97706; } .kpi-rate .kpi-icon { color:#f59e0b; }
 
-/* Progress Gauge Bar */
-.progress-gauge-wrap { background:white; border-radius:16px; padding:20px; box-shadow:0 4px 20px rgba(0,0,0,.07); }
-.gauge-bar-outer { height:22px; background:#e2e8f0; border-radius:50px; position:relative; overflow:visible; margin-bottom:4px; }
-.gauge-bar-fill { height:100%; border-radius:50px; transition:width 1s ease-in-out; }
-.gauge-bar-fill.good { background:linear-gradient(90deg,#22c55e,#16a34a); }
-.gauge-bar-fill.warn { background:linear-gradient(90deg,#f59e0b,#d97706); }
-.gauge-bar-fill.bad { background:linear-gradient(90deg,#ef4444,#b91c1c); }
-.gauge-target-line { position:absolute; top:-6px; bottom:-6px; width:3px; background:#ef4444; border-radius:2px; box-shadow:0 0 8px rgba(239,68,68,.5); }
-.gauge-target-label { position:absolute; top:-26px; transform:translateX(-50%); font-size:.72rem; font-weight:800; color:#ef4444; white-space:nowrap; background:white; padding:2px 5px; border-radius:4px; border:1px solid #fca5a5; }
+/* Chart Containers */
+.chart-card { background:#fff; border-radius:16px; padding:22px; box-shadow:0 4px 15px rgba(0,0,0,0.05); border:1px solid #e2e8f0; margin-bottom:24px; }
+.chart-header { font-size:1.1rem; font-weight:800; color:#1e293b; margin-bottom:16px; display:flex; align-items:center; }
 
-/* Rep Banner */
-.rep-banner { border-radius:14px; padding:18px 22px; background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#0070B9 100%); color:white; box-shadow:0 4px 18px rgba(0,112,185,.25); margin-bottom:18px; }
-
-.chart-card { border-radius:14px; border:none; box-shadow:0 4px 18px rgba(0,0,0,0.08); background:white; padding:22px; }
-.insight-card { background:linear-gradient(135deg,#f0fdfa 0%,#f8fafc 100%); border:1px solid #ccfbf1; border-left:5px solid #0d9488; border-radius:12px; padding:14px 18px; box-shadow:0 2px 10px rgba(15,118,110,0.06); line-height:1.65; }
+.insight-card { background:linear-gradient(135deg,#f0fdfa 0%,#f8fafc 100%); border:1px solid #ccfbf1; border-left:5px solid #0d9488; border-radius:12px; padding:18px; box-shadow:0 2px 10px rgba(15,118,110,0.06); line-height:1.65; }
 
 @@media print {
-    .no-print, .sales-subnav, nav, .btn, .export-bar { display: none !important; }
-    body { font-size: 10pt; background: #fff !important; }
-    .chart-card { break-inside: avoid; page-break-inside: avoid; }
-    .signature-area { break-inside: avoid; page-break-inside: avoid; margin-top: 30px; }
+    .no-print, .sales-subnav, nav, .btn, .export-bar { display:none !important; }
+    body { background:#fff; font-size:10pt; }
+    .kpi-card, .chart-card { box-shadow:none !important; border:1px solid #ccc !important; }
 }
 </style>
 
 <!-- Sub-Tabs Navigation Header -->
 <div class="sales-subnav no-print">
-    <a href="/SalesReport/Summary" class="subnav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Summary" || ViewContext.RouteData.Values["action"]?.ToString() == "Sales" ? "active" : "")">
-        <i class="bi bi-table me-2"></i> 1. สรุปยอดขาย-ยอดเก็บเงิน (Pivot Matrix)
+    <a href="/SalesReport/Summary" class="subnav-item">
+        <i class="bi bi-table me-2"></i> 1. เธชเธฃเธธเธเธขเธญเธ”เธเธฒเธข-เธขเธญเธ”เน€เธเนเธเน€เธเธดเธ (Pivot Matrix)
     </a>
-    <a href="/SalesReport/Charts" class="subnav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Charts" ? "active" : "")">
-        <i class="bi bi-bar-chart-line me-2"></i> 2. กราฟผลงานรายผู้แทน (Charts)
+    <a href="/SalesReport/Charts" class="subnav-item active">
+        <i class="bi bi-bar-chart-line me-2"></i> 2. เธเธฃเธฒเธเธเธฅเธเธฒเธเธฃเธฒเธขเธเธนเนเนเธ—เธ (Charts)
     </a>
-    <a href="/SalesReport/ProductDetails" class="subnav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetails" ? "active" : "")">
-        <i class="bi bi-box-seam me-2"></i> 3. รายละเอียดสินค้าที่ขาย (Product Details)
+    <a href="/SalesReport/ProductDetails" class="subnav-item">
+        <i class="bi bi-box-seam me-2"></i> 3. เธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”เธชเธดเธเธเนเธฒเธ—เธตเนเธเธฒเธข (Product Details)
     </a>
     @if (!isSalesRepRole)
     {
-        <a href="/SalesReport/Compare" class="subnav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Compare" ? "active" : "")">
-            <i class="bi bi-people me-2"></i> 4. กราฟเปรียบเทียบผู้แทนขาย
+        <a href="/SalesReport/Compare" class="subnav-item">
+            <i class="bi bi-people me-2"></i> 4. เธเธฃเธฒเธเน€เธเธฃเธตเธขเธเน€เธ—เธตเธขเธเธเธนเนเนเธ—เธเธเธฒเธข
         </a>
     }
+    <a href="/SalesReport/CustomerPurchaseSummary" class="subnav-item">
+        <i class="bi bi-person-lines-fill me-2"></i> 5. เธชเธฃเธธเธเธเธฒเธฃเธเธทเนเธญเธฃเธฒเธขเธฅเธนเธเธเนเธฒ
+    </a>
 </div>
 
 <!-- Header Title & Export Toolbar -->
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 export-bar">
     <div>
         <h3 class="mb-1 fw-bold" style="color:#065f46;">
-            <i class="bi bi-graph-up" style="color:#059669;"></i> กราฟวิเคราะห์ยอดขายและแนวโน้มผลงานสิ้นปี
+            <i class="bi bi-graph-up" style="color:#059669;"></i> เธเธฃเธฒเธเธเธฅเธเธฒเธเธฃเธฒเธขเธเธธเธเธเธฅ
         </h3>
-        <span class="text-muted fw-semibold">กราฟแท่งเปรียบเทียบสัดส่วนยอดขาย เก็บเงิน หนี้ค้าง และ Trendline อัตราเก็บเงินรายบุคคล</span>
+        <span class="text-muted fw-semibold">เนเธชเธ”เธเธเธฅเนเธเธ Infographic Dashboard เธชเธณเธซเธฃเธฑเธเธ เธฒเธเธฃเธงเธกเนเธฅเธฐเธฃเธฒเธขเธเธธเธเธเธฅ</span>
     </div>
     
     @if (canDownload)
     {
-        <!-- 3 Export Buttons (Admin / Authorized Only) -->
         <div class="d-flex gap-2 no-print">
-            <button onclick="window.print()" class="btn btn-outline-danger btn-sm fw-bold px-3 py-2 shadow-sm" title="สั่งพิมพ์เป็นเอกสาร PDF">
-                <i class="bi bi-file-earmark-pdf me-1"></i> 📥 Export to PDF
+            <button onclick="window.print()" class="btn btn-outline-danger btn-sm fw-bold px-3 py-2 shadow-sm">
+                <i class="bi bi-file-earmark-pdf me-1"></i> Export PDF
             </button>
-            <a href="/SalesReport/ExportSummaryExcel" class="btn btn-sm fw-bold px-3 py-2 shadow-sm text-white" title="ดาวน์โหลดไฟล์ Excel" style="background:#059669; border-color:#059669;">
-                <i class="bi bi-file-earmark-excel me-1"></i> 📊 Export to Excel (.xlsx)
-            </a>
-            <button onclick="downloadScreenCapture('chart-capture-area')" class="btn btn-outline-success btn-sm fw-bold px-3 py-2 shadow-sm" title="บันทึกภาพกราฟความละเอียดสูง">
-                <i class="bi bi-image me-1"></i> 🖼️ Download Image (PNG)
+            <button onclick="downloadScreenCapture('chart-capture-area')" class="btn btn-outline-success btn-sm fw-bold px-3 py-2 shadow-sm">
+                <i class="bi bi-image me-1"></i> Download PNG
             </button>
         </div>
     }
 </div>
 
-<!-- ================= COMPACT SINGLE-ROW REP SELECTOR ================= -->
-<div class="card border-0 shadow-sm mb-3 no-print" style="background: #f0fdf4; border: 1.5px solid #a7f3d0 !important; border-radius: 14px;">
+<!-- Rep Selector -->
+<div class="card border-0 shadow-sm mb-4 no-print" style="background:#f0fdf4; border:1.5px solid #a7f3d0 !important; border-radius:14px;">
     <div class="card-body py-2 px-3">
         <div class="row align-items-center g-2">
             <div class="col-md-auto">
-                <span class="fw-bold" style="color: #065f46; font-size: 0.95rem;">
-                    <i class="bi bi-person-badge-fill me-1 text-success"></i> เลือกผู้แทนขาย:
+                <span class="fw-bold" style="color:#065f46; font-size:0.95rem;">
+                    <i class="bi bi-person-badge-fill me-1 text-success"></i> เน€เธฅเธทเธญเธเธเธนเนเนเธ—เธเธเธฒเธข:
                 </span>
             </div>
             <div class="col-md-4 col-lg-3">
-                <select class="form-select form-select-sm fw-bold shadow-sm" id="chartsRepDropdown" onchange="switchChartRep(this.value)" style="border: 2px solid #10b981; border-radius: 10px; color: #065f46; font-size: 0.92rem; background-color: #ffffff; cursor: pointer;">
-                    <option value="overall" selected>🏢 ภาพรวมผู้แทนทุกคน (รวมทั้งบริษัท)</option>
-                    @for (int rIdx = 0; rIdx < allReps.Count; rIdx++)
+                <select class="form-select form-select-sm fw-bold shadow-sm" id="repSelectDropdown" onchange="selectRep(this.value)" style="border:2px solid #10b981; border-radius:10px; color:#065f46;" @(isSalesRepRole ? "disabled" : "")>
+                    @if (!isSalesRepRole) { <option value="overall" selected>๐ข เธ เธฒเธเธฃเธงเธกเธ—เธธเธเธเธ (เธฃเธงเธกเธ—เธฑเนเธเธเธฃเธดเธฉเธฑเธ—)</option> }
+                    @for (int ri = 0; ri < allReps.Count; ri++)
                     {
-                        var rep = allReps[rIdx];
-                        <option value="@rIdx">👤 @rep.SalesRep</option>
+                        var repName = allReps[ri].SalesRep;
+                        // For sales rep role, select only their own data
+                        var currentUserName = User.FindFirst("FullName")?.Value ?? User.Identity.Name;
+                        if (isSalesRepRole && repName == currentUserName) { <option value="@ri" selected>๐‘ค @repName</option> }
+                        else if (!isSalesRepRole) { <option value="@ri">๐‘ค @repName</option> }
                     }
                 </select>
             </div>
-            <div class="col-md-3 col-lg-3">
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-white border-success text-success"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control form-control-sm border-success fw-semibold" id="chartRepQuickSearch" placeholder="พิมพ์ชื่อผู้แทนเพื่อค้นหา..." oninput="filterChartRepByName(this.value)" />
-                </div>
-            </div>
-            <div class="col-md-auto d-flex gap-1">
-                <button type="button" class="btn btn-sm btn-outline-success fw-semibold shadow-sm" onclick="selectPreviousChartRep()" title="ผู้แทนคนก่อนหน้า" style="border-radius: 8px;">
-                    <i class="bi bi-chevron-left"></i> ก่อนหน้า
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-success fw-semibold shadow-sm" onclick="selectNextChartRep()" title="ผู้แทนคนถัดไป" style="border-radius: 8px;">
-                    ถัดไป <i class="bi bi-chevron-right"></i>
-                </button>
-            </div>
-            <div class="col-md text-end">
-                <span class="badge shadow-sm" style="background:#d1fae5; color:#065f46; font-size:0.85rem; padding: 6px 12px; border-radius: 10px; border: 1px solid #a7f3d0;">
-                    <i class="bi bi-people-fill me-1"></i> ผู้แทนทั้งหมด: <strong>@allReps.Count</strong> ท่าน
-                </span>
-            </div>
         </div>
     </div>
 </div>
 
-<!-- Tab Contents -->
-<div class="tab-content" id="chart-capture-area">
-    <!-- Overall Tab -->
-    <div class="tab-pane fade show active" id="tab-c-overall" role="tabpanel">
-        @{
-            RenderChartSection(overall, "overall", canDownload);
-        }
+<div id="chart-capture-area">
+    <!-- Dynamic Content Rendered via JS -->
+    
+    <!-- 4 KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card kpi-sales">
+                <div class="kpi-title">เธขเธญเธ”เธเธฒเธขเธฃเธงเธกเธ—เธฑเนเธเธซเธกเธ” (เธเธฒเธ—)</div>
+                <div class="kpi-value" id="kpi-sales-val">0</div>
+                <div class="kpi-sub text-muted">เธ•เธฅเธญเธ”เธเนเธงเธ 8 เน€เธ”เธทเธญเธ</div>
+                <i class="bi bi-bag-fill kpi-icon"></i>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card kpi-collect">
+                <div class="kpi-title">เธขเธญเธ”เน€เธเนเธเน€เธเธดเธเธฃเธงเธก (เธเธฒเธ—)</div>
+                <div class="kpi-value" id="kpi-collect-val">0</div>
+                <div class="kpi-sub text-muted">เธเธฒเธเธขเธญเธ”เธเธฒเธขเธ—เธฑเนเธเธซเธกเธ”</div>
+                <i class="bi bi-cash-coin kpi-icon"></i>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card kpi-debt">
+                <div class="kpi-title">เธซเธเธตเนเธเธเธเนเธฒเธเธฃเธงเธก (เธเธฒเธ—)</div>
+                <div class="kpi-value" id="kpi-debt-val">0</div>
+                <div class="kpi-sub text-muted">เธ—เธตเนเธขเธฑเธเน€เธฃเธตเธขเธเน€เธเนเธเนเธกเนเนเธ”เน</div>
+                <i class="bi bi-exclamation-octagon-fill kpi-icon"></i>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card kpi-rate">
+                <div class="kpi-title">เธเธฃเธฐเธชเธดเธ—เธเธดเธ เธฒเธเธเธฒเธฃเน€เธเนเธเน€เธเธดเธ (%)</div>
+                <div class="kpi-value" id="kpi-rate-val">0%</div>
+                <div class="kpi-sub text-muted" id="kpi-rate-sub">เธเธฃเธฐเน€เธกเธดเธเธเธฅ: -</div>
+                <i class="bi bi-speedometer2 kpi-icon"></i>
+            </div>
+        </div>
     </div>
 
-    <!-- Individual Rep Tabs -->
-    @for (int rIdx = 0; rIdx < allReps.Count; rIdx++)
-    {
-        var rep = allReps[rIdx];
-        <div class="tab-pane fade" id="tab-c-rep-@rIdx" role="tabpanel">
-            @{
-                RenderChartSection(rep, rIdx.ToString(), canDownload);
-            }
-        </div>
-    }
-</div>
-
-@functions {
-    void RenderChartSection(SalesRepMonthlyReport data, string key, bool canDownload)
-    {
-        decimal rate = data.OverallCollectionRate;
-        string rateClass = rate >= 85 ? "good" : (rate >= 50 ? "warn" : "bad");
-        string rateColor = rate >= 85 ? "#15803d" : (rate >= 50 ? "#d97706" : "#b91c1c");
-
-        <div class="rep-banner">
-            <div class="fw-bold" style="font-size:1.1rem;opacity:.85;margin-bottom:4px;">
-                <i class="bi bi-person-badge me-2 text-warning"></i>@data.SalesRep
-            </div>
-            <div class="small" style="opacity:.7;">ผลงานสรุปยอดขายและการตามหนี้ ไทม์ไลน์ 8 เดือน ปี 2569</div>
-        </div>
-
-        <div class="row g-3 mb-4">
-            <div class="col-md-3 col-sm-6">
-                <div class="kpi-card blue h-100">
-                    <div class="kpi-icon-wrap blue"><i class="bi bi-bag-fill"></i></div>
-                    <div>
-                        <div class="kpi-label">ยอดขายสะสม</div>
-                        <div class="kpi-value blue">@data.TotalSales.ToString("N0")</div>
-                        <div class="kpi-sub">บาท ตลอด 8 เดือน</div>
-                    </div>
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4 align-items-stretch">
+        <div class="col-lg-8">
+            <div class="chart-card h-100 mb-0 d-flex flex-column">
+                <div class="chart-header">
+                    <i class="bi bi-bar-chart-fill text-primary me-2"></i> เธเธฃเธฒเธเนเธ—เนเธเน€เธเธฃเธตเธขเธเน€เธ—เธตเธขเธเธขเธญเธ”เธเธฒเธข vs เน€เธเนเธเน€เธเธดเธ vs เธซเธเธตเนเธเธเธเนเธฒเธ
                 </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="kpi-card green h-100">
-                    <div class="kpi-icon-wrap green"><i class="bi bi-cash-coin"></i></div>
-                    <div>
-                        <div class="kpi-label">ยอดเก็บได้</div>
-                        <div class="kpi-value green">@data.TotalCollected.ToString("N0")</div>
-                        <div class="kpi-sub">บาท เงินสดไหลเข้าจริง</div>
-                    </div>
+                <div style="position:relative; flex-grow:1; min-height:280px;">
+                    <canvas id="mainBarChart"></canvas>
                 </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="kpi-card red h-100">
-                    <div class="kpi-icon-wrap red"><i class="bi bi-exclamation-triangle-fill"></i></div>
-                    <div>
-                        <div class="kpi-label">หนี้คงค้าง</div>
-                        <div class="kpi-value red">@data.TotalOutstanding.ToString("N0")</div>
-                        <div class="kpi-sub">บาท ⚠️ จุดความเสี่ยง</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="progress-gauge-wrap h-100 d-flex flex-column justify-content-center">
-                    <div style="font-size:.82rem;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:8px;">📊 % เก็บสำเร็จ (Collection Rate)</div>
-                    <div class="d-flex align-items-baseline gap-2 mb-2">
-                        <span style="font-size:2rem;font-weight:900;line-height:1;color:@rateColor;">@data.OverallCollectionRate%</span>
-                        <span class="small text-muted">เป้า 85%</span>
-                    </div>
-                    <div class="gauge-bar-outer">
-                        <div class="gauge-bar-fill @rateClass" style="width:@(Math.Min(data.OverallCollectionRate, 100))%;" id="gauge-fill-@key"></div>
-                        <div class="gauge-target-line" style="left:85%;">
-                            <div class="gauge-target-label">เป้า 85%</div>
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-between mt-1">
-                        <span class="small text-muted">0%</span>
-                        <span class="small text-muted">100%</span>
-                    </div>
-                </div>
+                <div class="insight-card mt-4" id="main-insight-box"></div>
             </div>
         </div>
-
-        <div class="row g-3 mb-4">
-            <!-- Chart 1: Grouped Bar Chart -->
-            <div class="col-md-7">
-                <div class="chart-card">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="fw-bold" style="color:#1a1a2e; font-size:1.05rem;">
-                            <i class="bi bi-bar-chart-fill text-primary"></i> 1. กราฟแท่งเปรียบเทียบ ยอดขาย vs เก็บได้ vs หนี้ค้าง
-                        </span>
-                        @if (canDownload)
-                        {
-                            <button class="btn btn-sm btn-outline-secondary no-print" onclick="downloadSingleChart('barChart-@key', 'BarChart_@key')">
-                                <i class="bi bi-download"></i> PNG
-                            </button>
-                        }
-                    </div>
-                    <canvas id="barChart-@key" height="135"></canvas>
-                    <div class="insight-card mt-3" id="desc-box-@key"></div>
+        <div class="col-lg-4">
+            <div class="chart-card h-100 mb-0 d-flex flex-column">
+                <div class="chart-header">
+                    <i class="bi bi-speedometer text-success me-2"></i> เธชเธฑเธ”เธชเนเธงเธเธเธงเธฒเธกเธชเธณเน€เธฃเนเธ
                 </div>
-            </div>
-            <!-- Chart 2: Trendline -->
-            <div class="col-md-5">
-                <div class="chart-card">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="fw-bold" style="color:#1a1a2e; font-size:1.05rem;">
-                            <i class="bi bi-graph-up-arrow text-success"></i> 2. เส้นแนวโน้ม % ประสิทธิภาพการเก็บเงิน
-                        </span>
-                        @if (canDownload)
-                        {
-                            <button class="btn btn-sm btn-outline-secondary no-print" onclick="downloadSingleChart('lineChart-@key', 'Trendline_@key')">
-                                <i class="bi bi-download"></i> PNG
-                            </button>
-                        }
-                    </div>
-                    <canvas id="lineChart-@key" height="135"></canvas>
-                    <div class="insight-card mt-3">
-                        <p class="mb-0" style="font-size:0.9rem;">
-                            <i class="bi bi-graph-up-arrow text-success me-1"></i>
-                            ประสิทธิภาพการเก็บเงินรวมของ <strong class="text-warning">@data.SalesRep</strong> คิดเป็น <strong class="text-danger">@data.OverallCollectionRate%</strong> 
-                            เงินสดไหลเข้าจริงคือ <strong class="text-success">@data.TotalCollected.ToString("N2")</strong> บาท
-                        </p>
-                    </div>
+                <div style="position:relative; flex-grow:1; display:flex; justify-content:center; align-items:center; min-height:220px;">
+                    <canvas id="doughnutChart"></canvas>
                 </div>
-            </div>
-        </div>
-    }
-}
-
-<!-- ================= SIGNATURE SECTION ================= -->
-<div class="card shadow-sm border-0 mb-3 no-print" style="background:#f8f9fa;">
-    <div class="card-body py-2">
-        <div class="row align-items-center">
-            <div class="col-md-6">
-                <span class="fw-bold text-dark"><i class="bi bi-pen me-1"></i> ตัวเลือกการแสดงผลช่องลงนามท้ายรายงาน:</span>
-            </div>
-            <div class="col-md-6 d-flex justify-content-end gap-3">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="toggle-sig" checked onchange="toggleSignatures()">
-                    <label class="form-check-label small fw-bold" for="toggle-sig">แสดงช่องลงนาม 4 ฝ่าย</label>
+                <div class="text-center mt-3 text-muted small fw-bold">
+                    * เธญเธฑเธ•เธฃเธฒเธชเนเธงเธ เน€เธเธฃเธตเธขเธเน€เธ—เธตเธขเธเธขเธญเธ”เน€เธเนเธเนเธ”เนเธเธฑเธเธซเธเธตเนเธเนเธฒเธ
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-<div class="signature-area" id="signature-block">
-    <div class="row text-center mt-3 pt-3" style="border-top: 1.5px dashed #ccc;">
-        <div class="col-3">
-            <div style="border-bottom: 1px solid #333; margin: 45px 15px 6px;">&nbsp;</div>
-            <p class="mb-0 fw-bold" style="font-size:0.95rem;">(ผู้รายงาน)</p>
-            <small class="text-muted">วันที่ ...... / ...... / ..........</small>
-        </div>
-        <div class="col-3">
-            <div style="border-bottom: 1px solid #333; margin: 45px 15px 6px;">&nbsp;</div>
-            <p class="mb-0 fw-bold" style="font-size:0.95rem;">(ผู้ตรวจสอบ)</p>
-            <small class="text-muted">วันที่ ...... / ...... / ..........</small>
-        </div>
-        <div class="col-3">
-            <div style="border-bottom: 1px solid #333; margin: 45px 15px 6px;">&nbsp;</div>
-            <p class="mb-0 fw-bold" style="font-size:0.95rem;">(ผู้มีอำนาจลงนาม)</p>
-            <small class="text-muted">วันที่ ...... / ...... / ..........</small>
-        </div>
-        <div class="col-3">
-            <div style="border-bottom: 1px solid #333; margin: 45px 15px 6px;">&nbsp;</div>
-            <p class="mb-0 fw-bold" style="font-size:0.95rem;">(ผู้แทนขาย)</p>
-            <small class="text-muted">วันที่ ...... / ...... / ..........</small>
+    
+    <div class="row g-4 mb-2">
+        <div class="col-12">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <i class="bi bi-graph-up-arrow text-warning me-2"></i> เน€เธชเนเธเนเธเธงเนเธเนเธกเธเธฃเธฐเธชเธดเธ—เธเธดเธ เธฒเธเธเธฒเธฃเน€เธเนเธเน€เธเธดเธ (%) เธฃเธฒเธขเน€เธ”เธทเธญเธ
+                </div>
+                <div style="position:relative; height:250px;">
+                    <canvas id="trendLineChart"></canvas>
+                </div>
+            </div>
         </div>
     </div>
+
 </div>
 
 @section Scripts {
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@@1.4.1/dist/html2canvas.min.js"></script>
 <script>
 const monthsLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Months));
-const chartInstances = {};
-
-const reportsData = {
+const repsDataStore = {
     "overall": {
+        name: "เธ เธฒเธเธฃเธงเธกเธ—เธฑเนเธเธซเธกเธ”",
         sales: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OverallCompany.MonthlyData.Select(m => m.TotalSales).ToList())),
         collected: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OverallCompany.MonthlyData.Select(m => m.TotalCollected).ToList())),
         debt: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OverallCompany.MonthlyData.Select(m => m.Outstanding).ToList())),
-        rates: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OverallCompany.MonthlyData.Select(m => m.CollectionRate).ToList()))
+        rates: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OverallCompany.MonthlyData.Select(m => m.CollectionRate).ToList())),
+        totSales: @Model.OverallCompany.TotalSales,
+        totCol: @Model.OverallCompany.TotalCollected,
+        totDebt: @Model.OverallCompany.TotalOutstanding,
+        totRate: @Model.OverallCompany.OverallCollectionRate
     }
-    @for (int rIdx = 0; rIdx < allReps.Count; rIdx++)
+    @for (int ri = 0; ri < allReps.Count; ri++)
     {
-        var rep = allReps[rIdx];
-        <text>
-        , "@rIdx": {
+        var rep = allReps[ri];
+        <text>, "@ri": {
+            name: "@rep.SalesRep",
             sales: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.TotalSales).ToList())),
             collected: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.TotalCollected).ToList())),
             debt: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.Outstanding).ToList())),
-            rates: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.CollectionRate).ToList()))
-        }
-        </text>
+            rates: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.CollectionRate).ToList())),
+            totSales: @rep.TotalSales,
+            totCol: @rep.TotalCollected,
+            totDebt: @rep.TotalOutstanding,
+            totRate: @rep.OverallCollectionRate
+        }</text>
     }
 };
 
-function formatBaht(v) {
-    if (v >= 1000000) return (v/1000000).toFixed(2) + ' ล้าน';
-    if (v >= 1000) return (v/1000).toFixed(1) + 'K';
-    return v.toFixed(0);
+let mainBarChart, doughnutChart, trendLineChart;
+
+function formatNum(num) {
+    if (num >= 1000000) return (num/1000000).toFixed(2) + 'M';
+    if (num >= 1000) return (num/1000).toFixed(1) + 'K';
+    return num.toLocaleString('th-TH');
 }
 
-function initChartsFor(key) {
-    if (chartInstances['bar-' + key]) return;
-    const d = reportsData[key];
+function updateDashboard(key) {
+    const d = repsDataStore[key];
     if (!d) return;
 
-    // Animate gauge fill
-    const gaugeFill = document.getElementById('gauge-fill-' + key);
-    if (gaugeFill) {
-        const targetW = gaugeFill.style.width;
-        gaugeFill.style.width = '0%';
-        setTimeout(() => { gaugeFill.style.width = targetW; }, 200);
-    }
+    // 1. Update KPIs
+    document.getElementById('kpi-sales-val').innerText = formatNum(d.totSales);
+    document.getElementById('kpi-collect-val').innerText = formatNum(d.totCol);
+    document.getElementById('kpi-debt-val').innerText = formatNum(d.totDebt);
+    
+    const rateEl = document.getElementById('kpi-rate-val');
+    const rateSub = document.getElementById('kpi-rate-sub');
+    rateEl.innerText = d.totRate + '%';
+    if(d.totRate >= 85) { rateEl.style.color = '#059669'; rateSub.innerHTML = '<span class="text-success">เธเธฃเธฐเน€เธกเธดเธ: เธ”เธตเน€เธขเธตเนเธขเธก เธเนเธฒเธเน€เธเธ“เธ‘เน</span>'; }
+    else if(d.totRate >= 50) { rateEl.style.color = '#d97706'; rateSub.innerHTML = '<span class="text-warning">เธเธฃเธฐเน€เธกเธดเธ: เธเธฒเธเธเธฅเธฒเธ (เน€เธเนเธฒเธฃเธฐเธงเธฑเธ)</span>'; }
+    else { rateEl.style.color = '#e11d48'; rateSub.innerHTML = '<span class="text-danger fw-bold">เธเธฃเธฐเน€เธกเธดเธ: เธ•เนเธณเธเธงเนเธฒเน€เธเธ“เธ‘เน เธ•เนเธญเธเน€เธฃเนเธเธ”เนเธงเธ!</span>'; }
 
-    const descBox = document.getElementById("desc-box-" + key);
-    if (descBox && !descBox.dataset.generated) {
-        let totalSales = d.sales.reduce((a,b) => a+b, 0);
-        let maxSale = Math.max(...d.sales);
-        let maxMonthIdx = d.sales.indexOf(maxSale);
-        let maxMonth = monthsLabels[maxMonthIdx] || "";
-        
-        let validRates = d.rates.filter(r => r > 0);
-        let avgRate = validRates.length > 0 ? (validRates.reduce((a,b) => a+b, 0) / validRates.length) : 0;
-        
-        let text = `<b>สรุปผลงาน:</b> ยอดขายรวม <b>${totalSales.toLocaleString("th-TH")} บาท</b> | `;
-        if (maxSale > 0) {
-            text += `ทำยอดสูงสุดในเดือน <b>${maxMonth}</b> (${maxSale.toLocaleString("th-TH")} บาท)<br>`;
-        }
-        text += `• ประสิทธิภาพเฉลี่ย: <b>${avgRate.toFixed(1)}%</b> `;
-        
-        if (avgRate >= 85) {
-            text += `<span class="text-success fw-bold">(ผ่านเกณฑ์ 85%)</span> ขอให้รักษามาตรฐานไว้`;
-        } else if (avgRate >= 50) {
-            text += `<span class="text-warning fw-bold">(ปานกลาง)</span> ควรเน้นติดตามหนี้ให้ถึง 85%`;
-        } else {
-            text += `<span class="text-danger fw-bold">(ค่อนข้างต่ำ)</span> ต้องเร่งติดตามหนี้ด่วน`;
-        }
-        descBox.innerHTML = `<i class="bi bi-lightbulb-fill text-warning me-1"></i> ${text}`;
-        descBox.dataset.generated = "true";
-    }
+    // 2. Auto Insight
+    const insightEl = document.getElementById('main-insight-box');
+    const maxSale = Math.max(...d.sales);
+    const maxIdx = d.sales.indexOf(maxSale);
+    let msg = `<b>เธชเธฃเธธเธเธขเธญเธ”เธเธฃเธฐเธเธณเธ•เธฑเธงเธเธนเนเนเธ—เธ (${d.name}):</b> เธขเธญเธ”เธเธฒเธขเธชเธนเธเธชเธธเธ”เน€เธเธดเธ”เธเธถเนเธเนเธเน€เธ”เธทเธญเธ <b>${monthsLabels[maxIdx]}</b> (${maxSale.toLocaleString('th-TH')} เธเธฒเธ—) <br>`;
+    msg += `เธขเธญเธ”เน€เธเนเธเธฃเธงเธก <b>${d.totCol.toLocaleString('th-TH')}</b> เธเธฒเธ— เธเธดเธ”เน€เธเนเธ <b>${d.totRate}%</b> เธเธญเธเธขเธญเธ”เธเธฒเธข `;
+    if(d.totRate < 85) msg += `<span class="text-danger fw-bold">เธเธถเนเธเธขเธฑเธเธ•เนเธณเธเธงเนเธฒเน€เธเนเธฒเธซเธกเธฒเธข 85% เธกเธตเธซเธเธตเนเธเนเธฒเธเธญเธตเธ ${d.totDebt.toLocaleString('th-TH')} เธเธฒเธ— เธ—เธตเนเธ•เนเธญเธเธ•เธดเธ”เธ•เธฒเธก</span>`;
+    else msg += `<span class="text-success fw-bold">เธญเธขเธนเนเนเธเน€เธเธ“เธ‘เนเธ”เธตเน€เธขเธตเนเธขเธก (โฅ 85%)</span>`;
+    insightEl.innerHTML = `<i class="bi bi-megaphone-fill text-warning me-2"></i> ${msg}`;
 
-    const barEl = document.getElementById("barChart-" + key);
-    if (barEl) {
-        chartInstances['bar-' + key] = new Chart(barEl, {
+    // 3. Update Bar Chart
+    if (mainBarChart) {
+        mainBarChart.data.datasets[0].data = d.sales;
+        mainBarChart.data.datasets[1].data = d.collected;
+        mainBarChart.data.datasets[2].data = d.debt;
+        mainBarChart.update();
+    } else {
+        const ctx1 = document.getElementById('mainBarChart');
+        mainBarChart = new Chart(ctx1, {
             type: 'bar',
             data: {
                 labels: monthsLabels,
                 datasets: [
-                    {
-                        label: 'ยอดขาย (บาท)',
-                        data: d.sales,
-                        backgroundColor: 'rgba(59, 130, 246, 0.85)',
-                        borderColor: '#2563eb',
-                        borderWidth: 1.5,
-                        borderRadius: 8,
-                        borderSkipped: false
-                    },
-                    {
-                        label: 'ยอดเก็บได้ (บาท)',
-                        data: d.collected,
-                        backgroundColor: 'rgba(34, 197, 94, 0.85)',
-                        borderColor: '#16a34a',
-                        borderWidth: 1.5,
-                        borderRadius: 8,
-                        borderSkipped: false
-                    },
-                    {
-                        label: 'หนี้คงค้าง (บาท)',
-                        data: d.debt,
-                        backgroundColor: 'rgba(239, 68, 68, 0.85)',
-                        borderColor: '#dc2626',
-                        borderWidth: 1.5,
-                        borderRadius: 8,
-                        borderSkipped: false
-                    }
+                    { label: 'เธขเธญเธ”เธเธฒเธข', data: d.sales, backgroundColor: '#38bdf8', borderRadius:4 },
+                    { label: 'เน€เธเนเธเน€เธเธดเธเนเธ”เน', data: d.collected, backgroundColor: '#34d399', borderRadius:4 },
+                    { label: 'เธซเธเธตเนเธเนเธฒเธ', data: d.debt, backgroundColor: '#fb7185', borderRadius:4 }
                 ]
             },
             options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'top', labels: { font: { weight: 'bold', size: 12 } } },
-                    tooltip: {
-                        callbacks: {
-                            label: ctx => '  ' + ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString('th-TH') + ' บาท'
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { callback: v => formatBaht(v) }
-                    }
-                }
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: c => c.dataset.label + ': ' + c.parsed.y.toLocaleString('th-TH') } } },
+                scales: { y: { beginAtZero:true, ticks: { callback: v => formatNum(v) } } }
             }
         });
     }
 
-    const lineEl = document.getElementById('lineChart-' + key);
-    if (lineEl) {
-        chartInstances['line-' + key] = new Chart(lineEl, {
+    // 4. Update Doughnut Chart
+    if (doughnutChart) {
+        doughnutChart.data.datasets[0].data = [d.totCol, d.totDebt];
+        doughnutChart.update();
+    } else {
+        const ctx2 = document.getElementById('doughnutChart');
+        doughnutChart = new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: ['เน€เธเนเธเนเธ”เนเธชเธณเน€เธฃเนเธ', 'เธซเธเธตเนเธเธเธเนเธฒเธ'],
+                datasets: [{ data: [d.totCol, d.totDebt], backgroundColor: ['#10b981', '#f43f5e'], borderWidth:2, borderColor:'#fff', hoverOffset:4 }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, cutout: '65%',
+                plugins: { legend: { position:'bottom' } }
+            }
+        });
+    }
+
+    // 5. Update Line Chart
+    if (trendLineChart) {
+        trendLineChart.data.datasets[0].data = d.rates;
+        trendLineChart.update();
+    } else {
+        const ctx3 = document.getElementById('trendLineChart');
+        trendLineChart = new Chart(ctx3, {
             type: 'line',
             data: {
                 labels: monthsLabels,
                 datasets: [
-                    {
-                        label: '% ประสิทธิภาพการเก็บเงิน',
-                        data: d.rates,
-                        borderColor: '#198754',
-                        backgroundColor: 'rgba(25, 135, 84, 0.15)',
-                        borderWidth: 3.5,
-                        pointBackgroundColor: d.rates.map(r => r > 0 && r < 85 ? '#ef4444' : '#22c55e'),
-                        pointRadius: d.rates.map(r => r > 0 && r < 85 ? 8 : 6),
-                        fill: true,
-                        tension: 0.3
-                    },
-                    {
-                        label: 'เป้าหมายมาตรฐาน (85%)',
-                        data: monthsLabels.map(() => 85),
-                        borderColor: '#ef4444',
-                        borderWidth: 2,
-                        borderDash: [7, 4],
-                        pointRadius: 0,
-                        fill: false
-                    }
+                    { label: '% เน€เธเนเธเน€เธเธดเธ', data: d.rates, borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,0.1)', borderWidth:3, pointBackgroundColor:'#f59e0b', pointRadius:5, fill:true, tension:0.4 },
+                    { label: 'เน€เธเธ“เธ‘เน (85%)', data: monthsLabels.map(()=>85), borderColor:'#ef4444', borderDash:[5,5], borderWidth:2, pointRadius:0, fill:false }
                 ]
             },
             options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'top', labels: { font: { weight: 'bold', size: 12 } } },
-                    tooltip: {
-                        callbacks: {
-                            label: ctx => {
-                                let v = ctx.parsed.y;
-                                let warn = (ctx.datasetIndex === 0 && v < 85 && v > 0) ? ' ⚠️ ต่ำกว่าเป้า' : '';
-                                return '  ' + ctx.dataset.label + ': ' + v + '%' + warn;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        min: 0,
-                        max: 100,
-                        ticks: { callback: v => v + '%' }
-                    }
-                }
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } },
+                scales: { y: { min:0, max:100, ticks: { callback: v => v + '%' } } }
             }
         });
     }
 }
 
-function selectPreviousChartRep() {
-    const dropdown = document.getElementById('chartsRepDropdown');
-    if (!dropdown) return;
-    let idx = dropdown.selectedIndex;
-    if (idx > 0) { dropdown.selectedIndex = idx - 1; switchChartRep(dropdown.value); }
+function selectRep(val) {
+    updateDashboard(val);
 }
-function selectNextChartRep() {
-    const dropdown = document.getElementById('chartsRepDropdown');
-    if (!dropdown) return;
-    let idx = dropdown.selectedIndex;
-    if (idx < dropdown.options.length - 1) { dropdown.selectedIndex = idx + 1; switchChartRep(dropdown.value); }
-}
-function switchChartRep(key) {
-    const dropdown = document.getElementById('chartsRepDropdown');
-    if (dropdown && dropdown.value !== key) { dropdown.value = key; }
-    document.querySelectorAll('#chart-capture-area .tab-pane').forEach(p => p.classList.remove('show', 'active'));
-    const target = document.getElementById(key === 'overall' ? 'tab-c-overall' : 'tab-c-rep-' + key);
-    if (target) { target.classList.add('show', 'active'); }
-    setTimeout(() => { initChartsFor(key); }, 100);
-}
-function downloadSingleChart(canvasId, fileName) {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) return;
-    const link = document.createElement('a');
-    link.download = fileName + '_' + new Date().toISOString().slice(0,10) + '.png';
-    link.href = canvas.toDataURL('image/png', 1.0);
-    link.click();
-}
-function downloadScreenCapture(elementId) {
-    const target = document.getElementById(elementId);
-    if (!target) return;
-    html2canvas(target, { scale: 2, useCORS: true }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = 'SalesReport_Charts_' + new Date().toISOString().slice(0,10) + '.png';
-        link.href = canvas.toDataURL('image/png', 1.0);
-        link.click();
+
+function downloadScreenCapture(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    html2canvas(el, { scale:2, useCORS:true, backgroundColor: '#ffffff' }).then(canvas => {
+        const a = document.createElement('a');
+        a.download = 'Dashboard_Charts_' + new Date().toISOString().slice(0,10) + '.png';
+        a.href = canvas.toDataURL('image/png', 1.0);
+        a.click();
     });
 }
-function toggleSignatures() {
-    const el = document.getElementById('signature-block');
-    el.style.display = document.getElementById('toggle-sig').checked ? 'block' : 'none';
-}
-function filterChartRepByName(keyword) {
-    if (!keyword) return;
-    keyword = keyword.toLowerCase().trim();
-    const dropdown = document.getElementById('chartsRepDropdown');
-    if (!dropdown) return;
-    for (let i = 0; i < dropdown.options.length; i++) {
-        const text = dropdown.options[i].text.toLowerCase();
-        if (text.includes(keyword)) {
-            dropdown.selectedIndex = i;
-            switchChartRep(dropdown.options[i].value);
-            break;
-        }
-    }
-}
-window.addEventListener('DOMContentLoaded', () => { initChartsFor('overall'); });
+
+window.addEventListener('DOMContentLoaded', () => { 
+    const dd = document.getElementById('repSelectDropdown');
+    updateDashboard(dd ? dd.value : 'overall'); 
+});
 </script>
 }
