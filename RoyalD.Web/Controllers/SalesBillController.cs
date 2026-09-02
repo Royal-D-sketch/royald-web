@@ -726,9 +726,10 @@ if (!string.IsNullOrEmpty(poSearch))
             string? adminPassword = null)
         {
             var bill = await _db.SalesBills.FirstOrDefaultAsync(b => b.BillNo == billNo);
-            if (bill == null) return NotFound();
+            var existingDebt = await _db.OutstandingDebts.Include(d => d.PaymentRecords).FirstOrDefaultAsync(d => d.BillNo == billNo);
+            if (bill == null && existingDebt == null) return NotFound();
 
-            if (bill.IsFullyPaid)
+            if (bill != null && bill.IsFullyPaid)
             {
                 // The password is sent from JS unlock, but wait, the unlock form doesn't submit. 
                 // Let's just trust that if they could see the form, they unlocked it, OR we pass the password.
@@ -740,8 +741,8 @@ if (!string.IsNullOrEmpty(poSearch))
                 // But wait, the JS doesn't add it to the form! I'll just check if it's there.
             }
 
-            var debt = await _db.OutstandingDebts.Include(d => d.PaymentRecords).FirstOrDefaultAsync(d => d.BillNo == billNo);
-            if (debt == null)
+            var debt = existingDebt;
+            if (debt == null && bill != null)
             {
                 debt = new OutstandingDebt
                 {
@@ -764,17 +765,17 @@ if (!string.IsNullOrEmpty(poSearch))
                 await _db.SaveChangesAsync(); // save to get ID
             }
 
-            if (bill.IsFullyPaid && adminPassword != "029030445Rd*")
+            if (bill != null && bill.IsFullyPaid && adminPassword != "029030445Rd*")
             {
                 // Let's allow it if we bypass or if we just show error
                 TempData["Error"] = "บิลชำระครบแล้ว แต่ไม่มีรหัสผ่านการปลดล็อคที่ถูกต้อง";
-                return RedirectToAction("Detail", new { id = billNo });
+                return !string.IsNullOrEmpty(Request.Headers["Referer"]) ? Redirect(Request.Headers["Referer"].ToString()) : RedirectToAction("Detail", new { id = billNo });
             }
 
             if (amount <= 0 || amount > debt.RemainingAmount)
             {
                 TempData["Error"] = "ยอดชำระไม่ถูกต้อง (ต้องมากกว่า 0 และไม่เกินยอดคงค้าง)";
-                return RedirectToAction("Detail", new { id = billNo });
+                return !string.IsNullOrEmpty(Request.Headers["Referer"]) ? Redirect(Request.Headers["Referer"].ToString()) : RedirectToAction("Detail", new { id = billNo });
             }
 
             var actualPayDate = payDate ?? DateTime.Now;
@@ -805,17 +806,17 @@ if (!string.IsNullOrEmpty(poSearch))
                 else if (method == PaymentMethod.Check) debt.Status = DebtStatus.PaidCheck;
                 else debt.Status = DebtStatus.PaidCash;
                 
-                bill.IsFullyPaid = true;
+                if (bill != null) bill.IsFullyPaid = true;
             }
             else
             {
-                bill.IsFullyPaid = false;
+                if (bill != null) bill.IsFullyPaid = false;
                 debt.Status = (DebtStatus)100; // DebtStatus.Installment
             }
 
             await _db.SaveChangesAsync();
             TempData["Success"] = $"บันทึกรับชำระเงิน {amount:N2} บาท เรียบร้อยแล้ว";
-            return RedirectToAction("Detail", new { id = billNo });
+            return !string.IsNullOrEmpty(Request.Headers["Referer"]) ? Redirect(Request.Headers["Referer"].ToString()) : RedirectToAction("Detail", new { id = billNo });
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -835,20 +836,18 @@ if (!string.IsNullOrEmpty(poSearch))
             string? adminPassword = null)
         {
             var bill = await _db.SalesBills.FirstOrDefaultAsync(b => b.BillNo == billNo);
-            if (bill == null) return NotFound();
+            var existingDebt = await _db.OutstandingDebts.Include(d => d.PaymentRecords).FirstOrDefaultAsync(d => d.BillNo == billNo);
+            if (bill == null && existingDebt == null) return NotFound();
 
-            if (bill.IsFullyPaid && adminPassword != "029030445Rd*")
+            if (bill != null && bill.IsFullyPaid && adminPassword != "029030445Rd*")
             {
                 TempData["Error"] = "บิลชำระครบแล้ว แต่ไม่มีรหัสผ่านการปลดล็อคที่ถูกต้อง";
-                return RedirectToAction("Detail", new { id = billNo });
+                return !string.IsNullOrEmpty(Request.Headers["Referer"]) ? Redirect(Request.Headers["Referer"].ToString()) : RedirectToAction("Detail", new { id = billNo });
             }
 
-            var debt = await _db.OutstandingDebts
-                .Include(d => d.PendingProducts)
-                .Include(d => d.Attachments)
-                .FirstOrDefaultAsync(d => d.BillNo == billNo);
+            var debt = await _db.OutstandingDebts.Include(d => d.PendingProducts).Include(d => d.Attachments).FirstOrDefaultAsync(d => d.BillNo == billNo);
             
-            if (debt == null)
+            if (debt == null && bill != null)
             {
                 debt = new OutstandingDebt
                 {
@@ -934,7 +933,7 @@ if (!string.IsNullOrEmpty(poSearch))
 
             if (debt.RemainingAmount > 0)
             {
-                bill.IsFullyPaid = false;
+                if (bill != null) bill.IsFullyPaid = false;
             }
 
             if (statusFile != null && statusFile.Length > 0)
@@ -961,11 +960,12 @@ if (!string.IsNullOrEmpty(poSearch))
 
             await _db.SaveChangesAsync();
             TempData["Success"] = $"อัปเดตสถานะบิล {billNo} เป็น {newStatus} แล้ว";
-            return RedirectToAction("Detail", new { id = billNo });
+            return !string.IsNullOrEmpty(Request.Headers["Referer"]) ? Redirect(Request.Headers["Referer"].ToString()) : RedirectToAction("Detail", new { id = billNo });
         }
 
     }
 }
+
 
 
 

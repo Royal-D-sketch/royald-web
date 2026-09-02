@@ -436,6 +436,397 @@ else if (overdue120)
     </div>
 }
 
+@{ OutstandingDebt debt = Model; }
+<!-- ส่วนการจัดการ: บันทึกรับชำระเงิน & เปลี่ยนสถานะหนี้ -->
+<div class="row g-4 mb-4">
+    <!-- ฟอร์มรับชำระเงิน -->
+    <div class="col-lg-6">
+        <div class="card detail-card h-100">
+            <div class="card-header text-white py-3 fw-bold" style="background:#0d9488;">
+                <i class="bi bi-cash-coin me-1"></i> บันทึกรับชำระเงิน (Payment)
+            </div>
+            <div class="card-body p-4">
+                @if (false)
+                {
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-shield-lock-fill fs-1 text-secondary d-block mb-2"></i>
+                        <h6 class="fw-bold">ไม่มีสิทธิ์ดูหรือบันทึกการรับชำระเงิน</h6>
+                        <small>สิทธิ์นี้ถูกจำกัดตามนโยบายความปลอดภัยของบัญชีผู้ใช้</small>
+                    </div>
+                }
+                else if (debt?.RemainingAmount <= 0)
+                {
+                    <div class="text-center py-4 text-success">
+                        <i class="bi bi-check-circle fs-1 d-block mb-2"></i>
+                        บิลนี้ชำระเงินครบถ้วนแล้ว ไม่มียอดคงค้าง
+                    </div>
+                }
+                else
+                {
+                    <form asp-controller="SalesBill" asp-action="Pay" method="post" enctype="multipart/form-data" onsubmit="return syncPayment()">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="billNo" value="@Model.BillNo" />
+    <input type="hidden" name="method" value="Cash" id="methodField" />
+    
+    <input type="hidden" name="amount" id="realAmount" value="@(debt?.RemainingAmount ?? Model.OriginalAmount)" />
+    <input type="hidden" name="payDate" id="realPayDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+    <input type="hidden" name="note" id="realNote" value="" />
+
+    <!-- Nav Tabs: เงินสด / โอนเงิน / เช็ค -->
+    <ul class="nav nav-pills nav-fill mb-3" id="payTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active fw-bold" id="cash-tab" data-bs-toggle="tab" data-bs-target="#cash-pane" type="button" onclick="setPayMethod('Cash')">
+                <i class="bi bi-cash"></i> เงินสด (Cash)
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link fw-bold" id="transfer-tab" data-bs-toggle="tab" data-bs-target="#transfer-pane" type="button" onclick="setPayMethod('Transfer')">
+                <i class="bi bi-phone"></i> โอนเงิน (Transfer)
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link fw-bold" id="check-tab" data-bs-toggle="tab" data-bs-target="#check-pane" type="button" onclick="setPayMethod('Check')">
+                <i class="bi bi-bank"></i> เช็ค (Check)
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="payTabsContent">
+        <!-- เงินสด -->
+        <div class="tab-pane fade show active" id="cash-pane">
+            <div class="mb-3">
+                <label class="form-label fw-bold small text-muted">จำนวนเงินรับชำระ (Amount) <span class="text-danger">*</span></label>
+                <input type="number" step="0.01" id="amount_Cash" class="form-control form-control-lg fw-bold text-success" required max="@(debt?.RemainingAmount ?? Model.OriginalAmount)" value="@(debt?.RemainingAmount ?? Model.OriginalAmount)" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold small text-muted">วันที่รับเงินสด (Date)</label>
+                <input type="date" id="payDate_Cash" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold small text-muted">หมายเหตุ (Note)</label>
+                <input type="text" id="note_Cash" class="form-control" placeholder="เช่น รับเงินสดหน้าร้าน" />
+            </div>
+        </div>
+
+        <!-- โอนเงิน -->
+        <div class="tab-pane fade" id="transfer-pane">
+            <div class="mb-3">
+                <label class="form-label fw-bold small text-muted">จำนวนเงินโอน (Amount) <span class="text-danger">*</span></label>
+                <input type="number" step="0.01" id="amount_Transfer" class="form-control form-control-lg fw-bold text-success" max="@(debt?.RemainingAmount ?? Model.OriginalAmount)" value="@(debt?.RemainingAmount ?? Model.OriginalAmount)" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold small text-muted">วันที่โอนเงิน (Transfer Date)</label>
+                <input type="date" id="payDate_Transfer" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold small text-muted">แนบรูปสลิปโอนเงิน (Slip Image)</label>
+                <input type="file" id="file_Transfer" class="form-control" accept="image/*,.pdf" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold small text-muted">หมายเหตุ (Note)</label>
+                <input type="text" id="note_Transfer" class="form-control" placeholder="เช่น โอนเข้าบัญชีกสิกร" />
+            </div>
+        </div>
+
+        <!-- เช็ค -->
+        <div class="tab-pane fade" id="check-pane">
+            <div class="mb-3">
+                <label class="form-label fw-bold small text-muted">จำนวนเงินตามเช็ค (Amount) <span class="text-danger">*</span></label>
+                <input type="number" step="0.01" id="amount_Check" class="form-control form-control-lg fw-bold text-success" max="@(debt?.RemainingAmount ?? Model.OriginalAmount)" value="@(debt?.RemainingAmount ?? Model.OriginalAmount)" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold small text-muted">วันที่รับเช็ค (Receive Date)</label>
+                <input type="date" id="payDate_Check" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="row g-2 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small text-muted">วันที่ในหน้าเช็ค (Cheque Date)</label>
+                    <input type="date" name="checkDate" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small text-muted">ธนาคาร (Bank)</label>
+                    <input type="text" name="bank" class="form-control" placeholder="เช่น กสิกร, กรุงเทพ" />
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label fw-bold small text-muted">เลขที่เช็ค (Check No.)</label>
+                    <input type="text" name="checkNo" class="form-control" placeholder="เช่น 1234567" />
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold small text-muted">แนบรูปหน้าเช็ค (Cheque Image)</label>
+                <input type="file" id="file_Check" class="form-control" accept="image/*,.pdf" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold small text-muted">หมายเหตุ (Note)</label>
+                <input type="text" id="note_Check" class="form-control" placeholder="เช่น รอเช็คเคลียร์" />
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-success w-100 fw-bold py-2 mt-2">
+        <i class="bi bi-save"></i> ยืนยันการรับชำระเงิน
+    </button>
+</form>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- ฟอร์มเปลี่ยนสถานะหนี้ -->
+    <div class="col-lg-6">
+        @if (false)
+        {
+            <div class="card detail-card h-100 bg-light border-0">
+                <div class="card-header bg-secondary text-white py-3 fw-bold">
+                    <i class="bi bi-lock-fill me-1"></i> เปลี่ยนสถานะหนี้ / จัดการพิเศษ (ไม่มีสิทธิ์)
+                </div>
+                <div class="card-body p-4 text-center text-muted d-flex flex-column justify-content-center align-items-center" style="min-height:280px;">
+                    <i class="bi bi-shield-lock-fill fs-1 text-secondary mb-2" style="opacity:0.4;"></i>
+                    <h6 class="fw-bold text-dark mb-1">คุณไม่มีสิทธิ์ในการเปลี่ยนสถานะหนี้</h6>
+                    <p class="small text-muted mb-0">เฉพาะผู้ดูแลระบบหรือผู้ที่ได้รับอนุญาตสิทธิ์เท่านั้นที่สามารถเปลี่ยนสถานะหนี้ได้</p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card detail-card h-100">
+                <div class="card-header bg-secondary text-white py-3 fw-bold">
+                    <i class="bi bi-arrow-repeat me-1"></i> เปลี่ยนสถานะหนี้ / จัดการพิเศษ
+                </div>
+                <div class="card-body p-4">
+                    <form asp-controller="SalesBill" asp-action="UpdateStatus" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="billNo" value="@Model.BillNo" />
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">เลือกสถานะใหม่ <span class="text-danger">*</span></label>
+                            <select name="newStatus" class="form-select form-select-lg fw-bold" id="statusSelect" onchange="onStatusSelectChange()">
+                                <option value="Outstanding" selected="@(debt?.Status == DebtStatus.Outstanding)">ค้างชำระปกติ (Outstanding)</option>
+                                <option value="Postponed" selected="@(debt?.Status == DebtStatus.Postponed)">เลื่อนนัดชำระ (Postponed)</option>
+                                <option value="WaitingGoods" selected="@(debt?.Status == DebtStatus.WaitingGoods)">รอสินค้า / ของขาด (Waiting for Goods)</option>
+                                <option value="Delivering" selected="@(debt?.Status == DebtStatus.Delivering)">บิลอยู่จัดส่ง (Delivering)</option>
+                                <option value="ChangeProduct" selected="@(debt?.Status == DebtStatus.ChangeProduct)">เปลี่ยนสินค้า (Change Product)</option>
+                                <option value="Return" selected="@(debt?.Status == DebtStatus.ReturnIssued || debt?.Status == DebtStatus.ReturnPending)">รับคืนสินค้า (Return)</option>
+                                <option value="Consignment" selected="@(debt?.Status == DebtStatus.Consignment)">สินค้าฝากขาย (Consignment)</option>
+                                <option value="BadDebt" selected="@(debt?.Status == DebtStatus.BadDebt)">หนี้สูญ (Bad Debt)</option>
+                                <option value="Cancelled" style="color:red; font-weight:bold;">❌ บิลนี้ยกเลิก (ย้ายไปบิลยกเลิก 40 วัน)</option>
+                            </select>
+                        </div>
+
+                        <!-- รายละเอียดตามสถานะ -->
+                        <!-- 1. เลื่อนชำระ -->
+                        <div id="f-postponed" class="d-none mb-3 p-3 bg-light rounded border">
+                            <label class="form-label fw-bold small text-warning">📅 ระบุวันที่นัดชำระใหม่</label>
+                            <input type="date" name="postponedDate" class="form-control" value="@(debt?.PostponedDate?.ToString("yyyy-MM-dd") ?? "")" />
+                        </div>
+
+                        <!-- 2. จัดส่ง -->
+                        <div id="f-delivering" class="d-none mb-3 p-3 bg-light rounded border">
+                            <label class="form-label fw-bold small text-info">🚚 ระบุวันที่จัดส่ง</label>
+                            <input type="date" name="deliveringDate" class="form-control" value="@(debt?.DeliveringDate?.ToString("yyyy-MM-dd") ?? "")" />
+                        </div>
+
+                        <!-- 3. รอสินค้า -->
+                        <div id="f-waiting" class="d-none mb-3 p-3 rounded border" style="background:#f0fdf4; border-color:#86efac;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label fw-bold small text-success mb-0">
+                                    <i class="bi bi-box-seam me-1"></i> เลือกรายการสินค้าที่รอส่ง / ของขาดจากบิลนี้
+                                </label>
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-outline-success btn-sm py-0" onclick="selectAllWaitingProducts(true)">
+                                        <i class="bi bi-check-all"></i> เลือกทั้งหมด
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm py-0" onclick="selectAllWaitingProducts(false)">
+                                        <i class="bi bi-x-circle"></i> ล้าง
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <label class="form-label small text-muted mb-1">📅 วันที่รอสินค้า / นัดส่งสินค้าใหม่</label>
+                                <input type="date" name="waitingGoodsDate" class="form-control form-control-sm" value="@(debt?.WaitingGoodsDate?.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd"))" />
+                            </div>
+
+                            @if (billItems != null && billItems.Any())
+                            {
+                                <div class="table-responsive bg-white rounded border mb-2" style="max-height: 250px; overflow-y: auto;">
+                                    <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                                        <thead class="table-light sticky-top" style="background:#ecfdf5;">
+                                            <tr>
+                                                <th style="width: 40px;" class="text-center">เลือก</th>
+                                                <th style="width: 100px;">รหัสสินค้า</th>
+                                                <th>ชื่อสินค้า</th>
+                                                <th style="width: 110px;" class="text-end">จำนวนที่รอ</th>
+                                                <th style="width: 60px;" class="text-center">หน่วย</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @for (int idx = 0; idx < billItems.Count; idx++)
+                                            {
+                                                var item = billItems.ElementAt(idx);
+                                                var existingPending = debt?.PendingProducts?.FirstOrDefault(p => p.ProductCode == item.ProductCode);
+                                                bool isChecked = existingPending != null || (debt?.Status == DebtStatus.WaitingGoods && billItems.Count == 1);
+                                                int defaultQty = existingPending?.Quantity ?? (int)item.Qty;
+
+                                                <tr>
+                                                    <td class="text-center">
+                                                        <input type="checkbox" name="waitingProductCodes" value="@item.ProductCode" id="chk_prod_@idx" 
+                                                               class="form-check-input waiting-prod-chk" onchange="toggleWaitingQtyInput(@idx)"
+                                                               @(isChecked ? "checked" : "") />
+                                                        <input type="hidden" name="allProductCodes" value="@item.ProductCode" />
+                                                        <input type="hidden" name="allProductNames" value="@item.ProductName" />
+                                                    </td>
+                                                    <td><label for="chk_prod_@idx" class="form-check-label mb-0 fw-bold text-dark"><code>@item.ProductCode</code></label></td>
+                                                    <td><label for="chk_prod_@idx" class="form-check-label mb-0 fw-semibold">@item.ProductName</label></td>
+                                                    <td class="text-end">
+                                                        <input type="number" name="waitingQuantities_@item.ProductCode" id="qty_input_@idx" 
+                                                               class="form-control form-control-sm text-end fw-bold text-danger waiting-qty-input" 
+                                                               value="@defaultQty" min="1" max="@((int)item.Qty)" style="width: 85px; display: inline-block;" 
+                                                               @(isChecked ? "" : "disabled") />
+                                                    </td>
+                                                    <td class="text-center text-muted"><small>@item.Unit</small></td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="alert alert-info py-1 px-2 small mb-2">
+                                    <i class="bi bi-info-circle me-1"></i> ไม่พบรายการสินค้าในบิลนี้ สามารถพิมพ์ระบุในหมายเหตุได้
+                                </div>
+                            }
+
+                            <div>
+                                <label class="form-label small text-muted mb-1">📝 หมายเหตุเพิ่มเติม (ถ้ามี)</label>
+                                <input type="text" name="note" class="form-control form-control-sm" placeholder="เช่น รอของเข้าโรงงานวันศุกร์..." value="@debt?.Note" />
+                            </div>
+                        </div>
+
+                        <!-- 4. รับคืนสินค้า -->
+                        <div id="f-return" class="d-none mb-3 p-3 bg-light rounded border">
+                            <label class="form-label fw-bold small text-secondary">↩️ ยอดเงินรับคืน (บาท)</label>
+                            <input type="number" step="0.01" name="returnAmount" class="form-control mb-2" placeholder="0.00" value="@(debt?.ReturnAmount ?? 0)" />
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="isReturnCutFromBill" value="true" id="chkReturnCut" checked="@((debt?.IsReturnCutFromBill == true))" />
+                                <label class="form-check-label fw-semibold" for="chkReturnCut">
+                                    ตัดยอดรับคืนออกจากยอดหนี้บิลนี้ทันที
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- 5. หนี้สูญ -->
+                        <div id="f-baddebt" class="d-none mb-3 p-3 bg-danger bg-opacity-10 rounded border border-danger">
+                            <label class="form-label fw-bold small text-danger">⚠️ ยอดตัดหนี้สูญ (บาท)</label>
+                            <input type="number" step="0.01" name="badDebtAmount" class="form-control mb-2" value="@(debt?.BadDebtAmount ?? debt?.RemainingAmount)" />
+                        </div>
+
+                        <!-- 6. ยกเลิกบิล -->
+                        <div id="f-cancelled" class="d-none mb-3 p-3 bg-danger bg-opacity-10 rounded border border-danger">
+                            <label class="form-label fw-bold small text-danger">❌ เหตุผลในการยกเลิกบิล</label>
+                            <input type="text" name="note" class="form-control mb-2" placeholder="เช่น ลูกค้ายกเลิกคำสั่งซื้อ / ออกบิลซ้ำ" />
+                            <small class="text-danger d-block">
+                                * เมื่อยกเลิก บิลจะถูกย้ายไปเก็บที่หน้า "บิลยกเลิก" เป็นเวลา 40 วัน ก่อนจะถูกลบออกจากระบบ
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">แนบเอกสาร/รูปภาพประกอบ (ถ้ามี)</label>
+                            <input type="file" name="statusFile" class="form-control" accept="image/*,.pdf" />
+                        </div>
+
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-secondary btn-lg fw-bold shadow">
+                                <i class="bi bi-save me-1"></i> บันทึกการเปลี่ยนสถานะ
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- ประวัติการรับชำระเงิน -->
+<div class="card detail-card mb-4">
+    <div class="card-header bg-light py-3 fw-bold d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-clock-history me-1"></i> ประวัติการรับชำระเงินของบิลนี้</span>
+        <span class="badge bg-secondary">@(debt?.PaymentRecords?.Count ?? 0) รายการ</span>
+    </div>
+    <div class="card-body p-0">
+        @if (false)
+        {
+            <div class="text-center py-4 text-muted">
+                <i class="bi bi-shield-lock fs-2 text-muted d-block mb-1"></i>
+                <span>ข้อมูลประวัติการรับชำระเงินถูกซ่อนไว้ตามสิทธิ์ความปลอดภัย</span>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>วันที่รับเงิน</th>
+                            <th>วิธีการชำระ</th>
+                            <th class="text-end">จำนวนเงิน (บาท)</th>
+                            <th>ผู้บันทึก</th>
+                            <th>เอกสารแนบ</th>
+                            <th>หมายเหตุ / รายละเอียด</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (debt?.PaymentRecords == null || !debt.PaymentRecords.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">ยังไม่มีประวัติการรับชำระเงินสำหรับบิลนี้</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var p in debt?.PaymentRecords.OrderByDescending(x => x.PaidDate))
+                            {
+                                <tr>
+                                    <td>@p.PaidDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        <span class="badge bg-info text-dark">@p.Method</span>
+                                        @if (!string.IsNullOrEmpty(p.CheckNumber))
+                                        {
+                                            <small class="d-block text-muted">เช็ค: @p.CheckNumber (@p.BankName)</small>
+                                        }
+                                    </td>
+                                    <td class="text-end fw-bold text-success">@p.PaidAmount.ToString("N2")</td>
+                                    <td><span class="badge bg-light text-dark border">@p.CreatedBy</span></td>
+                                    <td>
+                                        @if (p.Attachments != null && p.Attachments.Any())
+                                        {
+                                            @foreach (var att in p.Attachments)
+                                            {
+                                                <a href="@att.FilePath" target="_blank" class="btn btn-sm btn-outline-primary py-0 px-2">
+                                                    <i class="bi bi-paperclip"></i> ดูไฟล์
+                                                </a>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">-</span>
+                                        }
+                                    </td>
+                                    <td>@p.Note</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+
+
+
 <script>
     function setPayMethod(method) {
     document.getElementById('methodField').value = method;
@@ -499,3 +890,5 @@ function syncPayment() {
         onStatusSelectChange();
     });
 </script>
+
+
