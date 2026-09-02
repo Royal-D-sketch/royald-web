@@ -1,4 +1,4 @@
-﻿using RoyalD.Web.Models;
+using RoyalD.Web.Models;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
@@ -164,7 +164,7 @@ namespace RoyalD.Web.Services
                 .OrderBy(r => r)
                 .ToList();
 
-            MonthlySummaryItem CalcMonth(List<dynamic> mBills, string mk)
+            MonthlySummaryItem CalcMonth(List<dynamic> mBills, string mk, string repName, bool isOverall)
             {
                 decimal mSales = mBills.Sum(b => (decimal)b.TotalAmount);
                 decimal mOutstanding = 0m;
@@ -204,7 +204,7 @@ namespace RoyalD.Web.Services
                 foreach (var mk in monthKeys)
                 {
                     var mBills = bills.Where(b => (b.SalesRep != null && b.SalesRep.Contains(rep.Trim())) && (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) == mk)).Cast<dynamic>().ToList();
-                    row.MonthlyData.Add(CalcMonth(mBills, mk));
+                    row.MonthlyData.Add(CalcMonth(mBills, mk, rep, false));
                 }
                 vm.RepRows.Add(row);
             }
@@ -216,7 +216,7 @@ namespace RoyalD.Web.Services
             foreach (var mk in monthKeys)
             {
                 var mBills = bills.Where(b => (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) == mk)).Cast<dynamic>().ToList();
-                var cMonth = CalcMonth(mBills, mk);
+                var cMonth = CalcMonth(mBills, mk, "", true);
                 totalRow.MonthlyData.Add(cMonth);
                 overallRep.MonthlyData.Add(cMonth);
             }
@@ -981,6 +981,7 @@ namespace RoyalD.Web.Services
         public List<CustomerPurchaseSummaryRow> Rows { get; set; } = new();
     }
 }
+
 
 
 
