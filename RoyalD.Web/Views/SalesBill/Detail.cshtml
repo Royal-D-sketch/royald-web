@@ -408,6 +408,7 @@
                             <label class="form-label fw-bold small text-muted">เลือกสถานะใหม่ <span class="text-danger">*</span></label>
                             <select name="newStatus" class="form-select form-select-lg fw-bold" id="statusSelect" onchange="onStatusSelectChange()">
                                 <option value="Outstanding" selected="@(debt?.Status == DebtStatus.Outstanding)">ค้างชำระปกติ (Outstanding)</option>
+                                <option value="100" selected="@((int?)debt?.Status == 100)">ผ่อนชำระ / จ่ายบางส่วน (Installment)</option>
                                 <option value="Postponed" selected="@(debt?.Status == DebtStatus.Postponed)">เลื่อนนัดชำระ (Postponed)</option>
                                 <option value="WaitingGoods" selected="@(debt?.Status == DebtStatus.WaitingGoods)">รอสินค้า / ของขาด (Waiting for Goods)</option>
                                 <option value="Delivering" selected="@(debt?.Status == DebtStatus.Delivering)">บิลอยู่จัดส่ง (Delivering)</option>
@@ -837,6 +838,7 @@ else
                             <label class="form-label fw-bold small text-muted">เลือกสถานะใหม่ <span class="text-danger">*</span></label>
                             <select name="newStatus" class="form-select form-select-lg fw-bold" id="statusSelect" onchange="onStatusSelectChange()">
                                 <option value="Outstanding" selected="@(debt?.Status == DebtStatus.Outstanding)">ค้างชำระปกติ (Outstanding)</option>
+                                <option value="100" selected="@((int?)debt?.Status == 100)">ผ่อนชำระ / จ่ายบางส่วน (Installment)</option>
                                 <option value="Postponed" selected="@(debt?.Status == DebtStatus.Postponed)">เลื่อนนัดชำระ (Postponed)</option>
                                 <option value="WaitingGoods" selected="@(debt?.Status == DebtStatus.WaitingGoods)">รอสินค้า / ของขาด (Waiting for Goods)</option>
                                 <option value="Delivering" selected="@(debt?.Status == DebtStatus.Delivering)">บิลอยู่จัดส่ง (Delivering)</option>
