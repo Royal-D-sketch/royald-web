@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -489,6 +489,10 @@ namespace RoyalD.Web.Services
                     if (qty > 0 && price == 0 && amt > 0)
                     {
                         price = Math.Round(amt / qty, 2);
+                    }
+                    if (qty == 0 && price > 0 && amt > 0)
+                    {
+                        qty = Math.Round(amt / price, 2);
                     }
 
                     if (qty == 0 && amt == 0) continue; // skip non-product lines

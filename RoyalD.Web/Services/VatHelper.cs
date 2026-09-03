@@ -67,6 +67,12 @@ namespace RoyalD.Web.Services
                 return VatCategory.VatZero;
             }
 
+            // ถ้ายอดรวมสินค้าเท่ากับยอดรวมสุทธิ แสดงว่าเป็น VAT ใน อย่างแน่นอน (เพราะไม่มีการบวก VAT เพิ่ม)
+            if (totalAmount > 0 && itemSum > 0 && Math.Abs(totalAmount - itemSum) < 0.1m)
+            {
+                return VatCategory.VatIn;
+            }
+
             // ลูกค้าสยามชิน, ขายสด, ออนไลน์ -> บิล VAT ใน เสมอ
             if (custCode == "850051" || custName.IndexOf("สยามชิน", StringComparison.OrdinalIgnoreCase) >= 0 ||
                 custCode == "102448" || custName.IndexOf("ขายสด", StringComparison.OrdinalIgnoreCase) >= 0 ||
