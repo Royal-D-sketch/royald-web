@@ -272,6 +272,7 @@
                     <form asp-controller="SalesBill" asp-action="Pay" method="post" enctype="multipart/form-data" onsubmit="return syncPayment()">
     @Html.AntiForgeryToken()
     <input type="hidden" name="billNo" value="@Model.BillNo" />
+    <input type="hidden" name="adminPassword" class="hidden-admin-pwd" value="" />
     <input type="hidden" name="method" value="Cash" id="methodField" />
     
     <input type="hidden" name="amount" id="realAmount" value="@(debt?.RemainingAmount ?? Model.TotalAmount)" />
@@ -403,6 +404,7 @@
                     <form asp-controller="SalesBill" asp-action="UpdateStatus" method="post" enctype="multipart/form-data">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="billNo" value="@Model.BillNo" />
+                        <input type="hidden" name="adminPassword" class="hidden-admin-pwd" value="" />
 
                         <div class="mb-3">
                             <label class="form-label fw-bold small text-muted">เลือกสถานะใหม่ <span class="text-danger">*</span></label>
@@ -702,6 +704,7 @@ else
                     <form asp-controller="SalesBill" asp-action="Pay" method="post" enctype="multipart/form-data" onsubmit="return syncPayment()">
     @Html.AntiForgeryToken()
     <input type="hidden" name="billNo" value="@Model.BillNo" />
+    <input type="hidden" name="adminPassword" class="hidden-admin-pwd" value="" />
     <input type="hidden" name="method" value="Cash" id="methodField" />
     
     <input type="hidden" name="amount" id="realAmount" value="@(debt?.RemainingAmount ?? Model.TotalAmount)" />
@@ -833,6 +836,7 @@ else
                     <form asp-controller="SalesBill" asp-action="UpdateStatus" method="post" enctype="multipart/form-data">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="billNo" value="@Model.BillNo" />
+                        <input type="hidden" name="adminPassword" class="hidden-admin-pwd" value="" />
 
                         <div class="mb-3">
                             <label class="form-label fw-bold small text-muted">เลือกสถานะใหม่ <span class="text-danger">*</span></label>
@@ -1108,6 +1112,12 @@ function unlockForms() {
     if (pwd === '029030445Rd*') {
         document.getElementById('unlock-form').style.display = 'none';
         document.getElementById('management-forms').style.display = 'block';
+        
+        // Populate hidden password fields in the forms so backend validation passes
+        var pwds = document.getElementsByClassName('hidden-admin-pwd');
+        for (var i = 0; i < pwds.length; i++) {
+            pwds[i].value = pwd;
+        }
     } else {
         alert('รหัสผ่านไม่ถูกต้อง');
     }
