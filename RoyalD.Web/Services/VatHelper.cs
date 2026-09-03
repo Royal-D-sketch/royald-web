@@ -67,6 +67,8 @@ namespace RoyalD.Web.Services
                 return VatCategory.VatZero;
             }
 
+            if (totalAmount < itemSum - 1m) totalAmount = itemSum; // Fallback if imported TotalAmount is wrong
+
             // ถ้ายอดรวมสินค้าเท่ากับยอดรวมสุทธิ แสดงว่าเป็น VAT ใน อย่างแน่นอน (เพราะไม่มีการบวก VAT เพิ่ม)
             if (totalAmount > 0 && itemSum > 0 && Math.Abs(totalAmount - itemSum) < 0.1m)
             {
@@ -158,6 +160,8 @@ namespace RoyalD.Web.Services
                     discountAmount += lineDiscount;
                 }
                 netAmount = grossAmount - discountAmount;
+                // If the given totalAmount is much smaller than grossAmount, use grossAmount as totalAmount
+                if (totalAmount < grossAmount - 1m) totalAmount = grossAmount;
                 if (netAmount <= 0) netAmount = totalAmount > 0 ? totalAmount : itemSum;
             }
             else

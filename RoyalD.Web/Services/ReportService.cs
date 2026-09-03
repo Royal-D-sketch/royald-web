@@ -182,16 +182,23 @@ namespace RoyalD.Web.Services
                             mOverdue120++;
                     }
                 }
+                int mkYear = int.Parse(mk.Substring(0, 4));
+                int mkMonth = int.Parse(mk.Substring(5, 2));
+
                 decimal mCollected = 0m;
                 var repDebts = isOverall ? debts : debts.Where(x => x.SalesRep != null && x.SalesRep.Contains(repName.Trim())).ToList();
                 foreach (var d in repDebts)
                 {
-                    var dPayments = payments.Where(p => p.OutstandingDebtId == d.Id && p.PaidDate.ToString("yyyy-MM") == mk).ToList();
+                    var dPayments = payments.Where(p => p.OutstandingDebtId == d.Id && 
+                        (p.PaidDate.Year > 2500 ? p.PaidDate.Year - 543 : p.PaidDate.Year) == mkYear && p.PaidDate.Month == mkMonth).ToList();
+                    
                     if (dPayments.Any())
                     {
                         mCollected += dPayments.Sum(p => p.PaidAmount);
                     }
-                    else if (d.ReceiptDate.HasValue && d.ReceiptDate.Value.ToString("yyyy-MM") == mk)
+                    else if (d.ReceiptDate.HasValue && 
+                        (d.ReceiptDate.Value.Year > 2500 ? d.ReceiptDate.Value.Year - 543 : d.ReceiptDate.Value.Year) == mkYear && 
+                        d.ReceiptDate.Value.Month == mkMonth)
                     {
                         mCollected += (d.OriginalAmount - d.RemainingAmount);
                     }
@@ -301,16 +308,23 @@ namespace RoyalD.Web.Services
                         }
                     }
 
+                    int mkYear = int.Parse(mk.Substring(0, 4));
+                    int mkMonth = int.Parse(mk.Substring(5, 2));
+
                     decimal mCollected = 0m;
                     var repDebts = isOverall ? debts : debts.Where(x => x.SalesRep != null && x.SalesRep.Contains(repName.Trim())).ToList();
                     foreach (var d in repDebts)
                     {
-                        var dPayments = payments.Where(p => p.OutstandingDebtId == d.Id && p.PaidDate.ToString("yyyy-MM") == mk).ToList();
+                        var dPayments = payments.Where(p => p.OutstandingDebtId == d.Id && 
+                            (p.PaidDate.Year > 2500 ? p.PaidDate.Year - 543 : p.PaidDate.Year) == mkYear && p.PaidDate.Month == mkMonth).ToList();
+                        
                         if (dPayments.Any())
                         {
                             mCollected += dPayments.Sum(p => p.PaidAmount);
                         }
-                        else if (d.ReceiptDate.HasValue && d.ReceiptDate.Value.ToString("yyyy-MM") == mk)
+                        else if (d.ReceiptDate.HasValue && 
+                            (d.ReceiptDate.Value.Year > 2500 ? d.ReceiptDate.Value.Year - 543 : d.ReceiptDate.Value.Year) == mkYear && 
+                            d.ReceiptDate.Value.Month == mkMonth)
                         {
                             mCollected += (d.OriginalAmount - d.RemainingAmount);
                         }
