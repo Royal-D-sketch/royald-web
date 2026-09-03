@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -298,7 +298,7 @@ if (!string.IsNullOrEmpty(poSearch))
             var debts = await _db.OutstandingDebts.AsNoTracking()
                 .Where(d => billNos.Contains(d.BillNo))
                 .ToListAsync();
-            var debtDict = debts.ToDictionary(d => d.BillNo, d => d);
+            var debtDict = debts.GroupBy(d => d.BillNo).ToDictionary(g => g.Key, g => g.First());
 
             ViewBag.Status = status;
             ViewBag.Search = search;

@@ -1,4 +1,4 @@
-﻿using RoyalD.Web.Models;
+using RoyalD.Web.Models;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
@@ -148,7 +148,8 @@ namespace RoyalD.Web.Services
                 }).ToListAsync();
 
             var today = DateTime.Today;
-            var debts = await _db.OutstandingDebts.Select(d => new { d.BillNo, d.OriginalAmount, d.RemainingAmount, d.DueDate, d.Status, d.ReceiptDate, SalesRep = string.IsNullOrEmpty(d.SalesRep) ? "ไม่ระบุ" : d.SalesRep }).ToListAsync();
+            var debts = await _db.OutstandingDebts.Select(d => new { d.Id, d.BillNo, d.OriginalAmount, d.RemainingAmount, d.DueDate, d.Status, d.ReceiptDate, SalesRep = string.IsNullOrEmpty(d.SalesRep) ? "ไม่ระบุ" : d.SalesRep }).ToListAsync();
+            var payments = await _db.PaymentRecords.Select(p => new { p.OutstandingDebtId, p.PaidDate, p.PaidAmount }).ToListAsync();
 
             var debtDict = debts.GroupBy(d => d.BillNo).ToDictionary(g => g.Key, g => g.First());
 
@@ -167,13 +168,34 @@ namespace RoyalD.Web.Services
                 {
                     if (debtDict.TryGetValue((string)b.BillNo, out var d))
                     {
-                        mOutstanding += d.RemainingAmount;
+                        decimal billOutstanding = d.RemainingAmount;
+                        if (d.OriginalAmount > d.RemainingAmount && d.ReceiptDate.HasValue)
+                        {
+                            string receiptMonth = d.ReceiptDate.Value.ToString("yyyy-MM");
+                            if (string.Compare(receiptMonth, mk) > 0)
+                            {
+                                billOutstanding = d.OriginalAmount;
+                            }
+                        }
+                        mOutstanding += billOutstanding;
                         if (d.RemainingAmount > 0 && (today - d.DueDate).TotalDays > 120)
                             mOverdue120++;
                     }
                 }
-                var mCollectedDebts = isOverall ? debts.Where(x => x.ReceiptDate.HasValue && x.ReceiptDate.Value.ToString("yyyy-MM") == mk).ToList() : debts.Where(x => x.SalesRep != null && x.SalesRep.Contains(repName.Trim()) && x.ReceiptDate.HasValue && x.ReceiptDate.Value.ToString("yyyy-MM") == mk).ToList();
-decimal mCollected = mCollectedDebts.Sum(x => x.OriginalAmount - x.RemainingAmount);
+                decimal mCollected = 0m;
+                var repDebts = isOverall ? debts : debts.Where(x => x.SalesRep != null && x.SalesRep.Contains(repName.Trim())).ToList();
+                foreach (var d in repDebts)
+                {
+                    var dPayments = payments.Where(p => p.OutstandingDebtId == d.Id && p.PaidDate.ToString("yyyy-MM") == mk).ToList();
+                    if (dPayments.Any())
+                    {
+                        mCollected += dPayments.Sum(p => p.PaidAmount);
+                    }
+                    else if (d.ReceiptDate.HasValue && d.ReceiptDate.Value.ToString("yyyy-MM") == mk)
+                    {
+                        mCollected += (d.OriginalAmount - d.RemainingAmount);
+                    }
+                }
 
                 return new MonthlySummaryItem
                 {
@@ -236,7 +258,8 @@ decimal mCollected = mCollectedDebts.Sum(x => x.OriginalAmount - x.RemainingAmou
                 }).ToListAsync();
 
             var today = DateTime.Today;
-            var debts = await _db.OutstandingDebts.Select(d => new { d.BillNo, d.OriginalAmount, d.RemainingAmount, d.DueDate, d.Status, d.ReceiptDate, SalesRep = string.IsNullOrEmpty(d.SalesRep) ? "ไม่ระบุ" : d.SalesRep }).ToListAsync();
+            var debts = await _db.OutstandingDebts.Select(d => new { d.Id, d.BillNo, d.OriginalAmount, d.RemainingAmount, d.DueDate, d.Status, d.ReceiptDate, SalesRep = string.IsNullOrEmpty(d.SalesRep) ? "ไม่ระบุ" : d.SalesRep }).ToListAsync();
+            var payments = await _db.PaymentRecords.Select(p => new { p.OutstandingDebtId, p.PaidDate, p.PaidAmount }).ToListAsync();
 
             var debtDict = debts.GroupBy(d => d.BillNo).ToDictionary(g => g.Key, g => g.First());
 
@@ -263,14 +286,35 @@ decimal mCollected = mCollectedDebts.Sum(x => x.OriginalAmount - x.RemainingAmou
                     {
                         if (debtDict.TryGetValue(b.BillNo, out var d))
                         {
-                            mOutstanding += d.RemainingAmount;
+                            decimal billOutstanding = d.RemainingAmount;
+                            if (d.OriginalAmount > d.RemainingAmount && d.ReceiptDate.HasValue)
+                            {
+                                string receiptMonth = d.ReceiptDate.Value.ToString("yyyy-MM");
+                                if (string.Compare(receiptMonth, mk) > 0)
+                                {
+                                    billOutstanding = d.OriginalAmount;
+                                }
+                            }
+                            mOutstanding += billOutstanding;
                             if (d.RemainingAmount > 0 && (today - d.DueDate).TotalDays > 120)
                                 mOverdue120++;
                         }
                     }
 
-                    var mCollectedDebts = isOverall ? debts.Where(x => x.ReceiptDate.HasValue && x.ReceiptDate.Value.ToString("yyyy-MM") == mk).ToList() : debts.Where(x => x.SalesRep != null && x.SalesRep.Contains(repName.Trim()) && x.ReceiptDate.HasValue && x.ReceiptDate.Value.ToString("yyyy-MM") == mk).ToList();
-decimal mCollected = mCollectedDebts.Sum(x => x.OriginalAmount - x.RemainingAmount);
+                    decimal mCollected = 0m;
+                    var repDebts = isOverall ? debts : debts.Where(x => x.SalesRep != null && x.SalesRep.Contains(repName.Trim())).ToList();
+                    foreach (var d in repDebts)
+                    {
+                        var dPayments = payments.Where(p => p.OutstandingDebtId == d.Id && p.PaidDate.ToString("yyyy-MM") == mk).ToList();
+                        if (dPayments.Any())
+                        {
+                            mCollected += dPayments.Sum(p => p.PaidAmount);
+                        }
+                        else if (d.ReceiptDate.HasValue && d.ReceiptDate.Value.ToString("yyyy-MM") == mk)
+                        {
+                            mCollected += (d.OriginalAmount - d.RemainingAmount);
+                        }
+                    }
 
                     rep.MonthlyData.Add(new MonthlySummaryItem
                     {
