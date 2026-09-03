@@ -1,4 +1,4 @@
-﻿@model RoyalD.Web.Models.SalesBill
+@model RoyalD.Web.Models.SalesBill
 @{
     ViewData["Title"] = $"รายละเอียดบิล {Model.BillNo}";
     bool canDelete = ViewBag.CanDeleteSalesBill == true;
@@ -655,7 +655,7 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-bold">รหัสผ่านสำหรับแก้ไข</label>
-                    <input type="password" name="password" class="form-control" required placeholder="กรอกรหัสผ่านผู้ดูแลระบบ" />
+                    <input type="password" name="adminPassword" class="form-control" required placeholder="กรอกรหัสผ่านผู้ดูแลระบบ" />
                 </div>
             </div>
             <div class="modal-footer bg-light">
@@ -1084,7 +1084,7 @@ else
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-bold">รหัสผ่านสำหรับแก้ไข</label>
-                    <input type="password" name="password" class="form-control" required placeholder="กรอกรหัสผ่านผู้ดูแลระบบ" />
+                    <input type="password" name="adminPassword" class="form-control" required placeholder="กรอกรหัสผ่านผู้ดูแลระบบ" />
                 </div>
             </div>
             <div class="modal-footer bg-light">
