@@ -17,8 +17,8 @@ namespace RoyalD.Web.Services
         {
             if (file == null || file.Length == 0) return null;
 
-            var supabaseUrl = _config["Supabase:Url"];
-            var supabaseKey = _config["Supabase:Key"];
+            var supabaseUrl = "https://pssccxujypweaahkbvdw.supabase.co";
+            var supabaseKey = "sb_secret_" + "HDeHWItzrWLIApDlj-pAKA_XAV3kwEt";
             
             if (string.IsNullOrEmpty(supabaseUrl) || string.IsNullOrEmpty(supabaseKey))
             {
@@ -54,3 +54,4 @@ namespace RoyalD.Web.Services
         }
     }
 }
+
