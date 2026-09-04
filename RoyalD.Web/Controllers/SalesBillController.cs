@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -924,14 +924,23 @@ if (!string.IsNullOrEmpty(poSearch))
                         if (waitingProductCodes.Contains(code))
                         {
                             var qtyStr = Request.Form[$"waitingQuantities_{code}"].ToString();
-                            if (int.TryParse(qtyStr, out int qty) && qty > 0)
+                            int qty = 1;
+                            if (int.TryParse(qtyStr, out int parsedQty) && parsedQty > 0)
                             {
-                                debt.PendingProducts.Add(new PendingProduct
-                                {
-                                    ProductCode = code,
-                                    ProductName = allNames.Length > i ? allNames[i] : code,
-                                    Quantity = qty
-                                });
+                                qty = parsedQty;
+                            }
+                            else
+                            {
+                                var matchedItem = await _db.SalesBillItems.FirstOrDefaultAsync(item => item.BillNo == billNo && item.ProductCode == code);
+                                if (matchedItem != null) qty = (int)matchedItem.Qty;
+                            }
+
+                            debt.PendingProducts.Add(new PendingProduct
+                            {
+                                ProductCode = code,
+                                ProductName = allNames.Length > i ? allNames[i] : code,
+                                Quantity = qty
+                            }););
                             }
                         }
                     }
@@ -1007,6 +1016,7 @@ if (!string.IsNullOrEmpty(poSearch))
 
     }
 }
+
 
 
 

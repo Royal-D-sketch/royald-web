@@ -809,12 +809,29 @@ function onStatusSelectChange() {
     if (val === 'BadDebt' && fb) fb.classList.remove('d-none');
     if (val === 'Cancelled' && fc) fc.classList.remove('d-none');
 }
+function toggleWaitingQtyInput(idx) {
+    var chk = document.getElementById('chk_prod_' + idx);
+    var input = document.getElementById('qty_input_' + idx);
+    if (chk && input) {
+        input.disabled = !chk.checked;
+    }
+}
 function selectAllWaitingProducts(select) {
-    var checkboxes = document.querySelectorAll('.waiting-chk');
-    checkboxes.forEach(function(chk) { chk.checked = select; });
+    var checkboxes = document.querySelectorAll('.waiting-prod-chk');
+    checkboxes.forEach(function(chk, idx) { 
+        chk.checked = select; 
+        // 1-based index in Razor vs 0-based in JS: Razor idx is 1-based.
+        // Actually, in the loop we can just find the closest qty input or use the idx from id.
+        var idParts = chk.id.split('_');
+        var chkIdx = idParts[idParts.length - 1];
+        toggleWaitingQtyInput(chkIdx);
+    });
+});
 }
 </script>
 }
+
+
 
 
 

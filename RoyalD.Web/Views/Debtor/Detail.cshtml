@@ -893,10 +893,13 @@ function syncPayment() {
 
     function selectAllWaitingProducts(checked) {
         const checkboxes = document.querySelectorAll('.waiting-prod-chk');
-        checkboxes.forEach((chk, idx) => {
+        checkboxes.forEach((chk) => {
             chk.checked = checked;
-            toggleWaitingQtyInput(idx);
+            var idParts = chk.id.split('_');
+            var chkIdx = idParts[idParts.length - 1];
+            toggleWaitingQtyInput(chkIdx);
         });
+    });
     }
 
     function toggleWaitingQtyInput(idx) {
@@ -927,6 +930,7 @@ function syncPayment() {
         onStatusSelectChange();
     });
 </script>
+
 
 
 
