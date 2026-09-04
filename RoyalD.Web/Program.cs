@@ -88,6 +88,8 @@ else
 builder.Services.AddScoped<ExcelImportService>();
 builder.Services.AddScoped<DebtorService>();
 builder.Services.AddScoped<ReportService>();
+builder.Services.AddScoped<RoyalD.Web.Services.PermissionService>();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient<RoyalD.Web.Services.SupabaseStorageService>();
 
 // Authentication Cookie
@@ -328,4 +330,5 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
 
