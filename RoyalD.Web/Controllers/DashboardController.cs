@@ -33,6 +33,48 @@ namespace RoyalD.Web.Controllers
             }
             if (needsSave) await _db.SaveChangesAsync();
 
+            // แทรกบิลหนี้สูญ 2 ใบที่ตกหล่น (R100150, R108995) แบบอัตโนมัติหากยังไม่มี
+            bool addedBadDebt = false;
+            var missingBills = new[] { "R100150", "R108995" };
+            foreach (var b in missingBills)
+            {
+                if (!await _db.OutstandingDebts.AnyAsync(d => d.BillNo == b))
+                {
+                    _db.SalesBills.Add(new SalesBill
+                    {
+                        BillNo = b,
+                        CustomerCode = "370018",
+                        CustomerName = "ศรีอำนวย",
+                        Province = "อำนาจเจริญ",
+                        District = "เมือง",
+                        SalesRep = "วีรนุช",
+                        BillDate = b == "R100150" ? new DateTime(2024, 11, 4) : new DateTime(2025, 3, 20),
+                        Credit = 45,
+                        TotalAmount = 11340,
+                        SourceMonth = b == "R100150" ? "2024-11" : "2025-03",
+                        IsFullyPaid = false
+                    });
+                    
+                    _db.OutstandingDebts.Add(new OutstandingDebt
+                    {
+                        BillNo = b,
+                        CustomerCode = "370018",
+                        CustomerName = "ศรีอำนวย",
+                        Province = "อำนาจเจริญ",
+                        District = "เมือง",
+                        SalesRep = "วีรนุช",
+                        BillDate = b == "R100150" ? new DateTime(2024, 11, 4) : new DateTime(2025, 3, 20),
+                        DueDate = b == "R100150" ? new DateTime(2024, 12, 19) : new DateTime(2025, 5, 4),
+                        Credit = 45,
+                        OriginalAmount = 11340,
+                        RemainingAmount = 11340,
+                        Status = DebtStatus.Outstanding
+                    });
+                    addedBadDebt = true;
+                }
+            }
+            if (addedBadDebt) await _db.SaveChangesAsync();
+
             var allDebts = await _db.OutstandingDebts
                 .Where(d => d.Status != DebtStatus.Cancelled)
                 .Select(d => new { d.Province, d.District, d.BillDate, d.DueDate, d.Credit, d.OriginalAmount, d.RemainingAmount, d.CustomerCode, d.Status })
