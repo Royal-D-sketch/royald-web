@@ -624,7 +624,7 @@ namespace RoyalD.Web.Controllers
             string? checkNo, 
             DateTime? checkDate, 
             string? note, 
-            IFormFile? file)
+            IFormFile? statusFile)
         {
             var debt = await _db.OutstandingDebts.Include(d => d.PaymentRecords).FirstOrDefaultAsync(d => d.BillNo == billNo);
             if (debt == null) return NotFound();
@@ -650,22 +650,22 @@ namespace RoyalD.Web.Controllers
                 CreatedBy = User.Identity?.Name ?? "system"
             };
 
-            if (file != null && file.Length > 0)
+            if (statusFile != null && statusFile.Length > 0)
             {
                 var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads");
                 if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
-                var uniqueFileName = Guid.NewGuid().ToString("N") + Path.GetExtension(file.FileName);
+                var uniqueFileName = Guid.NewGuid().ToString("N") + Path.GetExtension(statusFile.FileName);
                 var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
-                    await file.CopyToAsync(stream);
+                    await statusFile.CopyToAsync(stream);
                 }
 
                 rec.Attachments.Add(new FileAttachment
                 {
-                    FileName = file.FileName,
+                    FileName = statusFile.FileName,
                     FilePath = "/uploads/" + uniqueFileName,
                     UploadedBy = User.Identity?.Name ?? "system"
                 });
@@ -714,7 +714,7 @@ namespace RoyalD.Web.Controllers
             bool? isReturnCutFromBill, 
             string? returnType, 
             string? note, 
-            IFormFile? file)
+            IFormFile? statusFile)
         {
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             bool canChangeStatus = currentUser != null && (currentUser.Role == "admin" || currentUser.CanChangeDebtStatus);
@@ -833,7 +833,7 @@ namespace RoyalD.Web.Controllers
             {
                 debt.ReturnAmount = returnAmount;
                 debt.IsReturnCutFromBill = isReturnCutFromBill ?? false;
-                if (status == DebtStatus.ReturnIssued && debt.IsReturnCutFromBill == true && returnAmount.HasValue && returnAmount.Value > 0)
+                if (debt.IsReturnCutFromBill == true && returnAmount.HasValue && returnAmount.Value > 0)
                 {
                     debt.RemainingAmount = Math.Max(0, debt.RemainingAmount - returnAmount.Value);
                 }
@@ -876,23 +876,23 @@ namespace RoyalD.Web.Controllers
                 debt.PostponedDate = null;
             }
 
-            if (file != null && file.Length > 0)
+            if (statusFile != null && statusFile.Length > 0)
             {
                 var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads");
                 if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
-                var uniqueFileName = Guid.NewGuid().ToString("N") + Path.GetExtension(file.FileName);
+                var uniqueFileName = Guid.NewGuid().ToString("N") + Path.GetExtension(statusFile.FileName);
                 var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
-                    await file.CopyToAsync(stream);
+                    await statusFile.CopyToAsync(stream);
                 }
 
                 _db.FileAttachments.Add(new FileAttachment
                 {
                     OutstandingDebtId = debt.Id,
-                    FileName = file.FileName,
+                    FileName = statusFile.FileName,
                     FilePath = "/uploads/" + uniqueFileName,
                     UploadedBy = User.Identity?.Name ?? "system"
                 });

@@ -279,11 +279,11 @@
                             }
                             else if (debtStatus == DebtStatus.ReturnPending)
                             {
-                                <span class="badge bg-danger bg-opacity-75">รอออกใบลดหนี้</span>
+                                <span class="badge bg-danger bg-opacity-75">@(debt?.IsReturnCutFromBill == true ? "รอออกใบลดหนี้ (ตัดกับบิล)" : "รอออกใบลดหนี้ (รอตัด)")</span>
                             }
                             else if (debtStatus == DebtStatus.ReturnIssued)
                             {
-                                <span class="badge bg-success bg-opacity-75">ออกใบลดหนี้แล้ว</span>
+                                <span class="badge bg-success bg-opacity-75">@(debt?.IsReturnCutFromBill == true ? "ออกใบลดหนี้แล้ว (ตัดกับบิล)" : "ออกใบลดหนี้แล้ว (รอตัด)")</span>
                             }
                             else if (isOverdue120)
                             {
