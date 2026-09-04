@@ -1,1 +1,22 @@
-﻿using System; using System.Linq; using Microsoft.EntityFrameworkCore; using RoyalD.Web.Models; class Program { static void Main() { var b = new DbContextOptionsBuilder<AppDbContext>(); b.UseNpgsql("Host=aws-0-ap-southeast-1.pooler.supabase.com;Port=5432;Database=postgres;Username=postgres.pssccxujypweaahkbvdw;Password=029030445Rd*;Pooling=true;Maximum Pool Size=100;SSL Mode=Require;Trust Server Certificate=true;"); using var db = new AppDbContext(b.Options); var debts = db.OutstandingDebts.Where(x => x.SalesRep.Contains("อิทธิพัทธ์")).ToList(); Console.WriteLine("Debts for อิทธิพัทธ์: " + debts.Count); var withReceipt = debts.Where(x => x.ReceiptDate.HasValue).ToList(); Console.WriteLine("With ReceiptDate: " + withReceipt.Count); if (withReceipt.Any()) { Console.WriteLine("Sample Dates: " + string.Join(", ", withReceipt.Select(x => x.ReceiptDate.Value.ToString("yyyy-MM-dd")).Take(5))); Console.WriteLine("Collected: " + withReceipt.Sum(x => x.OriginalAmount - x.RemainingAmount)); } var payments = db.PaymentRecords.Where(p => p.OutstandingDebt.SalesRep.Contains("อิทธิพัทธ์")).ToList(); Console.WriteLine("Payments: " + payments.Count); } }
+using System;
+using Microsoft.Data.Sqlite;
+
+class Program
+{
+    static void Main()
+    {
+        using var conn = new SqliteConnection(@"Data Source=..\royald.db");
+        conn.Open();
+        var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            UPDATE OutstandingDebts 
+            SET Status = 6, 
+                BadDebtAmount = 11340, 
+                RemainingAmount = 0, 
+                BadDebtDate = '2026-04-17 00:00:00' 
+            WHERE BillNo IN ('R100150', 'R108995');
+        ";
+        cmd.ExecuteNonQuery();
+        Console.WriteLine("Updated R100150 and R108995 to Bad Debt (Status 5)");
+    }
+}

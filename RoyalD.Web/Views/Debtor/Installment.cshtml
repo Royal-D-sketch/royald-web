@@ -1,4 +1,4 @@
-﻿@model List<RoyalD.Web.Models.OutstandingDebt>
+@model List<RoyalD.Web.Models.OutstandingDebt>
 @using RoyalD.Web.Models
 @{
     ViewData["Title"] = "ลูกค้าผ่อนชำระ";
@@ -96,7 +96,7 @@
                     <th>วันที่ผ่อน</th>
                     <th class="text-end">ยอดผ่อน</th>
                     <th class="text-end">ยอดคงเหลือ</th>
-                    <th>เลขที่ใบเสร็จ</th>
+                    <th>เลขที่ใบเสร็จ / หมายเหตุ</th>
                 </tr>
             </thead>
             <tbody>
@@ -133,7 +133,9 @@
                             <td class="text-end fw-bold @(d.RemainingAmount > 0 ? "text-danger" : "text-success")">
                                 @d.RemainingAmount.ToString("N2")
                             </td>
-                            <td class="text-center text-muted small">@(string.IsNullOrEmpty(d.ReceiptNo) ? "-" : d.ReceiptNo)</td>
+                            <td class="text-center fw-bold text-muted small" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:150px;" title="@(lastPayment?.Note ?? d.Note)">
+                                @(string.IsNullOrEmpty(lastPayment?.Note) ? (string.IsNullOrEmpty(d.Note) ? "-" : d.Note) : lastPayment.Note)
+                            </td>
                         </tr>
                         
                         @if (d.PaymentRecords != null && d.PaymentRecords.Count > 1)
@@ -146,7 +148,10 @@
                                     <td></td>
                                     <td class="text-center text-muted">@p.PaidDate.ToString("dd/MM/yy")</td>
                                     <td class="text-end text-success">@p.PaidAmount.ToString("N2")</td>
-                                    <td colspan="2"></td>
+                                    <td></td>
+                                    <td class="text-center text-muted small" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:150px;" title="@p.Note">
+                                        @(string.IsNullOrEmpty(p.Note) ? "-" : p.Note)
+                                    </td>
                                 </tr>
                             }
                         }
