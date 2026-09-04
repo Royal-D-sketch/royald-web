@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using RoyalD.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -39,7 +39,8 @@ namespace RoyalD.Web.Controllers
                     UpdatedAt = p.OutstandingDebt.WaitingGoodsDate ?? p.OutstandingDebt.BillDate,
                     ProductCode = p.ProductCode,
                     ProductName = p.ProductName,
-                    Quantity = p.Quantity
+                    Quantity = p.Quantity,
+                    Note = p.OutstandingDebt.Note
                 }).ToListAsync();
             return View(data);
         }

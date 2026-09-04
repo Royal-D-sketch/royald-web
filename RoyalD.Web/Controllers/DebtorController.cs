@@ -26,7 +26,7 @@ namespace RoyalD.Web.Controllers
         public async Task<IActionResult> Index(
             string? search, 
             string? salesRep, 
-            string? status = "outstanding", 
+            string? status = null, 
             string? poSearch = null, 
             string? region = null, 
             string? province = null, 
@@ -233,7 +233,7 @@ namespace RoyalD.Web.Controllers
         public async Task<IActionResult> ExportExcel(
             string? search, 
             string? salesRep, 
-            string? status = "outstanding", 
+            string? status = null, 
             string? poSearch = null, 
             string? region = null, 
             string? province = null, 
@@ -321,7 +321,7 @@ namespace RoyalD.Web.Controllers
         public async Task<IActionResult> ExportCsv(
             string? search, 
             string? salesRep, 
-            string? status = "outstanding", 
+            string? status = null, 
             string? poSearch = null, 
             string? region = null, 
             string? province = null, 
@@ -375,7 +375,7 @@ namespace RoyalD.Web.Controllers
         public async Task<IActionResult> ExportPdf(
             string? search, 
             string? salesRep, 
-            string? status = "outstanding", 
+            string? status = null, 
             string? poSearch = null, 
             string? region = null, 
             string? province = null, 

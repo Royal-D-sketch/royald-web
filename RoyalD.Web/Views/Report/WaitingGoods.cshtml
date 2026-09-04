@@ -20,6 +20,7 @@
                     <th>รหัสสินค้า</th>
                     <th>ชื่อสินค้า</th>
                     <th class="text-end">จำนวนรอส่ง</th>
+                    <th>รายละเอียดเพิ่มเติม</th>
                 </tr>
             </thead>
             <tbody>
@@ -35,6 +36,7 @@
                         <td><code>@item.ProductCode</code></td>
                         <td>@item.ProductName</td>
                         <td class="text-end text-danger fw-bold">@item.Quantity.ToString("N0")</td>
+                        <td class="text-muted small">@(string.IsNullOrEmpty(item.Note) ? "-" : item.Note)</td>
                     </tr>
                 }
             </tbody>

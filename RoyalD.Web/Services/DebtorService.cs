@@ -121,7 +121,7 @@ namespace RoyalD.Web.Services
                 var cutoff120 = today.AddDays(-120);
                 q = q.Where(d => d.Status == DebtStatus.Outstanding && d.DueDate < cutoff120);
             }
-            else if (Enum.TryParse<DebtStatus>(status, out var debtSt))
+            else if (Enum.TryParse<DebtStatus>(status, true, out var debtSt))
             {
                 q = q.Where(d => d.Status == debtSt);
             }
@@ -297,6 +297,7 @@ namespace RoyalD.Web.Services
             var cutoffDate = DateTime.Today.AddDays(-30);
             var q = _db.OutstandingDebts
                 .Include(d => d.Customer)
+                .Include(d => d.Attachments)
                 .Where(d => d.Status == DebtStatus.Cancelled && (d.CancelledDate == null || d.CancelledDate >= cutoffDate));
 
             q = ApplyAreaPermissions(q, userAllowedRegion, userAllowedProvinces, userAllowedDistricts);
