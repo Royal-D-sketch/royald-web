@@ -16,11 +16,11 @@ namespace RoyalD.Web.Controllers
         }
 
         [HttpGet]
-        [Route(""Fix/CustomerName"")]
+        [Route("Fix/CustomerName")]
         public async Task<IActionResult> CustomerName()
         {
-            string code = ""740114"";
-            string correctName = ""น.ส.วารินทร์ อภิวัฒนเบญญ"";
+            string code = "740114";
+            string correctName = "น.ส.วารินทร์ อภิวัฒนเบญญ";
             
             var bills = await _db.SalesBills.Where(b => b.CustomerCode == code).ToListAsync();
             int bCount = 0;
@@ -37,7 +37,7 @@ namespace RoyalD.Web.Controllers
             }
             
             await _db.SaveChangesAsync();
-            return Content($""Updated {bCount} SalesBills and {dCount} OutstandingDebts for {code}"");
+            return Content($"Updated {bCount} SalesBills and {dCount} OutstandingDebts for {code}");
         }
     }
 }
