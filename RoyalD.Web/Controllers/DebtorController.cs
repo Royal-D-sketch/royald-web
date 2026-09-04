@@ -652,23 +652,20 @@ namespace RoyalD.Web.Controllers
 
             if (statusFile != null && statusFile.Length > 0)
             {
-                var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads");
-                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-
-                var uniqueFileName = Guid.NewGuid().ToString("N") + Path.GetExtension(statusFile.FileName);
-                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                var supabaseStorage = HttpContext.RequestServices.GetService<RoyalD.Web.Services.SupabaseStorageService>();
+                if (supabaseStorage != null)
                 {
-                    await statusFile.CopyToAsync(stream);
+                    string? uploadedUrl = await supabaseStorage.UploadFileAsync(statusFile, "uploads");
+                    if (!string.IsNullOrEmpty(uploadedUrl))
+                    {
+                        rec.Attachments.Add(new FileAttachment
+                        {
+                            FileName = statusFile.FileName,
+                            FilePath = uploadedUrl,
+                            UploadedBy = User.Identity?.Name ?? "system"
+                        });
+                    }
                 }
-
-                rec.Attachments.Add(new FileAttachment
-                {
-                    FileName = statusFile.FileName,
-                    FilePath = "/uploads/" + uniqueFileName,
-                    UploadedBy = User.Identity?.Name ?? "system"
-                });
             }
 
             _db.PaymentRecords.Add(rec);
@@ -878,24 +875,21 @@ namespace RoyalD.Web.Controllers
 
             if (statusFile != null && statusFile.Length > 0)
             {
-                var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads");
-                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-
-                var uniqueFileName = Guid.NewGuid().ToString("N") + Path.GetExtension(statusFile.FileName);
-                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                var supabaseStorage = HttpContext.RequestServices.GetService<RoyalD.Web.Services.SupabaseStorageService>();
+                if (supabaseStorage != null)
                 {
-                    await statusFile.CopyToAsync(stream);
+                    string? uploadedUrl = await supabaseStorage.UploadFileAsync(statusFile, "uploads");
+                    if (!string.IsNullOrEmpty(uploadedUrl))
+                    {
+                        _db.FileAttachments.Add(new FileAttachment
+                        {
+                            OutstandingDebtId = debt.Id,
+                            FileName = statusFile.FileName,
+                            FilePath = uploadedUrl,
+                            UploadedBy = User.Identity?.Name ?? "system"
+                        });
+                    }
                 }
-
-                _db.FileAttachments.Add(new FileAttachment
-                {
-                    OutstandingDebtId = debt.Id,
-                    FileName = statusFile.FileName,
-                    FilePath = "/uploads/" + uniqueFileName,
-                    UploadedBy = User.Identity?.Name ?? "system"
-                });
             }
 
             _db.AuditLogs.Add(new AuditLog

@@ -982,24 +982,22 @@ if (!string.IsNullOrEmpty(poSearch))
 
             if (statusFile != null && statusFile.Length > 0)
             {
-                var uploadsFolder = Path.Combine(env.WebRootPath, "uploads", "status_files");
-                Directory.CreateDirectory(uploadsFolder);
-                var ext = Path.GetExtension(statusFile.FileName);
-                var fileName = $"{Guid.NewGuid()}{ext}";
-                var filePath = Path.Combine(uploadsFolder, fileName);
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                var supabaseStorage = HttpContext.RequestServices.GetService<RoyalD.Web.Services.SupabaseStorageService>();
+                if (supabaseStorage != null)
                 {
-                    await statusFile.CopyToAsync(stream);
+                    string? uploadedUrl = await supabaseStorage.UploadFileAsync(statusFile, "uploads");
+                    if (!string.IsNullOrEmpty(uploadedUrl))
+                    {
+                        if (debt.Attachments == null) debt.Attachments = new List<FileAttachment>();
+                        debt.Attachments.Add(new FileAttachment
+                        {
+                            FileName = statusFile.FileName,
+                            FilePath = uploadedUrl,
+                            UploadedAt = DateTime.Now,
+                            UploadedBy = User.Identity?.Name ?? "system"
+                        });
+                    }
                 }
-
-                if (debt.Attachments == null) debt.Attachments = new List<FileAttachment>();
-                debt.Attachments.Add(new FileAttachment
-                {
-                    FileName = statusFile.FileName,
-                    FilePath = $"/uploads/status_files/{fileName}",
-                    UploadedAt = DateTime.Now,
-                    UploadedBy = User.Identity?.Name ?? "system"
-                });
             }
 
             await _db.SaveChangesAsync();
@@ -1009,6 +1007,7 @@ if (!string.IsNullOrEmpty(poSearch))
 
     }
 }
+
 
 
 

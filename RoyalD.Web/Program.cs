@@ -88,6 +88,7 @@ else
 builder.Services.AddScoped<ExcelImportService>();
 builder.Services.AddScoped<DebtorService>();
 builder.Services.AddScoped<ReportService>();
+builder.Services.AddHttpClient<RoyalD.Web.Services.SupabaseStorageService>();
 
 // Authentication Cookie
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
