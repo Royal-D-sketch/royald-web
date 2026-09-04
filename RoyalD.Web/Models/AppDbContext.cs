@@ -15,6 +15,7 @@ namespace RoyalD.Web.Models
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;
         public DbSet<FileAttachment> FileAttachments { get; set; } = null!;
         public DbSet<PendingProduct> PendingProducts { get; set; } = null!;
+        public DbSet<UserMenuPermission> UserMenuPermissions { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -62,4 +63,6 @@ namespace RoyalD.Web.Models
         }
     }
 }
+
+
 

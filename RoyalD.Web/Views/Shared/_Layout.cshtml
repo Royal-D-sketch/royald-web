@@ -1,4 +1,5 @@
 ﻿@using System.Security.Claims
+@inject RoyalD.Web.Services.PermissionService PermissionService
 @{
     bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
     bool isMasterAdmin = isAdmin;
@@ -277,7 +278,14 @@
                 </form>
             </div>
         </div>
-    </nav>
+                        @if (await PermissionService.CanAccessAsync("AdminPermissions"))
+                    {
+                        <hr class="dropdown-divider my-2 border-secondary" style="opacity:0.2;">
+                        <a class="nav-link" href="/Admin/Permissions">
+                            <i class="bi bi-shield-lock"></i> ตั้งค่าสิทธิ์เมนู
+                        </a>
+                    }
+</nav>
 
     <div class="d-flex" id="app-wrapper">
         <!-- Sidebar (แสดงเฉพาะเมนูที่ได้รับอนุญาต) -->
@@ -295,18 +303,18 @@
                 @if (hasBill || hasCancel)
                 {
                     <div class="nav-section">บิลขาย</div>
-                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesBill" ? "active" : "")"
+                    @if (await PermissionService.CanAccessAsync("SalesBillList")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesBill" ? "active" : "")"
                        href="/SalesBill">
                         <i class="bi bi-receipt"></i> รายการบิลขาย
-                    </a>
-                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && ViewContext.RouteData.Values["action"]?.ToString() == "CustomerProduct" ? "active" : "")"
+                    </a> }
+                    @if (await PermissionService.CanAccessAsync("CustomerSalesReport")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && ViewContext.RouteData.Values["action"]?.ToString() == "CustomerProduct" ? "active" : "")"
                        href="/SalesReport/CustomerProduct">
                         <i class="bi bi-shop"></i> รายการขายรายลูกค้า
-                    </a>
-                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "WaitingGoods" ? "active" : "")"
+                    </a> }
+                    @if (await PermissionService.CanAccessAsync("WaitingGoodsReport")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "WaitingGoods" ? "active" : "")"
                        href="/Report/WaitingGoods">
                         <i class="bi bi-box-seam"></i> บิลรอเอกสาร/รอสินค้า
-                    </a>
+                    </a> }
                     <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "ReturnNotes" ? "active" : "")"
                        href="/Report/ReturnNotes">
                         <i class="bi bi-arrow-return-left"></i> รับคืนสินค้า
@@ -326,10 +334,10 @@
                     <div class="nav-section">ลูกหนี้</div>
                     @if (hasDebt)
                     {
-                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Debtor" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
+                        @if (await PermissionService.CanAccessAsync("DebtorList")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Debtor" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
                            href="/Debtor">
                             <i class="bi bi-credit-card-2-front"></i> การ์ดลูกหนี้
-                        </a>
+                        </a> }
                     }
                     <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Installment" ? "active" : "")"
                        href="/Debtor/Installment">
@@ -353,14 +361,14 @@
                     <div class="nav-section">รายงาน</div>
                     @if (hasRep)
                     {
-                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && (ViewContext.RouteData.Values["action"]?.ToString() == "Summary" || ViewContext.RouteData.Values["action"]?.ToString() == "Charts" || ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetails" || ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetailsAmount" || ViewContext.RouteData.Values["action"]?.ToString() == "Compare") ? "active" : "")"
+                        @if (await PermissionService.CanAccessAsync("SalesRepReport")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && (ViewContext.RouteData.Values["action"]?.ToString() == "Summary" || ViewContext.RouteData.Values["action"]?.ToString() == "Charts" || ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetails" || ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetailsAmount" || ViewContext.RouteData.Values["action"]?.ToString() == "Compare") ? "active" : "")"
                            href="/SalesReport/Summary">
                             <i class="bi bi-graph-up-arrow"></i> รายงานผู้แทนขาย
-                        </a>
-                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && ViewContext.RouteData.Values["action"]?.ToString() == "CustomerPurchaseSummary" ? "active" : "")"
+                        </a> }
+                        @if (await PermissionService.CanAccessAsync("CustomerPurchaseSummary")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && ViewContext.RouteData.Values["action"]?.ToString() == "CustomerPurchaseSummary" ? "active" : "")"
                            href="/SalesReport/CustomerPurchaseSummary">
                             <i class="bi bi-person-lines-fill"></i> สรุปการซื้อรายลูกค้า
-                        </a>
+                        </a> }
                     }
                 }
 
@@ -369,10 +377,10 @@
                     <div class="nav-section">จัดการระบบ</div>
                     @if (hasUpload)
                     {
-                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Upload" ? "active" : "")"
+                        @if (await PermissionService.CanAccessAsync("Upload")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Upload" ? "active" : "")"
                            href="/Upload">
                             <i class="bi bi-cloud-upload"></i> อัปโหลดไฟล์
-                        </a>
+                        </a> }
                     }
                     @if (hasUsers)
                     {
@@ -383,13 +391,20 @@
                     }
                     @if (hasAudit)
                     {
-                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Audit" ? "active" : "")"
+                        @if (await PermissionService.CanAccessAsync("AuditLogs")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Audit" ? "active" : "")"
                            href="/Audit">
                             <i class="bi bi-journal-text"></i> ประวัติการใช้งาน
-                        </a>
+                        </a> }
                     }
                 }
-            </nav>
+                                @if (await PermissionService.CanAccessAsync("AdminPermissions"))
+                    {
+                        <hr class="dropdown-divider my-2 border-secondary" style="opacity:0.2;">
+                        <a class="nav-link" href="/Admin/Permissions">
+                            <i class="bi bi-shield-lock"></i> ตั้งค่าสิทธิ์เมนู
+                        </a>
+                    }
+</nav>
         </div>
 
         <!-- Main Content -->
@@ -859,6 +874,10 @@ else
 </script>
 </body>
 </html>
+
+
+
+
 
 
 

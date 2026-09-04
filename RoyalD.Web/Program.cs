@@ -1,4 +1,4 @@
-using RoyalD.Web;
+﻿using RoyalD.Web;
 using RoyalD.Web.Models;
 using RoyalD.Web.Services;
 using Microsoft.EntityFrameworkCore;
@@ -178,7 +178,7 @@ using (var scope = app.Services.CreateScope())
             }
         }
 
-                AddColumnIfMissing("Users", "Position", "TEXT NOT NULL DEFAULT 'ผู้แทนขาย'");
+                AddColumnIfMissing("Users", "Position", "TEXT NOT NULL DEFAULT 'เธเธนเนเนเธ—เธเธเธฒเธข'");
         AddColumnIfMissing("Users", "CanViewPaymentDetails", "INTEGER NOT NULL DEFAULT 1");
         AddColumnIfMissing("Users", "SalesRepCode", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing("Users", "SessionTimeoutMinutes", "INTEGER NULL DEFAULT 10");
@@ -213,7 +213,7 @@ using (var scope = app.Services.CreateScope())
             if (conn.State != System.Data.ConnectionState.Open) conn.Open();
             using var cmd = conn.CreateCommand();
             cmd.CommandText = @"
-                ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""Position"" varchar(50) DEFAULT 'ผู้แทนขาย';
+                ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""Position"" varchar(50) DEFAULT 'เธเธนเนเนเธ—เธเธเธฒเธข';
                 ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""CanViewPaymentDetails"" boolean DEFAULT true;
                 ALTER TABLE ""SalesBills"" ADD COLUMN IF NOT EXISTS ""PoNumber"" varchar(50) DEFAULT '';
                 ALTER TABLE ""SalesBills"" ADD COLUMN IF NOT EXISTS ""ReceiptNo"" varchar(50) DEFAULT '';
@@ -241,7 +241,7 @@ using (var scope = app.Services.CreateScope())
         {
             Username = "admin",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin1234"),
-            FullName = "ผู้ดูแลระบบ",
+            FullName = "เธเธนเนเธ”เธนเนเธฅเธฃเธฐเธเธ",
             Role = "admin",
             IsActive = true,
             SessionTimeoutMinutes = null,
@@ -262,15 +262,15 @@ using (var scope = app.Services.CreateScope())
 
     // Auto Import initial Excel files if empty
     var excelService = scope.ServiceProvider.GetRequiredService<ExcelImportService>();
-    var billsPath = Path.Combine(builder.Environment.ContentRootPath, "..", "2.บิลขาย ม.ค.-ก.ค.69");
+    var billsPath = Path.Combine(builder.Environment.ContentRootPath, "..", "2.เธเธดเธฅเธเธฒเธข เธก.เธ.-เธ.เธ.69");
     if (!Directory.Exists(billsPath))
     {
-        billsPath = Path.Combine(builder.Environment.ContentRootPath, "2.บิลขาย ม.ค.-ก.ค.69");
+        billsPath = Path.Combine(builder.Environment.ContentRootPath, "2.เธเธดเธฅเธเธฒเธข เธก.เธ.-เธ.เธ.69");
     }
-    var debtPath = Path.Combine(builder.Environment.ContentRootPath, "..", "การ์ดลูกหนี้ ณ 1 ส.ค. 69.xlsx");
+    var debtPath = Path.Combine(builder.Environment.ContentRootPath, "..", "เธเธฒเธฃเนเธ”เธฅเธนเธเธซเธเธตเน เธ“ 1 เธช.เธ. 69.xlsx");
     if (!File.Exists(debtPath))
     {
-        debtPath = Path.Combine(builder.Environment.ContentRootPath, "การ์ดลูกหนี้ ณ 1 ส.ค. 69.xlsx");
+        debtPath = Path.Combine(builder.Environment.ContentRootPath, "เธเธฒเธฃเนเธ”เธฅเธนเธเธซเธเธตเน เธ“ 1 เธช.เธ. 69.xlsx");
     }
 
     if (Directory.Exists(billsPath) && !db.SalesBills.Any())
@@ -328,3 +328,4 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
