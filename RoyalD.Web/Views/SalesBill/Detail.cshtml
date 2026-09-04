@@ -1,4 +1,4 @@
-﻿@model RoyalD.Web.Models.SalesBill
+@model RoyalD.Web.Models.SalesBill
 @{
     ViewData["Title"] = $"รายละเอียดบิล {Model.BillNo}";
     bool canDelete = ViewBag.CanDeleteSalesBill == true;
@@ -827,7 +827,6 @@ function selectAllWaitingProducts(select) {
         var chkIdx = idParts[idParts.length - 1];
         toggleWaitingQtyInput(chkIdx);
     });
-});
 }
 </script>
 }

@@ -1,4 +1,4 @@
-﻿@using RoyalD.Web.Models
+@using RoyalD.Web.Models
 @using RoyalD.Web
 @model RoyalD.Web.Models.OutstandingDebt
 @{
@@ -899,7 +899,6 @@ function syncPayment() {
             var chkIdx = idParts[idParts.length - 1];
             toggleWaitingQtyInput(chkIdx);
         });
-    });
     }
 
     function toggleWaitingQtyInput(idx) {
