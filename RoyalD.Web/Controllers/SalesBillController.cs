@@ -956,6 +956,19 @@ if (!string.IsNullOrEmpty(poSearch))
                 if (debt.RemainingAmount < 0) debt.RemainingAmount = 0;
             }
 
+            // Always unmark fully paid for active/special statuses so they show up in lists
+            if (newStatus == DebtStatus.BadDebt || 
+                newStatus == DebtStatus.WaitingGoods || 
+                newStatus == DebtStatus.ReturnPending || 
+                newStatus == DebtStatus.ReturnIssued || 
+                newStatus == DebtStatus.Delivering || 
+                newStatus == DebtStatus.Postponed ||
+                newStatus == DebtStatus.ChangeProduct ||
+                newStatus == DebtStatus.Consignment)
+            {
+                if (bill != null) bill.IsFullyPaid = false;
+            }
+
             if (debt.RemainingAmount > 0)
             {
                 if (bill != null) bill.IsFullyPaid = false;

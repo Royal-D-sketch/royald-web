@@ -843,6 +843,20 @@ namespace RoyalD.Web.Controllers
                 debt.CancelledDate = DateTime.Today;
             }
 
+            // Always unmark fully paid for active/special statuses so they show up in lists
+            if (status == DebtStatus.BadDebt || 
+                status == DebtStatus.WaitingGoods || 
+                status == DebtStatus.ReturnPending || 
+                status == DebtStatus.ReturnIssued || 
+                status == DebtStatus.Delivering || 
+                status == DebtStatus.Postponed ||
+                status == DebtStatus.ChangeProduct ||
+                status == DebtStatus.Consignment)
+            {
+                var bill = await _db.SalesBills.FirstOrDefaultAsync(b => b.BillNo == billNo);
+                if (bill != null) bill.IsFullyPaid = false;
+            }
+
             // เธ–เนเธฒเน€เธเธฅเธตเนเธขเธเน€เธเนเธเธชเธ–เธฒเธเธฐเธญเธทเนเธเธ—เธตเนเนเธกเนเนเธเน WaitingGoods เนเธซเนเน€เธเธฅเธตเธขเธฃเน PendingProducts เนเธฅเธฐ WaitingGoodsDate
             if (status != DebtStatus.WaitingGoods)
             {

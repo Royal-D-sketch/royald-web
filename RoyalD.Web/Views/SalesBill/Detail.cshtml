@@ -27,7 +27,13 @@
 @{
     var debt = ViewBag.Debt as RoyalD.Web.Models.OutstandingDebt;
     bool isInstallment = debt != null && (debt.Status == RoyalD.Web.Models.DebtStatus.Installment || (int)debt.Status == 100);
-    bool isFullyPaid = !isInstallment && (Model.IsFullyPaid || (debt != null && 
+    bool isBadDebt = debt != null && debt.Status == RoyalD.Web.Models.DebtStatus.BadDebt;
+    bool isWaitingGoods = debt != null && debt.Status == RoyalD.Web.Models.DebtStatus.WaitingGoods;
+    bool isReturn = debt != null && (debt.Status == RoyalD.Web.Models.DebtStatus.ReturnIssued || debt.Status == RoyalD.Web.Models.DebtStatus.ReturnPending);
+
+    bool isSpecialStatus = isInstallment || isBadDebt || isWaitingGoods || isReturn;
+    
+    bool isFullyPaid = !isSpecialStatus && (Model.IsFullyPaid || (debt != null && 
         (debt.RemainingAmount <= 0 || debt.FullyPaidDate.HasValue || 
          debt.Status == RoyalD.Web.Models.DebtStatus.PaidTransfer || 
          debt.Status == RoyalD.Web.Models.DebtStatus.PaidCash || 
@@ -45,6 +51,18 @@
             @if (isInstallment)
             {
                 <span class="badge bg-warning text-dark ms-2 px-3 py-1 fs-6 shadow-sm"><i class="bi bi-clock-history me-1"></i> ผ่อนชำระ</span>
+            }
+            else if (isBadDebt)
+            {
+                <span class="badge bg-danger ms-2 px-3 py-1 fs-6 shadow-sm"><i class="bi bi-x-octagon me-1"></i> หนี้สูญ</span>
+            }
+            else if (isWaitingGoods)
+            {
+                <span class="badge bg-info text-dark ms-2 px-3 py-1 fs-6 shadow-sm"><i class="bi bi-box-seam me-1"></i> รอสินค้า</span>
+            }
+            else if (isReturn)
+            {
+                <span class="badge bg-secondary ms-2 px-3 py-1 fs-6 shadow-sm"><i class="bi bi-arrow-return-left me-1"></i> รับคืนสินค้า</span>
             }
             else if (isFullyPaid)
             {
@@ -92,7 +110,33 @@
             }
         </div>
     }
-    else if (Model.IsFullyPaid)
+    else if (isBadDebt)
+    {
+        <div class="alert alert-danger text-center py-2 mb-3 fw-bold fs-5 shadow-sm rounded-pill" style="border: 2px dashed #dc3545; background:#f8d7da; color:#842029;">
+            <i class="bi bi-x-octagon fs-4 me-2"></i> หนี้สูญ
+            @if (debt != null && debt.BadDebtAmount > 0)
+            {
+                <span class="fs-6 fw-normal ms-2">(ยอดตัดหนี้สูญ: <strong class="text-danger">@debt.BadDebtAmount?.ToString("N2")</strong> บาท)</span>
+            }
+        </div>
+    }
+    else if (isWaitingGoods)
+    {
+        <div class="alert alert-info text-center py-2 mb-3 fw-bold fs-5 shadow-sm rounded-pill" style="border: 2px dashed #0dcaf0; background:#cff4fc; color:#055160;">
+            <i class="bi bi-box-seam fs-4 me-2"></i> รอสินค้า
+        </div>
+    }
+    else if (isReturn)
+    {
+        <div class="alert alert-secondary text-center py-2 mb-3 fw-bold fs-5 shadow-sm rounded-pill" style="border: 2px dashed #6c757d; background:#e2e3e5; color:#41464b;">
+            <i class="bi bi-arrow-return-left fs-4 me-2"></i> รับคืนสินค้า
+            @if (debt != null && debt.ReturnAmount > 0)
+            {
+                <span class="fs-6 fw-normal ms-2">(ยอดรับคืน: <strong>@debt.ReturnAmount?.ToString("N2")</strong> บาท)</span>
+            }
+        </div>
+    }
+    else if (isFullyPaid)
     {
         <div class="alert alert-success text-center py-2 mb-3 fw-bold fs-5 shadow-sm rounded-pill" style="border: 2px dashed #198754;">
             <i class="bi bi-check-circle-fill fs-4 me-2"></i> ชำระครบแล้ว
