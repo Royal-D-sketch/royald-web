@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -377,10 +377,10 @@ if (!string.IsNullOrEmpty(poSearch))
         {
             if (string.IsNullOrEmpty(id)) return RedirectToAction("Index");
             id = Uri.UnescapeDataString(id).Trim();
-            var bill = await _db.SalesBills.AsNoTracking().Include(b => b.Items).Include(b => b.Customer).FirstOrDefaultAsync(b => b.BillNo == id);
+            var bill = await _db.SalesBills.AsNoTracking().Include(b => b.Items).FirstOrDefaultAsync(b => b.BillNo == id);
             if (bill == null)
             {
-                bill = await _db.SalesBills.AsNoTracking().Include(b => b.Items).Include(b => b.Customer).FirstOrDefaultAsync(b => EF.Functions.ILike(b.BillNo, id + "%"));
+                bill = await _db.SalesBills.AsNoTracking().Include(b => b.Items).FirstOrDefaultAsync(b => EF.Functions.ILike(b.BillNo, id + "%"));
             }
             if (bill == null) return NotFound();
 
@@ -410,7 +410,7 @@ if (!string.IsNullOrEmpty(poSearch))
             if (!passwordOk)
                 return Json(new { success = false, message = "รหัสผ่านไม่ถูกต้อง" });
 
-            var bill = await _db.SalesBills.Include(b => b.Items).Include(b => b.Customer).FirstOrDefaultAsync(b => b.BillNo == id);
+            var bill = await _db.SalesBills.Include(b => b.Items).FirstOrDefaultAsync(b => b.BillNo == id);
             if (bill == null)
                 return Json(new { success = false, message = "ไม่พบบิลขายเลขที่ " + id });
 
@@ -447,7 +447,7 @@ if (!string.IsNullOrEmpty(poSearch))
                 return RedirectToAction("Index");
             }
 
-            var bill = await _db.SalesBills.Include(b => b.Items).Include(b => b.Customer).FirstOrDefaultAsync(b => b.BillNo == id);
+            var bill = await _db.SalesBills.Include(b => b.Items).FirstOrDefaultAsync(b => b.BillNo == id);
             if (bill == null) return NotFound();
 
             var billNo = bill.BillNo;
@@ -924,23 +924,14 @@ if (!string.IsNullOrEmpty(poSearch))
                         if (waitingProductCodes.Contains(code))
                         {
                             var qtyStr = Request.Form[$"waitingQuantities_{code}"].ToString();
-                            int qty = 1;
-                            if (int.TryParse(qtyStr, out int parsedQty) && parsedQty > 0)
+                            if (int.TryParse(qtyStr, out int qty) && qty > 0)
                             {
-                                qty = parsedQty;
-                            }
-                            else
-                            {
-                                var matchedItem = await _db.SalesBillItems.FirstOrDefaultAsync(item => item.BillNo == billNo && item.ProductCode == code);
-                                if (matchedItem != null) qty = (int)matchedItem.Qty;
-                            }
-
-                            debt.PendingProducts.Add(new PendingProduct
-                            {
-                                ProductCode = code,
-                                ProductName = allNames.Length > i ? allNames[i] : code,
-                                Quantity = qty
-                            }););
+                                debt.PendingProducts.Add(new PendingProduct
+                                {
+                                    ProductCode = code,
+                                    ProductName = allNames.Length > i ? allNames[i] : code,
+                                    Quantity = qty
+                                });
                             }
                         }
                     }
@@ -991,22 +982,24 @@ if (!string.IsNullOrEmpty(poSearch))
 
             if (statusFile != null && statusFile.Length > 0)
             {
-                var supabaseStorage = HttpContext.RequestServices.GetService<RoyalD.Web.Services.SupabaseStorageService>();
-                if (supabaseStorage != null)
+                var uploadsFolder = Path.Combine(env.WebRootPath, "uploads", "status_files");
+                Directory.CreateDirectory(uploadsFolder);
+                var ext = Path.GetExtension(statusFile.FileName);
+                var fileName = $"{Guid.NewGuid()}{ext}";
+                var filePath = Path.Combine(uploadsFolder, fileName);
+                using (var stream = new FileStream(filePath, FileMode.Create))
                 {
-                    string? uploadedUrl = await supabaseStorage.UploadFileAsync(statusFile, "uploads");
-                    if (!string.IsNullOrEmpty(uploadedUrl))
-                    {
-                        if (debt.Attachments == null) debt.Attachments = new List<FileAttachment>();
-                        debt.Attachments.Add(new FileAttachment
-                        {
-                            FileName = statusFile.FileName,
-                            FilePath = uploadedUrl,
-                            UploadedAt = DateTime.Now,
-                            UploadedBy = User.Identity?.Name ?? "system"
-                        });
-                    }
+                    await statusFile.CopyToAsync(stream);
                 }
+
+                if (debt.Attachments == null) debt.Attachments = new List<FileAttachment>();
+                debt.Attachments.Add(new FileAttachment
+                {
+                    FileName = statusFile.FileName,
+                    FilePath = $"/uploads/status_files/{fileName}",
+                    UploadedAt = DateTime.Now,
+                    UploadedBy = User.Identity?.Name ?? "system"
+                });
             }
 
             await _db.SaveChangesAsync();
@@ -1016,9 +1009,6 @@ if (!string.IsNullOrEmpty(poSearch))
 
     }
 }
-
-
-
 
 
 
