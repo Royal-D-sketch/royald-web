@@ -192,11 +192,7 @@ namespace RoyalD.Web.Services
                     var dPayments = payments.Where(p => p.OutstandingDebtId == d.Id && 
                         (p.PaidDate.Year > 2500 ? p.PaidDate.Year - 543 : p.PaidDate.Year) == mkYear && p.PaidDate.Month == mkMonth).ToList();
                     
-                    if (dPayments.Any())
-                    {
-                        mCollected += dPayments.Sum(p => p.PaidAmount);
-                    }
-                    else if (d.ReceiptDate.HasValue && 
+                    if (d.ReceiptDate.HasValue && 
                         (d.ReceiptDate.Value.Year > 2500 ? d.ReceiptDate.Value.Year - 543 : d.ReceiptDate.Value.Year) == mkYear && 
                         d.ReceiptDate.Value.Month == mkMonth)
                     {
@@ -318,11 +314,7 @@ namespace RoyalD.Web.Services
                         var dPayments = payments.Where(p => p.OutstandingDebtId == d.Id && 
                             (p.PaidDate.Year > 2500 ? p.PaidDate.Year - 543 : p.PaidDate.Year) == mkYear && p.PaidDate.Month == mkMonth).ToList();
                         
-                        if (dPayments.Any())
-                        {
-                            mCollected += dPayments.Sum(p => p.PaidAmount);
-                        }
-                        else if (d.ReceiptDate.HasValue && 
+                        if (d.ReceiptDate.HasValue && 
                             (d.ReceiptDate.Value.Year > 2500 ? d.ReceiptDate.Value.Year - 543 : d.ReceiptDate.Value.Year) == mkYear && 
                             d.ReceiptDate.Value.Month == mkMonth)
                         {
