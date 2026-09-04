@@ -220,6 +220,13 @@ namespace RoyalD.Web.Controllers
             if (!string.IsNullOrEmpty(month))
                 q = q.Where(b => b.SourceMonth == month);
             
+            // EXCLUDE Cancelled bills by default, unless explicitly requested
+            var canBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Cancelled).Select(d => d.BillNo);
+            if (status != "cancelled")
+            {
+                q = q.Where(b => !canBillNos.Contains(b.BillNo));
+            }
+
             if (!string.IsNullOrEmpty(status))
             {
                 if (status == "paid") q = q.Where(b => b.IsFullyPaid);
@@ -271,7 +278,6 @@ namespace RoyalD.Web.Controllers
                 }
                 else if (status == "cancelled")
                 {
-                    var canBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Cancelled).Select(d => d.BillNo);
                     q = q.Where(b => canBillNos.Contains(b.BillNo));
                 }
             }

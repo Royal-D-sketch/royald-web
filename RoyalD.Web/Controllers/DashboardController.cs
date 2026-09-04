@@ -16,7 +16,8 @@ namespace RoyalD.Web.Controllers
         {
             var today = DateTime.Today;
 
-            ViewBag.TotalBills = await _db.SalesBills.CountAsync();
+            var cancelledCount = await _db.OutstandingDebts.CountAsync(d => d.Status == DebtStatus.Cancelled);
+            ViewBag.TotalBills = (await _db.SalesBills.CountAsync()) - cancelledCount;
 
             // ดึงข้อมูลลูกหนี้ทั้งหมด (พร้อมซ่อมแซมข้อมูลจังหวัดและเครดิตที่หายไป)
             var nullProvinces = await _db.OutstandingDebts.Where(d => string.IsNullOrEmpty(d.Province) || string.IsNullOrEmpty(d.District)).ToListAsync();
@@ -33,6 +34,7 @@ namespace RoyalD.Web.Controllers
             if (needsSave) await _db.SaveChangesAsync();
 
             var allDebts = await _db.OutstandingDebts
+                .Where(d => d.Status != DebtStatus.Cancelled)
                 .Select(d => new { d.Province, d.District, d.BillDate, d.DueDate, d.Credit, d.OriginalAmount, d.RemainingAmount, d.CustomerCode, d.Status })
                 .ToListAsync();
 

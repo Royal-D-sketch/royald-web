@@ -30,8 +30,9 @@
     bool isBadDebt = debt != null && debt.Status == RoyalD.Web.Models.DebtStatus.BadDebt;
     bool isWaitingGoods = debt != null && debt.Status == RoyalD.Web.Models.DebtStatus.WaitingGoods;
     bool isReturn = debt != null && (debt.Status == RoyalD.Web.Models.DebtStatus.ReturnIssued || debt.Status == RoyalD.Web.Models.DebtStatus.ReturnPending);
+    bool isCancelled = debt != null && debt.Status == RoyalD.Web.Models.DebtStatus.Cancelled;
 
-    bool isSpecialStatus = isInstallment || isBadDebt || isWaitingGoods || isReturn;
+    bool isSpecialStatus = isInstallment || isBadDebt || isWaitingGoods || isReturn || isCancelled;
     
     bool isFullyPaid = !isSpecialStatus && (Model.IsFullyPaid || (debt != null && 
         (debt.RemainingAmount <= 0 || debt.FullyPaidDate.HasValue || 
@@ -51,6 +52,10 @@
             @if (isInstallment)
             {
                 <span class="badge bg-warning text-dark ms-2 px-3 py-1 fs-6 shadow-sm"><i class="bi bi-clock-history me-1"></i> ผ่อนชำระ</span>
+            }
+            else if (isCancelled)
+            {
+                <span class="badge bg-dark ms-2 px-3 py-1 fs-6 shadow-sm"><i class="bi bi-x-circle-fill me-1"></i> บิลยกเลิก</span>
             }
             else if (isBadDebt)
             {
@@ -107,6 +112,16 @@
             @if (!string.IsNullOrEmpty(Model.ReceiptNo))
             {
                 <span class="fs-6 fw-normal ms-2 text-muted">| เลขที่ใบเสร็จ: @Model.ReceiptNo</span>
+            }
+        </div>
+    }
+    else if (isCancelled)
+    {
+        <div class="alert alert-dark text-center py-2 mb-3 fw-bold fs-5 shadow-sm rounded-pill" style="border: 2px dashed #343a40;">
+            <i class="bi bi-x-circle-fill fs-4 me-2"></i> บิลยกเลิก
+            @if (debt != null && !string.IsNullOrEmpty(debt.Note))
+            {
+                <span class="fs-6 fw-normal ms-2 text-muted">(เหตุผล: @debt.Note)</span>
             }
         </div>
     }

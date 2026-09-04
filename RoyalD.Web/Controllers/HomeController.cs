@@ -39,7 +39,8 @@ namespace RoyalD.Web.Controllers
             ViewBag.WaitingGoodsCount = waitingGoodsCount;
 
             // 2. Sales Rep Stats
-            var salesBills = await _db.SalesBills.ToListAsync();
+            var cancelledBillNos = outstandingDebts.Where(d => d.Status == DebtStatus.Cancelled).Select(d => d.BillNo).ToHashSet();
+            var salesBills = (await _db.SalesBills.ToListAsync()).Where(s => !cancelledBillNos.Contains(s.BillNo)).ToList();
             var paymentRecords = await _db.PaymentRecords.Include(p => p.OutstandingDebt).ToListAsync();
 
             var repNames = salesBills.Select(s => s.SalesRep).Where(r => !string.IsNullOrEmpty(r)).Distinct().ToList();
