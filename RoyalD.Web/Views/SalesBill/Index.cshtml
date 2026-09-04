@@ -205,12 +205,13 @@
                 @foreach (var b in Model) {
                     var dueDate = b.BillDate.AddDays(b.Credit);
                     var overdueDays = (int)(DateTime.Today - dueDate).TotalDays;
-                    bool isOverdue = !b.IsFullyPaid && overdueDays > 0;
-                    bool isOverdue120 = !b.IsFullyPaid && overdueDays > 120;
                     debtDict.TryGetValue(b.BillNo, out var debt);
                     var debtStatus = debt?.Status;
+                    bool isInstallment = debtStatus == DebtStatus.Installment || (int?)debtStatus == 100;
+                    bool isOverdue = !b.IsFullyPaid && !isInstallment && overdueDays > 0;
+                    bool isOverdue120 = !b.IsFullyPaid && !isInstallment && overdueDays > 120;
 
-                    var rowClass = b.IsFullyPaid ? "table-success" : (debtStatus == DebtStatus.BadDebt || isOverdue120 ? "table-danger" : "");
+                    var rowClass = isInstallment ? "table-warning" : (b.IsFullyPaid ? "table-success" : (debtStatus == DebtStatus.BadDebt || isOverdue120 ? "table-danger" : ""));
                     <tr class="@rowClass">
                         <td class="fw-bold text-primary">
                             @b.BillNo
@@ -225,7 +226,11 @@
                             <span class="badge bg-info text-dark">@b.Credit วัน</span>
                         </td><td class="text-center">@b.BillDate.AddDays(b.Credit).ToString("dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture)</td>
                         <td class="text-center">
-                            @if (b.IsFullyPaid)
+                            @if (isInstallment)
+                            {
+                                <span class="badge bg-warning text-dark"><i class="bi bi-clock-history me-1"></i>ผ่อนชำระ</span>
+                            }
+                            else if (b.IsFullyPaid)
                             {
                                 <span class="badge bg-success">ชำระแล้ว</span>
                             }
@@ -240,7 +245,11 @@
                         </td>
                         <td class="text-end fw-bold text-success">@b.TotalAmount.ToString("N2")</td>
                         <td class="text-center">
-                            @if (b.IsFullyPaid)
+                            @if (isInstallment)
+                            {
+                                <span class="badge bg-warning text-dark fw-bold"><i class="bi bi-clock-history me-1"></i>ผ่อนชำระ</span>
+                            }
+                            else if (b.IsFullyPaid)
                             {
                                 <span class="badge bg-success">ชำระครบแล้ว</span>
                             }

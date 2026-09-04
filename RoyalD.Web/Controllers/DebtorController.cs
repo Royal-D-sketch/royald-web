@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -64,6 +64,8 @@ namespace RoyalD.Web.Controllers
 
             var today = DateTime.Today;
             debts = debts.Where(d => {
+                bool isInstallment = d.Status == DebtStatus.Installment || (int)d.Status == 100;
+                if (isInstallment) return true;
                 bool isPaid = d.RemainingAmount <= 0 || d.FullyPaidDate.HasValue || 
                               d.Status == DebtStatus.PaidTransfer || 
                               d.Status == DebtStatus.PaidCash || 
@@ -76,31 +78,37 @@ namespace RoyalD.Web.Controllers
             
             if (status == "outstanding")
             {
-                debts = debts.Where(d => d.Status == DebtStatus.Outstanding).ToList();
+                debts = debts.Where(d => d.Status == DebtStatus.Outstanding || d.Status == DebtStatus.Installment || (int)d.Status == 100).ToList();
             }
             else if (status == "paid")
             {
-                debts = debts.Where(d => d.Status != DebtStatus.Outstanding && (d.RemainingAmount <= 0 || d.FullyPaidDate.HasValue)).ToList();
+                debts = debts.Where(d => d.Status != DebtStatus.Outstanding && d.Status != DebtStatus.Installment && (int)d.Status != 100 && (d.RemainingAmount <= 0 || d.FullyPaidDate.HasValue)).ToList();
             }
             else if (status == "overdue120")
             {
                 debts = debts.Where(d => d.Status == DebtStatus.Outstanding && (today - d.BillDate.AddDays(d.Credit)).TotalDays > 120).ToList();
+            }
+            else if (!string.IsNullOrEmpty(status) && (status.Equals("Installment", StringComparison.OrdinalIgnoreCase) || status == "100"))
+            {
+                debts = debts.Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100).ToList();
             }
             else if (!string.IsNullOrEmpty(status) && Enum.TryParse<DebtStatus>(status, out var parsedStatus))
             {
                 debts = debts.Where(d => d.Status == parsedStatus).ToList();
             }
             
-            // เธเธฃเธญเธเธเธดเธฅเธ—เธตเนเธเธณเธฃเธฐเธเธฃเธเนเธฅเนเธงเนเธฅเธฐเน€เธฅเธข 1 เธงเธฑเธ (เธขเนเธฒเธขเนเธเธเธฃเธฐเธงเธฑเธ•เธด)
+            // กรองบิลที่ชำระครบแล้วและเลย 1 วัน (ย้ายไปประวัติ) ยกเว้นบิลผ่อนชำระ
             debts = debts.Where(d => 
             {
+                bool isInstallment = d.Status == DebtStatus.Installment || (int)d.Status == 100;
+                if (isInstallment) return true;
                 if (d.RemainingAmount <= 0 || d.FullyPaidDate.HasValue || 
                     d.Status == DebtStatus.PaidTransfer || d.Status == DebtStatus.PaidCash || d.Status == DebtStatus.PaidCheck)
                 {
                     var dateToCheck = d.ReceiptDate ?? d.FullyPaidDate ?? d.PaidDate;
                     if (dateToCheck.HasValue && dateToCheck.Value.Date < DateTime.Today)
                     {
-                        return false; // เธเธฃเธญเธเธญเธญเธ เน€เธเธฃเธฒเธฐเน€เธเนเธฒเธเธงเนเธฒ 1 เธงเธฑเธ
+                        return false; // กรองออก เพราะเก่ากว่า 1 วัน
                     }
                 }
                 return true;
@@ -720,7 +728,24 @@ namespace RoyalD.Web.Controllers
             if (debt == null) return NotFound();
 
             var oldStatus = debt.Status;
-            debt.Status = status;
+            if (status == DebtStatus.Installment || (int)status == 100)
+            {
+                status = DebtStatus.Installment;
+                debt.Status = DebtStatus.Installment;
+                var payments = await _db.PaymentRecords.Where(p => p.OutstandingDebtId == debt.Id).ToListAsync();
+                decimal paid = payments.Sum(p => p.PaidAmount);
+                if (debt.RemainingAmount <= 0)
+                {
+                    debt.RemainingAmount = (debt.OriginalAmount > paid) ? (debt.OriginalAmount - paid) : debt.OriginalAmount;
+                }
+                debt.FullyPaidDate = null;
+                var bill = await _db.SalesBills.FirstOrDefaultAsync(b => b.BillNo == billNo);
+                if (bill != null) bill.IsFullyPaid = false;
+            }
+            else
+            {
+                debt.Status = status;
+            }
             debt.Note = note ?? "";
 
             if (status == DebtStatus.Postponed)
@@ -935,7 +960,7 @@ namespace RoyalD.Web.Controllers
 
             var q = _db.OutstandingDebts
                 .Include(d => d.PaymentRecords)
-                .Where(d => d.Status == DebtStatus.Installment);
+                .Where(d => d.Status == DebtStatus.Installment || d.PaymentRecords.Count > 1);
 
             if (!string.IsNullOrEmpty(userAllowedRegion)) q = q.Where(d => d.Province != null && d.Province.Contains(userAllowedRegion));
             if (!string.IsNullOrEmpty(salesRep)) q = q.Where(d => d.SalesRep != null && d.SalesRep.Contains(salesRep));
@@ -946,7 +971,7 @@ namespace RoyalD.Web.Controllers
             ViewBag.Search = search;
             ViewBag.SalesRep = salesRep;
             ViewBag.SalesReps = await _db.OutstandingDebts.AsNoTracking()
-                .Where(d => d.Status == DebtStatus.Installment)
+                .Where(d => d.Status == DebtStatus.Installment || d.PaymentRecords.Count > 1)
                 .Select(d => d.SalesRep).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s).ToListAsync();
             return View(debts);
         }

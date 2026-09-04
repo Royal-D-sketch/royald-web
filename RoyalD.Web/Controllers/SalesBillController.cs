@@ -556,8 +556,16 @@ if (!string.IsNullOrEmpty(poSearch))
             
             if (!string.IsNullOrEmpty(status))
             {
-                if (status == "paid") q = q.Where(b => b.IsFullyPaid);
-                else if (status == "unpaid") q = q.Where(b => !b.IsFullyPaid);
+                if (status == "paid")
+                {
+                    var installBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100).Select(d => d.BillNo);
+                    q = q.Where(b => b.IsFullyPaid && !installBillNos.Contains(b.BillNo));
+                }
+                else if (status == "unpaid")
+                {
+                    var installBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100).Select(d => d.BillNo);
+                    q = q.Where(b => !b.IsFullyPaid || installBillNos.Contains(b.BillNo));
+                }
                 else if (status == "overdue_under_120")
                   {
                       var today = DateTime.Today;
@@ -570,7 +578,7 @@ if (!string.IsNullOrEmpty(poSearch))
                   }
                 else if (status == "installment")
                 {
-                    var installBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Installment).Select(d => d.BillNo);
+                    var installBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100).Select(d => d.BillNo);
                     q = q.Where(b => installBillNos.Contains(b.BillNo));
                 }
                 else if (status == "postponed")
@@ -811,7 +819,7 @@ if (!string.IsNullOrEmpty(poSearch))
             else
             {
                 if (bill != null) bill.IsFullyPaid = false;
-                debt.Status = (DebtStatus)100; // DebtStatus.Installment
+                debt.Status = DebtStatus.Installment;
             }
 
             await _db.SaveChangesAsync();
@@ -845,7 +853,7 @@ if (!string.IsNullOrEmpty(poSearch))
                 return !string.IsNullOrEmpty(Request.Headers["Referer"]) ? Redirect(Request.Headers["Referer"].ToString()) : RedirectToAction("Detail", new { id = billNo });
             }
 
-            var debt = await _db.OutstandingDebts.Include(d => d.PendingProducts).Include(d => d.Attachments).FirstOrDefaultAsync(d => d.BillNo == billNo);
+            var debt = await _db.OutstandingDebts.Include(d => d.PendingProducts).Include(d => d.Attachments).Include(d => d.PaymentRecords).FirstOrDefaultAsync(d => d.BillNo == billNo);
             
             if (debt == null && bill != null)
             {
@@ -870,6 +878,23 @@ if (!string.IsNullOrEmpty(poSearch))
             else
             {
                 debt.Status = newStatus;
+            }
+
+            if (newStatus == DebtStatus.Installment || (int)newStatus == 100)
+            {
+                newStatus = DebtStatus.Installment;
+                debt.Status = DebtStatus.Installment;
+                if (decimal.TryParse(Request.Form["installmentRemainingAmount"], out var customAmt) && customAmt > 0)
+                {
+                    debt.RemainingAmount = customAmt;
+                }
+                else if (debt.RemainingAmount <= 0)
+                {
+                    decimal totalPaid = debt.PaymentRecords?.Sum(p => p.PaidAmount) ?? 0;
+                    debt.RemainingAmount = (debt.OriginalAmount > totalPaid) ? (debt.OriginalAmount - totalPaid) : debt.OriginalAmount;
+                }
+                debt.FullyPaidDate = null;
+                if (bill != null) bill.IsFullyPaid = false;
             }
             
             debt.Note = note ?? "";
