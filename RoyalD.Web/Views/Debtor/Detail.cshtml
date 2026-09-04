@@ -825,8 +825,41 @@ else if (overdue120)
     </div>
 </div>
 
-
-
+<!-- Modal แก้ไขข้อมูลใบเสร็จ -->
+<div class="modal fade" id="editReceiptModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form asp-controller="Debtor" asp-action="UpdateReceipt" method="post" class="modal-content">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="bi bi-receipt"></i> จัดการข้อมูลใบเสร็จรับเงิน</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">เลขที่ใบเสร็จ</label>
+                    <input type="text" name="receiptNo" class="form-control" value="@Model.ReceiptNo" placeholder="เว้นว่างไว้หากต้องการลบออก" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">วันที่รับเงิน</label>
+                    <input type="date" name="receiptDate" class="form-control" value="@(Model.ReceiptDate?.ToString("yyyy-MM-dd"))" />
+                </div>
+                <hr />
+                <div class="alert alert-warning small">
+                    <i class="bi bi-shield-lock-fill"></i> กรุณายืนยันรหัสผ่านเพื่อบันทึกการเปลี่ยนแปลง
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">รหัสผ่านสำหรับแก้ไข</label>
+                    <input type="password" name="password" class="form-control" required placeholder="กรอกรหัสผ่าน" />
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                <button type="submit" class="btn btn-success fw-bold"><i class="bi bi-save me-1"></i> บันทึกข้อมูล</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <script>
     function setPayMethod(method) {

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using RoyalD.Web.Models;
@@ -97,6 +97,7 @@ namespace RoyalD.Web.Services
                 .AsNoTracking()
                 .Include(d => d.PaymentRecords)
                 .Include(d => d.Customer)
+                .Include(d => d.Attachments)
                 .AsQueryable();
 
             // Filtering by status
