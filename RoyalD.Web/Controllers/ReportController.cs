@@ -28,20 +28,20 @@ namespace RoyalD.Web.Controllers
 
         public async Task<IActionResult> WaitingGoods([FromServices] AppDbContext db, string? search, string? salesRep)
         {
-            var q = db.PendingProducts
+            var qPending = db.PendingProducts
                 .Include(p => p.OutstandingDebt)
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(search))
             {
-                q = q.Where(p => p.OutstandingDebt.CustomerName.Contains(search) || p.OutstandingDebt.BillNo.Contains(search) || p.OutstandingDebt.CustomerCode.Contains(search));
+                qPending = qPending.Where(p => p.OutstandingDebt.CustomerName.Contains(search) || p.OutstandingDebt.BillNo.Contains(search) || p.OutstandingDebt.CustomerCode.Contains(search));
             }
             if (!string.IsNullOrEmpty(salesRep))
             {
-                q = q.Where(p => p.OutstandingDebt.SalesRep == salesRep);
+                qPending = qPending.Where(p => p.OutstandingDebt.SalesRep == salesRep);
             }
 
-            var data = await q.Select(p => new {
+            var data1 = await qPending.Select(p => new {
                     BillNo = p.OutstandingDebt.BillNo,
                     BillDate = p.OutstandingDebt.BillDate,
                     CustomerCode = p.OutstandingDebt.CustomerCode,
@@ -53,6 +53,35 @@ namespace RoyalD.Web.Controllers
                     Quantity = p.Quantity,
                     Note = p.OutstandingDebt.Note
                 }).ToListAsync();
+
+            var qDebt = db.OutstandingDebts
+                .Include(d => d.PendingProducts)
+                .Where(d => d.Status == DebtStatus.WaitingGoods && !d.PendingProducts.Any())
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                qDebt = qDebt.Where(d => d.CustomerName.Contains(search) || d.BillNo.Contains(search) || d.CustomerCode.Contains(search));
+            }
+            if (!string.IsNullOrEmpty(salesRep))
+            {
+                qDebt = qDebt.Where(d => d.SalesRep == salesRep);
+            }
+
+            var data2 = await qDebt.Select(d => new {
+                    BillNo = d.BillNo,
+                    BillDate = d.BillDate,
+                    CustomerCode = d.CustomerCode,
+                    CustomerName = d.CustomerName,
+                    SalesRep = d.SalesRep,
+                    UpdatedAt = d.WaitingGoodsDate ?? d.BillDate,
+                    ProductCode = "-",
+                    ProductName = "หลายรายการ / ไม่ได้ระบุรหัสสินค้า",
+                    Quantity = 0,
+                    Note = d.Note
+                }).ToListAsync();
+
+            var data = data1.Concat(data2).OrderByDescending(x => x.UpdatedAt).ToList();
 
             var reps = await db.OutstandingDebts.Where(d => d.SalesRep != null && d.SalesRep != "").Select(d => d.SalesRep).Distinct().ToListAsync();
             ViewBag.SalesReps = reps.OrderBy(x => x).ToList();

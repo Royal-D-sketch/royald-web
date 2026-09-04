@@ -49,30 +49,7 @@
             </a>
             <span class="fw-bold fs-5" style="color:#0f766e;"><i class="bi bi-receipt text-primary"></i> รายละเอียดบิลขาย: <code>@Model.BillNo</code></span>
             <span class="badge @vatBadgeClass ms-2 px-2 py-1 fs-6 shadow-sm"><i class="bi bi-patch-check-fill me-1"></i> @vatTypeLabel</span>
-            @if (isInstallment)
-            {
-                <span class="badge bg-warning text-dark ms-2 px-3 py-1 fs-6 shadow-sm"><i class="bi bi-clock-history me-1"></i> ผ่อนชำระ</span>
-            }
-            else if (isCancelled)
-            {
-                <span class="badge bg-dark ms-2 px-3 py-1 fs-6 shadow-sm"><i class="bi bi-x-circle-fill me-1"></i> บิลยกเลิก</span>
-            }
-            else if (isBadDebt)
-            {
-                <span class="badge bg-danger ms-2 px-3 py-1 fs-6 shadow-sm"><i class="bi bi-x-octagon me-1"></i> หนี้สูญ</span>
-            }
-            else if (isWaitingGoods)
-            {
-                <span class="badge bg-info text-dark ms-2 px-3 py-1 fs-6 shadow-sm"><i class="bi bi-box-seam me-1"></i> รอสินค้า</span>
-            }
-            else if (isReturn)
-            {
-                <span class="badge bg-secondary ms-2 px-3 py-1 fs-6 shadow-sm"><i class="bi bi-arrow-return-left me-1"></i> รับคืนสินค้า</span>
-            }
-            else if (isFullyPaid)
-            {
-                <span class="badge bg-success ms-2 px-3 py-1 fs-6 shadow-sm border border-success"><i class="bi bi-check-circle-fill me-1"></i> รับชำระครบแล้ว</span>
-            }
+            @if (debt != null) { <span class="badge bg-primary ms-2 px-3 py-1 fs-6 shadow-sm"><i class="bi bi-info-circle-fill me-1"></i> สถานะ: @(debt.Status.ToThaiString())</span> }
         </div>
         <div class="d-flex gap-2">
             <a href="/Debtor/Index?search=@Uri.EscapeDataString(Model.BillNo)" class="btn btn-outline-primary btn-sm fw-bold">
@@ -838,6 +815,7 @@ function selectAllWaitingProducts(select) {
 }
 </script>
 }
+
 
 
 
