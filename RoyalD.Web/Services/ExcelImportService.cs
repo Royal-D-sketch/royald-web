@@ -222,7 +222,7 @@ namespace RoyalD.Web.Services
                 string currentProvince = "";
                 string currentSalesRep = "";
 
-                var existingCustCodes = new HashSet<string>(_db.Customers.Select(c => c.CustomerCode).ToList());
+                var existingCustomers = _db.Customers.ToDictionary(c => c.CustomerCode, c => c.Name);
 
                 for (int r = headerRow + 1; r < tbl.Rows.Count; r++)
                 {
@@ -260,10 +260,20 @@ namespace RoyalD.Web.Services
                         currentProvince = cProvince >= 0 && cProvince < tbl.Columns.Count && !string.IsNullOrWhiteSpace(row[cProvince]?.ToString()) ? row[cProvince].ToString().Trim() : dynProv;
                         currentSalesRep = cSalesRep >= 0 && cSalesRep < tbl.Columns.Count && !string.IsNullOrWhiteSpace(row[cSalesRep]?.ToString()) ? row[cSalesRep].ToString().Trim() : dynRep;
 
-                        if (!string.IsNullOrEmpty(currentCustCode) && !existingCustCodes.Contains(currentCustCode))
+                        if (!string.IsNullOrEmpty(currentCustCode))
                         {
-                            _db.Customers.Add(new Customer { CustomerCode = currentCustCode, Name = currentCustName, District = currentDistrict, Province = currentProvince });
-                            existingCustCodes.Add(currentCustCode);
+                            if (existingCustomers.TryGetValue(currentCustCode, out var dbName))
+                            {
+                                if (!string.IsNullOrEmpty(dbName) && (dbName.Length > currentCustName.Length || dbName.StartsWith(currentCustName)))
+                                {
+                                    currentCustName = dbName;
+                                }
+                            }
+                            else
+                            {
+                                _db.Customers.Add(new Customer { CustomerCode = currentCustCode, Name = currentCustName, District = currentDistrict, Province = currentProvince });
+                                existingCustomers[currentCustCode] = currentCustName;
+                            }
                         }
                     }
 
@@ -327,6 +337,7 @@ namespace RoyalD.Web.Services
             var tbl = ds.Tables[0];
             if (tbl == null || tbl.Rows.Count < 4) return result;
 
+            var existingCustomers = _db.Customers.ToDictionary(c => c.CustomerCode, c => c.Name);
             var parsedBills = new List<BillPreviewItem>();
             string currentBillNo = "";
             DateTime currentBillDate = DateTime.MinValue;
@@ -409,6 +420,13 @@ namespace RoyalD.Web.Services
                     
                     // Column 5: Customer Name -> index 4
                     currentCustName = tbl.Columns.Count > 4 ? row[4]?.ToString()?.Trim() ?? "" : "";
+                    if (!string.IsNullOrEmpty(currentCustCode) && existingCustomers.TryGetValue(currentCustCode, out var dbName))
+                    {
+                        if (!string.IsNullOrEmpty(dbName) && (dbName.Length > currentCustName.Length || dbName.StartsWith(currentCustName)))
+                        {
+                            currentCustName = dbName;
+                        }
+                    }
                     
                     // Column 7: District/Area -> index 6
                     currentDistrict = tbl.Columns.Count > 6 ? row[6]?.ToString()?.Trim() ?? "" : "";
@@ -654,6 +672,7 @@ namespace RoyalD.Web.Services
         }
     }
 }
+
 
 
 
