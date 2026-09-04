@@ -1,4 +1,4 @@
-@model List<RoyalD.Web.Models.OutstandingDebt>
+﻿@model List<RoyalD.Web.Models.OutstandingDebt>
 @{
     ViewData["Title"] = "รายการบิลยกเลิก (เก็บบิล 30 วัน)";
     int totalCount = ViewBag.TotalCount ?? 0;
@@ -287,3 +287,4 @@ function openRestoreModal(debtId, billNo, customerName, amount) {
     modal.show();
 }
 </script>
+
