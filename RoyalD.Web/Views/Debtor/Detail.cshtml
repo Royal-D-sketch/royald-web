@@ -607,7 +607,8 @@ else if (overdue120)
                                 <option value="WaitingGoods" selected="@(debt?.Status == DebtStatus.WaitingGoods)">รอสินค้า / ของขาด (Waiting for Goods)</option>
                                 <option value="Delivering" selected="@(debt?.Status == DebtStatus.Delivering)">บิลอยู่จัดส่ง (Delivering)</option>
                                 <option value="ChangeProduct" selected="@(debt?.Status == DebtStatus.ChangeProduct)">เปลี่ยนสินค้า (Change Product)</option>
-                                <option value="Return" selected="@(debt?.Status == DebtStatus.ReturnIssued || debt?.Status == DebtStatus.ReturnPending)">รับคืนสินค้า (Return)</option>
+                                <option value="ReturnPending" selected="@(debt?.Status == DebtStatus.ReturnPending)">รับคืนสินค้า (รอออกใบลดหนี้)</option>
+                                <option value="ReturnIssued" selected="@(debt?.Status == DebtStatus.ReturnIssued)">รับคืนสินค้า (ออกใบลดหนี้แล้ว)</option>
                                 <option value="Consignment" selected="@(debt?.Status == DebtStatus.Consignment)">สินค้าฝากขาย (Consignment)</option>
                                 <option value="BadDebt" selected="@(debt?.Status == DebtStatus.BadDebt)">หนี้สูญ (Bad Debt)</option>
                                 <option value="Cancelled" style="color:red; font-weight:bold;">❌ บิลนี้ยกเลิก (ย้ายไปบิลยกเลิก 30 วัน)</option>
