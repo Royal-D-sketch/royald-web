@@ -26,11 +26,22 @@ namespace RoyalD.Web.Controllers
                 $"SalesReport_{DateTime.Now:yyyyMMdd}.xlsx");
         }
 
-        public async Task<IActionResult> WaitingGoods([FromServices] AppDbContext db)
+        public async Task<IActionResult> WaitingGoods([FromServices] AppDbContext db, string? search, string? salesRep)
         {
-            var data = await db.PendingProducts
+            var q = db.PendingProducts
                 .Include(p => p.OutstandingDebt)
-                .Select(p => new {
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                q = q.Where(p => p.OutstandingDebt.CustomerName.Contains(search) || p.OutstandingDebt.BillNo.Contains(search) || p.OutstandingDebt.CustomerCode.Contains(search));
+            }
+            if (!string.IsNullOrEmpty(salesRep))
+            {
+                q = q.Where(p => p.OutstandingDebt.SalesRep == salesRep);
+            }
+
+            var data = await q.Select(p => new {
                     BillNo = p.OutstandingDebt.BillNo,
                     BillDate = p.OutstandingDebt.BillDate,
                     CustomerCode = p.OutstandingDebt.CustomerCode,
@@ -42,6 +53,12 @@ namespace RoyalD.Web.Controllers
                     Quantity = p.Quantity,
                     Note = p.OutstandingDebt.Note
                 }).ToListAsync();
+
+            var reps = await db.OutstandingDebts.Where(d => d.SalesRep != null && d.SalesRep != "").Select(d => d.SalesRep).Distinct().ToListAsync();
+            ViewBag.SalesReps = reps.OrderBy(x => x).ToList();
+            ViewBag.Search = search;
+            ViewBag.SalesRep = salesRep;
+
             return View(data);
         }
         
@@ -72,12 +89,29 @@ namespace RoyalD.Web.Controllers
             return View(data);
         }
 
-        public async Task<IActionResult> ReturnNotes([FromServices] AppDbContext db)
+        public async Task<IActionResult> ReturnNotes([FromServices] AppDbContext db, string? search, string? salesRep)
         {
-            var data = await db.OutstandingDebts.AsNoTracking()
+            var q = db.OutstandingDebts.AsNoTracking()
                 .Include(d => d.Attachments)
                 .Where(d => d.Status == DebtStatus.ReturnIssued || d.Status == DebtStatus.ReturnPending)
-                .ToListAsync();
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                q = q.Where(d => d.CustomerName.Contains(search) || d.BillNo.Contains(search) || d.CustomerCode.Contains(search));
+            }
+            if (!string.IsNullOrEmpty(salesRep))
+            {
+                q = q.Where(d => d.SalesRep == salesRep);
+            }
+
+            var data = await q.OrderByDescending(d => d.BillDate).ToListAsync();
+            
+            var reps = await db.OutstandingDebts.Where(d => d.SalesRep != null && d.SalesRep != "").Select(d => d.SalesRep).Distinct().ToListAsync();
+            ViewBag.SalesReps = reps.OrderBy(x => x).ToList();
+            ViewBag.Search = search;
+            ViewBag.SalesRep = salesRep;
+
             return View(data);
         }
 

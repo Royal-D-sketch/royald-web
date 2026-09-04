@@ -377,10 +377,10 @@ if (!string.IsNullOrEmpty(poSearch))
         {
             if (string.IsNullOrEmpty(id)) return RedirectToAction("Index");
             id = Uri.UnescapeDataString(id).Trim();
-            var bill = await _db.SalesBills.AsNoTracking().Include(b => b.Items).FirstOrDefaultAsync(b => b.BillNo == id);
+            var bill = await _db.SalesBills.AsNoTracking().Include(b => b.Items).Include(b => b.Customer).FirstOrDefaultAsync(b => b.BillNo == id);
             if (bill == null)
             {
-                bill = await _db.SalesBills.AsNoTracking().Include(b => b.Items).FirstOrDefaultAsync(b => EF.Functions.ILike(b.BillNo, id + "%"));
+                bill = await _db.SalesBills.AsNoTracking().Include(b => b.Items).Include(b => b.Customer).FirstOrDefaultAsync(b => EF.Functions.ILike(b.BillNo, id + "%"));
             }
             if (bill == null) return NotFound();
 
@@ -410,7 +410,7 @@ if (!string.IsNullOrEmpty(poSearch))
             if (!passwordOk)
                 return Json(new { success = false, message = "รหัสผ่านไม่ถูกต้อง" });
 
-            var bill = await _db.SalesBills.Include(b => b.Items).FirstOrDefaultAsync(b => b.BillNo == id);
+            var bill = await _db.SalesBills.Include(b => b.Items).Include(b => b.Customer).FirstOrDefaultAsync(b => b.BillNo == id);
             if (bill == null)
                 return Json(new { success = false, message = "ไม่พบบิลขายเลขที่ " + id });
 
@@ -447,7 +447,7 @@ if (!string.IsNullOrEmpty(poSearch))
                 return RedirectToAction("Index");
             }
 
-            var bill = await _db.SalesBills.Include(b => b.Items).FirstOrDefaultAsync(b => b.BillNo == id);
+            var bill = await _db.SalesBills.Include(b => b.Items).Include(b => b.Customer).FirstOrDefaultAsync(b => b.BillNo == id);
             if (bill == null) return NotFound();
 
             var billNo = bill.BillNo;
@@ -1007,6 +1007,7 @@ if (!string.IsNullOrEmpty(poSearch))
 
     }
 }
+
 
 
 
