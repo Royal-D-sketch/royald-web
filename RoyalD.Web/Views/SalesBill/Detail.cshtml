@@ -166,7 +166,7 @@
                         <tr><td class="fw-semibold text-muted">รหัสลูกค้า:</td><td><code>@Model.CustomerCode</code></td></tr>
                         <tr><td class="fw-semibold text-muted">เขต/อำเภอ:</td><td>@(!string.IsNullOrEmpty(Model.District) ? Model.District : "-")</td></tr>
                         <tr><td class="fw-semibold text-muted">จังหวัด:</td><td>@(!string.IsNullOrEmpty(Model.Province) ? Model.Province : "-")</td></tr>
-                        <tr><td class="fw-semibold text-muted">เบอร์โทร:</td><td>@(Model.Customer?.Phone ?? (!string.IsNullOrEmpty(Model.Phone) ? Model.Phone : "-"))</td></tr>
+                        <tr><td class="fw-semibold text-muted">เบอร์โทร:</td><td>@(!string.IsNullOrEmpty(Model.Customer?.Phone) ? Model.Customer.Phone : (!string.IsNullOrEmpty(Model.Phone) ? Model.Phone : "-"))</td></tr>
                     </table>
                 </div>
                 <div class="col-md-6">
