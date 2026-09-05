@@ -14,7 +14,8 @@ namespace RoyalD.Web.Controllers
 
         public async Task<IActionResult> Index()
         {
-            if (!User.IsInRole("admin"))
+            var allowedPages = User.FindFirst("AllowedPages")?.Value?.Split(',').Select(p => p.Trim().ToLower()) ?? Array.Empty<string>();
+            if (!User.IsInRole("admin") && !allowedPages.Contains("dashboard"))
                 return RedirectToAction("Index", "SalesBill");
 
             var today = DateTime.Today;

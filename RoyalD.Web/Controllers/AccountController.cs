@@ -28,7 +28,8 @@ namespace RoyalD.Web.Controllers
         {
             if (User.Identity?.IsAuthenticated == true)
             {
-                if (User.IsInRole("admin")) return RedirectToAction("Index", "Dashboard");
+                var allowedPages = User.FindFirst("AllowedPages")?.Value?.Split(',').Select(p => p.Trim().ToLower()) ?? Array.Empty<string>();
+                if (User.IsInRole("admin") || allowedPages.Contains("dashboard")) return RedirectToAction("Index", "Dashboard");
                 return RedirectToAction("Index", "SalesBill");
             }
             ViewBag.ReturnUrl = returnUrl;
@@ -156,7 +157,8 @@ namespace RoyalD.Web.Controllers
                 return Redirect(returnUrl);
             }
 
-            if (user.Role == "admin")
+            var allowedPages = user.AllowedPages?.Split(',').Select(p => p.Trim().ToLower()) ?? Array.Empty<string>();
+            if (user.Role == "admin" || allowedPages.Contains("dashboard"))
             {
                 return RedirectToAction("Index", "Dashboard");
             }
@@ -414,7 +416,8 @@ namespace RoyalD.Web.Controllers
 
         public IActionResult AccessDenied()
         {
-            if (User.IsInRole("admin")) return RedirectToAction("Index", "Dashboard");
+            var allowedPages = User.FindFirst("AllowedPages")?.Value?.Split(',').Select(p => p.Trim().ToLower()) ?? Array.Empty<string>();
+            if (User.IsInRole("admin") || allowedPages.Contains("dashboard")) return RedirectToAction("Index", "Dashboard");
             return RedirectToAction("Index", "SalesBill");
         }
 
