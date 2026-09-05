@@ -1,4 +1,4 @@
-﻿@model List<RoyalD.Web.Models.OutstandingDebt>
+@model List<RoyalD.Web.Models.OutstandingDebt>
 @{
     ViewData["Title"] = "Accounts Receivable Dashboard";
     var summary = ViewBag.Summary as RoyalD.Web.Models.DashboardSummary;
@@ -221,7 +221,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', 'Leelawadee', 
             <div class="compare-panel">
                 <a href="/Debtor?region=กรุงเทพฯ&credit=0_7" class="text-decoration-none">
                     <div class="compare-header bkk">
-                        <i class="bi bi-buildings"></i> กรุงเทพฯ (เงินสด / 7 วัน)
+                        <i class="bi bi-buildings"></i> กรุงเทพฯ (เงินสด)
                         <span class="ms-auto badge bg-white text-primary fw-bold">@summary.Bangkok.BillCount.ToString("N0") บิล <i class="bi bi-arrow-right-short"></i></span>
                     </div>
                 </a>

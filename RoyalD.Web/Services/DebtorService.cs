@@ -402,7 +402,7 @@ namespace RoyalD.Web.Services
                 ws.Cells[row, 3].Value = d.BillDate.ToString("dd/MM/yyyy");
                 ws.Cells[row, 4].Value = d.PoNumber;
                 ws.Cells[row, 5].Value = d.DueDate.ToString("dd/MM/yyyy");
-                ws.Cells[row, 6].Value = d.Credit;
+                ws.Cells[row, 6].Value = (d.Credit == 0 || d.Credit == 7) ? "เงินสด" : d.Credit.ToString();
                 ws.Cells[row, 7].Value = d.CustomerCode;
                 ws.Cells[row, 8].Value = d.CustomerName;
                 ws.Cells[row, 9].Value = d.Province ?? "-";

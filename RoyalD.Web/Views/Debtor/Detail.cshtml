@@ -114,7 +114,7 @@ else if (overdue120)
                 </div>
                 <div class="row mb-2">
                     <div class="col-4 text-muted">เครดิตเทอม</div>
-                    <div class="col-8">@(Model.Credit == 0 ? "เงินสด (0 วัน)" : $"{Model.Credit} วัน")</div>
+                    <div class="col-8">@(Model.Credit == 0 || Model.Credit == 7 ? "เงินสด" : $"{Model.Credit} วัน")</div>
                 </div>
                 <div class="row mb-2">
                     <div class="col-4 text-muted">อายุหนี้</div>

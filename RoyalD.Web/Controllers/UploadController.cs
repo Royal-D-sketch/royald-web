@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RoyalD.Web.Models;
 using RoyalD.Web.Services;
@@ -19,6 +19,33 @@ namespace RoyalD.Web.Controllers
 
         [HttpGet] public async Task<IActionResult> CleanGarbage() { var g = _db.SalesBills.Where(b => (!b.BillNo.StartsWith("R") && !b.BillNo.StartsWith("SO") && !b.BillNo.StartsWith("IV") && !b.BillNo.StartsWith("63") && !b.BillNo.StartsWith("64") && !b.BillNo.StartsWith("65")) || b.BillNo.Length > 25); _db.SalesBills.RemoveRange(g); await _db.SaveChangesAsync(); return Content("Cleaned " + g.Count()); }
         public IActionResult Index() => View();
+
+        [AllowAnonymous]
+        public async Task<IActionResult> FixData()
+        {
+            int phoneUpdates = 0;
+            var billsWithPhone = _db.SalesBills.Where(b => b.Phone != null && b.Phone != "").ToList();
+            foreach (var b in billsWithPhone)
+            {
+                var cust = _db.Customers.FirstOrDefault(c => c.CustomerCode == b.CustomerCode);
+                if (cust != null && (string.IsNullOrEmpty(cust.Phone) || cust.Phone.Length < 5))
+                {
+                    cust.Phone = b.Phone;
+                    phoneUpdates++;
+                }
+            }
+
+            var b152858 = _db.SalesBills.FirstOrDefault(b => b.BillNo == "R152858");
+            if (b152858 != null)
+            {
+                b152858.Credit = 7;
+            }
+            var debts = _db.OutstandingDebts.Where(d => d.BillNo == "R152858").ToList();
+            foreach (var d in debts) { d.Credit = 7; }
+
+            await _db.SaveChangesAsync();
+            return Content($"Fixed data! Updated {phoneUpdates} customer phones. Fixed credit for R152858 to 7.");
+        }
 
         [AllowAnonymous]
         public async Task<IActionResult> ForceUploadSalesBills()

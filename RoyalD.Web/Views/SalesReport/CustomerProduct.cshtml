@@ -1,4 +1,4 @@
-﻿@using RoyalD.Web.Services
+@using RoyalD.Web.Services
 @model RoyalD.Web.Services.CustomerProductViewModel
 @{
     ViewData["Title"] = "รายการขายรายลูกค้า";
@@ -139,7 +139,7 @@
                                     <span class="badge bg-light text-dark border me-1">@item.ProductCode</span>@item.ProductName
                                 </td>
                                 <td class="text-end">@item.Price.ToString("N2")</td>
-                                <td class="text-center">@item.Credit</td>
+                                <td class="text-center">@(item.Credit == 0 || item.Credit == 7 ? "เงินสด" : item.Credit.ToString())</td>
                                 <td class="text-center">@item.SalesRep</td>
                             </tr>
                         }

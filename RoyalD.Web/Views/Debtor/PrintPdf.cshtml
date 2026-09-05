@@ -1,4 +1,4 @@
-﻿@model List<RoyalD.Web.Models.OutstandingDebt>
+@model List<RoyalD.Web.Models.OutstandingDebt>
 @using RoyalD.Web.Models
 @{
     Layout = null;
@@ -126,7 +126,7 @@
                     <td class="text-center fw-bold">@d.BillNo</td>
                     <td class="text-center">@d.BillDate.ToString("dd/MM/yy")</td>
                     <td class="text-center">@d.DueDate.ToString("dd/MM/yy")</td>
-                    <td class="text-center">@d.Credit</td>
+                    <td class="text-center">@(d.Credit == 0 || d.Credit == 7 ? "เงินสด" : d.Credit.ToString())</td>
                     <td class="text-center">@d.CustomerCode</td>
                     <td class="fw-semibold">@d.CustomerName</td>
                     <td class="text-center">@(d.Province ?? "-")</td>

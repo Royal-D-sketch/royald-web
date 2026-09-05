@@ -1,4 +1,4 @@
-﻿using RoyalD.Web.Models;
+using RoyalD.Web.Models;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
@@ -941,7 +941,7 @@ namespace RoyalD.Web.Services
                 ws.Cells[row, 4].Value = item.CustomerName;
                 ws.Cells[row, 5].Value = $"{item.ProductCode} : {item.ProductName}";
                 ws.Cells[row, 6].Value = item.Price;
-                ws.Cells[row, 7].Value = item.Credit;
+                ws.Cells[row, 7].Value = (item.Credit == 0 || item.Credit == 7) ? "เงินสด" : item.Credit.ToString();
                 ws.Cells[row, 8].Value = item.SalesRep;
                 row++;
             }

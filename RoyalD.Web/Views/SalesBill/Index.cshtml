@@ -223,7 +223,7 @@
                         <td>@(!string.IsNullOrEmpty(b.District) ? b.District : "-")</td>
                         <td>@(!string.IsNullOrEmpty(b.Province) ? b.Province : "-")</td>
                         <td class="text-center">
-                            <span class="badge bg-info text-dark">@b.Credit วัน</span>
+                            <span class="badge bg-info text-dark">@(b.Credit == 0 || b.Credit == 7 ? "เงินสด" : $"{b.Credit} วัน")</span>
                         </td><td class="text-center">@b.BillDate.AddDays(b.Credit).ToString("dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture)</td>
                         <td class="text-center">
                             @if (isInstallment)

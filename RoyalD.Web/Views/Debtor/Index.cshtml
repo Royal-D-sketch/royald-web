@@ -1,4 +1,4 @@
-﻿@model List<RoyalD.Web.Models.OutstandingDebt>
+@model List<RoyalD.Web.Models.OutstandingDebt>
 @using RoyalD.Web.Models
 @{
     ViewData["Title"] = "การ์ดลูกหนี้คงค้าง";
@@ -276,7 +276,7 @@
                     <select name="region" id="debtor-region-select" class="form-select form-select-sm" onchange="onDebtorRegionChange()" @(isLockedRegion ? "disabled" : "") style="border-color:#cbd5e1;">
                         @if (!isLockedRegion) {
                             <option value="">-- ทุกภาค / ทุกพื้นที่ --</option>
-                            <option value="กรุงเทพฯ" selected="@(ViewBag.SelectedRegion == "กรุงเทพฯ" || ViewBag.SelectedRegion == "กรุงเทพ")">🏙️ กรุงเทพฯ (เงินสด / 7 วัน)</option>
+                            <option value="กรุงเทพฯ" selected="@(ViewBag.SelectedRegion == "กรุงเทพฯ" || ViewBag.SelectedRegion == "กรุงเทพ")">🏙️ กรุงเทพฯ (เงินสด)</option>
                             <option value="ต่างจังหวัด" selected="@(ViewBag.SelectedRegion == "ต่างจังหวัด")">🌾 ต่างจังหวัด (ทุกภาค)</option>
                         }
                         @foreach (var reg in regions) {
@@ -337,7 +337,7 @@
                             if (cOpt == "0_7")
                             {
                                 bool isSel = ViewBag.SelectedCredit == "0_7" || ViewBag.SelectedCredit == "0" || ViewBag.SelectedCredit == "7";
-                                <option value="0_7" selected="@isSel">💵 เงินสด / 7 วัน</option>
+                                <option value="0_7" selected="@isSel">💵 เงินสด</option>
                             }
                             else
                             {
@@ -510,7 +510,7 @@
                                 @if (d.Credit == 0 || d.Credit == 7)
                                 {
                                     <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.75rem;">
-                                        @(d.Credit == 0 ? "สด" : "7 วัน")
+                                        เงินสด
                                     </span>
                                 }
                                 else
