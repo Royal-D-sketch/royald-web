@@ -1,4 +1,4 @@
-﻿@using RoyalD.Web.Models
+@using RoyalD.Web.Models
 @model List<RoyalD.Web.Models.SalesBill>
 @{
     ViewData["Title"] = "รายการบิลขาย";
@@ -243,7 +243,13 @@
                                 <span class="badge bg-light text-secondary border">ยังไม่ถึงกำหนด</span>
                             }
                         </td>
-                        <td class="text-end fw-bold text-success">@b.TotalAmount.ToString("N2")</td>
+                        <td class="text-end">
+                            <div class="fw-bold text-success">@(debt != null ? debt.OriginalAmount.ToString("N2") : b.TotalAmount.ToString("N2"))</div>
+                            @if (debt != null && (debt.RemainingAmount < debt.OriginalAmount || isInstallment))
+                            {
+                                <div class="text-danger small mt-1" style="line-height:1.2;">ยอดคงค้าง:<br/>@debt.RemainingAmount.ToString("N2")</div>
+                            }
+                        </td>
                         <td class="text-center">
                             @if (isInstallment)
                             {

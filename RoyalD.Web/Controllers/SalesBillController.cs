@@ -229,8 +229,16 @@ namespace RoyalD.Web.Controllers
 
             if (!string.IsNullOrEmpty(status))
             {
-                if (status == "paid") q = q.Where(b => b.IsFullyPaid);
-                else if (status == "unpaid") q = q.Where(b => !b.IsFullyPaid);
+                if (status == "paid") 
+                {
+                    var installBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100).Select(d => d.BillNo);
+                    q = q.Where(b => b.IsFullyPaid && !installBillNos.Contains(b.BillNo));
+                }
+                else if (status == "unpaid") 
+                {
+                    var installBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100).Select(d => d.BillNo);
+                    q = q.Where(b => !b.IsFullyPaid || installBillNos.Contains(b.BillNo));
+                }
                 else if (status == "overdue_under_120")
                   {
                       var today = DateTime.Today;
@@ -243,7 +251,7 @@ namespace RoyalD.Web.Controllers
                   }
                 else if (status == "installment")
                 {
-                    var installBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Installment).Select(d => d.BillNo);
+                    var installBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100).Select(d => d.BillNo);
                     q = q.Where(b => installBillNos.Contains(b.BillNo));
                 }
                 else if (status == "postponed")
@@ -648,10 +656,11 @@ if (!string.IsNullOrEmpty(poSearch))
             sheet.Cells[1, 5].Value = "จังหวัด";
             sheet.Cells[1, 6].Value = "ผู้แทนขาย";
             sheet.Cells[1, 7].Value = "ยอดรวม";
-            sheet.Cells[1, 8].Value = "สถานะ";
-            sheet.Cells[1, 9].Value = "PO Number";
+            sheet.Cells[1, 8].Value = "ยอดคงเหลือ";
+            sheet.Cells[1, 9].Value = "สถานะ";
+            sheet.Cells[1, 10].Value = "PO Number";
 
-            using (var range = sheet.Cells[1, 1, 1, 9])
+            using (var range = sheet.Cells[1, 1, 1, 10])
             {
                 range.Style.Font.Bold = true;
                 range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
@@ -662,9 +671,15 @@ if (!string.IsNullOrEmpty(poSearch))
             foreach (var b in bills)
             {
                 string statusText = b.IsFullyPaid ? "ชำระครบแล้ว" : "ค้างชำระ";
+                decimal rem = b.TotalAmount;
                 if (!b.IsFullyPaid && debtDict.TryGetValue(b.BillNo, out var d))
                 {
                     statusText = d.Status.ToString();
+                    rem = d.RemainingAmount;
+                }
+                else if (b.IsFullyPaid)
+                {
+                    rem = 0;
                 }
 
                 sheet.Cells[row, 1].Value = b.BillNo;
@@ -675,8 +690,10 @@ if (!string.IsNullOrEmpty(poSearch))
                 sheet.Cells[row, 6].Value = b.SalesRep;
                 sheet.Cells[row, 7].Value = b.TotalAmount;
                 sheet.Cells[row, 7].Style.Numberformat.Format = "#,##0.00";
-                sheet.Cells[row, 8].Value = statusText;
-                sheet.Cells[row, 9].Value = b.PoNumber;
+                sheet.Cells[row, 8].Value = rem;
+                sheet.Cells[row, 8].Style.Numberformat.Format = "#,##0.00";
+                sheet.Cells[row, 9].Value = statusText;
+                sheet.Cells[row, 10].Value = b.PoNumber;
                 row++;
             }
 
@@ -713,15 +730,29 @@ if (!string.IsNullOrEmpty(poSearch))
             if (!string.IsNullOrEmpty(poSearch)) q = q.Where(b => b.PoNumber.Contains(poSearch));
 
             var bills = await q.OrderByDescending(b => b.BillDate).ToListAsync();
+            var billNos = bills.Select(b => b.BillNo).ToList();
+            var debts = await _db.OutstandingDebts.AsNoTracking().Where(d => billNos.Contains(d.BillNo)).ToListAsync();
+            var debtDict = debts.GroupBy(d => d.BillNo).ToDictionary(g => g.Key, g => g.First());
+
             var csv = new System.Text.StringBuilder();
             // UTF-8 BOM
             csv.Append('\uFEFF');
-            csv.AppendLine("เลขที่บิล,วันที่บิล,รหัสลูกค้า,ชื่อลูกค้า,จังหวัด,ผู้แทนขาย,ยอดรวม,สถานะ,PO Number");
+            csv.AppendLine("เลขที่บิล,วันที่บิล,รหัสลูกค้า,ชื่อลูกค้า,จังหวัด,ผู้แทนขาย,ยอดรวม,ยอดคงเหลือ,สถานะ,PO Number");
 
             foreach (var b in bills)
             {
                 string statusText = b.IsFullyPaid ? "ชำระครบแล้ว" : "ค้างชำระ";
-                csv.AppendLine($"\"{b.BillNo}\",\"{b.BillDate:dd/MM/yyyy}\",\"{b.CustomerCode}\",\"{b.CustomerName?.Replace("\"", "\"\"")}\",\"{b.Province}\",\"{b.SalesRep}\",\"{b.TotalAmount:F2}\",\"{statusText}\",\"{b.PoNumber}\"");
+                decimal rem = b.TotalAmount;
+                if (!b.IsFullyPaid && debtDict.TryGetValue(b.BillNo, out var d))
+                {
+                    statusText = d.Status.ToString();
+                    rem = d.RemainingAmount;
+                }
+                else if (b.IsFullyPaid)
+                {
+                    rem = 0;
+                }
+                csv.AppendLine($"\"{b.BillNo}\",\"{b.BillDate:dd/MM/yyyy}\",\"{b.CustomerCode}\",\"{b.CustomerName?.Replace("\"", "\"\"")}\",\"{b.Province}\",\"{b.SalesRep}\",\"{b.TotalAmount:F2}\",\"{rem:F2}\",\"{statusText}\",\"{b.PoNumber}\"");
             }
 
             return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv; charset=utf-8", $"SalesBills_{DateTime.Now:yyyyMMddHHmmss}.csv");
@@ -982,24 +1013,22 @@ if (!string.IsNullOrEmpty(poSearch))
 
             if (statusFile != null && statusFile.Length > 0)
             {
-                var uploadsFolder = Path.Combine(env.WebRootPath, "uploads", "status_files");
-                Directory.CreateDirectory(uploadsFolder);
-                var ext = Path.GetExtension(statusFile.FileName);
-                var fileName = $"{Guid.NewGuid()}{ext}";
-                var filePath = Path.Combine(uploadsFolder, fileName);
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                var supabaseStorage = HttpContext.RequestServices.GetService<RoyalD.Web.Services.SupabaseStorageService>();
+                if (supabaseStorage != null)
                 {
-                    await statusFile.CopyToAsync(stream);
+                    string? uploadedUrl = await supabaseStorage.UploadFileAsync(statusFile, "uploads");
+                    if (!string.IsNullOrEmpty(uploadedUrl))
+                    {
+                        if (debt.Attachments == null) debt.Attachments = new List<FileAttachment>();
+                        debt.Attachments.Add(new FileAttachment
+                        {
+                            FileName = statusFile.FileName,
+                            FilePath = uploadedUrl,
+                            UploadedAt = DateTime.Now,
+                            UploadedBy = User.Identity?.Name ?? "system"
+                        });
+                    }
                 }
-
-                if (debt.Attachments == null) debt.Attachments = new List<FileAttachment>();
-                debt.Attachments.Add(new FileAttachment
-                {
-                    FileName = statusFile.FileName,
-                    FilePath = $"/uploads/status_files/{fileName}",
-                    UploadedAt = DateTime.Now,
-                    UploadedBy = User.Identity?.Name ?? "system"
-                });
             }
 
             await _db.SaveChangesAsync();

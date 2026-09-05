@@ -1,4 +1,4 @@
-@model RoyalD.Web.Models.SalesBill
+﻿@model RoyalD.Web.Models.SalesBill
 @{
     ViewData["Title"] = $"รายละเอียดบิล {Model.BillNo}";
     bool canDelete = ViewBag.CanDeleteSalesBill == true;
@@ -16,8 +16,9 @@
 
 @using RoyalD.Web.Services
 @{
+    var debt = ViewBag.Debt as RoyalD.Web.Models.OutstandingDebt;
     decimal itemSum = Model.Items.Sum(x => x.Amount);
-    var vatCalc = VatHelper.Calculate(Model.BillNo, Model.CustomerCode, Model.CustomerName, Model.Province, Model.TotalAmount, itemSum, Model.SalesRep, Model.Items);
+    var vatCalc = VatHelper.Calculate(Model.BillNo, Model.CustomerCode, Model.CustomerName, Model.Province, (debt != null ? debt.OriginalAmount : Model.TotalAmount), itemSum, Model.SalesRep, Model.Items);
     string vatTypeLabel = vatCalc.Label;
     string vatShortLabel = vatCalc.ShortLabel;
     string vatBadgeClass = vatCalc.BadgeClass;
@@ -25,7 +26,6 @@
 }
 
 @{
-    var debt = ViewBag.Debt as RoyalD.Web.Models.OutstandingDebt;
     bool isInstallment = debt != null && (debt.Status == RoyalD.Web.Models.DebtStatus.Installment || (int)debt.Status == 100);
     bool isBadDebt = debt != null && debt.Status == RoyalD.Web.Models.DebtStatus.BadDebt;
     bool isWaitingGoods = debt != null && debt.Status == RoyalD.Web.Models.DebtStatus.WaitingGoods;
@@ -85,7 +85,7 @@
             <i class="bi bi-clock-history fs-4 me-2"></i> ผ่อนชำระ
             @if (debt != null)
             {
-                <span class="fs-6 fw-normal ms-2">(ยอดคงค้างผ่อนชำระ: <strong class="text-danger">@debt.RemainingAmount.ToString("N2")</strong> บาท / ยอดบิล: @Model.TotalAmount.ToString("N2") บาท)</span>
+                <span class="fs-6 fw-normal ms-2">(ยอดคงค้างผ่อนชำระ: <strong class="text-danger">@debt.RemainingAmount.ToString("N2")</strong> บาท / ยอดบิล: @(debt != null ? debt.OriginalAmount : Model.TotalAmount).ToString("N2") บาท)</span>
             }
             @if (!string.IsNullOrEmpty(Model.ReceiptNo))
             {
@@ -333,7 +333,7 @@
     <input type="hidden" name="adminPassword" class="hidden-admin-pwd" value="" />
     <input type="hidden" name="method" value="Cash" id="methodField" />
     
-    <input type="hidden" name="amount" id="realAmount" value="@(debt?.RemainingAmount > 0 ? debt.RemainingAmount : Model.TotalAmount)" />
+    <input type="hidden" name="amount" id="realAmount" value="@(debt?.RemainingAmount > 0 ? debt.RemainingAmount : (debt != null ? debt.OriginalAmount : Model.TotalAmount))" />
     <input type="hidden" name="payDate" id="realPayDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
     <input type="hidden" name="note" id="realNote" value="" />
 
@@ -361,7 +361,7 @@
         <div class="tab-pane fade show active" id="cash-pane">
             <div class="mb-3">
                 <label class="form-label fw-bold small text-muted">จำนวนเงินรับชำระ (Amount) <span class="text-danger">*</span></label>
-                <input type="number" step="0.01" id="amount_Cash" class="form-control form-control-lg fw-bold text-success" required max="@(debt?.RemainingAmount > 0 ? debt.RemainingAmount : Model.TotalAmount)" value="@(debt?.RemainingAmount > 0 ? debt.RemainingAmount : Model.TotalAmount)" />
+                <input type="number" step="0.01" id="amount_Cash" class="form-control form-control-lg fw-bold text-success" required max="@(debt?.RemainingAmount > 0 ? debt.RemainingAmount : (debt != null ? debt.OriginalAmount : Model.TotalAmount))" value="@(debt?.RemainingAmount > 0 ? debt.RemainingAmount : (debt != null ? debt.OriginalAmount : Model.TotalAmount))" />
             </div>
             <div class="mb-3">
                 <label class="form-label fw-bold small text-muted">วันที่รับเงินสด (Date)</label>
@@ -377,7 +377,7 @@
         <div class="tab-pane fade" id="transfer-pane">
             <div class="mb-3">
                 <label class="form-label fw-bold small text-muted">จำนวนเงินโอน (Amount) <span class="text-danger">*</span></label>
-                <input type="number" step="0.01" id="amount_Transfer" class="form-control form-control-lg fw-bold text-success" max="@(debt?.RemainingAmount > 0 ? debt.RemainingAmount : Model.TotalAmount)" value="@(debt?.RemainingAmount > 0 ? debt.RemainingAmount : Model.TotalAmount)" />
+                <input type="number" step="0.01" id="amount_Transfer" class="form-control form-control-lg fw-bold text-success" max="@(debt?.RemainingAmount > 0 ? debt.RemainingAmount : (debt != null ? debt.OriginalAmount : Model.TotalAmount))" value="@(debt?.RemainingAmount > 0 ? debt.RemainingAmount : (debt != null ? debt.OriginalAmount : Model.TotalAmount))" />
             </div>
             <div class="mb-3">
                 <label class="form-label fw-bold small text-muted">วันที่โอนเงิน (Transfer Date)</label>
@@ -397,7 +397,7 @@
         <div class="tab-pane fade" id="check-pane">
             <div class="mb-3">
                 <label class="form-label fw-bold small text-muted">จำนวนเงินตามเช็ค (Amount) <span class="text-danger">*</span></label>
-                <input type="number" step="0.01" id="amount_Check" class="form-control form-control-lg fw-bold text-success" max="@(debt?.RemainingAmount > 0 ? debt.RemainingAmount : Model.TotalAmount)" value="@(debt?.RemainingAmount > 0 ? debt.RemainingAmount : Model.TotalAmount)" />
+                <input type="number" step="0.01" id="amount_Check" class="form-control form-control-lg fw-bold text-success" max="@(debt?.RemainingAmount > 0 ? debt.RemainingAmount : (debt != null ? debt.OriginalAmount : Model.TotalAmount))" value="@(debt?.RemainingAmount > 0 ? debt.RemainingAmount : (debt != null ? debt.OriginalAmount : Model.TotalAmount))" />
             </div>
             <div class="mb-3">
                 <label class="form-label fw-bold small text-muted">วันที่รับเช็ค (Receive Date)</label>
@@ -485,7 +485,7 @@
                         <!-- 0. ผ่อนชำระ -->
                         <div id="f-installment" class="@(isInstallment ? "" : "d-none") mb-3 p-3 rounded border" style="background:#fffbeb; border-color:#fde68a;">
                             <label class="form-label fw-bold small text-warning">💳 ยอดหนี้คงเหลือที่ต้องผ่อนชำระ (บาท)</label>
-                            <input type="number" step="0.01" name="installmentRemainingAmount" class="form-control" placeholder="ระบุยอดคงเหลือ หรือเว้นว่างเพื่อใช้ยอดตามจริง" value="@(debt?.RemainingAmount > 0 ? debt.RemainingAmount.ToString("F2") : (debt != null ? Math.Max(0, debt.OriginalAmount - (debt.PaymentRecords?.Sum(p => p.PaidAmount) ?? 0)).ToString("F2") : Model.TotalAmount.ToString("F2")))" />
+                            <input type="number" step="0.01" name="installmentRemainingAmount" class="form-control" placeholder="ระบุยอดคงเหลือ หรือเว้นว่างเพื่อใช้ยอดตามจริง" value="@(debt?.RemainingAmount > 0 ? debt.RemainingAmount.ToString("F2") : (debt != null ? Math.Max(0, debt.OriginalAmount - (debt.PaymentRecords?.Sum(p => p.PaidAmount) ?? 0)).ToString("F2") : (debt != null ? debt.OriginalAmount : Model.TotalAmount).ToString("F2")))" />
                             <small class="text-muted">หากบิลนี้เคยตัดเป็นชำระครบแล้ว การเลือกผ่อนชำระจะเปิดบิลกลับมาให้สามารถชำระต่องวดได้ตามยอดนี้</small>
                         </div>
                         <!-- 1. เลื่อนชำระ -->
@@ -627,7 +627,7 @@
 <!-- ประวัติการรับชำระเงิน -->
 <div class="card detail-card mb-4">
     <div class="card-header bg-light py-3 fw-bold d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-clock-history me-1"></i> ประวัติการรับชำระเงินของบิลนี้</span>
+        <span><i class="bi bi-clock-history me-1"></i> @(isInstallment ? "ประวัติการผ่อน" : "ประวัติการรับชำระเงินของบิลนี้")</span>
         <span class="badge bg-secondary">@(debt?.PaymentRecords?.Count ?? 0) รายการ</span>
     </div>
     <div class="card-body p-0">
