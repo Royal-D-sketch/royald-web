@@ -18,6 +18,9 @@ namespace RoyalD.Web.Controllers
             if (User.Identity?.IsAuthenticated != true)
                 return RedirectToAction("Login", "Account");
 
+            if (!User.IsInRole("admin"))
+                return RedirectToAction("Index", "SalesBill");
+
             var today = DateTime.Today;
 
             // 1. Calculate AR Summary

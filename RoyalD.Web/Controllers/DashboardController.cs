@@ -14,6 +14,9 @@ namespace RoyalD.Web.Controllers
 
         public async Task<IActionResult> Index()
         {
+            if (!User.IsInRole("admin"))
+                return RedirectToAction("Index", "SalesBill");
+
             var today = DateTime.Today;
 
             var cancelledCount = await _db.OutstandingDebts.CountAsync(d => d.Status == DebtStatus.Cancelled);

@@ -27,7 +27,10 @@ namespace RoyalD.Web.Controllers
         public IActionResult Login(string? returnUrl = null)
         {
             if (User.Identity?.IsAuthenticated == true)
-                return RedirectToAction("Index", "Dashboard");
+            {
+                if (User.IsInRole("admin")) return RedirectToAction("Index", "Dashboard");
+                return RedirectToAction("Index", "SalesBill");
+            }
             ViewBag.ReturnUrl = returnUrl;
             return View();
         }
@@ -411,7 +414,8 @@ namespace RoyalD.Web.Controllers
 
         public IActionResult AccessDenied()
         {
-            return RedirectToAction("Index", "Home");
+            if (User.IsInRole("admin")) return RedirectToAction("Index", "Dashboard");
+            return RedirectToAction("Index", "SalesBill");
         }
 
         private string GetRealIpAddress()
