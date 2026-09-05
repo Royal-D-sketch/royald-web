@@ -1,5 +1,4 @@
 ﻿@using System.Security.Claims
-@inject RoyalD.Web.Services.PermissionService PermissionService
 @{
     bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
     bool isMasterAdmin = isAdmin;
@@ -278,13 +277,8 @@
                 </form>
             </div>
         </div>
-                        @if (await PermissionService.CanAccessAsync("AdminPermissions"))
-                    {
-                        <hr class="dropdown-divider my-2 border-secondary" style="opacity:0.2;">
-                        <a class="nav-link" href="/Admin/Permissions">
-                            <i class="bi bi-shield-lock"></i> ตั้งค่าสิทธิ์เมนู
-                        </a>
-                    }
+                        @if (isAdmin)
+                    
 </nav>
 
     <div class="d-flex" id="app-wrapper">
@@ -303,7 +297,7 @@
                 @if (hasBill || hasCancel)
                 {
                     <div class="nav-section">บิลขาย</div>
-                    @if (await PermissionService.CanAccessAsync("SalesBillList")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesBill" ? "active" : "")"
+                    @if (hasBill) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesBill" ? "active" : "")"
                        href="/SalesBill">
                         <i class="bi bi-receipt"></i> รายการบิลขาย
                     </a> }
@@ -334,7 +328,7 @@
                     <div class="nav-section">ลูกหนี้</div>
                     @if (hasDebt)
                     {
-                        @if (await PermissionService.CanAccessAsync("DebtorList")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Debtor" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
+                        @if (hasDebt) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Debtor" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
                            href="/Debtor">
                             <i class="bi bi-credit-card-2-front"></i> การ์ดลูกหนี้
                         </a> }
@@ -377,7 +371,7 @@
                     <div class="nav-section">จัดการระบบ</div>
                     @if (hasUpload)
                     {
-                        @if (await PermissionService.CanAccessAsync("Upload")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Upload" ? "active" : "")"
+                        @if (hasUpload) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Upload" ? "active" : "")"
                            href="/Upload">
                             <i class="bi bi-cloud-upload"></i> อัปโหลดไฟล์
                         </a> }
@@ -391,19 +385,14 @@
                     }
                     @if (hasAudit)
                     {
-                        @if (await PermissionService.CanAccessAsync("AuditLogs")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Audit" ? "active" : "")"
+                        @if (hasAudit) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Audit" ? "active" : "")"
                            href="/Audit">
                             <i class="bi bi-journal-text"></i> ประวัติการใช้งาน
                         </a> }
                     }
                 }
-                                @if (await PermissionService.CanAccessAsync("AdminPermissions"))
-                    {
-                        <hr class="dropdown-divider my-2 border-secondary" style="opacity:0.2;">
-                        <a class="nav-link" href="/Admin/Permissions">
-                            <i class="bi bi-shield-lock"></i> ตั้งค่าสิทธิ์เมนู
-                        </a>
-                    }
+                                @if (isAdmin)
+                    
 </nav>
         </div>
 
@@ -874,6 +863,8 @@ else
 </script>
 </body>
 </html>
+
+
 
 
 
