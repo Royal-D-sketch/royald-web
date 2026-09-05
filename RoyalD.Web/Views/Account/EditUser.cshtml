@@ -271,6 +271,61 @@
                             </div>
                         </div>
                     </div>
+                          <div class="col-md-3">
+                              <div class="p-3 perm-card">
+                                  <div class="form-check">
+                                      <input class="form-check-input page-check" type="checkbox" name="pages" value="CustomerProduct" id="p_custprod" checked="@(Model.Role == "admin" || userPages.Contains("customerproduct"))">
+                                      <label class="form-check-label fw-bold" for="p_custprod" style="color:#0f766e;">
+                                          <i class="bi bi-shop me-1"></i> ขายรายลูกค้า
+                                      </label>
+                                  </div>
+                                  <small class="text-muted d-block ms-4" style="font-size:0.78rem;">สินค้าที่ลูกค้าซื้อ</small>
+                              </div>
+                          </div>
+                          <div class="col-md-3">
+                              <div class="p-3 perm-card">
+                                  <div class="form-check">
+                                      <input class="form-check-input page-check" type="checkbox" name="pages" value="CustomerPurchaseSummary" id="p_custsum" checked="@(Model.Role == "admin" || userPages.Contains("customerpurchasesummary"))">
+                                      <label class="form-check-label fw-bold" for="p_custsum" style="color:#4338ca;">
+                                          <i class="bi bi-person-lines-fill me-1"></i> สรุปซื้อรายลูกค้า
+                                      </label>
+                                  </div>
+                                  <small class="text-muted d-block ms-4" style="font-size:0.78rem;">สรุปยอดแต่ละเดือน</small>
+                              </div>
+                          </div>
+                          <div class="col-md-3">
+                              <div class="p-3 perm-card">
+                                  <div class="form-check">
+                                      <input class="form-check-input page-check" type="checkbox" name="pages" value="Installment" id="p_install" checked="@(Model.Role == "admin" || userPages.Contains("installment"))">
+                                      <label class="form-check-label fw-bold" for="p_install" style="color:#d97706;">
+                                          <i class="bi bi-credit-card-fill me-1"></i> ลูกค้าผ่อนชำระ
+                                      </label>
+                                  </div>
+                                  <small class="text-muted d-block ms-4" style="font-size:0.78rem;">บิลผ่อนชำระ</small>
+                              </div>
+                          </div>
+                          <div class="col-md-3">
+                              <div class="p-3 perm-card">
+                                  <div class="form-check">
+                                      <input class="form-check-input page-check" type="checkbox" name="pages" value="BadDebt" id="p_baddebt" checked="@(Model.Role == "admin" || userPages.Contains("baddebt"))">
+                                      <label class="form-check-label fw-bold" for="p_baddebt" style="color:#dc2626;">
+                                          <i class="bi bi-exclamation-octagon me-1"></i> หนี้สูญ
+                                      </label>
+                                  </div>
+                                  <small class="text-muted d-block ms-4" style="font-size:0.78rem;">รายการหนี้สูญ</small>
+                              </div>
+                          </div>
+                          <div class="col-md-3">
+                              <div class="p-3 perm-card">
+                                  <div class="form-check">
+                                      <input class="form-check-input page-check" type="checkbox" name="pages" value="ReturnNotes" id="p_return" checked="@(Model.Role == "admin" || userPages.Contains("returnnotes"))">
+                                      <label class="form-check-label fw-bold" for="p_return" style="color:#6b7280;">
+                                          <i class="bi bi-arrow-return-left me-1"></i> รับคืนสินค้า
+                                      </label>
+                                  </div>
+                                  <small class="text-muted d-block ms-4" style="font-size:0.78rem;">รายการรับคืน</small>
+                              </div>
+                          </div>
 
                     <!-- 3. ขอบเขตพื้นที่และข้อมูลที่รับผิดชอบ -->
                     <h5 class="fw-bold mb-3" style="color:#0f766e; border-bottom:2px solid #ccfbf1; padding-bottom:8px;">
@@ -745,6 +800,7 @@
         onRegionCheckboxChange();
     });
 </script>
+
 
 
 

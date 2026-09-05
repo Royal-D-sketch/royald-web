@@ -30,6 +30,9 @@
     bool hasRep = isAdmin || allowedPagesList.Contains("salesreport");
     bool hasAudit = isAdmin || allowedPagesList.Contains("audit");
     bool hasUsers = isAdmin || allowedPagesList.Contains("users");
+    bool hasInstallment = isAdmin || allowedPagesList.Contains("installment");
+    bool hasBadDebt = isAdmin || allowedPagesList.Contains("baddebt");
+    bool hasReturnNotes = isAdmin || allowedPagesList.Contains("returnnotes");
     bool hasUpload = isAdmin || allowedPagesList.Contains("upload");
 }
 <!DOCTYPE html>
@@ -308,10 +311,7 @@
                        href="/Report/WaitingGoods">
                         <i class="bi bi-box-seam"></i> บิลรอเอกสาร/รอสินค้า
                     </a> }
-                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "ReturnNotes" ? "active" : "")"
-                       href="/Report/ReturnNotes">
-                        <i class="bi bi-arrow-return-left"></i> รับคืนสินค้า
-                    </a>
+                    @if (hasReturnNotes) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "ReturnNotes" ? "active" : "")" href="/Report/ReturnNotes"><i class="bi bi-arrow-return-left"></i> รับคืนสินค้า</a> }
                     @if (hasCancel)
                     {
                         <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Cancelled" ? "active" : "")"
@@ -332,10 +332,7 @@
                             <i class="bi bi-credit-card-2-front"></i> การ์ดลูกหนี้
                         </a> }
                     }
-                    <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Installment" ? "active" : "")"
-                       href="/Debtor/Installment">
-                        <i class="bi bi-credit-card-fill" style="color:#d97706;"></i> ลูกค้าผ่อนชำระ
-                    </a>
+                    @if (hasInstallment) { <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Installment" ? "active" : "")" href="/Debtor/Installment"><i class="bi bi-credit-card-fill" style="color:#d97706;"></i> ลูกค้าผ่อนชำระ</a> }
                     @if (hasHist)
                     {
                         <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "History" ? "active" : "")"
@@ -343,10 +340,7 @@
                             <i class="bi bi-clock-history"></i> ประวัติชำระครบ
                         </a>
                     }
-                    <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "BadDebt" ? "active" : "")"
-                       href="/Debtor/BadDebt">
-                        <i class="bi bi-exclamation-octagon"></i> หนี้สูญ
-                    </a>
+                    @if (hasBadDebt) { <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "BadDebt" ? "active" : "")" href="/Debtor/BadDebt"><i class="bi bi-exclamation-octagon"></i> หนี้สูญ</a> }
                 }
 
                 @if (hasRep || hasWaiting)
@@ -861,6 +855,7 @@ else
 </script>
 </body>
 </html>
+
 
 
 
