@@ -385,10 +385,10 @@ if (!string.IsNullOrEmpty(poSearch))
         {
             if (string.IsNullOrEmpty(id)) return RedirectToAction("Index");
             id = Uri.UnescapeDataString(id).Trim();
-            var bill = await _db.SalesBills.AsNoTracking().Include(b => b.Items).FirstOrDefaultAsync(b => b.BillNo == id);
+            var bill = await _db.SalesBills.AsNoTracking().Include(b => b.Items).Include(b => b.Customer).FirstOrDefaultAsync(b => b.BillNo == id);
             if (bill == null)
             {
-                bill = await _db.SalesBills.AsNoTracking().Include(b => b.Items).FirstOrDefaultAsync(b => EF.Functions.ILike(b.BillNo, id + "%"));
+                bill = await _db.SalesBills.AsNoTracking().Include(b => b.Items).Include(b => b.Customer).FirstOrDefaultAsync(b => EF.Functions.ILike(b.BillNo, id + "%"));
             }
             if (bill == null) return NotFound();
 
