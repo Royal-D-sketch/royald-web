@@ -12,53 +12,45 @@ namespace RoyalD.Web.Controllers
         public SalesReportController(ReportService svc) => _svc = svc;
 
         // Screen 1: Pivot Matrix Summary & Interactive Rep Tabs (Default)
-        public async Task<IActionResult> Index()
-        {
+        private bool CheckPerm(string p) { if(User.IsInRole("admin")) return true; var a = User.FindFirst("AllowedPages")?.Value?.Split(',').Select(x => x.Trim().ToLower()) ?? Array.Empty<string>(); return a.Contains(p.ToLower()); } public async Task<IActionResult> Index() { if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
             var data = await _svc.GetAnnualPerformanceAsync();
             return View("Summary", data);
         }
 
-        public async Task<IActionResult> Summary()
-        {
+        public async Task<IActionResult> Summary() { if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
             var data = await _svc.GetAnnualPerformanceAsync();
             return View(data);
         }
 
         // Screen 2: Annual Performance Charts
-        public async Task<IActionResult> Charts()
-        {
+        public async Task<IActionResult> Charts() { if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
             var data = await _svc.GetAnnualPerformanceAsync();
             return View(data);
         }
 
         // Screen 3: Product Movement Details
-        public async Task<IActionResult> ProductDetails(string? salesRep = null, string? month = null)
-        {
+        public async Task<IActionResult> ProductDetails(string? salesRep = null, string? month = null) { if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
             var data = await _svc.GetProductDetailsReportAsync(salesRep, month);
             return View(data);
         }
 
-        public async Task<IActionResult> ProductDetailsAmount(string? salesRep = null, string? month = null)
-        {
+        public async Task<IActionResult> ProductDetailsAmount(string? salesRep = null, string? month = null) { if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
             var data = await _svc.GetProductDetailsReportAsync(salesRep, month);
             return View(data);
         }
 
         // Screen 4: Customer Product Details
-        public async Task<IActionResult> CustomerProduct(string? rep = null, string? month = null, DateTime? date = null, string? q = null)
-        {
+        public async Task<IActionResult> CustomerProduct(string? rep = null, string? month = null, DateTime? date = null, string? q = null) { if (!CheckPerm("customerproduct")) return RedirectToAction("Index", "SalesBill");
             var vm = await _svc.GetCustomerProductReportAsync(rep, month, date, q);
             return View(vm);
         }
 
         // Screen 5: Compare Sales Reps
-        public async Task<IActionResult> Compare()
-        {
+        public async Task<IActionResult> Compare() { if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
             var data = await _svc.GetAnnualPerformanceAsync();
             return View(data);
         }
-                public async Task<IActionResult> CustomerPurchaseSummary(string salesRep, string month)
-        {
+                public async Task<IActionResult> CustomerPurchaseSummary(string salesRep, string month) { if (!CheckPerm("customerpurchasesummary")) return RedirectToAction("Index", "SalesBill");
             bool isAdmin = User.IsInRole("admin");
             bool isSalesRepRole = User.HasClaim(c => c.Type == "Position" && (c.Value.Contains("ผู้แทน") || c.Value.Contains("พนักงานขาย"))) && !isAdmin;
             
@@ -121,5 +113,7 @@ namespace RoyalD.Web.Controllers
         }
     }
 }
+
+
 
 

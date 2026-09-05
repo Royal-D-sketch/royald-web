@@ -307,11 +307,11 @@
                        href="/SalesBill">
                         <i class="bi bi-receipt"></i> รายการบิลขาย
                     </a> }
-                    @if (await PermissionService.CanAccessAsync("CustomerSalesReport")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && ViewContext.RouteData.Values["action"]?.ToString() == "CustomerProduct" ? "active" : "")"
+                    @if (isAdmin || allowedPagesList.Contains("customerproduct")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && ViewContext.RouteData.Values["action"]?.ToString() == "CustomerProduct" ? "active" : "")"
                        href="/SalesReport/CustomerProduct">
                         <i class="bi bi-shop"></i> รายการขายรายลูกค้า
                     </a> }
-                    @if (await PermissionService.CanAccessAsync("WaitingGoodsReport")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "WaitingGoods" ? "active" : "")"
+                    @if (isAdmin || allowedPagesList.Contains("waitinggoodsreport")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "WaitingGoods" ? "active" : "")"
                        href="/Report/WaitingGoods">
                         <i class="bi bi-box-seam"></i> บิลรอเอกสาร/รอสินค้า
                     </a> }
@@ -361,11 +361,11 @@
                     <div class="nav-section">รายงาน</div>
                     @if (hasRep)
                     {
-                        @if (await PermissionService.CanAccessAsync("SalesRepReport")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && (ViewContext.RouteData.Values["action"]?.ToString() == "Summary" || ViewContext.RouteData.Values["action"]?.ToString() == "Charts" || ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetails" || ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetailsAmount" || ViewContext.RouteData.Values["action"]?.ToString() == "Compare") ? "active" : "")"
+                        @if (isAdmin || allowedPagesList.Contains("salesreport")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && (ViewContext.RouteData.Values["action"]?.ToString() == "Summary" || ViewContext.RouteData.Values["action"]?.ToString() == "Charts" || ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetails" || ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetailsAmount" || ViewContext.RouteData.Values["action"]?.ToString() == "Compare") ? "active" : "")"
                            href="/SalesReport/Summary">
                             <i class="bi bi-graph-up-arrow"></i> รายงานผู้แทนขาย
                         </a> }
-                        @if (await PermissionService.CanAccessAsync("CustomerPurchaseSummary")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && ViewContext.RouteData.Values["action"]?.ToString() == "CustomerPurchaseSummary" ? "active" : "")"
+                        @if (isAdmin || allowedPagesList.Contains("customerpurchasesummary")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && ViewContext.RouteData.Values["action"]?.ToString() == "CustomerPurchaseSummary" ? "active" : "")"
                            href="/SalesReport/CustomerPurchaseSummary">
                             <i class="bi bi-person-lines-fill"></i> สรุปการซื้อรายลูกค้า
                         </a> }
@@ -874,6 +874,7 @@ else
 </script>
 </body>
 </html>
+
 
 
 
