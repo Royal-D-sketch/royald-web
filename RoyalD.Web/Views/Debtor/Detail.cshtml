@@ -283,7 +283,7 @@ else if (overdue120)
                 <span class="fw-bold text-dark"><i class="bi bi-box-seam me-1 text-primary"></i> รายการสินค้าในบิลขาย (@debtorItems.Count รายการ)</span>
                 <span class="badge @dVatBadgeClass ms-2 px-2 py-1"><i class="bi bi-patch-check-fill me-1"></i> @dVatLabel</span>
             </div>
-            <a asp-controller="SalesBill" asp-action="Detail" asp-route-id="@Model.BillNo" class="btn btn-sm btn-outline-primary" target="_blank">
+            <a asp-controller="Debtor" asp-action="Detail" asp-route-id="@Model.BillNo" class="btn btn-sm btn-outline-primary" target="_blank">
                 <i class="bi bi-box-arrow-up-right me-1"></i> ดูใบส่งสินค้า/ใบกำกับภาษีเต็ม
             </a>
         </div>
@@ -463,7 +463,7 @@ else if (overdue120)
                 }
                 else
                 {
-                    <form asp-controller="SalesBill" asp-action="Pay" method="post" enctype="multipart/form-data" onsubmit="return syncPayment()">
+                    <form asp-controller="Debtor" asp-action="Pay" method="post" enctype="multipart/form-data" onsubmit="return syncPayment()">
     @Html.AntiForgeryToken()
     <input type="hidden" name="billNo" value="@Model.BillNo" />
     <input type="hidden" name="method" value="Cash" id="methodField" />
@@ -594,7 +594,7 @@ else if (overdue120)
                     <i class="bi bi-arrow-repeat me-1"></i> เปลี่ยนสถานะหนี้ / จัดการพิเศษ
                 </div>
                 <div class="card-body p-4">
-                    <form asp-controller="SalesBill" asp-action="UpdateStatus" method="post" enctype="multipart/form-data">
+                    <form asp-controller="Debtor" asp-action="UpdateStatus" method="post" enctype="multipart/form-data">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="billNo" value="@Model.BillNo" />
 
