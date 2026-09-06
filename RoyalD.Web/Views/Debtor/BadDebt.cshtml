@@ -1,4 +1,4 @@
-﻿@model List<RoyalD.Web.Models.OutstandingDebt>
+@model List<RoyalD.Web.Models.OutstandingDebt>
 @using RoyalD.Web.Models
 @{
     ViewData["Title"] = "รายงานหนี้สูญ";
@@ -61,7 +61,7 @@
             else
             {
                 <div class="col-md-3">
-                    <select name="salesRep" class="form-select">
+                    <select name="salesRep" class="form-select select2-searchable">
                         <option value="">-- ทุกผู้แทน --</option>
                         @foreach (var s in (ViewBag.SalesReps as List<string> ?? new()))
                         {

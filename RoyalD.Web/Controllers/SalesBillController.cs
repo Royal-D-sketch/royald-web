@@ -874,8 +874,7 @@ if (!string.IsNullOrEmpty(poSearch))
             string? note, 
             decimal? returnAmount,
             bool isReturnCutFromBill,
-            decimal? badDebtAmount,
-            string[] waitingProductCodes,
+            decimal? badDebtAmount, DateTime? badDebtDate, string[] waitingProductCodes,
             IFormFile? statusFile,
             [FromServices] IWebHostEnvironment env,
             string? adminPassword = null)
@@ -989,6 +988,7 @@ if (!string.IsNullOrEmpty(poSearch))
             else if (newStatus == DebtStatus.BadDebt)
             {
                 debt.BadDebtAmount = badDebtAmount ?? debt.RemainingAmount;
+                debt.BadDebtDate = badDebtDate ?? DateTime.Today;
                 debt.RemainingAmount -= (debt.BadDebtAmount ?? 0);
                 if (debt.RemainingAmount < 0) debt.RemainingAmount = 0;
             }

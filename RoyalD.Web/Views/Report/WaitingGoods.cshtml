@@ -1,4 +1,4 @@
-﻿@model IEnumerable<dynamic>
+@model IEnumerable<dynamic>
 @{
     ViewData["Title"] = "รายการสินค้ารอส่งมอบ/รายการรอสินค้า";
 }
@@ -16,7 +16,7 @@
                 </div>
             </div>
             <div class="col-auto">
-                <select name="salesRep" class="form-select form-select-sm" style="min-width: 180px;">
+                <select name="salesRep" class="form-select form-select-sm select2-searchable" style="min-width: 180px;">
                     <option value="">-- พนักงานขายทั้งหมด --</option>
                     @if(ViewBag.SalesReps != null)
                     {
@@ -47,7 +47,7 @@
                     <th>ชื่อลูกค้า</th>
                     <th>ผู้แทนขาย</th>
                     <th>วันที่อัปเดต</th>
-                    <th>รหัสสินค้า</th>
+                    <th style="min-width: 140px;">รหัสสินค้า</th>
                     <th>ชื่อสินค้า</th>
                     <th class="text-end">จำนวนรอส่ง</th>
                     <th>รายละเอียดเพิ่มเติม</th>
@@ -63,7 +63,7 @@
                         <td>@item.CustomerName</td>
                         <td><span class="badge bg-light text-dark border">@item.SalesRep</span></td>
                         <td>@(item.UpdatedAt != null ? ((DateTime)item.UpdatedAt).ToString("dd/MM/yyyy") : "-")</td>
-                        <td><code>@item.ProductCode</code></td>
+                        <td><code style="white-space: nowrap;">@item.ProductCode</code></td>
                         <td>@item.ProductName</td>
                         <td class="text-end text-danger fw-bold">@item.Quantity.ToString("N0")</td>
                         <td class="text-muted small">@(string.IsNullOrEmpty(item.Note) ? "-" : item.Note)</td>

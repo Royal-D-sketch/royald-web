@@ -1,4 +1,4 @@
-﻿@model List<RoyalD.Web.Models.OutstandingDebt>
+@model List<RoyalD.Web.Models.OutstandingDebt>
 @using RoyalD.Web.Models
 @{
     ViewData["Title"] = "ประวัติชำระครบแล้ว";
@@ -30,7 +30,7 @@
                     <input type="text" name="search" class="form-control" placeholder="ค้นหา ชื่อ / บิล / ใบเสร็จ..." value="@ViewBag.Search" />
                 </div>
                 <div class="col-md-3">
-                    <select name="salesRep" class="form-select">
+                    <select name="salesRep" class="form-select select2-searchable">
                         <option value="">-- ทุกผู้แทน --</option>
                         @{ var __histReps = ViewBag.SalesReps as List<string> ?? new List<string>(); }
                         @foreach (var r in __histReps)

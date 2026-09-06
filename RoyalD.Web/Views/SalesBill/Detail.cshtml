@@ -596,6 +596,9 @@
                         <div id="f-baddebt" class="d-none mb-3 p-3 bg-danger bg-opacity-10 rounded border border-danger">
                             <label class="form-label fw-bold small text-danger">⚠️ ยอดตัดหนี้สูญ (บาท)</label>
                             <input type="number" step="0.01" name="badDebtAmount" class="form-control mb-2" value="@(debt?.BadDebtAmount ?? debt?.RemainingAmount)" />
+                            
+                            <label class="form-label fw-bold small text-danger mt-2">📅 วันที่บันทึกหนี้สูญ</label>
+                            <input type="date" name="badDebtDate" class="form-control mb-2" value="@(debt?.BadDebtDate?.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd"))" />
                         </div>
 
                         <!-- 6. ยกเลิกบิล -->

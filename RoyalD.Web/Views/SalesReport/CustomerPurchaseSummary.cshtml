@@ -1,4 +1,4 @@
-﻿@using RoyalD.Web.Services
+@using RoyalD.Web.Services
 @model RoyalD.Web.Services.CustomerPurchaseSummaryViewModel
 @{
     ViewData["Title"] = "11. รายงานสรุปการซื้อสินค้าของลูกค้าแต่ละราย";
@@ -86,7 +86,7 @@
         <form method="get" class="row g-2 align-items-end">
             <div class="col-md-4">
                 <label class="form-label small fw-bold text-primary mb-1">👤 เลือกผู้แทนขาย</label>
-                <select name="salesRep" class="form-select form-select-sm" @(isSalesRepRole ? "disabled" : "")>
+                <select name="salesRep" class="form-select form-select-sm select2-searchable" @(isSalesRepRole ? "disabled" : "")>
                     @if(!isSalesRepRole) { <option value="">-- ผู้แทนขายทุกคน --</option> }
                     @foreach (var r in Model.SalesReps)
                     {

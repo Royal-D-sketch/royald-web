@@ -1,4 +1,4 @@
-﻿@model List<RoyalD.Web.Models.OutstandingDebt>
+@model List<RoyalD.Web.Models.OutstandingDebt>
 @{
     ViewData["Title"] = "รายการบิลยกเลิก (เก็บบิล 30 วัน)";
     int totalCount = ViewBag.TotalCount ?? 0;
@@ -86,7 +86,7 @@
                 </div>
             </div>
             <div class="col-md-4">
-                <select name="salesRep" class="form-select">
+                <select name="salesRep" class="form-select select2-searchable">
                     <option value="">-- พนักงานขายทั้งหมด --</option>
                     @if (ViewBag.SalesReps != null)
                     {

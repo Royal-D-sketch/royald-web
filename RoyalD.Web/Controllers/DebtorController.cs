@@ -578,6 +578,8 @@ namespace RoyalD.Web.Controllers
             }).ToList();
             ViewBag.Search = search;
             ViewBag.SalesRep = salesRep;
+            ViewBag.TotalCount = debts.Count();
+            ViewBag.TotalAmount = debts.Sum(d => d.OriginalAmount);
             ViewBag.SalesReps = await _cache.GetOrCreateAsync("all_debtor_reps", async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
@@ -604,6 +606,8 @@ namespace RoyalD.Web.Controllers
             var debts = await _svc.GetCancelledDebtsAsync(search, salesRep, userAllowedRegion, userAllowedProvinces, userAllowedDistricts);
             ViewBag.Search = search;
             ViewBag.SalesRep = salesRep;
+            ViewBag.TotalCount = debts.Count();
+            ViewBag.TotalAmount = debts.Sum(d => d.OriginalAmount);
             ViewBag.SalesReps = await _cache.GetOrCreateAsync("all_debtor_reps", async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
