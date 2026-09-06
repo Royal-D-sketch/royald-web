@@ -1088,7 +1088,7 @@ namespace RoyalD.Web.Controllers
                 Username = User.Identity?.Name ?? "system",
                 Action = "RESTORE_CANCELLED_BILL",
                 Detail = $"Restored Cancelled Bill {debt.BillNo}",
-                Timestamp = DateTime.Now
+                IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""
             });
 
             await _db.SaveChangesAsync();
