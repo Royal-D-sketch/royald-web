@@ -60,14 +60,43 @@ namespace RoyalD.Web.Services
                 bool isAllowed = false;
                 if (controller == "dashboard" && allowedList.Contains("dashboard")) isAllowed = true;
                 else if (controller == "salesbill" && allowedList.Contains("salesbill")) isAllowed = true;
-                else if (controller == "debtor" && action == "cancelled" && (allowedList.Contains("cancelled") || allowedList.Contains("debtorcancelled"))) isAllowed = true;
-                else if (controller == "debtor" && action == "history" && (allowedList.Contains("debtorhistory") || allowedList.Contains("history"))) isAllowed = true;
-                else if (controller == "debtor" && action != "history" && action != "cancelled" && allowedList.Contains("debtor")) isAllowed = true;
+                else if (controller == "salesreport")
+                {
+                    if (action == "customerproduct" || action == "exportcustomerproductexcel" || action == "exportcustomerproductcsv")
+                    {
+                        var pos = user.FindFirst("Position")?.Value ?? "";
+                        if (allowedList.Contains("customerproduct") || allowedList.Contains("salesbill") || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย"))
+                        {
+                            isAllowed = true;
+                        }
+                    }
+                    else if (action == "customerpurchasesummary")
+                    {
+                        if (allowedList.Contains("customerpurchasesummary")) isAllowed = true;
+                    }
+                    else if (allowedList.Contains("salesreport") || allowedList.Contains("report"))
+                    {
+                        isAllowed = true;
+                    }
+                }
+                else if (controller == "report")
+                {
+                    if (action == "waitinggoods" && (allowedList.Contains("waitinggoods") || allowedList.Contains("waitinggoodsreport"))) isAllowed = true;
+                    else if (action == "returnnotes" && allowedList.Contains("returnnotes")) isAllowed = true;
+                    else if (allowedList.Contains("report") || allowedList.Contains("salesreport")) isAllowed = true;
+                }
+                else if (controller == "debtor")
+                {
+                    if (action == "cancelled" && (allowedList.Contains("cancelled") || allowedList.Contains("debtorcancelled"))) isAllowed = true;
+                    else if (action == "history" && (allowedList.Contains("debtorhistory") || allowedList.Contains("history"))) isAllowed = true;
+                    else if (action == "baddebt" && allowedList.Contains("baddebt")) isAllowed = true;
+                    else if (action == "installment" && allowedList.Contains("installment")) isAllowed = true;
+                    else if (allowedList.Contains("debtor")) isAllowed = true;
+                }
                 else if (controller == "debtorcard" && allowedList.Contains("debtor")) isAllowed = true;
-                else if (controller == "report" && action == "waitinggoods" && allowedList.Contains("waitinggoods")) isAllowed = true;
-                else if ((controller == "salesreport" || (controller == "report" && action != "waitinggoods")) && (allowedList.Contains("salesreport") || allowedList.Contains("report"))) isAllowed = true;
                 else if (controller == "audit" && allowedList.Contains("audit")) isAllowed = true;
                 else if (controller == "upload" && allowedList.Contains("upload")) isAllowed = true;
+                else if ((controller == "users" || controller == "usermanagement") && allowedList.Contains("users")) isAllowed = true;
 
                 if (!isAllowed)
                 {
