@@ -199,6 +199,10 @@
                                     <a href="/Account/EditUser/@u.Id" class="btn btn-sm btn-primary fw-bold text-nowrap shadow-sm" style="background:#0d9488; border-color:#0d9488;" title="แก้ไขสิทธิ์และขอบเขตพื้นที่">
                                         <i class="bi bi-pencil-square"></i> แก้ไขสิทธิ์
                                     </a>
+                                    <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-bold text-nowrap shadow-sm" 
+                                            onclick="openResetPasswordModal(@u.Id, '@u.Username', '@u.FullName')" title="รีเซ็ตรหัสผ่าน">
+                                        <i class="bi bi-key-fill text-warning"></i> รีเซ็ตรหัส
+                                    </button>
                                     @if (u.Username != "admin")
                                     {
                                         <form asp-controller="Account" asp-action="DeleteUser" method="post"
@@ -223,3 +227,56 @@
         </div>
     </div>
 </div>
+
+<!-- Modal รีเซ็ตรหัสผ่าน -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius:16px; overflow:hidden;">
+            <div class="modal-header bg-warning bg-opacity-10 border-0">
+                <h5 class="modal-title fw-bold text-dark" id="resetPasswordModalLabel">
+                    <i class="bi bi-key-fill text-warning me-2"></i> รีเซ็ตรหัสผ่านผู้ใช้งาน
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-controller="Account" asp-action="ResetPassword" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="resetUserId" value="" />
+                <div class="modal-body p-4">
+                    <div class="alert alert-light border mb-3">
+                        <div class="fw-bold fs-6 text-dark" id="resetUsernameDisplay"></div>
+                        <small class="text-muted" id="resetFullNameDisplay"></small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">รหัสผ่านใหม่</label>
+                        <div class="input-group">
+                            <input type="text" name="newPassword" id="resetNewPasswordInput" class="form-control fw-bold" value="029030445" required />
+                            <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('resetNewPasswordInput').value='029030445'">
+                                <i class="bi bi-arrow-counterclockwise"></i> ใช้รหัส 029030445
+                            </button>
+                        </div>
+                        <small class="text-muted d-block mt-1">ค่าเริ่มต้นของระบบคือ <code>029030445</code> หรือสามารถกำหนดรหัสผ่านใหม่ตามที่ต้องการได้</small>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-warning fw-bold text-dark px-4 shadow-sm">
+                        <i class="bi bi-check-circle-fill me-1"></i> ยืนยันตั้งรหัสผ่านใหม่
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openResetPasswordModal(id, username, fullName) {
+    document.getElementById('resetUserId').value = id;
+    document.getElementById('resetUsernameDisplay').innerHTML = '<i class="bi bi-person-fill text-primary"></i> บัญชี: <code>' + username + '</code>';
+    document.getElementById('resetFullNameDisplay').innerText = 'ชื่อ-นามสกุล: ' + fullName;
+    document.getElementById('resetNewPasswordInput').value = '029030445';
+    var modal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+    modal.show();
+}
+</script>
+

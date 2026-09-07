@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -42,15 +42,50 @@ namespace RoyalD.Web.Controllers
             ViewBag.ReturnUrl = returnUrl;
             ViewBag.Username = username;
 
-            var user = await _db.Users.FirstOrDefaultAsync(u => u.Username == username);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            var cleanUsername = (username ?? "").Trim();
+            var cleanPassword = (password ?? "").Trim();
+
+            if (string.IsNullOrEmpty(cleanUsername) || string.IsNullOrEmpty(cleanPassword))
+            {
+                ModelState.AddModelError("", "กรุณากรอกชื่อผู้ใช้และรหัสผ่าน");
+                return View();
+            }
+
+            // ค้นหาผู้ใช้โดยรองรับทั้ง:
+            // 1. Username (ไม่สนพิมพ์เล็ก-พิมพ์ใหญ่)
+            // 2. SalesRepCode (เช่น รหัสตัวแทนขาย)
+            // 3. คำที่ปรากฏใน FullName (เช่น รหัสหรือชื่อผู้แทน)
+            var user = await _db.Users.FirstOrDefaultAsync(u => EF.Functions.ILike(u.Username, cleanUsername));
+            if (user == null)
+            {
+                user = await _db.Users.FirstOrDefaultAsync(u => u.SalesRepCode != null && EF.Functions.ILike(u.SalesRepCode, cleanUsername));
+            }
+            if (user == null)
+            {
+                user = await _db.Users.FirstOrDefaultAsync(u => u.FullName != null && EF.Functions.ILike(u.FullName, $"%{cleanUsername}%"));
+            }
+
+            bool isPasswordValid = false;
+            if (user != null && !string.IsNullOrEmpty(user.PasswordHash))
+            {
+                if (BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+                {
+                    isPasswordValid = true;
+                }
+                else if (cleanPassword != password && BCrypt.Net.BCrypt.Verify(cleanPassword, user.PasswordHash))
+                {
+                    isPasswordValid = true;
+                }
+            }
+
+            if (user == null || !isPasswordValid)
             {
                 ModelState.AddModelError("", "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
                 _db.AuditLogs.Add(new AuditLog
                 {
-                    Username = username,
+                    Username = cleanUsername,
                     Action = "LOGIN_FAILED",
-                    Detail = "Attempted login with incorrect credentials",
+                    Detail = $"Attempted login with incorrect credentials (Input: '{cleanUsername}')",
                     Latitude = lat ?? "",
                     Longitude = lng ?? "",
                     Area = !string.IsNullOrEmpty(locationName) ? locationName : GeoLocationHelper.ReverseGeocode(lat, lng),
@@ -106,6 +141,7 @@ namespace RoyalD.Web.Controllers
                 new Claim("FullName", user.FullName),
                 new Claim(ClaimTypes.Role, user.Role),
                 new Claim("Position", user.Position ?? "ผู้แทนขาย"),
+                new Claim("SalesRepCode", user.SalesRepCode ?? ""),
                 new Claim("CanViewPaymentDetails", user.CanViewPaymentDetails ? "true" : "false"),
                 new Claim("CanChangeDebtStatus", (user.Role == "admin" || user.CanChangeDebtStatus) ? "true" : "false"),
                 new Claim("CanDeleteSalesBill", (user.Role == "admin" || user.CanDeleteSalesBill) ? "true" : "false"),
@@ -294,9 +330,20 @@ namespace RoyalD.Web.Controllers
             string[]? pages, bool canViewPaymentDetails, bool canChangeDebtStatus, bool canDeleteSalesBill, bool canDeleteDebtor, 
             bool canDownload, bool canScreenCapture)
         {
-            if (_db.Users.Any(u => u.Username == username))
+            var cleanUsername = (username ?? "").Trim();
+            var cleanPassword = (password ?? "").Trim();
+            var cleanFullName = (fullName ?? "").Trim();
+            var cleanSalesRepCode = (salesRepCode ?? "").Trim();
+
+            if (string.IsNullOrEmpty(cleanUsername) || string.IsNullOrEmpty(cleanPassword))
             {
-                TempData["Error"] = "ชื่อผู้ใช้นี้ถูกใช้งานแล้ว";
+                TempData["Error"] = "กรุณากรอกชื่อผู้ใช้และรหัสผ่าน";
+                return RedirectToAction("CreateUser");
+            }
+
+            if (_db.Users.Any(u => EF.Functions.ILike(u.Username, cleanUsername)))
+            {
+                TempData["Error"] = $"ชื่อผู้ใช้ '{cleanUsername}' นี้ถูกใช้งานแล้ว";
                 return RedirectToAction("CreateUser");
             }
 
@@ -304,16 +351,16 @@ namespace RoyalD.Web.Controllers
 
             _db.Users.Add(new AppUser
             {
-                Username = username,
-                FullName = fullName,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+                Username = cleanUsername,
+                FullName = cleanFullName,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(cleanPassword),
                 Role = role,
                 Position = position ?? "ผู้แทนขาย",
-                SalesRepCode = salesRepCode ?? "",
+                SalesRepCode = cleanSalesRepCode,
                 SessionTimeoutMinutes = (sessionTimeoutMinutes == null || sessionTimeoutMinutes == 0) ? null : sessionTimeoutMinutes,
-                AllowedRegion = allowedRegion ?? "",
-                AllowedProvinces = allowedProvinces ?? "",
-                AllowedDistricts = allowedDistricts ?? "",
+                AllowedRegion = (allowedRegion ?? "").Trim(),
+                AllowedProvinces = (allowedProvinces ?? "").Trim(),
+                AllowedDistricts = (allowedDistricts ?? "").Trim(),
                 AllowedPages = allowedPagesStr,
                 CanViewPaymentDetails = canViewPaymentDetails,
                 CanChangeDebtStatus = canChangeDebtStatus,
@@ -321,6 +368,7 @@ namespace RoyalD.Web.Controllers
                 CanDeleteDebtor = canDeleteDebtor,
                 CanDownload = canDownload,
                 CanScreenCapture = canScreenCapture,
+                CurrentSessionToken = "",
                 IsActive = true,
                 CreatedAt = DateTime.Now
             });
@@ -328,12 +376,12 @@ namespace RoyalD.Web.Controllers
             {
                 Username = User.Identity?.Name ?? "",
                 Action = "CREATE_USER",
-                Detail = $"Created user: {username} ({position}) role={role} timeout={sessionTimeoutMinutes} pages={allowedPagesStr}",
+                Detail = $"Created user: {cleanUsername} ({position}) role={role} timeout={sessionTimeoutMinutes} pages={allowedPagesStr}",
                 IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
                 CreatedAt = DateTime.Now
             });
             await _db.SaveChangesAsync();
-            TempData["Success"] = $"สร้างบัญชีผู้ใช้ '{username}' สำเร็จ";
+            TempData["Success"] = $"สร้างบัญชีผู้ใช้ '{cleanUsername}' สำเร็จ";
             return RedirectToAction("Users");
         }
 
@@ -355,15 +403,15 @@ namespace RoyalD.Web.Controllers
         {
             var user = _db.Users.Find(id);
             if (user == null) return NotFound();
-            user.FullName = fullName;
+            user.FullName = (fullName ?? "").Trim();
             user.Role = role;
             user.Position = position ?? "ผู้แทนขาย";
-            user.SalesRepCode = salesRepCode ?? "";
+            user.SalesRepCode = (salesRepCode ?? "").Trim();
             user.SessionTimeoutMinutes = (sessionTimeoutMinutes == null || sessionTimeoutMinutes == 0) ? null : sessionTimeoutMinutes;
             user.IsActive = isActive;
-            user.AllowedRegion = allowedRegion ?? "";
-            user.AllowedProvinces = allowedProvinces ?? "";
-            user.AllowedDistricts = allowedDistricts ?? "";
+            user.AllowedRegion = (allowedRegion ?? "").Trim();
+            user.AllowedProvinces = (allowedProvinces ?? "").Trim();
+            user.AllowedDistricts = (allowedDistricts ?? "").Trim();
             user.AllowedPages = pages != null && pages.Length > 0 ? string.Join(",", pages) : "";
             user.CanViewPaymentDetails = canViewPaymentDetails;
             user.CanChangeDebtStatus = canChangeDebtStatus;
@@ -372,8 +420,8 @@ namespace RoyalD.Web.Controllers
             user.CanDownload = canDownload;
             user.CanScreenCapture = canScreenCapture;
 
-            if (!string.IsNullOrEmpty(newPassword))
-                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            if (!string.IsNullOrWhiteSpace(newPassword))
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword.Trim());
 
             _db.AuditLogs.Add(new AuditLog
             {
@@ -384,7 +432,30 @@ namespace RoyalD.Web.Controllers
                 CreatedAt = DateTime.Now
             });
             await _db.SaveChangesAsync();
-            TempData["Success"] = "แก้ไขข้อมูลและสิทธิ์ผู้ใช้สำเร็จ";
+            TempData["Success"] = $"แก้ไขข้อมูลและสิทธิ์ผู้ใช้ '{user.Username}' สำเร็จ";
+            return RedirectToAction("Users");
+        }
+
+        [Authorize(Roles = "admin"), HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(int id, string? newPassword)
+        {
+            var user = await _db.Users.FindAsync(id);
+            if (user == null) return NotFound();
+
+            var passwordToSet = !string.IsNullOrWhiteSpace(newPassword) ? newPassword.Trim() : "029030445";
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(passwordToSet);
+
+            _db.AuditLogs.Add(new AuditLog
+            {
+                Username = User.Identity?.Name ?? "",
+                Action = "RESET_PASSWORD",
+                Detail = $"Admin reset password for user '{user.Username}' ({user.FullName})",
+                IPAddress = GetRealIpAddress(),
+                CreatedAt = DateTime.Now
+            });
+
+            await _db.SaveChangesAsync();
+            TempData["Success"] = $"รีเซ็ตรหัสผ่านของผู้ใช้ '{user.Username}' ({user.FullName}) สำเร็จแล้ว (รหัสผ่านใหม่: {passwordToSet})";
             return RedirectToAction("Users");
         }
 
