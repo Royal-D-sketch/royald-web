@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RoyalD.Web.Services;
 
@@ -42,7 +42,7 @@ namespace RoyalD.Web.Controllers
         // Screen 4: Customer Product Details
         public async Task<IActionResult> CustomerProduct(string? rep = null, string? month = null, DateTime? date = null, string? q = null) 
         { 
-            if (!CheckPerm("customerproduct") && !CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
+            if (!CheckPerm("customerproduct")) return RedirectToAction("Index", "SalesBill");
 
             bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
             var pos = User.FindFirst("Position")?.Value ?? "";
@@ -70,7 +70,7 @@ namespace RoyalD.Web.Controllers
 
         public async Task<IActionResult> CustomerPurchaseSummary(string? salesRep = null, string? month = null) 
         { 
-            if (!CheckPerm("customerpurchasesummary") && !CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
+            if (!CheckPerm("customerpurchasesummary")) return RedirectToAction("Index", "SalesBill");
 
             bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
             var pos = User.FindFirst("Position")?.Value ?? "";
