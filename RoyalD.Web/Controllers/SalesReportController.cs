@@ -94,13 +94,14 @@ namespace RoyalD.Web.Controllers
         {
             var data = await _svc.GetCustomerProductReportAsync(rep, month, date, q);
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("ลำดับ,เดือน,รหัสลูกค้า,ชื่อลูกค้า,รหัสสินค้า,ชื่อสินค้า,ราคาต่อหน่วย,เครดิต(วัน),ชื่อผู้แทนขาย");
+            sb.AppendLine("ลำดับ,เดือน,รหัสลูกค้า,ชื่อลูกค้า,รหัสสินค้า,ชื่อสินค้า,หน่วยสินค้า,ราคาต่อหน่วย,เครดิต(วัน),ชื่อผู้แทนขาย");
             int idx = 1;
             foreach (var item in data.Items)
             {
                 var custName = (item.CustomerName ?? "").Replace("\"", "\"\"");
                 var prodName = (item.ProductName ?? "").Replace("\"", "\"\"");
-                sb.AppendLine($"{idx++},{item.Month},{item.CustomerCode},\"{custName}\",{item.ProductCode},\"{prodName}\",{item.Price},{item.Credit},{item.SalesRep}");
+                var unit = (item.Unit ?? "").Replace("\"", "\"\"");
+                sb.AppendLine($"{idx++},{item.Month},{item.CustomerCode},\"{custName}\",{item.ProductCode},\"{prodName}\",\"{unit}\",{item.Price},{item.Credit},{item.SalesRep}");
             }
             // Use UTF8 with BOM so Excel reads Thai correctly
             var utf8Bom = new byte[] { 0xEF, 0xBB, 0xBF };

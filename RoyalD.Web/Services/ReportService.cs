@@ -1,4 +1,4 @@
-using RoyalD.Web.Models;
+﻿using RoyalD.Web.Models;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
@@ -477,7 +477,12 @@ namespace RoyalD.Web.Services
                     };
 
                     var groupedProducts = monthItems
-                        .GroupBy(i => new { i.ProductCode, i.ProductName, i.Unit, i.Price })
+                        .GroupBy(i => new { 
+                            i.ProductCode, 
+                            i.ProductName, 
+                            Unit = ProductCatalogService.GetUnit(i.ProductCode, i.ProductName, i.Unit), 
+                            i.Price 
+                        })
                         .Select(g => {
                             decimal totalQty = g.Sum(x => x.Qty);
                             decimal totalAmt = g.Sum(x => x.Amount);
@@ -905,6 +910,7 @@ namespace RoyalD.Web.Services
                         SalesRep = g.Key.Rep ?? "",
                         ProductCode = g.Key.Code ?? "",
                         ProductName = g.Key.Name ?? "",
+                        Unit = ProductCatalogService.GetUnit(g.Key.Code, g.Key.Name, g.FirstOrDefault()?.Unit),
                         Price = g.Key.Price,
                         Credit = g.First().SalesBill.Credit,
                         Qty = g.Sum(x => x.Qty),
@@ -924,7 +930,7 @@ namespace RoyalD.Web.Services
             var ws = pkg.Workbook.Worksheets.Add("CustomerSales");
 
             // Headers
-            var headers = new[] { "ลำดับ", "เดือน", "รหัสลูกค้า", "ชื่อลูกค้า", "รหัสสินค้า : ชื่อสินค้า", "ราคาต่อหน่วย", "เครดิต(วัน)", "ชื่อผู้แทนขาย" };
+            var headers = new[] { "ลำดับ", "เดือน", "รหัสลูกค้า", "ชื่อลูกค้า", "รหัสสินค้า : ชื่อสินค้า", "หน่วยสินค้า", "ราคาต่อหน่วย", "เครดิต(วัน)", "ชื่อผู้แทนขาย" };
             for (int i = 0; i < headers.Length; i++)
             {
                 ws.Cells[1, i + 1].Value = headers[i];
@@ -940,16 +946,17 @@ namespace RoyalD.Web.Services
                 ws.Cells[row, 3].Value = item.CustomerCode;
                 ws.Cells[row, 4].Value = item.CustomerName;
                 ws.Cells[row, 5].Value = $"{item.ProductCode} : {item.ProductName}";
-                ws.Cells[row, 6].Value = item.Price;
-                ws.Cells[row, 7].Value = (item.Credit == 0 || item.Credit == 7) ? "เงินสด" : item.Credit.ToString();
-                ws.Cells[row, 8].Value = item.SalesRep;
+                ws.Cells[row, 6].Value = item.Unit;
+                ws.Cells[row, 7].Value = item.Price;
+                ws.Cells[row, 8].Value = (item.Credit == 0 || item.Credit == 7) ? "เงินสด" : item.Credit.ToString();
+                ws.Cells[row, 9].Value = item.SalesRep;
                 row++;
             }
 
             ws.Cells[ws.Dimension.Address].AutoFitColumns();
             return await pkg.GetAsByteArrayAsync();
         }
-        public async Task<CustomerPurchaseSummaryViewModel> GetCustomerPurchaseSummaryAsync(string selectedRep, string selectedMonth)
+        public async Task<CustomerPurchaseSummaryViewModel> GetCustomerPurchaseSummaryAsync(string? selectedRep = null, string? selectedMonth = null)
         {
             var vm = new CustomerPurchaseSummaryViewModel();
             vm.MonthKeys = StandardMonthsMap.Keys.ToList();
@@ -990,7 +997,7 @@ namespace RoyalD.Web.Services
                     CustomerName = x.SalesBill.CustomerName ?? "",
                     ProductCode = x.ProductCode ?? "",
                     ProductName = x.ProductName ?? "",
-                    Unit = x.Unit ?? "",
+                    Unit = ProductCatalogService.GetUnit(x.ProductCode, x.ProductName, x.Unit),
                     UnitPrice = x.Price
                 })
                 .Select(g => new CustomerPurchaseSummaryRow {

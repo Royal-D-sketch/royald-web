@@ -112,6 +112,7 @@
                         <th class="text-start">รหัสลูกค้า</th>
                         <th class="text-start">ชื่อลูกค้า</th>
                         <th class="text-start">รหัสสินค้า : ชื่อสินค้า</th>
+                        <th class="text-center">หน่วยสินค้า</th>
                         <th>ราคา/หน่วย</th>
                         <th>เครดิต(วัน)</th>
                         <th>ผู้แทนขาย</th>
@@ -120,7 +121,7 @@
                 <tbody>
                     @if (!Model.Items.Any())
                     {
-                        <tr><td colspan="8" class="text-center text-muted py-4">
+                        <tr><td colspan="9" class="text-center text-muted py-4">
                             <i class="bi bi-search me-2 fs-4"></i><br/>
                             ไม่พบข้อมูล — ลองพิมพ์คำค้นหาในช่องด้านบน
                         </td></tr>
@@ -138,6 +139,7 @@
                                 <td class="text-start">
                                     <span class="badge bg-light text-dark border me-1">@item.ProductCode</span>@item.ProductName
                                 </td>
+                                <td class="text-center"><span class="badge bg-info bg-opacity-10 text-dark border border-info border-opacity-25 px-2 py-1">@(string.IsNullOrWhiteSpace(item.Unit) ? "-" : item.Unit)</span></td>
                                 <td class="text-end">@item.Price.ToString("N2")</td>
                                 <td class="text-center">@(item.Credit == 0 || item.Credit == 7 ? "เงินสด" : item.Credit.ToString())</td>
                                 <td class="text-center">@item.SalesRep</td>

@@ -131,7 +131,8 @@
                 <th style="min-width:200px;">ชื่อลูกค้า</th>
                 <th style="width:120px;">รหัสสินค้า</th>
                 <th style="min-width:180px;">ชื่อสินค้า</th>
-                <th style="width:140px;" class="text-end">จำนวนที่ซื้อ (หน่วย)</th>
+                <th style="width:100px;" class="text-center">หน่วยสินค้า</th>
+                <th style="width:120px;" class="text-end">จำนวนที่ซื้อ</th>
                 <th style="width:120px;" class="text-end">ราคา/หน่วย</th>
                 <th style="width:150px;" class="text-end">จำนวนเงินรวม</th>
             </tr>
@@ -140,7 +141,7 @@
             @if (!Model.Rows.Any())
             {
                 <tr>
-                    <td colspan="7" class="text-center py-4 text-muted">ไม่พบข้อมูล หรือไม่มีรายการที่เข้าเงื่อนไข</td>
+                    <td colspan="8" class="text-center py-4 text-muted">ไม่พบข้อมูล หรือไม่มีรายการที่เข้าเงื่อนไข</td>
                 </tr>
             }
             else
@@ -162,7 +163,8 @@
                         </td>
                         <td class="text-secondary">@row.ProductCode</td>
                         <td class="fw-semibold text-dark">@row.ProductName</td>
-                        <td class="text-end fw-bold text-info">@row.Quantity.ToString("N0") <small class="text-muted fw-normal">@row.Unit</small></td>
+                        <td class="text-center"><span class="badge bg-secondary bg-opacity-10 text-dark border px-2 py-1">@(string.IsNullOrWhiteSpace(row.Unit) ? "-" : row.Unit)</span></td>
+                        <td class="text-end fw-bold text-info">@row.Quantity.ToString("N0")</td>
                         <td class="text-end">@row.UnitPrice.ToString("N2")</td>
                         <td class="text-end fw-bold text-success">@row.Amount.ToString("N2")</td>
                     </tr>
@@ -171,7 +173,7 @@
                 }
                 
                 <tr class="table-light fw-bold" style="border-top:2px solid #334155;">
-                    <td colspan="6" class="text-end fs-6">รวมจำนวนเงินดิบทั้งสิ้น (ก่อนหักลด/ไม่รวม VAT):</td>
+                    <td colspan="7" class="text-end fs-6">รวมจำนวนเงินดิบทั้งสิ้น (ก่อนหักลด/ไม่รวม VAT):</td>
                     <td class="text-end text-success fs-5">@totalGrandAmount.ToString("N2")</td>
                 </tr>
             }

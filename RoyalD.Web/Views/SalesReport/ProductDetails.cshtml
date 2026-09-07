@@ -256,7 +256,7 @@ else
                     <tr>
                         <th rowspan="2" style="width:45px;">#</th>
                         <th rowspan="2" style="min-width:250px;">รหัส และ ชื่อสินค้า</th>
-                        <th rowspan="2" style="width:70px;">หน่วย</th>
+                        <th rowspan="2" style="width:85px;">หน่วยสินค้า</th>
                         @foreach (var rep in activeReps)
                         {
                             <th class="border-start bg-primary bg-gradient">@rep</th>
@@ -282,7 +282,7 @@ else
                                     <span class="badge bg-secondary me-1">@prod.Code</span>@prod.Name
                                 </div>
                             </td>
-                            <td class="text-center text-muted small">@prod.Unit</td>
+                            <td class="text-center"><span class="badge bg-secondary bg-opacity-10 text-dark border px-2 py-1">@(string.IsNullOrWhiteSpace(prod.Unit) ? "-" : prod.Unit)</span></td>
                             
                             @foreach (var rep in activeReps)
                             {
