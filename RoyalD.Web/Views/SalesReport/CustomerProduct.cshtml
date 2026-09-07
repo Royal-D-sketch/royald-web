@@ -1,4 +1,4 @@
-﻿@using RoyalD.Web.Services
+@using RoyalD.Web.Services
 @model RoyalD.Web.Services.CustomerProductViewModel
 @{
     ViewData["Title"] = "รายการขายรายลูกค้า";
@@ -131,10 +131,7 @@
                 else
                 {
                     <select name="rep" class="form-select select2-searchable">
-                        @if (!isSalesRep)
-                        {
-                            <option value="">-- ทุกคน --</option>
-                        }
+                        <option value="">@(isSalesRep ? "-- ทั้งหมด --" : "-- ทุกคน --")</option>
                         @foreach (var r in Model.AllReps)
                         {
                             if (Model.SelectedRep == r)

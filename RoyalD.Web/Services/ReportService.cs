@@ -912,23 +912,15 @@ namespace RoyalD.Web.Services
                 var repMatches = ResolveMatchingReps(userSalesRepCode, userFullName, username, allDbReps);
                 if (repMatches.Count > 0)
                 {
-                    if (string.IsNullOrEmpty(selectedRep) || !repMatches.Contains(selectedRep, StringComparer.OrdinalIgnoreCase))
-                    {
-                        selectedRep = repMatches[0];
-                    }
                     vm.AllReps = repMatches;
-                    vm.SelectedRep = selectedRep;
-
-                    if (repMatches.Count == 1)
+                    if (!string.IsNullOrEmpty(selectedRep) && repMatches.Contains(selectedRep, StringComparer.OrdinalIgnoreCase))
                     {
-                        query = query.Where(i => i.SalesBill.SalesRep == repMatches[0]);
-                    }
-                    else if (!string.IsNullOrEmpty(selectedRep))
-                    {
+                        vm.SelectedRep = selectedRep;
                         query = query.Where(i => i.SalesBill.SalesRep == selectedRep);
                     }
                     else
                     {
+                        vm.SelectedRep = repMatches.Count == 1 ? repMatches[0] : null;
                         query = query.Where(i => repMatches.Contains(i.SalesBill.SalesRep));
                     }
                 }

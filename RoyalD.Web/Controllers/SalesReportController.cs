@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RoyalD.Web.Services;
 
@@ -12,7 +12,24 @@ namespace RoyalD.Web.Controllers
         public SalesReportController(ReportService svc) => _svc = svc;
 
         // Screen 1: Pivot Matrix Summary & Interactive Rep Tabs (Default)
-        private bool CheckPerm(string p) { if(User.IsInRole("admin")) return true; var a = User.FindFirst("AllowedPages")?.Value?.Split(',').Select(x => x.Trim().ToLower()) ?? Array.Empty<string>(); return a.Contains(p.ToLower()); } public async Task<IActionResult> Index() { if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
+        private bool CheckPerm(string p) 
+        { 
+            if (User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin")) return true; 
+            var a = User.FindFirst("AllowedPages")?.Value?.Split(',').Select(x => x.Trim().ToLower()) ?? Array.Empty<string>(); 
+            if (a.Contains(p.ToLower())) return true; 
+
+            if (p.Equals("customerproduct", StringComparison.OrdinalIgnoreCase))
+            {
+                var pos = User.FindFirst("Position")?.Value ?? "";
+                if (pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย") || a.Contains("salesbill"))
+                {
+                    return true;
+                }
+            }
+            return false; 
+        } 
+
+        public async Task<IActionResult> Index() { if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
             var data = await _svc.GetAnnualPerformanceAsync();
             return View("Summary", data);
         }

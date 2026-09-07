@@ -23,14 +23,14 @@
 
     bool hasDash = isAdmin || allowedPagesList.Contains("dashboard");
     bool hasBill = isAdmin || allowedPagesList.Contains("salesbill");
-    bool hasCustProd = isAdmin || allowedPagesList.Contains("customerproduct");
+    bool hasCustProd = isAdmin || allowedPagesList.Contains("customerproduct") || (isSalesRep && allowedPagesList.Contains("salesbill"));
     bool hasCustSum = isAdmin || allowedPagesList.Contains("customerpurchasesummary");
     bool hasDebt = isAdmin || allowedPagesList.Contains("debtor");
     bool hasHist = isAdmin || allowedPagesList.Contains("debtorhistory") || allowedPagesList.Contains("history");
     bool hasCancel = isAdmin || allowedPagesList.Contains("cancelled") || allowedPagesList.Contains("debtorcancelled");
     bool hasWaiting = isAdmin || allowedPagesList.Contains("waitinggoods") || allowedPagesList.Contains("waitinggoodsreport");
     bool hasRep = isAdmin || allowedPagesList.Contains("salesreport");
-    bool hasRepSection = hasRep || hasCustProd || hasCustSum || hasWaiting;
+    bool hasRepSection = hasRep || hasCustSum || hasWaiting;
     bool hasAudit = isAdmin || allowedPagesList.Contains("audit");
     bool hasUsers = isAdmin || allowedPagesList.Contains("users");
     bool hasInstallment = isAdmin || allowedPagesList.Contains("installment");
@@ -354,13 +354,6 @@
                         <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && (ViewContext.RouteData.Values["action"]?.ToString() == "Summary" || ViewContext.RouteData.Values["action"]?.ToString() == "Charts" || ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetails" || ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetailsAmount" || ViewContext.RouteData.Values["action"]?.ToString() == "Compare") ? "active" : "")"
                            href="/SalesReport/Summary">
                             <i class="bi bi-graph-up-arrow"></i> รายงานผู้แทนขาย
-                        </a>
-                    }
-                    @if (hasCustProd)
-                    {
-                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && ViewContext.RouteData.Values["action"]?.ToString() == "CustomerProduct" ? "active" : "")"
-                           href="/SalesReport/CustomerProduct">
-                            <i class="bi bi-shop"></i> รายการขายรายลูกค้า
                         </a>
                     }
                     @if (hasCustSum)
