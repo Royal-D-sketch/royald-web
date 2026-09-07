@@ -1,4 +1,4 @@
-﻿@using System.Security.Claims
+@using System.Security.Claims
 @{
     bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
     bool isMasterAdmin = isAdmin;
@@ -23,11 +23,14 @@
 
     bool hasDash = isAdmin || allowedPagesList.Contains("dashboard");
     bool hasBill = isAdmin || allowedPagesList.Contains("salesbill");
+    bool hasCustProd = isAdmin || allowedPagesList.Contains("customerproduct");
+    bool hasCustSum = isAdmin || allowedPagesList.Contains("customerpurchasesummary");
     bool hasDebt = isAdmin || allowedPagesList.Contains("debtor");
     bool hasHist = isAdmin || allowedPagesList.Contains("debtorhistory") || allowedPagesList.Contains("history");
     bool hasCancel = isAdmin || allowedPagesList.Contains("cancelled") || allowedPagesList.Contains("debtorcancelled");
-    bool hasWaiting = isAdmin || allowedPagesList.Contains("waitinggoods");
+    bool hasWaiting = isAdmin || allowedPagesList.Contains("waitinggoods") || allowedPagesList.Contains("waitinggoodsreport");
     bool hasRep = isAdmin || allowedPagesList.Contains("salesreport");
+    bool hasRepSection = hasRep || hasCustProd || hasCustSum || hasWaiting;
     bool hasAudit = isAdmin || allowedPagesList.Contains("audit");
     bool hasUsers = isAdmin || allowedPagesList.Contains("users");
     bool hasInstallment = isAdmin || allowedPagesList.Contains("installment");
@@ -296,14 +299,14 @@
                     </a>
                 }
 
-                @if (hasBill || hasCancel)
+                @if (hasBill || hasCustProd || hasCancel)
                 {
                     <div class="nav-section">บิลขาย</div>
                     @if (hasBill) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesBill" ? "active" : "")"
                        href="/SalesBill">
                         <i class="bi bi-receipt"></i> รายการบิลขาย
                     </a> }
-                    @if (isAdmin || allowedPagesList.Contains("customerproduct")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && ViewContext.RouteData.Values["action"]?.ToString() == "CustomerProduct" ? "active" : "")"
+                    @if (hasCustProd) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && ViewContext.RouteData.Values["action"]?.ToString() == "CustomerProduct" ? "active" : "")"
                        href="/SalesReport/CustomerProduct">
                         <i class="bi bi-shop"></i> รายการขายรายลูกค้า
                     </a> }
@@ -343,19 +346,29 @@
                     @if (hasBadDebt) { <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "BadDebt" ? "active" : "")" href="/Debtor/BadDebt"><i class="bi bi-exclamation-octagon"></i> หนี้สูญ</a> }
                 }
 
-                @if (hasRep || hasWaiting)
+                @if (hasRepSection)
                 {
                     <div class="nav-section">รายงาน</div>
                     @if (hasRep)
                     {
-                        @if (isAdmin || allowedPagesList.Contains("salesreport")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && (ViewContext.RouteData.Values["action"]?.ToString() == "Summary" || ViewContext.RouteData.Values["action"]?.ToString() == "Charts" || ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetails" || ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetailsAmount" || ViewContext.RouteData.Values["action"]?.ToString() == "Compare") ? "active" : "")"
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && (ViewContext.RouteData.Values["action"]?.ToString() == "Summary" || ViewContext.RouteData.Values["action"]?.ToString() == "Charts" || ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetails" || ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetailsAmount" || ViewContext.RouteData.Values["action"]?.ToString() == "Compare") ? "active" : "")"
                            href="/SalesReport/Summary">
                             <i class="bi bi-graph-up-arrow"></i> รายงานผู้แทนขาย
-                        </a> }
-                        @if (isAdmin || allowedPagesList.Contains("customerpurchasesummary")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && ViewContext.RouteData.Values["action"]?.ToString() == "CustomerPurchaseSummary" ? "active" : "")"
+                        </a>
+                    }
+                    @if (hasCustProd)
+                    {
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && ViewContext.RouteData.Values["action"]?.ToString() == "CustomerProduct" ? "active" : "")"
+                           href="/SalesReport/CustomerProduct">
+                            <i class="bi bi-shop"></i> รายการขายรายลูกค้า
+                        </a>
+                    }
+                    @if (hasCustSum)
+                    {
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && ViewContext.RouteData.Values["action"]?.ToString() == "CustomerPurchaseSummary" ? "active" : "")"
                            href="/SalesReport/CustomerPurchaseSummary">
                             <i class="bi bi-person-lines-fill"></i> สรุปการซื้อรายลูกค้า
-                        </a> }
+                        </a>
                     }
                 }
 

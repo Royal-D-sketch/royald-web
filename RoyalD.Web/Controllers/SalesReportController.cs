@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RoyalD.Web.Services;
 
@@ -40,8 +40,25 @@ namespace RoyalD.Web.Controllers
         }
 
         // Screen 4: Customer Product Details
-        public async Task<IActionResult> CustomerProduct(string? rep = null, string? month = null, DateTime? date = null, string? q = null) { if (!CheckPerm("customerproduct")) return RedirectToAction("Index", "SalesBill");
-            var vm = await _svc.GetCustomerProductReportAsync(rep, month, date, q);
+        public async Task<IActionResult> CustomerProduct(string? rep = null, string? month = null, DateTime? date = null, string? q = null) 
+        { 
+            if (!CheckPerm("customerproduct") && !CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
+
+            bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
+            var pos = User.FindFirst("Position")?.Value ?? "";
+            bool isSalesRep = !isAdmin && (pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย"));
+
+            string? userRepCode = null;
+            string? userFullName = null;
+            string? username = null;
+            if (isSalesRep)
+            {
+                userRepCode = User.FindFirst("SalesRepCode")?.Value;
+                userFullName = User.FindFirst("FullName")?.Value;
+                username = User.Identity?.Name;
+            }
+
+            var vm = await _svc.GetCustomerProductReportAsync(rep, month, date, q, userRepCode, userFullName, username);
             return View(vm);
         }
 
@@ -50,18 +67,26 @@ namespace RoyalD.Web.Controllers
             var data = await _svc.GetAnnualPerformanceAsync();
             return View(data);
         }
-                public async Task<IActionResult> CustomerPurchaseSummary(string salesRep, string month) { if (!CheckPerm("customerpurchasesummary")) return RedirectToAction("Index", "SalesBill");
-            bool isAdmin = User.IsInRole("admin");
-            bool isSalesRepRole = User.HasClaim(c => c.Type == "Position" && (c.Value.Contains("ผู้แทน") || c.Value.Contains("พนักงานขาย"))) && !isAdmin;
-            
+
+        public async Task<IActionResult> CustomerPurchaseSummary(string? salesRep = null, string? month = null) 
+        { 
+            if (!CheckPerm("customerpurchasesummary") && !CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
+
+            bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
+            var pos = User.FindFirst("Position")?.Value ?? "";
+            bool isSalesRepRole = !isAdmin && (pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย"));
+
+            string? userRepCode = null;
+            string? userFullName = null;
+            string? username = null;
             if (isSalesRepRole)
             {
-                // Lock filter to own name
-                var nameClaim = User.FindFirst("FullName")?.Value ?? User.Identity?.Name;
-                salesRep = nameClaim;
+                userRepCode = User.FindFirst("SalesRepCode")?.Value;
+                userFullName = User.FindFirst("FullName")?.Value;
+                username = User.Identity?.Name;
             }
 
-            var vm = await _svc.GetCustomerPurchaseSummaryAsync(salesRep, month);
+            var vm = await _svc.GetCustomerPurchaseSummaryAsync(salesRep, month, userRepCode, userFullName, username);
             return View(vm);
         }
 
@@ -87,7 +112,14 @@ namespace RoyalD.Web.Controllers
                 public async Task<IActionResult> ExportCustomerProductExcel(string? rep = null, string? month = null, DateTime? date = null, string? q = null)
         {
             if (!CanDownload()) return Forbid();
-            var data = await _svc.GetCustomerProductReportAsync(rep, month, date, q);
+            bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
+            var pos = User.FindFirst("Position")?.Value ?? "";
+            bool isSalesRep = !isAdmin && (pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย"));
+            string? userRepCode = isSalesRep ? User.FindFirst("SalesRepCode")?.Value : null;
+            string? userFullName = isSalesRep ? User.FindFirst("FullName")?.Value : null;
+            string? username = isSalesRep ? User.Identity?.Name : null;
+
+            var data = await _svc.GetCustomerProductReportAsync(rep, month, date, q, userRepCode, userFullName, username);
             var bytes = await _svc.ExportCustomerProductExcelAsync(data);
             return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 $"CustomerProduct_{DateTime.Now:yyyyMMdd}.xlsx");
@@ -105,7 +137,14 @@ namespace RoyalD.Web.Controllers
         public async Task<IActionResult> ExportCustomerProductCsv(string? rep = null, string? month = null, DateTime? date = null, string? q = null)
         {
             if (!CanDownload()) return Forbid();
-            var data = await _svc.GetCustomerProductReportAsync(rep, month, date, q);
+            bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
+            var pos = User.FindFirst("Position")?.Value ?? "";
+            bool isSalesRep = !isAdmin && (pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย"));
+            string? userRepCode = isSalesRep ? User.FindFirst("SalesRepCode")?.Value : null;
+            string? userFullName = isSalesRep ? User.FindFirst("FullName")?.Value : null;
+            string? username = isSalesRep ? User.Identity?.Name : null;
+
+            var data = await _svc.GetCustomerProductReportAsync(rep, month, date, q, userRepCode, userFullName, username);
             var sb = new System.Text.StringBuilder();
             sb.AppendLine("ลำดับ,เดือน,รหัสลูกค้า,ชื่อลูกค้า,รหัสสินค้า,ชื่อสินค้า,หน่วยสินค้า,ราคาต่อหน่วย,เครดิต(วัน),ชื่อผู้แทนขาย");
             int idx = 1;

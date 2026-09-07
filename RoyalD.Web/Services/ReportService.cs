@@ -1,4 +1,4 @@
-﻿using RoyalD.Web.Models;
+using RoyalD.Web.Models;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
@@ -812,15 +812,92 @@ namespace RoyalD.Web.Services
             }
             return result;
         }
-        public async Task<CustomerProductViewModel> GetCustomerProductReportAsync(string? selectedRep, string? selectedMonth, DateTime? selectedDate, string? q = null)
+        public static string CleanThai(string s)
         {
+            if (string.IsNullOrWhiteSpace(s)) return "";
+            var res = s.Replace("คุณ", "").Replace("นาย", "").Replace("นางสาว", "").Replace("นาง", "").Replace("น.ส.", "");
+            res = res.Replace("์", ""); // remove garun
+            res = res.Replace(" ", "").Trim().ToLower();
+            return res;
+        }
+
+        public static List<string> ResolveMatchingReps(string? repCode, string? fullName, string? username, List<string> dbReps)
+        {
+            var matched = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var candidates = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(repCode))
+            {
+                candidates.AddRange(repCode.Split(new[] { ',', ';', '/' }, StringSplitOptions.RemoveEmptyEntries));
+            }
+            if (!string.IsNullOrWhiteSpace(fullName))
+            {
+                var cleaned = fullName.Replace("คุณ", "").Replace("นาย", "").Replace("นางสาว", "").Replace("นาง", "").Replace("น.ส.", "");
+                var parts = cleaned.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                candidates.AddRange(parts);
+            }
+            if (!string.IsNullOrWhiteSpace(username))
+            {
+                candidates.Add(username);
+            }
+
+            foreach (var cand in candidates)
+            {
+                var cTrim = cand.Trim();
+                if (cTrim.Length < 2) continue;
+                if (decimal.TryParse(cTrim, out _)) continue;
+
+                var cClean = CleanThai(cTrim);
+
+                foreach (var dbRep in dbReps)
+                {
+                    if (string.Equals(dbRep, cTrim, StringComparison.OrdinalIgnoreCase))
+                    {
+                        matched.Add(dbRep);
+                        continue;
+                    }
+
+                    var dbClean = CleanThai(dbRep);
+                    if (dbClean == cClean || dbClean.StartsWith(cClean) || cClean.StartsWith(dbClean))
+                    {
+                        matched.Add(dbRep);
+                        continue;
+                    }
+
+                    // Special phonetic/spelling tolerance: e.g. ธนศักดิ์ vs ธนาศักดิ์
+                    if ((cClean.Contains("ธนศักดิ") || cClean.Contains("ธนาศักดิ")) && 
+                        (dbClean.Contains("ธนศักดิ") || dbClean.Contains("ธนาศักดิ")))
+                    {
+                        matched.Add(dbRep);
+                        continue;
+                    }
+                }
+            }
+
+            return matched.OrderBy(x => x).ToList();
+        }
+
+        public async Task<CustomerProductViewModel> GetCustomerProductReportAsync(
+            string? selectedRep, 
+            string? selectedMonth, 
+            DateTime? selectedDate, 
+            string? q = null,
+            string? userSalesRepCode = null,
+            string? userFullName = null,
+            string? username = null)
+        {
+            var allDbReps = await _db.SalesBills
+                .Where(b => b.SalesRep != null && b.SalesRep != "")
+                .Select(b => b.SalesRep)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToListAsync();
+
             var vm = new CustomerProductViewModel
             {
                 SearchQuery = q,
-                SelectedRep = selectedRep,
                 SelectedMonth = selectedMonth,
                 SelectedDate = selectedDate,
-                AllReps = await _db.SalesBills.Where(b => b.SalesRep != null && b.SalesRep != "").Select(b => b.SalesRep).Distinct().OrderBy(x => x).ToListAsync(),
                 AllMonths = StandardMonthsMap
             };
 
@@ -829,8 +906,49 @@ namespace RoyalD.Web.Services
                 .AsQueryable()
                 .Where(i => i.Price > 0);
 
-            if (!string.IsNullOrEmpty(selectedRep))
-                query = query.Where(i => i.SalesBill.SalesRep == selectedRep);
+            bool isRestrictedRep = !string.IsNullOrWhiteSpace(userSalesRepCode) || !string.IsNullOrWhiteSpace(userFullName);
+            if (isRestrictedRep)
+            {
+                var repMatches = ResolveMatchingReps(userSalesRepCode, userFullName, username, allDbReps);
+                if (repMatches.Count > 0)
+                {
+                    if (string.IsNullOrEmpty(selectedRep) || !repMatches.Contains(selectedRep, StringComparer.OrdinalIgnoreCase))
+                    {
+                        selectedRep = repMatches[0];
+                    }
+                    vm.AllReps = repMatches;
+                    vm.SelectedRep = selectedRep;
+
+                    if (repMatches.Count == 1)
+                    {
+                        query = query.Where(i => i.SalesBill.SalesRep == repMatches[0]);
+                    }
+                    else if (!string.IsNullOrEmpty(selectedRep))
+                    {
+                        query = query.Where(i => i.SalesBill.SalesRep == selectedRep);
+                    }
+                    else
+                    {
+                        query = query.Where(i => repMatches.Contains(i.SalesBill.SalesRep));
+                    }
+                }
+                else
+                {
+                    // Sales rep has no matching sales bills in database
+                    vm.AllReps = new List<string>();
+                    vm.SelectedRep = selectedRep;
+                    query = query.Where(i => false);
+                }
+            }
+            else
+            {
+                vm.AllReps = allDbReps;
+                vm.SelectedRep = selectedRep;
+                if (!string.IsNullOrEmpty(selectedRep))
+                {
+                    query = query.Where(i => i.SalesBill.SalesRep == selectedRep);
+                }
+            }
 
             if (selectedDate.HasValue)
                 query = query.Where(i => i.SalesBill.BillDate.Date == selectedDate.Value.Date);
@@ -863,7 +981,11 @@ namespace RoyalD.Web.Services
                 ).ToList();
             }
 
-            var allCustomers = await _db.Customers.ToDictionaryAsync(c => c.CustomerCode ?? "", c => c.Name ?? "");
+            var allCustomers = await _db.Customers
+                .Where(c => !string.IsNullOrEmpty(c.CustomerCode))
+                .GroupBy(c => c.CustomerCode!)
+                .ToDictionaryAsync(g => g.Key, g => g.First().Name ?? "");
+
             var billCustomers = await _db.SalesBills
                 .Where(b => !string.IsNullOrEmpty(b.CustomerCode) && !string.IsNullOrEmpty(b.CustomerName))
                 .Select(b => new { b.CustomerCode, b.CustomerName })
@@ -876,7 +998,6 @@ namespace RoyalD.Web.Services
                     allCustomers[bc.CustomerCode] = bc.CustomerName ?? "";
                 }
             }
-
 
             var grouped = items.GroupBy(i => new { 
                     CustCode = i.SalesBill.CustomerCode,
@@ -956,22 +1077,76 @@ namespace RoyalD.Web.Services
             ws.Cells[ws.Dimension.Address].AutoFitColumns();
             return await pkg.GetAsByteArrayAsync();
         }
-        public async Task<CustomerPurchaseSummaryViewModel> GetCustomerPurchaseSummaryAsync(string? selectedRep = null, string? selectedMonth = null)
+
+        public async Task<CustomerPurchaseSummaryViewModel> GetCustomerPurchaseSummaryAsync(
+            string? selectedRep = null, 
+            string? selectedMonth = null,
+            string? userSalesRepCode = null,
+            string? userFullName = null,
+            string? username = null)
         {
-            var vm = new CustomerPurchaseSummaryViewModel();
-            vm.MonthKeys = StandardMonthsMap.Keys.ToList();
-            vm.Months = StandardMonthsMap.Values.ToList();
-            vm.SalesReps = await _db.SalesBills.Where(b => b.SalesRep != null && b.SalesRep != "").Select(b => b.SalesRep).Distinct().OrderBy(x => x).ToListAsync();
-            vm.SelectedSalesRep = selectedRep;
-            vm.SelectedMonth = selectedMonth;
+            var allDbReps = await _db.SalesBills
+                .Where(b => b.SalesRep != null && b.SalesRep != "")
+                .Select(b => b.SalesRep)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToListAsync();
+
+            var vm = new CustomerPurchaseSummaryViewModel
+            {
+                MonthKeys = StandardMonthsMap.Keys.ToList(),
+                Months = StandardMonthsMap.Values.ToList(),
+                SelectedMonth = selectedMonth
+            };
+
             // Query SalesBillItems directly (Price > 0 excludes free/bonus items)
             var itemQuery = _db.SalesBillItems
                 .Include(i => i.SalesBill)
                 .Where(i => i.Price > 0)
                 .AsQueryable();
 
-            if (!string.IsNullOrEmpty(selectedRep))
-                itemQuery = itemQuery.Where(i => i.SalesBill.SalesRep == selectedRep);
+            bool isRestrictedRep = !string.IsNullOrWhiteSpace(userSalesRepCode) || !string.IsNullOrWhiteSpace(userFullName);
+            if (isRestrictedRep)
+            {
+                var repMatches = ResolveMatchingReps(userSalesRepCode, userFullName, username, allDbReps);
+                if (repMatches.Count > 0)
+                {
+                    if (string.IsNullOrEmpty(selectedRep) || !repMatches.Contains(selectedRep, StringComparer.OrdinalIgnoreCase))
+                    {
+                        selectedRep = repMatches[0];
+                    }
+                    vm.SalesReps = repMatches;
+                    vm.SelectedSalesRep = selectedRep;
+
+                    if (repMatches.Count == 1)
+                    {
+                        itemQuery = itemQuery.Where(i => i.SalesBill.SalesRep == repMatches[0]);
+                    }
+                    else if (!string.IsNullOrEmpty(selectedRep))
+                    {
+                        itemQuery = itemQuery.Where(i => i.SalesBill.SalesRep == selectedRep);
+                    }
+                    else
+                    {
+                        itemQuery = itemQuery.Where(i => repMatches.Contains(i.SalesBill.SalesRep));
+                    }
+                }
+                else
+                {
+                    vm.SalesReps = new List<string>();
+                    vm.SelectedSalesRep = selectedRep;
+                    itemQuery = itemQuery.Where(i => false);
+                }
+            }
+            else
+            {
+                vm.SalesReps = allDbReps;
+                vm.SelectedSalesRep = selectedRep;
+                if (!string.IsNullOrEmpty(selectedRep))
+                {
+                    itemQuery = itemQuery.Where(i => i.SalesBill.SalesRep == selectedRep);
+                }
+            }
 
             if (!string.IsNullOrEmpty(selectedMonth))
             {
