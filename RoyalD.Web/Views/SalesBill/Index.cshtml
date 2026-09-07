@@ -1,4 +1,4 @@
-﻿@using RoyalD.Web.Models
+@using RoyalD.Web.Models
 @model List<RoyalD.Web.Models.SalesBill>
 @{
     ViewData["Title"] = "รายการบิลขาย";
@@ -17,11 +17,75 @@
 <style>
 .filter-card { background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%); border-radius: 14px; border: 1.5px solid #99f6e4; box-shadow: 0 2px 10px rgba(13,148,136,0.07); }
 .header-wrap { white-space: normal; max-width: 150px; word-break: break-word; }
+
+/* Sticky Header & Scroll container for SalesBill */
+.salesbill-scroll-wrap {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    max-height: 75vh !important;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    background: #ffffff;
+    scrollbar-width: thin !important;
+    scrollbar-color: #0d9488 #e2e8f0 !important;
+}
+.salesbill-scroll-wrap::-webkit-scrollbar {
+    width: 10px !important;
+    height: 12px !important;
+}
+.salesbill-scroll-wrap::-webkit-scrollbar-track {
+    background: #e2e8f0 !important;
+    border-radius: 8px !important;
+}
+.salesbill-scroll-wrap::-webkit-scrollbar-thumb {
+    background: #0d9488 !important;
+    border-radius: 8px !important;
+    border: 2px solid #e2e8f0 !important;
+}
+.salesbill-scroll-wrap::-webkit-scrollbar-thumb:hover {
+    background: #0f766e !important;
+}
+.salesbill-table {
+    min-width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    font-size: 0.90rem;
+}
+.salesbill-table thead th {
+    position: sticky !important;
+    top: 0 !important;
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+    font-weight: 800 !important;
+    font-size: 0.90rem;
+    padding: 14px 12px !important;
+    border-bottom: 2.5px solid #94a3b8 !important;
+    border-top: none !important;
+    white-space: nowrap;
+    z-index: 20 !important;
+    letter-spacing: 0.2px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.06);
+}
+.salesbill-table td {
+    padding: 11px 12px !important;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+.salesbill-table tbody tr {
+    transition: background-color 0.15s ease-in-out;
+}
+.salesbill-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
 @@media print {
     .filter-card, .stats-bar, nav, .btn-card, .no-print, .actions-col { display: none !important; }
     body { font-size: 10pt !important; }
     table { width: 100% !important; }
     @@page { size: A4 landscape; margin: 15mm; }
+    .salesbill-scroll-wrap { max-height: none !important; overflow: visible !important; border: none !important; box-shadow: none !important; }
+    .salesbill-table thead th { position: static !important; box-shadow: none !important; }
 }
 </style>
 
@@ -182,9 +246,9 @@
         <small>ลองเปลี่ยนตัวกรอง หรือค้นหาด้วยคำใหม่อีกครั้ง</small>
     </div>
 } else {
-    <div class="card shadow-sm p-3 mb-4 table-responsive">
-        <table class="table table-hover table-sm align-middle">
-            <thead class="table-light">
+    <div class="salesbill-scroll-wrap mb-4 shadow-sm" id="main-salesbill-scroll">
+        <table class="table table-hover table-sm align-middle mb-0 salesbill-table">
+            <thead>
                 <tr>
                     <th>เลขที่บิล</th>
                     <th>วันที่</th>
