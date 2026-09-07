@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -51,35 +51,79 @@ namespace RoyalD.Web.Controllers
                 return View();
             }
 
-            // ค้นหาผู้ใช้โดยรองรับทั้ง:
-            // 1. Username (ไม่สนพิมพ์เล็ก-พิมพ์ใหญ่)
-            // 2. SalesRepCode (เช่น รหัสตัวแทนขาย)
-            // 3. คำที่ปรากฏใน FullName (เช่น รหัสหรือชื่อผู้แทน)
-            var user = await _db.Users.FirstOrDefaultAsync(u => EF.Functions.ILike(u.Username, cleanUsername));
-            if (user == null && (cleanUsername.Equals("chureewan", StringComparison.OrdinalIgnoreCase) || cleanUsername.Equals("chuleewan", StringComparison.OrdinalIgnoreCase)))
+            // ค้นหาผู้ใช้แบบอัจฉริยะ รองรับทั้ง:
+            // 1. Username ภาษาอังกฤษ (เช่น Sunya, Chanthima, admin)
+            // 2. ชื่อ-นามสกุลภาษาไทยเต็ม (เช่น คุณจันทิมา จิรภิญโญกุล 115.0, คุณสัญญา สุขจิตต์ 121.1)
+            // 3. ชื่อที่มีคำว่า 'คุณ', 'นาย', 'น.ส.' หรือตัดออก
+            // 4. รหัสตัวแทนขาย (SalesRepCode)
+            // 5. ชื่อแรก (First Name เช่น จันทิมา, สัญญา, วีรนุช)
+            string normalizedThai = cleanUsername;
+            foreach (var prefix in new[] { "คุณ", "นางสาว", "น.ส.", "นาย", "นาง" })
             {
-                user = await _db.Users.FirstOrDefaultAsync(u => u.Username == "Chureewan" || u.Username == "Chuleewan" || (u.FullName != null && EF.Functions.ILike(u.FullName, "%ชูรีวรรณ%")));
-            }
-            if (user == null)
-            {
-                user = await _db.Users.FirstOrDefaultAsync(u => u.SalesRepCode != null && EF.Functions.ILike(u.SalesRepCode, cleanUsername));
-            }
-            if (user == null)
-            {
-                user = await _db.Users.FirstOrDefaultAsync(u => u.FullName != null && EF.Functions.ILike(u.FullName, $"%{cleanUsername}%"));
+                if (normalizedThai.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    normalizedThai = normalizedThai.Substring(prefix.Length).Trim();
+                    break;
+                }
             }
 
-            bool isPasswordValid = false;
-            if (user != null && !string.IsNullOrEmpty(user.PasswordHash))
+            var tokens = normalizedThai.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+            string firstNameToken = tokens.Length > 0 ? tokens[0] : normalizedThai;
+
+            // ค้นหาบัญชีผู้ใช้ที่เป็นไปได้ทั้งหมด (Candidates)
+            var candidateUsers = await _db.Users.Where(u => u.IsActive && (
+                EF.Functions.ILike(u.Username, cleanUsername) ||
+                EF.Functions.ILike(u.Username, normalizedThai) ||
+                EF.Functions.ILike(u.Username, firstNameToken)
+            )).ToListAsync();
+
+            if (cleanUsername.Equals("chureewan", StringComparison.OrdinalIgnoreCase) || cleanUsername.Equals("chuleewan", StringComparison.OrdinalIgnoreCase) || cleanUsername.Contains("ชุลีวรรณ") || cleanUsername.Contains("ชูรีวรรณ"))
             {
-                if (BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+                var chUsers = await _db.Users.Where(u => u.IsActive && (u.Username == "Chuleewan" || u.Username == "Chureewan" || (u.FullName != null && (EF.Functions.ILike(u.FullName, "%ชุลีวรรณ%") || EF.Functions.ILike(u.FullName, "%ชูรีวรรณ%"))))).ToListAsync();
+                candidateUsers.AddRange(chUsers);
+            }
+
+            var repMatches = await _db.Users.Where(u => u.IsActive && u.SalesRepCode != null && (
+                EF.Functions.ILike(u.SalesRepCode, cleanUsername) ||
+                EF.Functions.ILike(u.SalesRepCode, $"%{cleanUsername}%") ||
+                EF.Functions.ILike(u.SalesRepCode, $"%{normalizedThai}%") ||
+                EF.Functions.ILike(u.SalesRepCode, $"%{firstNameToken}%")
+            )).ToListAsync();
+            candidateUsers.AddRange(repMatches);
+
+            var nameMatches = await _db.Users.Where(u => u.IsActive && u.FullName != null && (
+                EF.Functions.ILike(u.FullName, $"%{cleanUsername}%") ||
+                EF.Functions.ILike(u.FullName, $"%{normalizedThai}%") ||
+                EF.Functions.ILike(u.FullName, $"%{firstNameToken}%")
+            )).ToListAsync();
+            candidateUsers.AddRange(nameMatches);
+
+            // เรียงลำดับความสำคัญ: บัญชีใหม่ (Id สูงกว่า) มาก่อน เพื่อแก้ปัญหาบัญชีเก่า AART/VVV บังบัญชีใหม่ Sunya/Weeranut
+            var distinctCandidates = candidateUsers.DistinctBy(u => u.Id).OrderByDescending(u => u.Id).ToList();
+
+            AppUser? user = null;
+            bool isPasswordValid = false;
+
+            // ตรวจสอบรหัสผ่านกับทุก Candidate ที่เข้าข่าย
+            foreach (var cand in distinctCandidates)
+            {
+                if (!string.IsNullOrEmpty(cand.PasswordHash))
                 {
-                    isPasswordValid = true;
+                    if (BCrypt.Net.BCrypt.Verify(password, cand.PasswordHash) ||
+                        (cleanPassword != password && BCrypt.Net.BCrypt.Verify(cleanPassword, cand.PasswordHash)))
+                    {
+                        user = cand;
+                        isPasswordValid = true;
+                        break;
+                    }
                 }
-                else if (cleanPassword != password && BCrypt.Net.BCrypt.Verify(cleanPassword, user.PasswordHash))
-                {
-                    isPasswordValid = true;
-                }
+            }
+
+            // หากไม่มีบัญชีใดรหัสผ่านตรง ให้เลือกบัญชีที่ตรงกับชื่อที่สุดเพื่อใช้บันทึก Audit Log และแจ้งเตือน
+            if (user == null && distinctCandidates.Any())
+            {
+                user = distinctCandidates.FirstOrDefault(u => u.Username.Equals(cleanUsername, StringComparison.OrdinalIgnoreCase))
+                       ?? distinctCandidates.First();
             }
 
             if (user == null || !isPasswordValid)
