@@ -1,4 +1,4 @@
-﻿@model RoyalD.Web.Models.AppUser
+@model RoyalD.Web.Models.AppUser
 @using System.Text.Json
 @{
     ViewData["Title"] = "สร้างบัญชีผู้ใช้ใหม่";
@@ -107,7 +107,12 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-muted">รหัสผ่านเริ่มต้น <span class="text-danger">*</span></label>
-                            <input type="password" name="password" class="form-control" required minlength="6" placeholder="รหัสผ่านขั้นต่ำ 6 ตัวอักษร" />
+                            <div class="input-group">
+                                <input type="password" name="password" id="createPasswordInput" class="form-control" required minlength="6" placeholder="รหัสผ่านขั้นต่ำ 6 ตัวอักษร" autocomplete="new-password" />
+                                <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('createPasswordInput', 'createEyeIcon')" title="กดเพื่อดู/ซ่อนรหัสผ่าน">
+                                    <i class="bi bi-eye" id="createEyeIcon"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-muted">ชื่อ-นามสกุล <span class="text-danger">*</span></label>
@@ -733,6 +738,19 @@
         });
         document.getElementById('salesRepCodeHidden').value = selectedSalesReps.join(', ');
         document.getElementById('salesRepCountBadge').textContent = selectedSalesReps.length + ' ผู้แทน';
+    }
+
+    function togglePasswordVisibility(inputId, iconId) {
+        var input = document.getElementById(inputId);
+        var icon = document.getElementById(iconId);
+        if (!input || !icon) return;
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'bi bi-eye-slash';
+        } else {
+            input.type = 'password';
+            icon.className = 'bi bi-eye';
+        }
     }
 
     document.addEventListener('DOMContentLoaded', () => {

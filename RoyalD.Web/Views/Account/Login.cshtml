@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "เข้าสู่ระบบ";
     Layout = null;
 }
@@ -110,7 +110,7 @@
         </div>
     }
 
-    <form method="post" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewBag.ReturnUrl" id="login-form" onsubmit="return validateGpsBeforeSubmit(event)">
+    <form method="post" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewBag.ReturnUrl" id="login-form" autocomplete="off" onsubmit="return validateGpsBeforeSubmit(event)">
         @Html.AntiForgeryToken()
         <!-- Hidden geolocation fields -->
         <input type="hidden" name="lat" id="lat-field" value=""/>
@@ -121,14 +121,14 @@
             <label class="form-label fw-bold small text-muted">ชื่อผู้ใช้งาน (Username)</label>
             <div class="input-group">
                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-muted"></i></span>
-                <input type="text" name="username" class="form-control" placeholder="กรอกชื่อผู้ใช้งาน" required autofocus autocomplete="username" value="@(ViewBag.Username ?? "")"/>
+                <input type="text" name="username" id="username-input" class="form-control" placeholder="กรอกชื่อผู้ใช้งาน" required autofocus autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" value=""/>
             </div>
         </div>
         <div class="mb-4">
             <label class="form-label fw-bold small text-muted">รหัสผ่าน (Password)</label>
             <div class="input-group">
                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
-                <input type="password" name="password" id="pwd" class="form-control" placeholder="กรอกรหัสผ่าน" required autocomplete="current-password"/>
+                <input type="password" name="password" id="pwd" class="form-control" placeholder="กรอกรหัสผ่าน" required autocomplete="new-password"/>
                 <button type="button" class="btn btn-outline-secondary" onclick="togglePwd()">
                     <i class="bi bi-eye" id="eye-icon"></i>
                 </button>
@@ -300,7 +300,21 @@ function validateGpsBeforeSubmit(e) {
     return true;
 }
 
+function clearLoginInputs() {
+    var u = document.getElementById('username-input');
+    var p = document.getElementById('pwd');
+    if (u) u.value = '';
+    if (p) p.value = '';
+}
+
+window.addEventListener('pageshow', function() {
+    clearLoginInputs();
+});
+
 document.addEventListener('DOMContentLoaded', () => {
+    clearLoginInputs();
+    setTimeout(clearLoginInputs, 50);
+    setTimeout(clearLoginInputs, 200);
     requestLocationPermission();
 });
 </script>

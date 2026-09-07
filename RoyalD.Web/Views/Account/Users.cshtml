@@ -1,4 +1,4 @@
-﻿@model List<RoyalD.Web.Models.AppUser>
+@model List<RoyalD.Web.Models.AppUser>
 @{
     ViewData["Title"] = "จัดการผู้ใช้งาน";
 }
@@ -250,7 +250,10 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold small text-muted">รหัสผ่านใหม่</label>
                         <div class="input-group">
-                            <input type="text" name="newPassword" id="resetNewPasswordInput" class="form-control fw-bold" value="029030445" required />
+                            <input type="password" name="newPassword" id="resetNewPasswordInput" class="form-control fw-bold" value="029030445" required autocomplete="new-password" />
+                            <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('resetNewPasswordInput', 'resetEyeIcon')" title="กดเพื่อดู/ซ่อนรหัสผ่าน">
+                                <i class="bi bi-eye" id="resetEyeIcon"></i>
+                            </button>
                             <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('resetNewPasswordInput').value='029030445'">
                                 <i class="bi bi-arrow-counterclockwise"></i> ใช้รหัส 029030445
                             </button>
@@ -270,11 +273,28 @@
 </div>
 
 <script>
+function togglePasswordVisibility(inputId, iconId) {
+    var input = document.getElementById(inputId);
+    var icon = document.getElementById(iconId);
+    if (!input || !icon) return;
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'bi bi-eye';
+    }
+}
+
 function openResetPasswordModal(id, username, fullName) {
     document.getElementById('resetUserId').value = id;
     document.getElementById('resetUsernameDisplay').innerHTML = '<i class="bi bi-person-fill text-primary"></i> บัญชี: <code>' + username + '</code>';
     document.getElementById('resetFullNameDisplay').innerText = 'ชื่อ-นามสกุล: ' + fullName;
-    document.getElementById('resetNewPasswordInput').value = '029030445';
+    var pwdInput = document.getElementById('resetNewPasswordInput');
+    pwdInput.value = '029030445';
+    pwdInput.type = 'password';
+    var eyeIcon = document.getElementById('resetEyeIcon');
+    if (eyeIcon) eyeIcon.className = 'bi bi-eye';
     var modal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
     modal.show();
 }

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -40,7 +40,7 @@ namespace RoyalD.Web.Controllers
         public async Task<IActionResult> Login(string username, string password, string? returnUrl = null, string? lat = null, string? lng = null, string? locationName = null)
         {
             ViewBag.ReturnUrl = returnUrl;
-            ViewBag.Username = username;
+            ViewBag.Username = "";
 
             var cleanUsername = (username ?? "").Trim();
             var cleanPassword = (password ?? "").Trim();
