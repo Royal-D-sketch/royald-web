@@ -104,7 +104,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.MaxAge = TimeSpan.FromHours(8);
         options.Cookie.HttpOnly = true;
         options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.Cookie.SameSite = SameSiteMode.Lax;
     });
 
 builder.Services.AddSession(options =>
@@ -119,6 +119,7 @@ var app = builder.Build();
 
 // ========== Middleware ==========
 app.UseDeveloperExceptionPage();
+app.UseForwardedHeaders(new ForwardedHeadersOptions { ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto });
 
 // Force Thai locale dd/MM/yyyy globally
 var thCulture = new System.Globalization.CultureInfo("th-TH");

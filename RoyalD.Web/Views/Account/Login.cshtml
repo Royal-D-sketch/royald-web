@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "เข้าสู่ระบบ";
     Layout = null;
 }
@@ -110,8 +110,8 @@
         </div>
     }
 
-    <form method="post" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewBag.ReturnUrl" id="login-form" autocomplete="off" onsubmit="return validateGpsBeforeSubmit(event)">
-        @Html.AntiForgeryToken()
+    <form method="post" action="/Account/Login" asp-antiforgery="false" id="login-form" autocomplete="off" onsubmit="return validateGpsBeforeSubmit(event)">
+        <!-- AntiForgery not needed on Login -->
         <!-- Hidden geolocation fields -->
         <input type="hidden" name="lat" id="lat-field" value=""/>
         <input type="hidden" name="lng" id="lng-field" value=""/>
