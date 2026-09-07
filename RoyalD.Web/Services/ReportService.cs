@@ -973,10 +973,12 @@ namespace RoyalD.Web.Services
                 ).ToList();
             }
 
-            var allCustomers = await _db.Customers
+            var allCustomers = (await _db.Customers
                 .Where(c => !string.IsNullOrEmpty(c.CustomerCode))
+                .Select(c => new { c.CustomerCode, c.Name })
+                .ToListAsync())
                 .GroupBy(c => c.CustomerCode!)
-                .ToDictionaryAsync(g => g.Key, g => g.First().Name ?? "");
+                .ToDictionary(g => g.Key, g => g.First().Name ?? "");
 
             var billCustomers = await _db.SalesBills
                 .Where(b => !string.IsNullOrEmpty(b.CustomerCode) && !string.IsNullOrEmpty(b.CustomerName))
