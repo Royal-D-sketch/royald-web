@@ -56,6 +56,10 @@ namespace RoyalD.Web.Controllers
             // 2. SalesRepCode (เช่น รหัสตัวแทนขาย)
             // 3. คำที่ปรากฏใน FullName (เช่น รหัสหรือชื่อผู้แทน)
             var user = await _db.Users.FirstOrDefaultAsync(u => EF.Functions.ILike(u.Username, cleanUsername));
+            if (user == null && (cleanUsername.Equals("chureewan", StringComparison.OrdinalIgnoreCase) || cleanUsername.Equals("chuleewan", StringComparison.OrdinalIgnoreCase)))
+            {
+                user = await _db.Users.FirstOrDefaultAsync(u => u.Username == "Chureewan" || u.Username == "Chuleewan" || (u.FullName != null && EF.Functions.ILike(u.FullName, "%ชูรีวรรณ%")));
+            }
             if (user == null)
             {
                 user = await _db.Users.FirstOrDefaultAsync(u => u.SalesRepCode != null && EF.Functions.ILike(u.SalesRepCode, cleanUsername));
