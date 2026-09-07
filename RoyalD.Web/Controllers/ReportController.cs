@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using RoyalD.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,6 +20,10 @@ namespace RoyalD.Web.Controllers
         }
         public async Task<IActionResult> ExportExcel(DateTime? from, DateTime? to)
         {
+            var pos = User.FindFirst("Position")?.Value ?? "";
+            bool isSalesRep = pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย");
+            if (isSalesRep || (!User.IsInRole("admin") && User.FindFirst("CanDownload")?.Value != "true")) return Forbid();
+
             var data = await _svc.GetSalesSummaryAsync(from, to);
             var bytes = await _svc.ExportToExcelAsync(data, from, to);
             return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

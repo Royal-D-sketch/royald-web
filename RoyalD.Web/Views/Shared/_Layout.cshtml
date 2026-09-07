@@ -568,9 +568,33 @@ else
             width: 100vw; height: 100vh;
             pointer-events: none;
             z-index: 999990;
-            opacity: 0.25;
+            opacity: 0.28;
             background-repeat: repeat;
             display: block;
+        }
+
+        .security-bottom-notice-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.96);
+            color: #f8fafc;
+            border-top: 3px solid #dc2626;
+            padding: 8px 16px;
+            font-size: 0.86rem;
+            font-weight: 600;
+            text-align: center;
+            z-index: 999999;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            letter-spacing: 0.3px;
+        }
+        body {
+            padding-bottom: 45px !important;
         }
 
         /* Automated Executive Summary Insight Boxes */
@@ -636,36 +660,45 @@ else
         }
     </style>
         
-        <canvas id="watermarkCanvas" width="450" height="250" style="display:none;"></canvas>
+        <canvas id="watermarkCanvas" width="480" height="280" style="display:none;"></canvas>
         <div class="security-watermark-overlay" id="watermarkOverlay"></div>
+        <div class="security-bottom-notice-bar">
+            <i class="bi bi-shield-lock-fill text-warning me-2 fs-6"></i>
+            <span class="badge bg-danger me-2" style="font-size:0.82rem;">เอกสารห้ามเผยแพร่</span>
+            <span>เอกสารลับเฉพาะภายใน บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด — ห้ามบันทึกภาพ แคปหน้าจอ อัดวิดีโอ หรือส่งต่อโดยเด็ดขาด</span>
+        </div>
 
         <script>
         // =========================================================================
-        //  ANTI-SCREEN CAPTURE & ANTI-RECORDING: INSTANT SOLID BLACKOUT + IMMEDIATE LOGOUT
+        //  ANTI-SCREEN CAPTURE & ANTI-RECORDING: WATERMARK + DISRUPTIVE BLACKOUT
         // =========================================================================
         (function() {
             let isBlackoutTriggered = false;
 
-            // 1. Watermark แบบไดนามิกครอบคลุมทั้งจอ
+            // 1. Watermark แบบไดนามิกครอบคลุมทั้งจอทุกหน้า
             try {
                 const canvas = document.getElementById('watermarkCanvas');
                 if (canvas) {
                     const ctx = canvas.getContext('2d');
-                    ctx.clearRect(0, 0, 450, 250);
+                    ctx.clearRect(0, 0, 480, 280);
                     ctx.save();
-                    ctx.translate(225, 125);
+                    ctx.translate(240, 140);
                     ctx.rotate(-22 * Math.PI / 180);
                     ctx.textAlign = 'center';
                     
-                    ctx.fillStyle = 'rgba(220, 38, 38, 0.45)';
-                    ctx.font = 'bold 16px sans-serif';
-                    const userName = '⚠️ @(User.Identity?.Name ?? "USER") - @(ViewContext.HttpContext.User.FindFirst("FullName")?.Value ?? "ผู้แทนขาย")';
-                    ctx.fillText(userName, 0, -10);
+                    ctx.fillStyle = 'rgba(220, 38, 38, 0.55)';
+                    ctx.font = 'bold 15px sans-serif';
+                    ctx.fillText('⚠️ เอกสารห้ามเผยแพร่เด็ดขาด (รอแยล-ดี)', 0, -22);
 
-                    ctx.fillStyle = 'rgba(15, 23, 42, 0.55)';
-                    ctx.font = 'bold 13px sans-serif';
-                    const nowStr = 'ห้ามบันทึกภาพ/อัดวิดีโอ ' + new Date().toLocaleDateString('th-TH');
-                    ctx.fillText(nowStr, 0, 16);
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
+                    ctx.font = 'bold 14px sans-serif';
+                    const userName = 'ผู้แทน: @(ViewContext.HttpContext.User.FindFirst("FullName")?.Value ?? User.Identity?.Name) (@(User.Identity?.Name))';
+                    ctx.fillText(userName, 0, 2);
+
+                    ctx.fillStyle = 'rgba(100, 116, 139, 0.65)';
+                    ctx.font = 'bold 12px sans-serif';
+                    const nowStr = 'ห้ามบันทึกภาพ/อัดวิดีโอ/ส่งต่อเด็ดขาด ' + new Date().toLocaleDateString('th-TH');
+                    ctx.fillText(nowStr, 0, 24);
                     ctx.restore();
 
                     const overlay = document.getElementById('watermarkOverlay');
@@ -676,8 +709,28 @@ else
             } catch(e) {}
 
             function triggerScreenCaptureBlackout(reason) {
-                // ปิดการจอดำสนิทเพื่อให้สามารถใช้งานเว็บได้ปกติ
-                console.warn('Security capture warning:', reason);
+                if (isBlackoutTriggered) return;
+                isBlackoutTriggered = true;
+
+                // สร้างหน้าจอดำชั่วคราวทับทันทีเพื่อทำลายภาพแคป/วิดีโอที่พยายามบันทึก
+                const blocker = document.createElement('div');
+                blocker.id = 'tempCaptureBlocker';
+                blocker.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000000;color:#ffffff;z-index:9999999;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;';
+                blocker.innerHTML = '<div style="color:#ef4444;font-size:2.2rem;font-weight:bold;margin-bottom:12px;"><i class="bi bi-shield-x me-2"></i>ตรวจพบการพยายามบันทึกภาพ/วิดีโอ</div><div style="font-size:1.15rem;color:#f87171;font-weight:600;">เอกสารลับเฉพาะภายใน บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด ห้ามเผยแพร่โดยเด็ดขาด</div>';
+                document.body.appendChild(blocker);
+
+                setTimeout(function() {
+                    if (blocker && blocker.parentNode) blocker.parentNode.removeChild(blocker);
+                    isBlackoutTriggered = false;
+                }, 2000);
+
+                try {
+                    fetch('/Account/LogSecurityViolation', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: 'action=' + encodeURIComponent(reason)
+                    }).catch(function(){});
+                } catch(err) {}
             }
 
             // 2. ดักจับการใช้ Screen Recording API (WebRTC getDisplayMedia & MediaRecorder)

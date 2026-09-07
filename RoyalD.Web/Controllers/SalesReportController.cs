@@ -65,9 +65,19 @@ namespace RoyalD.Web.Controllers
             return View(vm);
         }
 
+        private bool CanDownload()
+        {
+            if (User.IsInRole("admin")) return true;
+            var pos = User.FindFirst("Position")?.Value ?? "";
+            bool isSalesRep = pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย");
+            if (isSalesRep) return false;
+            return User.FindFirst("CanDownload")?.Value == "true";
+        }
+
         // Export Actions
         public async Task<IActionResult> ExportSummaryExcel()
         {
+            if (!CanDownload()) return Forbid();
             var data = await _svc.GetSalesSummaryMatrixAsync();
             var bytes = await _svc.ExportMatrixExcelAsync(data);
             return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -76,6 +86,7 @@ namespace RoyalD.Web.Controllers
 
                 public async Task<IActionResult> ExportCustomerProductExcel(string? rep = null, string? month = null, DateTime? date = null, string? q = null)
         {
+            if (!CanDownload()) return Forbid();
             var data = await _svc.GetCustomerProductReportAsync(rep, month, date, q);
             var bytes = await _svc.ExportCustomerProductExcelAsync(data);
             return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -84,6 +95,7 @@ namespace RoyalD.Web.Controllers
 
         public async Task<IActionResult> ExportProductDetailsExcel(string? salesRep = null, string? month = null)
         {
+            if (!CanDownload()) return Forbid();
             var data = await _svc.GetProductDetailsReportAsync(salesRep, month);
             var bytes = await _svc.ExportProductDetailsExcelAsync(data);
             return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -92,6 +104,7 @@ namespace RoyalD.Web.Controllers
 
         public async Task<IActionResult> ExportCustomerProductCsv(string? rep = null, string? month = null, DateTime? date = null, string? q = null)
         {
+            if (!CanDownload()) return Forbid();
             var data = await _svc.GetCustomerProductReportAsync(rep, month, date, q);
             var sb = new System.Text.StringBuilder();
             sb.AppendLine("ลำดับ,เดือน,รหัสลูกค้า,ชื่อลูกค้า,รหัสสินค้า,ชื่อสินค้า,หน่วยสินค้า,ราคาต่อหน่วย,เครดิต(วัน),ชื่อผู้แทนขาย");
