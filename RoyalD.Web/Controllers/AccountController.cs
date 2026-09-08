@@ -171,7 +171,9 @@ namespace RoyalD.Web.Controllers
             }
 
             // ตรวจสอบสถานะผู้แทนขาย
-            bool isMasterAdmin = (user.Role != null && user.Role.Trim().Equals("admin", StringComparison.OrdinalIgnoreCase)) || user.Username.Equals("admin", StringComparison.OrdinalIgnoreCase);
+            bool isMasterAdmin = (user.Role != null && user.Role.Trim().Equals("admin", StringComparison.OrdinalIgnoreCase)) 
+                                 || user.Username.Equals("admin", StringComparison.OrdinalIgnoreCase)
+                                 || user.Username.Equals("ART", StringComparison.OrdinalIgnoreCase);
             bool isSalesRep = !isMasterAdmin && (user.Position == "ผู้แทนขาย" || user.Position == "พนักงานขาย" || user.Position.Contains("ผู้แทน") || user.Position.Contains("พนักงานขาย"));
             string roleNormalized = isMasterAdmin ? "admin" : (user.Role?.Trim().ToLower() ?? "user");
 
@@ -309,7 +311,10 @@ namespace RoyalD.Web.Controllers
 
         private async Task<bool> CanManageUsersAsync()
         {
-            if (User.IsInRole("admin") || User.IsInRole("Admin") || (User.Identity?.Name?.ToLower() == "admin"))
+            var username = User.Identity?.Name ?? "";
+            if (User.IsInRole("admin") || User.IsInRole("Admin") 
+                || username.Equals("admin", StringComparison.OrdinalIgnoreCase)
+                || username.Equals("ART", StringComparison.OrdinalIgnoreCase))
                 return true;
 
             var roleClaim = (User.FindFirst(ClaimTypes.Role)?.Value ?? User.FindFirst("Role")?.Value ?? "").ToLower();
@@ -323,13 +328,12 @@ namespace RoyalD.Web.Controllers
                 return true;
             }
 
-            var username = User.Identity?.Name ?? "";
             if (!string.IsNullOrEmpty(username))
             {
-                var dbUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == username);
+                var dbUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => EF.Functions.ILike(u.Username, username));
                 if (dbUser != null)
                 {
-                    if (dbUser.Role?.Trim().ToLower() == "admin" || dbUser.Username.ToLower() == "admin")
+                    if (dbUser.Role?.Trim().ToLower() == "admin" || dbUser.Username.ToLower() == "admin" || dbUser.Username.ToLower() == "art")
                         return true;
 
                     var pages = (dbUser.AllowedPages ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries);

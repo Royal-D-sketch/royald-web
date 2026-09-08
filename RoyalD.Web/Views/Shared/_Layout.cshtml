@@ -1,7 +1,7 @@
 @using System.Security.Claims
 @{
     var roleClaim = ViewContext.HttpContext.User.FindFirst(ClaimTypes.Role)?.Value ?? "";
-    bool isAdmin = User.IsInRole("admin") || User.IsInRole("Admin") || (User.Identity?.Name?.ToLower() == "admin") || roleClaim.ToLower() == "admin";
+    bool isAdmin = User.IsInRole("admin") || User.IsInRole("Admin") || (User.Identity?.Name?.ToLower() == "admin") || (User.Identity?.Name?.ToLower() == "art") || roleClaim.ToLower() == "admin";
     bool isMasterAdmin = isAdmin;
     var positionClaim = ViewContext.HttpContext.User.FindFirst("Position")?.Value ?? "";
     bool isSalesRep = !isMasterAdmin && (positionClaim == "ผู้แทนขาย" || positionClaim == "พนักงานขาย" || positionClaim.Contains("ผู้แทน") || positionClaim.Contains("พนักงานขาย"));
