@@ -757,6 +757,13 @@ if (!string.IsNullOrEmpty(poSearch))
 
             return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv; charset=utf-8", $"SalesBills_{DateTime.Now:yyyyMMddHHmmss}.csv");
         }
+        private bool IsSalesRepUser()
+        {
+            if (User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin")) return false;
+            var pos = User.FindFirst("Position")?.Value ?? "";
+            return pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย");
+        }
+
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Pay(
             string billNo, 
@@ -770,6 +777,12 @@ if (!string.IsNullOrEmpty(poSearch))
             IFormFile? file,
             string? adminPassword = null)
         {
+            if (IsSalesRepUser())
+            {
+                TempData["Error"] = "รหัสผู้แทนขายไม่มีสิทธิ์บันทึกหรือแก้ไขการรับเงิน";
+                return RedirectToAction("Detail", new { id = billNo });
+            }
+
             var bill = await _db.SalesBills.FirstOrDefaultAsync(b => b.BillNo == billNo);
             var existingDebt = await _db.OutstandingDebts.Include(d => d.PaymentRecords).FirstOrDefaultAsync(d => d.BillNo == billNo);
             if (bill == null && existingDebt == null) return NotFound();
@@ -879,6 +892,12 @@ if (!string.IsNullOrEmpty(poSearch))
             [FromServices] IWebHostEnvironment env,
             string? adminPassword = null)
         {
+            if (IsSalesRepUser())
+            {
+                TempData["Error"] = "รหัสผู้แทนขายไม่มีสิทธิ์บันทึกเปลี่ยนแปลงสถานะ";
+                return RedirectToAction("Detail", new { id = billNo });
+            }
+
             var bill = await _db.SalesBills.FirstOrDefaultAsync(b => b.BillNo == billNo);
             var existingDebt = await _db.OutstandingDebts.Include(d => d.PaymentRecords).FirstOrDefaultAsync(d => d.BillNo == billNo);
             if (bill == null && existingDebt == null) return NotFound();

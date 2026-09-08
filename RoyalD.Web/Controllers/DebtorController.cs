@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -618,6 +618,13 @@ namespace RoyalD.Web.Controllers
             return View(debts);
         }
 
+        private bool IsSalesRepUser()
+        {
+            if (User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin")) return false;
+            var pos = User.FindFirst("Position")?.Value ?? "";
+            return pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย");
+        }
+
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Pay(
             string billNo, 
@@ -630,6 +637,12 @@ namespace RoyalD.Web.Controllers
             string? note, 
             IFormFile? statusFile)
         {
+            if (IsSalesRepUser())
+            {
+                TempData["Error"] = "รหัสผู้แทนขายไม่มีสิทธิ์บันทึกหรือแก้ไขการรับเงิน";
+                return RedirectToAction("Detail", new { id = billNo });
+            }
+
             var debt = await _db.OutstandingDebts.Include(d => d.PaymentRecords).FirstOrDefaultAsync(d => d.BillNo == billNo);
             if (debt == null) return NotFound();
 
@@ -717,6 +730,12 @@ namespace RoyalD.Web.Controllers
             string? note, 
             IFormFile? statusFile)
         {
+            if (IsSalesRepUser())
+            {
+                TempData["Error"] = "รหัสผู้แทนขายไม่มีสิทธิ์บันทึกเปลี่ยนแปลงสถานะ";
+                return RedirectToAction("Detail", new { id = billNo });
+            }
+
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             bool canChangeStatus = currentUser != null && (currentUser.Role == "admin" || currentUser.CanChangeDebtStatus);
             if (!canChangeStatus)
@@ -916,10 +935,16 @@ namespace RoyalD.Web.Controllers
             var debt = await _db.OutstandingDebts.FindAsync(id);
             if (debt == null) return NotFound();
 
-            // เธฃเธซเธฑเธชเธเนเธฒเธเธชเธณเธซเธฃเธฑเธเธเธฒเธฃเนเธเนเนเธเนเธเน€เธชเธฃเนเธ (เธ•เธฒเธกเธ—เธตเนเธฃเนเธญเธเธเธญ)
+            if (IsSalesRepUser())
+            {
+                TempData["Error"] = "รหัสผู้แทนขายไม่มีสิทธิ์แก้ไขข้อมูลใบเสร็จรับเงิน";
+                return RedirectToAction("Detail", new { id = debt.BillNo });
+            }
+
+            // เธฃเธซเธฑเธชเธœเนˆเธฒเธ™เธชเธณเธซเธฃเธฑเธšเธ เธฒเธฃเน เธ เน‰เน„เธ‚เนƒเธšเน€เธชเธฃเน‡เธˆ (เธ•เธฒเธกเธ—เธตเนˆเธฃเน‰เธญเธ‡เธ‚เธญ)
             if (password != "029030445Rd*")
             {
-                TempData["Error"] = "เน€เธเธเน€เธเธเน€เธเธ‘เน€เธเธเน€เธยเน€เธยเน€เธเธ’เน€เธยเน€เธยเน€เธเธเน€เธยเน€เธโ€“เน€เธเธเน€เธยเน€เธโ€ขเน€เธยเน€เธเธเน€เธย เน€เธยเน€เธเธเน€เธยเน€เธเธเน€เธเธ’เน€เธเธเน€เธเธ’เน€เธเธเน€เธโ€“เน€เธยเน€เธยเน€เธยเน€เธยเน€เธยเน€เธยเน€เธยเน€เธเธเน€เธเธเน€เธเธเน€เธเธ…เน€เธยเน€เธยเน€เธโฌเน€เธเธเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธโ€เน€เธย";
+                TempData["Error"] = "เน€เธ˜เธƒเน€เธ˜เธ‹เน€เธ˜เธ‘เน€เธ˜เธŠเน€เธ˜ยœเน€เธ™ยˆเน€เธ˜เธ’เน€เธ˜ย™เน€เธ™ย„เน€เธ˜เธ เน€เธ™ยˆเน€เธ˜โ€“เน€เธ˜เธ™เน€เธ˜ย เน€เธ˜โ€ขเน€เธ™ย‰เน€เธ˜เธ เน€เธ˜ย‡ เน€เธ™ย„เน€เธ˜เธ เน€เธ™ยˆเน€เธ˜เธŠเน€เธ˜เธ’เน€เธ˜เธ เน€เธ˜เธ’เน€เธ˜เธƒเน€เธ˜โ€“เน€เธ™ย เน€เธ˜ย เน€เธ™ย‰เน€เธ™ย„เน€เธ˜ย‚เน€เธ˜ย‚เน€เธ™ย‰เน€เธ˜เธ เน€เธ˜เธ เน€เธ˜เธ™เน€เธ˜เธ…เน€เธ™ยƒเน€เธ˜ยšเน€เธ™โ‚ฌเน€เธ˜เธŠเน€เธ˜เธƒเน€เธ™ย‡เน€เธ˜ยˆเน€เธ™ย„เน€เธ˜โ€ เน€เธ™ย‰";
                 return RedirectToAction("Detail", new { id = debt.BillNo });
             }
 
@@ -1047,6 +1072,12 @@ namespace RoyalD.Web.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> RestoreCancelledBill(int debtId, string confirmPassword)
         {
+            if (IsSalesRepUser())
+            {
+                TempData["Error"] = "รหัสผู้แทนขายไม่มีสิทธิ์กู้คืนบิลยกเลิก";
+                return RedirectToAction("Cancelled");
+            }
+
             var currentUser = await _db.Users.FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
 
             if (string.IsNullOrWhiteSpace(confirmPassword))

@@ -1,4 +1,4 @@
-﻿@using RoyalD.Web.Models
+@using RoyalD.Web.Models
 @using RoyalD.Web
 @model RoyalD.Web.Models.OutstandingDebt
 @{
@@ -8,6 +8,8 @@
     var overdue = !isMinDate && Model.DueDate < DateTime.Today;
     var aging = isMinDate ? 0 : (int)(DateTime.Today - Model.DueDate).TotalDays;
     if (aging < 0) aging = 0;
+    var userPos = ViewContext.HttpContext.User.FindFirst("Position")?.Value ?? "";
+    bool isSalesRep = !User.IsInRole("admin") && (userPos.Contains("ผู้แทน") || userPos.Contains("พนักงานขาย"));
     bool canViewPayment = ViewBag.CanViewPaymentDetails == true;
     bool canChangeStatus = ViewBag.CanChangeDebtStatus == true;
     bool canDelete = ViewBag.CanDeleteDebtor == true;
@@ -245,9 +247,12 @@ else if (overdue120)
                     <div class="p-3 rounded mt-3" style="background:#f0fdf4; border:1px solid #bbf7d0;">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="fw-bold text-success"><i class="bi bi-receipt me-1"></i> ข้อมูลใบเสร็จรับเงิน</span>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editReceiptModal">
-                                <i class="bi bi-pencil-square"></i> แก้ไข
-                            </button>
+                            @if (!isSalesRep)
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editReceiptModal">
+                                    <i class="bi bi-pencil-square"></i> แก้ไข
+                                </button>
+                            }
                         </div>
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <span class="text-muted">เลขที่ใบเสร็จ:</span>
@@ -259,7 +264,7 @@ else if (overdue120)
                         </div>
                     </div>
                 }
-                else
+                else if (!isSalesRep)
                 {
                     <div class="mt-3 text-end">
                         <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editReceiptModal">
@@ -446,12 +451,12 @@ else if (overdue120)
                 <i class="bi bi-cash-coin me-1"></i> บันทึกรับชำระเงิน (Payment)
             </div>
             <div class="card-body p-4">
-                @if (false)
+                @if (isSalesRep)
                 {
                     <div class="text-center py-4 text-muted">
                         <i class="bi bi-shield-lock-fill fs-1 text-secondary d-block mb-2"></i>
-                        <h6 class="fw-bold">ไม่มีสิทธิ์ดูหรือบันทึกการรับชำระเงิน</h6>
-                        <small>สิทธิ์นี้ถูกจำกัดตามนโยบายความปลอดภัยของบัญชีผู้ใช้</small>
+                        <h6 class="fw-bold">รหัสผู้แทนขายไม่มีสิทธิ์บันทึกหรือแก้ไขการรับชำระเงิน</h6>
+                        <small>สิทธิ์นี้ถูกจำกัดตามนโยบายความปลอดภัย</small>
                     </div>
                 }
                 else if (debt?.RemainingAmount <= 0)
@@ -574,7 +579,7 @@ else if (overdue120)
 
     <!-- ฟอร์มเปลี่ยนสถานะหนี้ -->
     <div class="col-lg-6">
-        @if (false)
+        @if (isSalesRep)
         {
             <div class="card detail-card h-100 bg-light border-0">
                 <div class="card-header bg-secondary text-white py-3 fw-bold">
@@ -582,8 +587,8 @@ else if (overdue120)
                 </div>
                 <div class="card-body p-4 text-center text-muted d-flex flex-column justify-content-center align-items-center" style="min-height:280px;">
                     <i class="bi bi-shield-lock-fill fs-1 text-secondary mb-2" style="opacity:0.4;"></i>
-                    <h6 class="fw-bold text-dark mb-1">คุณไม่มีสิทธิ์ในการเปลี่ยนสถานะหนี้</h6>
-                    <p class="small text-muted mb-0">เฉพาะผู้ดูแลระบบหรือผู้ที่ได้รับอนุญาตสิทธิ์เท่านั้นที่สามารถเปลี่ยนสถานะหนี้ได้</p>
+                    <h6 class="fw-bold text-dark mb-1">รหัสผู้แทนขายไม่มีสิทธิ์ในการเปลี่ยนสถานะหนี้</h6>
+                    <p class="small text-muted mb-0">เฉพาะผู้ดูแลระบบหรือเจ้าหน้าที่ที่ได้รับอนุญาตเท่านั้นที่สามารถเปลี่ยนสถานะหนี้ได้</p>
                 </div>
             </div>
         }
@@ -831,6 +836,8 @@ else if (overdue120)
     </div>
 </div>
 
+@if (!isSalesRep)
+{
 <!-- Modal แก้ไขข้อมูลใบเสร็จ -->
 <div class="modal fade" id="editReceiptModal" tabindex="-1">
     <div class="modal-dialog">
@@ -866,6 +873,7 @@ else if (overdue120)
         </form>
     </div>
 </div>
+}
 
 <script>
     function setPayMethod(method) {

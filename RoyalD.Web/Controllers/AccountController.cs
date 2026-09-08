@@ -194,7 +194,7 @@ namespace RoyalD.Web.Controllers
                 new Claim("CanChangeDebtStatus", (user.Role == "admin" || user.CanChangeDebtStatus) ? "true" : "false"),
                 new Claim("CanDeleteSalesBill", (user.Role == "admin" || user.CanDeleteSalesBill) ? "true" : "false"),
                 new Claim("CanDeleteDebtor", (user.Role == "admin" || user.CanDeleteDebtor) ? "true" : "false"),
-                new Claim("SessionTimeout", (user.SessionTimeoutMinutes ?? 0).ToString()),
+                new Claim("SessionTimeout", (user.SessionTimeoutMinutes.HasValue && user.SessionTimeoutMinutes > 0 ? user.SessionTimeoutMinutes.Value : (isSalesRep ? 10 : 0)).ToString()),
                 new Claim("CanDownload", canDownloadFinal ? "true" : "false"),
                 new Claim("CanScreenCapture", canCaptureFinal ? "true" : "false"),
                 new Claim("AllowedPages", user.Role == "admin" ? "Dashboard,SalesBill,Debtor,DebtorHistory,Cancelled,WaitingGoods,SalesReport,Audit,Users,Upload,PaymentDetails" : (user.AllowedPages ?? "")),

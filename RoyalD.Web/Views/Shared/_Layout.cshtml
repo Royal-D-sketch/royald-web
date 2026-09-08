@@ -260,11 +260,13 @@
                     int sessionTimeoutSec = 0;
                     if (int.TryParse(sessionTimeoutClaim, out var stMin) && stMin > 0)
                         sessionTimeoutSec = stMin * 60;
+                    else if (isSalesRep)
+                        sessionTimeoutSec = 600;
                 }
                 @if (sessionTimeoutSec > 0)
                 {
                     <span id="session-timer" class="badge bg-warning text-dark px-2 py-1" title="ระยะเวลาเข้าใช้งานระบบคงเหลือ">
-                        <i class="bi bi-stopwatch"></i> เวลาเข้าใช้งานคงเหลือ: <span id="timer-display">@($"{stMin:D2}:00")</span>
+                        <i class="bi bi-stopwatch"></i> เวลาเข้าใช้งานคงเหลือ: <span id="timer-display">@($"{(sessionTimeoutSec / 60):D2}:00")</span>
                     </span>
                 }
                 <!-- PWA 1-Click Install Button -->
@@ -428,19 +430,19 @@ else
 {
     var sessionTimeoutClaim = ViewContext.HttpContext.User.FindFirst("SessionTimeout")?.Value;
     int sessionSeconds = 0;
+    int idleMaxSeconds = 0;
+
     if (int.TryParse(sessionTimeoutClaim, out var stMinutes) && stMinutes > 0)
     {
         sessionSeconds = stMinutes * 60;
     }
-    else if (isSalesRep)
-    {
-        // ค่าเริ่มต้นสำหรับผู้แทนขาย: จำกัดเวลาใช้งานไม่เกิน 10 นาที (600 วินาที)
-        sessionSeconds = 600;
-    }
 
-    // ขยายเวลาใช้งานและปิดระบบตัดการเชื่อมต่อเมื่ออยู่นิ่ง (No idle blackout)
-    int idleMaxSeconds = 0; 
-    sessionSeconds = 0; // ไม่จำกัดเวลาล็อกอิน
+    if (isSalesRep)
+    {
+        // ข้อกำหนด: ผู้แทนขายกำหนดเวลาเข้าใช้งานไว้ 10 นาที (600 วินาที) และไม่ได้ใช้หน้าจอ 5 นาที (300 วินาที) ระบบออกอัตโนมัติ
+        sessionSeconds = 600;
+        idleMaxSeconds = 300;
+    }
 
     <script>
     // ===== 1. Session & Inactivity settings =====
@@ -502,7 +504,11 @@ else
                 navigator.sendBeacon('/Account/ForceLogout', JSON.stringify({ reason: reason || 'SESSION_EXPIRED' }));
             }
         } catch(e) {}
-        window.location.replace('/Account/Login?expired=1');
+        if (reason === 'IDLE_INACTIVITY_5_MIN') {
+            window.location.replace('/Account/Login?blocked=idle');
+        } else {
+            window.location.replace('/Account/Login?expired=1');
+        }
     }
 
     // ===== Sidebar Toggle =====

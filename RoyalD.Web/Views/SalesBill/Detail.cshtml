@@ -1,4 +1,4 @@
-﻿@model RoyalD.Web.Models.SalesBill
+@model RoyalD.Web.Models.SalesBill
 @{
     ViewData["Title"] = $"รายละเอียดบิล {Model.BillNo}";
     bool canDelete = ViewBag.CanDeleteSalesBill == true;
@@ -26,6 +26,9 @@
 }
 
 @{
+    var userPos = ViewContext.HttpContext.User.FindFirst("Position")?.Value ?? "";
+    bool isSalesRep = !User.IsInRole("admin") && (userPos.Contains("ผู้แทน") || userPos.Contains("พนักงานขาย"));
+
     bool isInstallment = debt != null && (debt.Status == RoyalD.Web.Models.DebtStatus.Installment || (int)debt.Status == 100);
     bool isBadDebt = debt != null && debt.Status == RoyalD.Web.Models.DebtStatus.BadDebt;
     bool isWaitingGoods = debt != null && debt.Status == RoyalD.Web.Models.DebtStatus.WaitingGoods;
@@ -291,7 +294,7 @@
     </div>
 </div>
 
-@if (isFullyPaid)
+@if (isFullyPaid && !isSalesRep)
 {
     <div id="unlock-form" class="alert alert-warning text-center">
         <h6>บิลนี้ชำระครบถ้วนแล้ว ต้องการปลดล็อคเพื่อแก้ไขหรือไม่?</h6>
@@ -310,12 +313,12 @@
                 <i class="bi bi-cash-coin me-1"></i> บันทึกรับชำระเงิน (Payment)
             </div>
             <div class="card-body p-4">
-                @if (false)
+                @if (isSalesRep)
                 {
                     <div class="text-center py-4 text-muted">
                         <i class="bi bi-shield-lock-fill fs-1 text-secondary d-block mb-2"></i>
-                        <h6 class="fw-bold">ไม่มีสิทธิ์ดูหรือบันทึกการรับชำระเงิน</h6>
-                        <small>สิทธิ์นี้ถูกจำกัดตามนโยบายความปลอดภัยของบัญชีผู้ใช้</small>
+                        <h6 class="fw-bold">รหัสผู้แทนขายไม่มีสิทธิ์บันทึกหรือแก้ไขการรับชำระเงิน</h6>
+                        <small>สิทธิ์นี้ถูกจำกัดตามนโยบายความปลอดภัย</small>
                     </div>
                 }
                 else if (debt?.RemainingAmount <= 0 && !isInstallment)
@@ -439,7 +442,7 @@
 
     <!-- ฟอร์มเปลี่ยนสถานะหนี้ -->
     <div class="col-lg-6">
-        @if (false)
+        @if (isSalesRep)
         {
             <div class="card detail-card h-100 bg-light border-0">
                 <div class="card-header bg-secondary text-white py-3 fw-bold">
@@ -447,8 +450,8 @@
                 </div>
                 <div class="card-body p-4 text-center text-muted d-flex flex-column justify-content-center align-items-center" style="min-height:280px;">
                     <i class="bi bi-shield-lock-fill fs-1 text-secondary mb-2" style="opacity:0.4;"></i>
-                    <h6 class="fw-bold text-dark mb-1">คุณไม่มีสิทธิ์ในการเปลี่ยนสถานะหนี้</h6>
-                    <p class="small text-muted mb-0">เฉพาะผู้ดูแลระบบหรือผู้ที่ได้รับอนุญาตสิทธิ์เท่านั้นที่สามารถเปลี่ยนสถานะหนี้ได้</p>
+                    <h6 class="fw-bold text-dark mb-1">รหัสผู้แทนขายไม่มีสิทธิ์ในการเปลี่ยนสถานะหนี้</h6>
+                    <p class="small text-muted mb-0">เฉพาะผู้ดูแลระบบหรือเจ้าหน้าที่ที่ได้รับอนุญาตเท่านั้นที่สามารถเปลี่ยนสถานะหนี้ได้</p>
                 </div>
             </div>
         }
