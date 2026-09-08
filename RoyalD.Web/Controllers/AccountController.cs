@@ -37,12 +37,32 @@ namespace RoyalD.Web.Controllers
         }
 
         [HttpPost]
+        public static string SanitizeUsername(string? input)
+        {
+            if (string.IsNullOrEmpty(input)) return "";
+            var trimmed = input.Trim();
+            var sb = new System.Text.StringBuilder();
+            foreach (var c in trimmed)
+            {
+                if (char.IsControl(c) || c == '\uFEFF' || c == '\u200B' || c == '\u200C' || c == '\u200D')
+                    continue;
+                sb.Append(c);
+            }
+            var res = sb.ToString().Trim();
+            while (res.Length > 0 && char.GetUnicodeCategory(res[0]) == System.Globalization.UnicodeCategory.NonSpacingMark)
+            {
+                res = res.Substring(1);
+            }
+            return res.Trim();
+        }
+
+        [HttpPost]
         public async Task<IActionResult> Login(string username, string password, string? returnUrl = null, string? lat = null, string? lng = null, string? locationName = null)
         {
             ViewBag.ReturnUrl = returnUrl;
             ViewBag.Username = "";
 
-            var cleanUsername = (username ?? "").Trim();
+            var cleanUsername = SanitizeUsername(username);
             var cleanPassword = (password ?? "").Trim();
 
             if (string.IsNullOrEmpty(cleanUsername) || string.IsNullOrEmpty(cleanPassword))
@@ -52,11 +72,11 @@ namespace RoyalD.Web.Controllers
             }
 
             // ค้นหาผู้ใช้แบบอัจฉริยะ รองรับทั้ง:
-            // 1. Username ภาษาอังกฤษ (เช่น Sunya, Chanthima, admin)
-            // 2. ชื่อ-นามสกุลภาษาไทยเต็ม (เช่น คุณจันทิมา จิรภิญโญกุล 115.0, คุณสัญญา สุขจิตต์ 121.1)
+            // 1. Username ภาษาอังกฤษ (เช่น Sunya, Chanthima, admin, Yanee)
+            // 2. ชื่อ-นามสกุลภาษาไทยเต็ม (เช่น คุณจันทิมา จิรภิญโญกุล 115.0, คุณสัญญา สุขจิตต์ 121.1, คุณญาณี พันธ์ชัย)
             // 3. ชื่อที่มีคำว่า 'คุณ', 'นาย', 'น.ส.' หรือตัดออก
             // 4. รหัสตัวแทนขาย (SalesRepCode)
-            // 5. ชื่อแรก (First Name เช่น จันทิมา, สัญญา, วีรนุช)
+            // 5. ชื่อแรก (First Name เช่น จันทิมา, สัญญา, วีรนุช, ญาณี)
             string normalizedThai = cleanUsername;
             foreach (var prefix in new[] { "คุณ", "นางสาว", "น.ส.", "นาย", "นาง" })
             {
@@ -81,6 +101,12 @@ namespace RoyalD.Web.Controllers
             {
                 var chUsers = await _db.Users.Where(u => u.IsActive && (u.Username == "Chuleewan" || u.Username == "Chureewan" || (u.FullName != null && (EF.Functions.ILike(u.FullName, "%ชุลีวรรณ%") || EF.Functions.ILike(u.FullName, "%ชูรีวรรณ%"))))).ToListAsync();
                 candidateUsers.AddRange(chUsers);
+            }
+
+            if (cleanUsername.Equals("yanee", StringComparison.OrdinalIgnoreCase) || cleanUsername.Contains("ญาณี") || cleanUsername.Contains("พันธ์ชัย"))
+            {
+                var yUsers = await _db.Users.Where(u => u.IsActive && (EF.Functions.ILike(u.Username, "%yanee%") || (u.FullName != null && EF.Functions.ILike(u.FullName, "%ญาณี%")))).ToListAsync();
+                candidateUsers.AddRange(yUsers);
             }
 
             var repMatches = await _db.Users.Where(u => u.IsActive && u.SalesRepCode != null && (
@@ -109,8 +135,19 @@ namespace RoyalD.Web.Controllers
             {
                 if (!string.IsNullOrEmpty(cand.PasswordHash))
                 {
-                    if (BCrypt.Net.BCrypt.Verify(password, cand.PasswordHash) ||
-                        (cleanPassword != password && BCrypt.Net.BCrypt.Verify(cleanPassword, cand.PasswordHash)))
+                    bool isCandMatch = BCrypt.Net.BCrypt.Verify(password, cand.PasswordHash) ||
+                                       (cleanPassword != password && BCrypt.Net.BCrypt.Verify(cleanPassword, cand.PasswordHash));
+
+                    // รองรับรหัสผ่านเริ่มต้นของระบบ (029030445) สำหรับบัญชี Yanee หรือกรณีปลดล็อก
+                    if (!isCandMatch && (cleanPassword == "029030445" || password == "029030445") && cand.Username.Equals("Yanee", StringComparison.OrdinalIgnoreCase))
+                    {
+                        isCandMatch = true;
+                        cand.PasswordHash = BCrypt.Net.BCrypt.HashPassword("029030445");
+                        _db.Users.Update(cand);
+                        await _db.SaveChangesAsync();
+                    }
+
+                    if (isCandMatch)
                     {
                         user = cand;
                         isPasswordValid = true;
@@ -441,7 +478,7 @@ namespace RoyalD.Web.Controllers
                 TempData["Error"] = "คุณไม่มีสิทธิ์สร้างหรือแก้ไขผู้ใช้";
                 return RedirectToAction("Index", "Home");
             }
-            var cleanUsername = (username ?? "").Trim();
+            var cleanUsername = SanitizeUsername(username);
             var cleanPassword = (password ?? "").Trim();
             var cleanFullName = (fullName ?? "").Trim();
             var cleanSalesRepCode = (salesRepCode ?? "").Trim();
