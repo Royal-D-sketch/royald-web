@@ -171,8 +171,9 @@ namespace RoyalD.Web.Controllers
             }
 
             // ตรวจสอบสถานะผู้แทนขาย
-            bool isMasterAdmin = user.Role == "admin" || user.Username.Equals("admin", StringComparison.OrdinalIgnoreCase);
+            bool isMasterAdmin = (user.Role != null && user.Role.Trim().Equals("admin", StringComparison.OrdinalIgnoreCase)) || user.Username.Equals("admin", StringComparison.OrdinalIgnoreCase);
             bool isSalesRep = !isMasterAdmin && (user.Position == "ผู้แทนขาย" || user.Position == "พนักงานขาย" || user.Position.Contains("ผู้แทน") || user.Position.Contains("พนักงานขาย"));
+            string roleNormalized = isMasterAdmin ? "admin" : (user.Role?.Trim().ToLower() ?? "user");
 
             // สิทธิ์การดาวน์โหลดและแคปหน้าจอ:
             // 1. แอดมิน (Admin) -> ปลดล็อค 100%
@@ -187,17 +188,18 @@ namespace RoyalD.Web.Controllers
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Username),
                 new Claim("FullName", user.FullName),
-                new Claim(ClaimTypes.Role, user.Role),
+                new Claim(ClaimTypes.Role, roleNormalized),
+                new Claim("Role", roleNormalized),
                 new Claim("Position", user.Position ?? "ผู้แทนขาย"),
                 new Claim("SalesRepCode", user.SalesRepCode ?? ""),
                 new Claim("CanViewPaymentDetails", user.CanViewPaymentDetails ? "true" : "false"),
-                new Claim("CanChangeDebtStatus", (user.Role == "admin" || user.CanChangeDebtStatus) ? "true" : "false"),
-                new Claim("CanDeleteSalesBill", (user.Role == "admin" || user.CanDeleteSalesBill) ? "true" : "false"),
-                new Claim("CanDeleteDebtor", (user.Role == "admin" || user.CanDeleteDebtor) ? "true" : "false"),
+                new Claim("CanChangeDebtStatus", (isMasterAdmin || user.CanChangeDebtStatus) ? "true" : "false"),
+                new Claim("CanDeleteSalesBill", (isMasterAdmin || user.CanDeleteSalesBill) ? "true" : "false"),
+                new Claim("CanDeleteDebtor", (isMasterAdmin || user.CanDeleteDebtor) ? "true" : "false"),
                 new Claim("SessionTimeout", (user.SessionTimeoutMinutes.HasValue && user.SessionTimeoutMinutes > 0 ? user.SessionTimeoutMinutes.Value : (isSalesRep ? 10 : 0)).ToString()),
                 new Claim("CanDownload", canDownloadFinal ? "true" : "false"),
                 new Claim("CanScreenCapture", canCaptureFinal ? "true" : "false"),
-                new Claim("AllowedPages", user.Role == "admin" ? "Dashboard,SalesBill,Debtor,DebtorHistory,Cancelled,WaitingGoods,SalesReport,Audit,Users,Upload,PaymentDetails" : (user.AllowedPages ?? "")),
+                new Claim("AllowedPages", isMasterAdmin ? "Dashboard,SalesBill,Debtor,DebtorHistory,Cancelled,WaitingGoods,SalesReport,Audit,Users,Upload,PaymentDetails" : (user.AllowedPages ?? "")),
                 new Claim("AllowedRegion", user.AllowedRegion ?? ""),
                 new Claim("AllowedProvinces", user.AllowedProvinces ?? ""),
                 new Claim("AllowedDistricts", user.AllowedDistricts ?? "")
@@ -305,14 +307,61 @@ namespace RoyalD.Web.Controllers
             return Json(new { success = true });
         }
 
-        [Authorize(Roles = "admin")]
-        public IActionResult Users(string? search)
+        private async Task<bool> CanManageUsersAsync()
         {
-            var q = _db.Users.AsQueryable();
-            if (!string.IsNullOrEmpty(search))
-                q = q.Where(u => u.Username.Contains(search) || u.FullName.Contains(search) || u.Position.Contains(search));
+            if (User.IsInRole("admin") || User.IsInRole("Admin") || (User.Identity?.Name?.ToLower() == "admin"))
+                return true;
+
+            var roleClaim = (User.FindFirst(ClaimTypes.Role)?.Value ?? User.FindFirst("Role")?.Value ?? "").ToLower();
+            if (roleClaim == "admin" || roleClaim == "administrator")
+                return true;
+
+            var allowedPagesClaim = User.FindFirst("AllowedPages")?.Value ?? "";
+            if (allowedPagesClaim.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                 .Any(p => p.Trim().Equals("Users", StringComparison.OrdinalIgnoreCase)))
+            {
+                return true;
+            }
+
+            var username = User.Identity?.Name ?? "";
+            if (!string.IsNullOrEmpty(username))
+            {
+                var dbUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == username);
+                if (dbUser != null)
+                {
+                    if (dbUser.Role?.Trim().ToLower() == "admin" || dbUser.Username.ToLower() == "admin")
+                        return true;
+
+                    var pages = (dbUser.AllowedPages ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries);
+                    if (pages.Any(p => p.Trim().Equals("Users", StringComparison.OrdinalIgnoreCase)))
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        [Authorize, HttpGet]
+        public async Task<IActionResult> Users(string? search)
+        {
+            if (!await CanManageUsersAsync())
+            {
+                TempData["Error"] = "คุณไม่มีสิทธิ์เข้าใช้งานหน้าจัดการผู้ใช้ (ต้องเป็นผู้ดูแลระบบ หรือได้รับสิทธิ์ 'จัดการผู้ใช้')";
+                return RedirectToAction("Index", "Home");
+            }
+
+            var q = _db.Users.AsNoTracking().AsQueryable();
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var s = search.Trim();
+                q = q.Where(u => (u.Username != null && u.Username.Contains(s)) || 
+                                 (u.FullName != null && u.FullName.Contains(s)) || 
+                                 (u.Position != null && u.Position.Contains(s)) ||
+                                 (u.SalesRepCode != null && u.SalesRepCode.Contains(s)));
+            }
             ViewBag.Search = search;
-            return View(q.OrderBy(u => u.Username).ToList());
+            var userList = await q.OrderBy(u => u.Username).ToListAsync();
+            return View(userList);
         }
 
         private void LoadLocationData()
@@ -364,20 +413,30 @@ namespace RoyalD.Web.Controllers
             }
         }
 
-        [Authorize(Roles = "admin"), HttpGet]
-        public IActionResult CreateUser()
+        [Authorize, HttpGet]
+        public async Task<IActionResult> CreateUser()
         {
+            if (!await CanManageUsersAsync())
+            {
+                TempData["Error"] = "คุณไม่มีสิทธิ์สร้างหรือแก้ไขผู้ใช้";
+                return RedirectToAction("Index", "Home");
+            }
             LoadLocationData();
             return View(new AppUser());
         }
 
-        [Authorize(Roles = "admin"), HttpPost, ValidateAntiForgeryToken]
+        [Authorize, HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateUser(string username, string fullName, string password,
             string role, string position, string? salesRepCode, int? sessionTimeoutMinutes, 
             string? allowedRegion, string? allowedProvinces, string? allowedDistricts, 
             string[]? pages, bool canViewPaymentDetails, bool canChangeDebtStatus, bool canDeleteSalesBill, bool canDeleteDebtor, 
             bool canDownload, bool canScreenCapture)
         {
+            if (!await CanManageUsersAsync())
+            {
+                TempData["Error"] = "คุณไม่มีสิทธิ์สร้างหรือแก้ไขผู้ใช้";
+                return RedirectToAction("Index", "Home");
+            }
             var cleanUsername = (username ?? "").Trim();
             var cleanPassword = (password ?? "").Trim();
             var cleanFullName = (fullName ?? "").Trim();
@@ -433,23 +492,33 @@ namespace RoyalD.Web.Controllers
             return RedirectToAction("Users");
         }
 
-        [Authorize(Roles = "admin"), HttpGet]
-        public IActionResult EditUser(int id)
+        [Authorize, HttpGet]
+        public async Task<IActionResult> EditUser(int id)
         {
-            var user = _db.Users.Find(id);
+            if (!await CanManageUsersAsync())
+            {
+                TempData["Error"] = "คุณไม่มีสิทธิ์สร้างหรือแก้ไขผู้ใช้";
+                return RedirectToAction("Index", "Home");
+            }
+            var user = await _db.Users.FindAsync(id);
             if (user == null) return NotFound();
             LoadLocationData();
             return View(user);
         }
 
-        [Authorize(Roles = "admin"), HttpPost, ValidateAntiForgeryToken]
+        [Authorize, HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> EditUser(int id, string fullName, string role, string position,
             string? salesRepCode, int? sessionTimeoutMinutes, bool isActive, string? newPassword,
             string? allowedRegion, string? allowedProvinces, string? allowedDistricts, 
             string[]? pages, bool canViewPaymentDetails, bool canChangeDebtStatus, bool canDeleteSalesBill, bool canDeleteDebtor, 
             bool canDownload, bool canScreenCapture)
         {
-            var user = _db.Users.Find(id);
+            if (!await CanManageUsersAsync())
+            {
+                TempData["Error"] = "คุณไม่มีสิทธิ์สร้างหรือแก้ไขผู้ใช้";
+                return RedirectToAction("Index", "Home");
+            }
+            var user = await _db.Users.FindAsync(id);
             if (user == null) return NotFound();
             user.FullName = (fullName ?? "").Trim();
             user.Role = role;
@@ -484,9 +553,14 @@ namespace RoyalD.Web.Controllers
             return RedirectToAction("Users");
         }
 
-        [Authorize(Roles = "admin"), HttpPost, ValidateAntiForgeryToken]
+        [Authorize, HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> ResetPassword(int id, string? newPassword)
         {
+            if (!await CanManageUsersAsync())
+            {
+                TempData["Error"] = "คุณไม่มีสิทธิ์รีเซ็ตรหัสผ่าน";
+                return RedirectToAction("Index", "Home");
+            }
             var user = await _db.Users.FindAsync(id);
             if (user == null) return NotFound();
 
@@ -507,10 +581,15 @@ namespace RoyalD.Web.Controllers
             return RedirectToAction("Users");
         }
 
-        [Authorize(Roles = "admin"), HttpPost, ValidateAntiForgeryToken]
+        [Authorize, HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            var user = _db.Users.Find(id);
+            if (!await CanManageUsersAsync())
+            {
+                TempData["Error"] = "คุณไม่มีสิทธิ์ลบผู้ใช้";
+                return RedirectToAction("Index", "Home");
+            }
+            var user = await _db.Users.FindAsync(id);
             if (user == null) return NotFound();
             if (user.Username == "admin")
             {

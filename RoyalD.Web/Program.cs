@@ -1,4 +1,4 @@
-﻿using RoyalD.Web;
+using RoyalD.Web;
 using RoyalD.Web.Models;
 using RoyalD.Web.Services;
 using Microsoft.EntityFrameworkCore;
@@ -133,6 +133,11 @@ app.UseRouting();
 app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "users",
+    pattern: "Users/{action=Users}/{id?}",
+    defaults: new { controller = "Account", action = "Users" });
 
 app.MapControllerRoute(
     name: "default",

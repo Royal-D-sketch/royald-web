@@ -1,6 +1,7 @@
 @using System.Security.Claims
 @{
-    bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
+    var roleClaim = ViewContext.HttpContext.User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+    bool isAdmin = User.IsInRole("admin") || User.IsInRole("Admin") || (User.Identity?.Name?.ToLower() == "admin") || roleClaim.ToLower() == "admin";
     bool isMasterAdmin = isAdmin;
     var positionClaim = ViewContext.HttpContext.User.FindFirst("Position")?.Value ?? "";
     bool isSalesRep = !isMasterAdmin && (positionClaim == "ผู้แทนขาย" || positionClaim == "พนักงานขาย" || positionClaim.Contains("ผู้แทน") || positionClaim.Contains("พนักงานขาย"));
@@ -12,7 +13,6 @@
     // 1. แอดมิน (Admin) -> ปลดล็อค 100% ไม่มีลายน้ำ และสามารถแคปจอ/ดาวน์โหลดได้ตลอดเวลา
     // 2. ตำแหน่งผู้แทนขาย (Sales Rep) -> ถูกล็อกความปลอดภัยเสมอ (มีลายน้ำ และห้ามแคปจอ/ห้ามดาวน์โหลด)
     // 3. ตำแหน่งอื่นๆ (ผู้บริหาร, พนักงาน, หัวหน้างาน, บัญชี ฯลฯ) -> ถ้าแอดมินติ๊กอนุญาต ก็จะไม่มีลายน้ำ และแคปจอ/ดาวน์โหลดได้ตามปกติ
-    var roleClaim = ViewContext.HttpContext.User.FindFirst(ClaimTypes.Role)?.Value ?? "";
     bool isManager = positionClaim.Contains("ผู้จัดการ") || positionClaim.ToLower().Contains("manager") || roleClaim.ToLower() == "manager";
     bool canDownload = (isMasterAdmin || isManager || canDownloadClaim == "true") && !isSalesRep;
     bool canScreenCapture = (isMasterAdmin || isManager || canCaptureClaim == "true") && !isSalesRep;
@@ -379,7 +379,7 @@
                     }
                     @if (hasUsers)
                     {
-                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Account" && ViewContext.RouteData.Values["action"]?.ToString() == "Users" ? "active" : "")"
+                        <a class="nav-link @((ViewContext.RouteData.Values["controller"]?.ToString() == "Account" || ViewContext.RouteData.Values["controller"]?.ToString() == "Users") && (ViewContext.RouteData.Values["action"]?.ToString() == "Users" || ViewContext.RouteData.Values["action"]?.ToString() == "CreateUser" || ViewContext.RouteData.Values["action"]?.ToString() == "EditUser") ? "active" : "")"
                            href="/Account/Users">
                             <i class="bi bi-people"></i> จัดการผู้ใช้
                         </a>

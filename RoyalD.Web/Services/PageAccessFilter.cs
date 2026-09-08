@@ -22,7 +22,7 @@ namespace RoyalD.Web.Services
             var user = context.HttpContext.User;
             if (user.Identity?.IsAuthenticated == true)
             {
-                if (user.IsInRole("admin"))
+                if (user.IsInRole("admin") || user.IsInRole("Admin") || (user.Identity?.Name?.ToLower() == "admin") || ((user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "").ToLower() == "admin"))
                 {
                     await next();
                     return;
@@ -47,7 +47,7 @@ namespace RoyalD.Web.Services
                     return (dbUser?.Role ?? "user", dbUser?.AllowedPages ?? "");
                 });
 
-                if (role == "admin")
+                if (role?.ToLower() == "admin" || username.ToLower() == "admin")
                 {
                     await next();
                     return;
@@ -96,7 +96,7 @@ namespace RoyalD.Web.Services
                 else if (controller == "debtorcard" && allowedList.Contains("debtor")) isAllowed = true;
                 else if (controller == "audit" && allowedList.Contains("audit")) isAllowed = true;
                 else if (controller == "upload" && allowedList.Contains("upload")) isAllowed = true;
-                else if ((controller == "users" || controller == "usermanagement") && allowedList.Contains("users")) isAllowed = true;
+                else if ((controller == "users" || controller == "usermanagement" || (controller == "account" && (action == "users" || action == "createuser" || action == "edituser"))) && allowedList.Contains("users")) isAllowed = true;
 
                 if (!isAllowed)
                 {
