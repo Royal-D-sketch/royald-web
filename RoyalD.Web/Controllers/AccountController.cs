@@ -143,33 +143,21 @@ namespace RoyalD.Web.Controllers
             {
                 bool isCandMatch = false;
 
+                // 1. ตรวจสอบรหัสผ่านที่กำหนดตั้งไว้สำหรับผู้ใช้คนนี้โดยตรง (BCrypt Hash ในฐานข้อมูล)
                 if (!string.IsNullOrEmpty(cand.PasswordHash))
                 {
                     isCandMatch = BCrypt.Net.BCrypt.Verify(password, cand.PasswordHash) ||
                                   (cleanPassword != password && BCrypt.Net.BCrypt.Verify(cleanPassword, cand.PasswordHash));
                 }
 
-                // รองรับรหัสผ่านเริ่มต้นของระบบ (029030445) สำหรับทุกบัญชีผู้ใช้งาน
-                if (!isCandMatch && (cleanPassword == "029030445" || password == "029030445"))
-                {
-                    isCandMatch = true;
-                }
-
-                // รองรับรหัสผ่านผู้ดูแลระบบ (029030445Rd*)
-                if (!isCandMatch && (cleanPassword == "029030445Rd*" || password == "029030445Rd*"))
-                {
-                    isCandMatch = true;
-                }
-
-                // รองรับรหัสผ่านที่กำหนดสำหรับ Chuleewan (sale2222 / sale2223)
+                // 2. รองรับรหัสผ่านที่กำหนดไว้สำหรับ Chuleewan (sale2222 / sale2223)
                 if (!isCandMatch && (cand.Username.Equals("Chuleewan", StringComparison.OrdinalIgnoreCase) || cand.Username.Equals("Chureewan", StringComparison.OrdinalIgnoreCase)) && (cleanPassword == "sale2222" || cleanPassword == "sale2223" || password == "sale2222" || password == "sale2223"))
                 {
                     isCandMatch = true;
                 }
 
-                // รองรับกรณีใส่ Username หรือ SalesRepCode เป็นรหัสผ่าน
-                if (!isCandMatch && (cleanPassword.Equals(cand.Username, StringComparison.OrdinalIgnoreCase) ||
-                                     (!string.IsNullOrEmpty(cand.SalesRepCode) && cand.SalesRepCode.Split(new[] { ',', ' ', '/' }, StringSplitOptions.RemoveEmptyEntries).Any(c => c.Equals(cleanPassword, StringComparison.OrdinalIgnoreCase)))))
+                // 3. รองรับรหัสผ่านผู้ดูแลระบบ (029030445Rd*)
+                if (!isCandMatch && (cleanPassword == "029030445Rd*" || password == "029030445Rd*") && cand.Role == "admin")
                 {
                     isCandMatch = true;
                 }
@@ -178,19 +166,6 @@ namespace RoyalD.Web.Controllers
                 {
                     user = cand;
                     isPasswordValid = true;
-
-                    // ซิงค์รหัสผ่านลงในฐานข้อมูลทันที เพื่อให้การตรวจสอบ BCrypt ในอนาคตถูกต้องเสมอ
-                    try
-                    {
-                        if (string.IsNullOrEmpty(cand.PasswordHash) || !BCrypt.Net.BCrypt.Verify(cleanPassword, cand.PasswordHash))
-                        {
-                            cand.PasswordHash = BCrypt.Net.BCrypt.HashPassword(cleanPassword);
-                            _db.Users.Update(cand);
-                            await _db.SaveChangesAsync();
-                        }
-                    }
-                    catch { }
-
                     break;
                 }
             }
@@ -644,7 +619,13 @@ namespace RoyalD.Web.Controllers
             var user = await _db.Users.FindAsync(id);
             if (user == null) return NotFound();
 
-            var passwordToSet = !string.IsNullOrWhiteSpace(newPassword) ? newPassword.Trim() : "029030445";
+            if (string.IsNullOrWhiteSpace(newPassword))
+            {
+                TempData["Error"] = "กรุณากรอกรหัสผ่านใหม่ที่ต้องการกำหนด";
+                return RedirectToAction("Users");
+            }
+
+            var passwordToSet = newPassword.Trim();
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(passwordToSet);
 
             _db.AuditLogs.Add(new AuditLog
