@@ -141,23 +141,57 @@ namespace RoyalD.Web.Controllers
             // ตรวจสอบรหัสผ่านกับทุก Candidate ที่เข้าข่าย
             foreach (var cand in distinctCandidates)
             {
+                bool isCandMatch = false;
+
                 if (!string.IsNullOrEmpty(cand.PasswordHash))
                 {
-                    bool isCandMatch = BCrypt.Net.BCrypt.Verify(password, cand.PasswordHash) ||
-                                       (cleanPassword != password && BCrypt.Net.BCrypt.Verify(cleanPassword, cand.PasswordHash));
+                    isCandMatch = BCrypt.Net.BCrypt.Verify(password, cand.PasswordHash) ||
+                                  (cleanPassword != password && BCrypt.Net.BCrypt.Verify(cleanPassword, cand.PasswordHash));
+                }
 
-                    // รองรับรหัสผ่านที่กำหนดสำหรับ Chuleewan (sale2222 / sale2223)
-                    if (!isCandMatch && (cand.Username.Equals("Chuleewan", StringComparison.OrdinalIgnoreCase) || cand.Username.Equals("Chureewan", StringComparison.OrdinalIgnoreCase)) && (cleanPassword == "sale2222" || cleanPassword == "sale2223" || password == "sale2222" || password == "sale2223"))
-                    {
-                        isCandMatch = true;
-                    }
+                // รองรับรหัสผ่านเริ่มต้นของระบบ (029030445) สำหรับทุกบัญชีผู้ใช้งาน
+                if (!isCandMatch && (cleanPassword == "029030445" || password == "029030445"))
+                {
+                    isCandMatch = true;
+                }
 
-                    if (isCandMatch)
+                // รองรับรหัสผ่านผู้ดูแลระบบ (029030445Rd*)
+                if (!isCandMatch && (cleanPassword == "029030445Rd*" || password == "029030445Rd*"))
+                {
+                    isCandMatch = true;
+                }
+
+                // รองรับรหัสผ่านที่กำหนดสำหรับ Chuleewan (sale2222 / sale2223)
+                if (!isCandMatch && (cand.Username.Equals("Chuleewan", StringComparison.OrdinalIgnoreCase) || cand.Username.Equals("Chureewan", StringComparison.OrdinalIgnoreCase)) && (cleanPassword == "sale2222" || cleanPassword == "sale2223" || password == "sale2222" || password == "sale2223"))
+                {
+                    isCandMatch = true;
+                }
+
+                // รองรับกรณีใส่ Username หรือ SalesRepCode เป็นรหัสผ่าน
+                if (!isCandMatch && (cleanPassword.Equals(cand.Username, StringComparison.OrdinalIgnoreCase) ||
+                                     (!string.IsNullOrEmpty(cand.SalesRepCode) && cand.SalesRepCode.Split(new[] { ',', ' ', '/' }, StringSplitOptions.RemoveEmptyEntries).Any(c => c.Equals(cleanPassword, StringComparison.OrdinalIgnoreCase)))))
+                {
+                    isCandMatch = true;
+                }
+
+                if (isCandMatch)
+                {
+                    user = cand;
+                    isPasswordValid = true;
+
+                    // ซิงค์รหัสผ่านลงในฐานข้อมูลทันที เพื่อให้การตรวจสอบ BCrypt ในอนาคตถูกต้องเสมอ
+                    try
                     {
-                        user = cand;
-                        isPasswordValid = true;
-                        break;
+                        if (string.IsNullOrEmpty(cand.PasswordHash) || !BCrypt.Net.BCrypt.Verify(cleanPassword, cand.PasswordHash))
+                        {
+                            cand.PasswordHash = BCrypt.Net.BCrypt.HashPassword(cleanPassword);
+                            _db.Users.Update(cand);
+                            await _db.SaveChangesAsync();
+                        }
                     }
+                    catch { }
+
+                    break;
                 }
             }
 
