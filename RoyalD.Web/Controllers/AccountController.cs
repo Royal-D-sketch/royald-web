@@ -156,7 +156,13 @@ namespace RoyalD.Web.Controllers
                     isCandMatch = true;
                 }
 
-                // 3. รองรับรหัสผ่านผู้ดูแลระบบ (029030445Rd*)
+                // 3. รองรับรหัสผ่านสำหรับ Apinya (sale2226)
+                if (!isCandMatch && (cand.Username.Equals("Apinya", StringComparison.OrdinalIgnoreCase) || (cand.FullName != null && cand.FullName.Contains("อภิญญา"))) && (cleanPassword == "sale2226" || password == "sale2226"))
+                {
+                    isCandMatch = true;
+                }
+
+                // 4. รองรับรหัสผ่านผู้ดูแลระบบ (029030445Rd*)
                 if (!isCandMatch && (cleanPassword == "029030445Rd*" || password == "029030445Rd*") && cand.Role == "admin")
                 {
                     isCandMatch = true;
