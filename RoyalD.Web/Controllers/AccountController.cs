@@ -72,11 +72,11 @@ namespace RoyalD.Web.Controllers
             }
 
             // ค้นหาผู้ใช้แบบอัจฉริยะ รองรับทั้ง:
-            // 1. Username ภาษาอังกฤษ (เช่น Sunya, Chanthima, admin, Yanee)
-            // 2. ชื่อ-นามสกุลภาษาไทยเต็ม (เช่น คุณจันทิมา จิรภิญโญกุล 115.0, คุณสัญญา สุขจิตต์ 121.1, คุณญาณี พันธ์ชัย)
-            // 3. ชื่อที่มีคำว่า 'คุณ', 'นาย', 'น.ส.' หรือตัดออก
-            // 4. รหัสตัวแทนขาย (SalesRepCode)
-            // 5. ชื่อแรก (First Name เช่น จันทิมา, สัญญา, วีรนุช, ญาณี)
+            // 1. Username ภาษาอังกฤษตามที่ตั้งไว้ในระบบ (เช่น Sunya, Weeranut, Chanthima, Thanyarak, Werasak, Apinya, Thanasak, Thinnaphat, Chuleewan, ART, Yada, Yanee, zine, admin)
+            // 2. ชื่อภาษาไทย / ชื่อ-นามสกุลเต็มภาษาไทย (เช่น สัญญา, คุณสัญญา, คุณสัญญา รุจิมิตร 121.1, วีรนุช, ปภาวดี ฯลฯ)
+            // 3. ชื่อที่มีคำนำหน้า 'คุณ', 'นางสาว', 'น.ส.', 'นาย', 'นาง' หรือไม่มี
+            // 4. รหัสตัวแทนขาย (SalesRepCode เช่น 121.1, 124.0, 115.0 ฯลฯ)
+            cleanUsername = System.Text.RegularExpressions.Regex.Replace(cleanUsername, @"\s+", " ");
             string normalizedThai = cleanUsername;
             foreach (var prefix in new[] { "คุณ", "นางสาว", "น.ส.", "นาย", "นาง" })
             {
@@ -90,42 +90,50 @@ namespace RoyalD.Web.Controllers
             var tokens = normalizedThai.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
             string firstNameToken = tokens.Length > 0 ? tokens[0] : normalizedThai;
 
-            // ค้นหาบัญชีผู้ใช้ที่เป็นไปได้ทั้งหมด (Candidates)
-            var candidateUsers = await _db.Users.Where(u => u.IsActive && (
-                EF.Functions.ILike(u.Username, cleanUsername) ||
-                EF.Functions.ILike(u.Username, normalizedThai) ||
-                EF.Functions.ILike(u.Username, firstNameToken)
-            )).ToListAsync();
+            // ดึงผู้ใช้ที่ Active ทั้งหมดมาจับคู่ในหน่วยความจำเพื่อความแม่นยำ 100% ไม่ติดปัญหา Collation ภาษาไทย
+            var allActiveUsers = await _db.Users.Where(u => u.IsActive).ToListAsync();
+
+            var candidateUsers = allActiveUsers.Where(u =>
+                u.Username.Equals(cleanUsername, StringComparison.OrdinalIgnoreCase) ||
+                u.Username.Equals(normalizedThai, StringComparison.OrdinalIgnoreCase) ||
+                u.Username.Equals(firstNameToken, StringComparison.OrdinalIgnoreCase)
+            ).ToList();
 
             if (cleanUsername.Equals("chureewan", StringComparison.OrdinalIgnoreCase) || cleanUsername.Equals("chuleewan", StringComparison.OrdinalIgnoreCase) || cleanUsername.Contains("ชุลีวรรณ") || cleanUsername.Contains("ชูรีวรรณ"))
             {
-                var chUsers = await _db.Users.Where(u => u.IsActive && (u.Username == "Chuleewan" || u.Username == "Chureewan" || (u.FullName != null && (EF.Functions.ILike(u.FullName, "%ชุลีวรรณ%") || EF.Functions.ILike(u.FullName, "%ชูรีวรรณ%"))))).ToListAsync();
+                var chUsers = allActiveUsers.Where(u => u.Username.Equals("Chuleewan", StringComparison.OrdinalIgnoreCase) || u.Username.Equals("Chureewan", StringComparison.OrdinalIgnoreCase) || (u.FullName != null && (u.FullName.Contains("ชุลีวรรณ") || u.FullName.Contains("ชูรีวรรณ")))).ToList();
                 candidateUsers.AddRange(chUsers);
             }
 
             if (cleanUsername.Equals("yanee", StringComparison.OrdinalIgnoreCase) || cleanUsername.Contains("ญาณี") || cleanUsername.Contains("พันธ์ชัย"))
             {
-                var yUsers = await _db.Users.Where(u => u.IsActive && (EF.Functions.ILike(u.Username, "%yanee%") || (u.FullName != null && EF.Functions.ILike(u.FullName, "%ญาณี%")))).ToListAsync();
+                var yUsers = allActiveUsers.Where(u => u.Username.IndexOf("yanee", StringComparison.OrdinalIgnoreCase) >= 0 || (u.FullName != null && u.FullName.Contains("ญาณี"))).ToList();
                 candidateUsers.AddRange(yUsers);
             }
 
-            var repMatches = await _db.Users.Where(u => u.IsActive && u.SalesRepCode != null && (
-                EF.Functions.ILike(u.SalesRepCode, cleanUsername) ||
-                EF.Functions.ILike(u.SalesRepCode, $"%{cleanUsername}%") ||
-                EF.Functions.ILike(u.SalesRepCode, $"%{normalizedThai}%") ||
-                EF.Functions.ILike(u.SalesRepCode, $"%{firstNameToken}%")
-            )).ToListAsync();
-            candidateUsers.AddRange(repMatches);
-
-            var nameMatches = await _db.Users.Where(u => u.IsActive && u.FullName != null && (
-                EF.Functions.ILike(u.FullName, $"%{cleanUsername}%") ||
-                EF.Functions.ILike(u.FullName, $"%{normalizedThai}%") ||
-                EF.Functions.ILike(u.FullName, $"%{firstNameToken}%")
-            )).ToListAsync();
+            var nameMatches = allActiveUsers.Where(u => !string.IsNullOrEmpty(u.FullName) && (
+                u.FullName.IndexOf(cleanUsername, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                u.FullName.IndexOf(normalizedThai, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                u.FullName.IndexOf(firstNameToken, StringComparison.OrdinalIgnoreCase) >= 0
+            )).ToList();
             candidateUsers.AddRange(nameMatches);
 
-            // เรียงลำดับความสำคัญ: บัญชีใหม่ (Id สูงกว่า) มาก่อน เพื่อแก้ปัญหาบัญชีเก่า AART/VVV บังบัญชีใหม่ Sunya/Weeranut
-            var distinctCandidates = candidateUsers.DistinctBy(u => u.Id).OrderByDescending(u => u.Id).ToList();
+            var repMatches = allActiveUsers.Where(u => !string.IsNullOrEmpty(u.SalesRepCode) && (
+                u.SalesRepCode.IndexOf(cleanUsername, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                u.SalesRepCode.IndexOf(normalizedThai, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                u.SalesRepCode.IndexOf(firstNameToken, StringComparison.OrdinalIgnoreCase) >= 0
+            )).ToList();
+            candidateUsers.AddRange(repMatches);
+
+            // เรียงลำดับความสำคัญ:
+            // 1. Username ภาษาอังกฤษตรงเป๊ะ (เช่น Sunya, sunya)
+            // 2. FullName ตรงกับชื่อไทยที่กรอก (เช่น สัญญา, คุณสัญญา)
+            // 3. บัญชีใหม่ (Id สูงกว่า)
+            var distinctCandidates = candidateUsers.DistinctBy(u => u.Id)
+                .OrderByDescending(u => u.Username.Equals(cleanUsername, StringComparison.OrdinalIgnoreCase) || u.Username.Equals(normalizedThai, StringComparison.OrdinalIgnoreCase))
+                .ThenByDescending(u => !string.IsNullOrEmpty(u.FullName) && (u.FullName.Contains(cleanUsername) || u.FullName.Contains(normalizedThai) || u.FullName.Contains(firstNameToken)))
+                .ThenByDescending(u => u.Id)
+                .ToList();
 
             AppUser? user = null;
             bool isPasswordValid = false;
