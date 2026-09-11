@@ -240,9 +240,9 @@ using var stream = file.OpenReadStream();
                 TempData["Error"] = "กรุณาเลือกไฟล์";
                 return RedirectToAction("Index");
             }
-            if (files.Count > 8)
+            if (files.Count > 60)
             {
-                TempData["Error"] = "เลือกได้สูงสุด 8 ไฟล์";
+                TempData["Error"] = "แนะนำเลือกไม่เกิน 50 - 60 ไฟล์ต่อครั้ง เพื่อประสิทธิภาพและความรวดเร็วในการประมวลผล";
                 return RedirectToAction("Index");
             }
 

@@ -42,7 +42,7 @@
           <div class="card shadow-sm border-primary">
             <div class="card-header bg-primary text-white fw-bold">
               <i class="bi bi-file-earmark-spreadsheet me-1"></i> ส่วนที่ 1: อัปโหลดไฟล์รายละเอียดบิลขาย
-              <small class="ms-2 fw-normal opacity-75">(รองรับสูงสุด 8 ไฟล์พร้อมกัน)</small>
+              <small class="ms-2 fw-normal opacity-75">(สามารถอัปโหลดได้พร้อมกันได้ถึง 20 – 50 ไฟล์ขึ้นไปในครั้งเดียว)</small>
             </div>
             <div class="card-body">
               <form asp-action="UploadSalesBills" method="post" enctype="multipart/form-data" id="formBills">
@@ -50,7 +50,7 @@
                 <div class="mb-3">
                   <label class="form-label fw-bold">เลือกไฟล์บิลขาย (.xls / .xlsx / .csv)</label>
                   <input type="file" name="files" multiple accept=".xls,.xlsx,.csv" class="form-control" id="billFiles" required>
-                  <div class="form-text">เลือกได้สูงสุด 8 ไฟล์ในครั้งเดียว ระบบจะรวมไฟล์และนำเข้าอัตโนมัติ</div>
+                  <div class="form-text">สามารถเลือกอัปโหลดพร้อมกันได้ถึง 20 – 50 ไฟล์ขึ้นไปในครั้งเดียว (ขนาดรวมไม่เกิน 100 MB) ระบบจะรวมไฟล์และนำเข้าให้อัตโนมัติ</div>
                 </div>
                 <div id="billFileList" class="mb-3"></div>
                 <div class="progress mb-3 d-none" id="billProgress">
@@ -128,8 +128,8 @@ function showProgress(id) {
 document.getElementById('billFiles').addEventListener('change', function(){
   var list = document.getElementById('billFileList');
   list.innerHTML = '';
-  if (this.files.length > 8) {
-    alert('เลือกได้สูงสุด 8 ไฟล์');
+  if (this.files.length > 60) {
+    alert('แนะนำเลือกไม่เกิน 50 - 60 ไฟล์ต่อครั้ง เพื่อความรวดเร็วในการประมวลผลค่ะ');
     this.value = '';
     return;
   }
