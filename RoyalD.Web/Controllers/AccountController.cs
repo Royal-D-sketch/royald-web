@@ -433,28 +433,7 @@ namespace RoyalD.Web.Controllers
 
             try
             {
-                ViewBag.ProvinceDistricts = _cache.GetOrCreate("loc_province_districts", entry =>
-                {
-                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15);
-                    var customerDistricts = _db.Customers.AsNoTracking()
-                        .Where(c => !string.IsNullOrEmpty(c.Province) && !string.IsNullOrEmpty(c.District))
-                        .Select(c => new { Province = c.Province.Trim(), District = c.District.Trim() })
-                        .Distinct()
-                        .ToList();
-
-                    var salesDistricts = _db.SalesBills.AsNoTracking()
-                        .Where(b => !string.IsNullOrEmpty(b.Province) && !string.IsNullOrEmpty(b.District))
-                        .Select(b => new { Province = b.Province.Trim(), District = b.District.Trim() })
-                        .Distinct()
-                        .ToList();
-
-                    var dict = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-                    foreach (var grp in customerDistricts.Concat(salesDistricts).Distinct().GroupBy(x => x.Province))
-                    {
-                        dict[grp.Key] = grp.Select(x => x.District).Where(d => !string.IsNullOrEmpty(d)).Distinct().OrderBy(d => d).ToList();
-                    }
-                    return dict;
-                }) ?? new Dictionary<string, List<string>>();
+                ViewBag.ProvinceDistricts = ThailandDistrictData.All;
 
                 ViewBag.DbSalesReps = _cache.GetOrCreate("loc_db_sales_reps", entry =>
                 {
@@ -469,7 +448,7 @@ namespace RoyalD.Web.Controllers
             }
             catch
             {
-                ViewBag.ProvinceDistricts = new Dictionary<string, List<string>>();
+                ViewBag.ProvinceDistricts = ThailandDistrictData.All;
                 ViewBag.DbSalesReps = new List<string>();
             }
         }

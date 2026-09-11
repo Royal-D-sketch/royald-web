@@ -28,6 +28,10 @@ namespace RoyalD.Web.Services
 
         public static readonly Dictionary<string, List<string>> Regions = new(StringComparer.OrdinalIgnoreCase)
         {
+            ["กรุงเทพฯ และปริมณฑล"] = new List<string>
+            {
+                "กรุงเทพมหานคร", "กรุงเทพฯ", "กรุงเทพ", "กทม", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสาคร", "นครปฐม"
+            },
             ["ภาคกลาง"] = new List<string>
             {
                 "กรุงเทพมหานคร", "กรุงเทพฯ", "กรุงเทพ", "กทม", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "นครปฐม", 
@@ -62,6 +66,10 @@ namespace RoyalD.Web.Services
 
         public static readonly Dictionary<string, List<string>> DisplayProvinces = new(StringComparer.OrdinalIgnoreCase)
         {
+            ["กรุงเทพฯ และปริมณฑล"] = new List<string>
+            {
+                "กรุงเทพมหานคร", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสาคร", "นครปฐม"
+            },
             ["ภาคกลาง"] = new List<string>
             {
                 "กรุงเทพมหานคร", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "นครปฐม", 
@@ -126,6 +134,10 @@ namespace RoyalD.Web.Services
                     if (r == "กรุงเทพฯ" || r == "กรุงเทพ" || r == "กทม" || r.Equals("bkk", StringComparison.OrdinalIgnoreCase))
                     {
                         result.AddRange(new[] { "กรุงเทพมหานคร", "กรุงเทพฯ", "กรุงเทพ", "กทม" });
+                    }
+                    else if (r == "กรุงเทพฯ และปริมณฑล" || r == "กรุงเทพและปริมณฑล" || r == "กรุงเทพมหานครและปริมณฑล")
+                    {
+                        result.AddRange(new[] { "กรุงเทพมหานคร", "กรุงเทพฯ", "กรุงเทพ", "กทม", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสาคร", "นครปฐม" });
                     }
                     else if (r == "ต่างจังหวัด" || r.Equals("upcountry", StringComparison.OrdinalIgnoreCase))
                     {
@@ -199,7 +211,15 @@ namespace RoyalD.Web.Services
                 var raw = d.Trim();
                 res.Add(raw);
 
-                var clean = raw;
+                var withoutProv = raw;
+                int parenIdx = withoutProv.IndexOf('(');
+                if (parenIdx >= 0)
+                {
+                    withoutProv = withoutProv.Substring(0, parenIdx).Trim();
+                    if (!string.IsNullOrEmpty(withoutProv)) res.Add(withoutProv);
+                }
+
+                var clean = withoutProv;
                 if (clean.StartsWith("อ.", StringComparison.OrdinalIgnoreCase)) clean = clean.Substring(2).Trim();
                 else if (clean.StartsWith("อำเภอ", StringComparison.OrdinalIgnoreCase)) clean = clean.Substring(5).Trim();
                 else if (clean.StartsWith("เขต", StringComparison.OrdinalIgnoreCase)) clean = clean.Substring(3).Trim();
@@ -211,6 +231,13 @@ namespace RoyalD.Web.Services
                 res.Add("อำเภอ " + clean);
                 res.Add("เขต" + clean);
                 res.Add("เขต " + clean);
+
+                if (clean.StartsWith("เมือง", StringComparison.OrdinalIgnoreCase))
+                {
+                    res.Add("เมือง");
+                    res.Add("อ.เมือง");
+                    res.Add("อำเภอเมือง");
+                }
             }
             return res.ToList();
         }

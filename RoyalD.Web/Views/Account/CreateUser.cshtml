@@ -77,6 +77,16 @@
     border-color: #0d9488;
     color: #ffffff;
 }
+.district-chip:hover {
+    background: #fef3c7 !important;
+    border-color: #f59e0b !important;
+    color: #92400e !important;
+}
+.district-chip.selected {
+    background: #d97706 !important;
+    border-color: #d97706 !important;
+    color: #ffffff !important;
+}
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -384,6 +394,29 @@
                                         เลือกทั้งหมดที่ค้นหา
                                     </button>
                                 </div>
+                                <div class="d-flex flex-wrap gap-1 mb-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 fw-bold" style="font-size:0.75rem; border-radius:20px;" onclick="selectBkkVicinity()" title="เลือกกรุงเทพฯ และปริมณฑล 6 จังหวัดทันที">
+                                        🏙️ กรุงเทพฯ และปริมณฑล (6 จังหวัด)
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:0.75rem; border-radius:20px;" onclick="selectRegionProvinces('ภาคกลาง')">
+                                        ภาคกลาง
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:0.75rem; border-radius:20px;" onclick="selectRegionProvinces('ภาคเหนือ')">
+                                        ภาคเหนือ
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:0.75rem; border-radius:20px;" onclick="selectRegionProvinces('ภาคอีสาน')">
+                                        ภาคอีสาน
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:0.75rem; border-radius:20px;" onclick="selectRegionProvinces('ภาคตะวันออก')">
+                                        ภาคตะวันออก
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:0.75rem; border-radius:20px;" onclick="selectRegionProvinces('ภาคใต้')">
+                                        ภาคใต้
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" style="font-size:0.75rem; border-radius:20px;" onclick="clearAllProvinces()" title="ล้างจังหวัดที่เลือกทั้งหมด">
+                                        <i class="bi bi-x"></i> ล้างที่เลือก
+                                    </button>
+                                </div>
                                 <div class="picker-container mb-2" id="provinceChipContainer">
                                     <!-- Populated dynamically with all 77 provinces -->
                                 </div>
@@ -395,19 +428,40 @@
                         <!-- 4. เลือกเขต/อำเภอ (Districts) -->
                         <div class="col-md-6">
                             <div class="p-3 bg-light rounded border h-100">
-                                <label class="form-label fw-bold text-primary mb-2">
-                                    📌 4. เลือกเขต/อำเภอ (District)
-                                </label>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label fw-bold text-primary mb-0">
+                                        📌 4. เลือกเขต/อำเภอ (District)
+                                    </label>
+                                    <span class="badge bg-secondary" id="districtCountBadge">0 อำเภอ</span>
+                                </div>
+                                <div class="alert alert-light border py-1 px-2 mb-2 text-muted" style="border-radius:8px; font-size:0.78rem; background:#f8fafc;">
+                                    <i class="bi bi-info-circle text-primary me-1"></i>
+                                    <strong>เลือกหรือไม่เลือกก็ได้:</strong> สามารถเลือกเฉพาะเขต/อำเภอ หรือ<strong>ไม่ต้องเลือกเขตใดๆ เลย</strong> (หากเว้นว่างไว้ ระบบจะให้สิทธิ์ดูข้อมูลได้<strong>ทุกเขตและทุกอำเภอ</strong>ในจังหวัดที่เลือกโดยอัตโนมัติ)
+                                </div>
+                                <div class="input-group input-group-sm mb-2">
+                                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                                    <input type="text" id="districtSearchInput" list="districtDatalist" class="form-control" placeholder="พิมพ์ค้นหาหรือเลือกเขต/อำเภอ เช่น เขตบางรัก, ปากเกร็ด, บางพลี..." oninput="filterDistrictChips()" onkeydown="handleDistrictSearchKeyDown(event)" autocomplete="off" />
+                                    <datalist id="districtDatalist"></datalist>
+                                    <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="addCurrentSearchedDistrict()" title="เพิ่มเขต/อำเภอที่พิมพ์ทันที">
+                                        <i class="bi bi-plus-circle"></i> เพิ่ม
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="selectAllFilteredDistricts()" title="เลือกทุกอำเภอที่กำลังค้นหา">
+                                        เลือกทั้งหมดที่ค้นหา
+                                    </button>
+                                </div>
+                                <div class="picker-container mb-2" id="districtChipContainer">
+                                    <!-- Populated dynamically based on selected provinces -->
+                                </div>
                                 <div class="input-group input-group-sm mb-2">
                                     <select class="form-select" id="districtDropdown">
-                                        <option value="">-- เลือกเขต/อำเภอ --</option>
+                                        <option value="">-- หรือคลิกเลือกเขต/อำเภอจากรายการตรงนี้ --</option>
                                     </select>
                                     <button type="button" class="btn btn-outline-primary" onclick="addSelectedDistrict()" title="เพิ่มเขต/อำเภอ">
                                         <i class="bi bi-plus-circle"></i> เพิ่ม
                                     </button>
                                 </div>
                                 <input type="hidden" name="allowedDistricts" id="allowedDistrictsHidden" value="" />
-                                <div id="districtTagsContainer" class="d-flex flex-wrap gap-1 mt-2"></div>
+                                <div id="districtTagsContainer" class="d-flex flex-wrap gap-1"></div>
                                 <small class="text-muted d-block mt-2" style="font-size:0.75rem;">* หากเว้นว่างไว้ ระบบจะแสดงข้อมูลทุกอำเภอในจังหวัดที่เลือก</small>
                             </div>
                         </div>
@@ -538,11 +592,55 @@
     const allThailandProvinces = @Html.Raw(JsonSerializer.Serialize(allThailandProvinces));
     const dbSalesReps = @Html.Raw(JsonSerializer.Serialize(dbSalesReps));
     const provinceDistrictsMap = @Html.Raw(JsonSerializer.Serialize(provinceDistricts));
+    const allProvincesMap = @Html.Raw(JsonSerializer.Serialize(allProvincesMap));
+    const bkkVicinityProvinces = ["กรุงเทพมหานคร", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสาคร", "นครปฐม"];
 
     let selectedRegions = [];
     let selectedProvinces = [];
     let selectedDistricts = [];
     let selectedSalesReps = [];
+
+    function selectBkkVicinity() {
+        bkkVicinityProvinces.forEach(p => {
+            if (!selectedProvinces.includes(p)) selectedProvinces.push(p);
+        });
+        renderProvinceChips();
+        renderProvinceTags();
+        renderDistrictChips();
+    }
+
+    function selectRegionProvinces(regionName) {
+        let provs = [];
+        if (allProvincesMap && allProvincesMap[regionName]) {
+            provs = allProvincesMap[regionName];
+        } else if (regionName === 'ภาคกลาง') {
+            provs = ["กรุงเทพมหานคร", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "นครปฐม", "สมุทรสาคร", "สมุทรสงคราม", "สุพรรณบุรี", "พระนครศรีอยุธยา", "อ่างทอง", "สิงห์บุรี", "ชัยนาท", "สระบุรี", "ลพบุรี", "กาญจนบุรี", "ราชบุรี"];
+        } else if (regionName === 'ภาคเหนือ') {
+            provs = ["เชียงใหม่", "เชียงราย", "ลำปาง", "ลำพูน", "พะเยา", "แพร่", "น่าน", "แม่ฮ่องสอน", "อุตรดิตถ์", "พิษณุโลก", "สุโขทัย", "ตาก", "กำแพงเพชร", "พิจิตร", "นครสวรรค์", "อุทัยธานี"];
+        } else if (regionName === 'ภาคอีสาน') {
+            provs = ["นครราชสีมา", "ขอนแก่น", "อุดรธานี", "อุบลราชธานี", "บุรีรัมย์", "สุรินทร์", "ศรีสะเกษ", "ร้อยเอ็ด", "ชัยภูมิ", "สกลนคร", "กาฬสินธุ์", "มหาสารคาม", "หนองคาย", "เลย", "เพชรบูรณ์", "หนองบัวลำภู", "บึงกาฬ", "นครพนม", "มุกดาหาร", "ยโสธร", "อำนาจเจริญ"];
+        } else if (regionName === 'ภาคตะวันออก') {
+            provs = ["ชลบุรี", "ระยอง", "ฉะเชิงเทรา", "จันทบุรี", "ตราด", "ปราจีนบุรี", "สระแก้ว", "นครนายก"];
+        } else if (regionName === 'ภาคใต้') {
+            provs = ["ภูเก็ต", "สุราษฎร์ธานี", "สงขลา", "นครศรีธรรมราช", "กระบี่", "พังงา", "ระนอง", "ชุมพร", "ตรัง", "พัทลุง", "สตูล", "ปัตตานี", "ยะลา", "นราธิวาส", "ประจวบคีรีขันธ์", "เพชรบุรี"];
+        }
+
+        provs.forEach(p => {
+            if (!selectedProvinces.includes(p)) selectedProvinces.push(p);
+        });
+        renderProvinceChips();
+        renderProvinceTags();
+        renderDistrictChips();
+    }
+
+    function clearAllProvinces() {
+        selectedProvinces = [];
+        selectedDistricts = [];
+        renderProvinceChips();
+        renderProvinceTags();
+        renderDistrictChips();
+        renderDistrictTags();
+    }
 
     function onRoleChange() {
         const role = document.getElementById('roleSelect').value;
@@ -565,6 +663,15 @@
             selectedRegions.push(cb.value);
         });
         document.getElementById('allowedRegionHidden').value = selectedRegions.join(', ');
+
+        if (selectedRegions.some(r => r.includes('กรุงเทพ') || r.includes('ปริมณฑล'))) {
+            bkkVicinityProvinces.forEach(p => {
+                if (!selectedProvinces.includes(p)) selectedProvinces.push(p);
+            });
+            renderProvinceChips();
+            renderProvinceTags();
+            renderDistrictChips();
+        }
     }
 
     // --- PROVINCE CHIP BROWSER ---
@@ -601,7 +708,7 @@
         }
         renderProvinceChips();
         renderProvinceTags();
-        updateDistrictDropdown();
+        renderDistrictChips();
     }
 
     function selectAllFilteredProvinces() {
@@ -613,14 +720,14 @@
         });
         renderProvinceChips();
         renderProvinceTags();
-        updateDistrictDropdown();
+        renderDistrictChips();
     }
 
     function removeProvince(prov) {
         selectedProvinces = selectedProvinces.filter(p => p !== prov);
         renderProvinceChips();
         renderProvinceTags();
-        updateDistrictDropdown();
+        renderDistrictChips();
     }
 
     function renderProvinceTags() {
@@ -636,35 +743,204 @@
         document.getElementById('provCountBadge').textContent = selectedProvinces.length + ' จังหวัด';
     }
 
-    function updateDistrictDropdown() {
-        const districtDropdown = document.getElementById('districtDropdown');
-        districtDropdown.innerHTML = '<option value="">-- เลือกเขต/อำเภอ --</option>';
+    // Helper to resolve districts from province name
+    function getDistrictsForProvince(prov) {
+        if (!prov) return [];
+        if (provinceDistrictsMap[prov] && provinceDistrictsMap[prov].length > 0) return provinceDistrictsMap[prov];
+        const norm = prov.replace(/^จ\.\s*/, '').trim();
+        if (provinceDistrictsMap[norm] && provinceDistrictsMap[norm].length > 0) return provinceDistrictsMap[norm];
+        if (norm.includes('กรุงเทพ') || norm.includes('กทม')) {
+            return provinceDistrictsMap['กรุงเทพมหานคร'] || [];
+        }
+        if (norm.includes('อยุธยา')) {
+            return provinceDistrictsMap['พระนครศรีอยุธยา'] || [];
+        }
+        return [];
+    }
 
-        const availableDistricts = new Set();
-        selectedProvinces.forEach(prov => {
-            if (provinceDistrictsMap[prov]) {
-                provinceDistrictsMap[prov].forEach(d => availableDistricts.add(`${d} (${prov})`));
+    // --- DISTRICT CHIP BROWSER & DROPDOWN ---
+    function renderDistrictChips() {
+        const query = (document.getElementById('districtSearchInput').value || '').trim().toLowerCase();
+        const container = document.getElementById('districtChipContainer');
+        const dropdown = document.getElementById('districtDropdown');
+        const datalist = document.getElementById('districtDatalist');
+        container.innerHTML = '';
+        dropdown.innerHTML = '<option value="">-- หรือคลิกเลือกเขต/อำเภอจากรายการตรงนี้ --</option>';
+        if (datalist) datalist.innerHTML = '';
+
+        const provsToUse = selectedProvinces.length > 0 ? selectedProvinces : Object.keys(provinceDistrictsMap);
+
+        if (selectedProvinces.length === 0 && !query) {
+            container.innerHTML = '<span class="text-muted small p-2"><i class="bi bi-info-circle me-1"></i>เลือกจังหวัดในข้อ 3 ด้านซ้าย เพื่อโหลดอำเภอทั้งหมด หรือพิมพ์ค้นหาอำเภอ</span>';
+            document.getElementById('districtCountBadge').textContent = selectedDistricts.length + ' อำเภอที่เลือก';
+            return;
+        }
+
+        let visibleCount = 0;
+
+        provsToUse.forEach(prov => {
+            const dists = getDistrictsForProvince(prov);
+            const isBkk = prov.includes('กรุงเทพ') || prov.includes('กทม');
+
+            dists.forEach(d => {
+                const cleanName = d.replace(/^(เขต|อำเภอ|อ\.)\s*/, '').trim();
+                const districtLabel = isBkk ? ('เขต' + cleanName) : ('อ.' + cleanName);
+                const showProv = selectedProvinces.length !== 1;
+                const displayText = showProv ? `${districtLabel} (${prov})` : districtLabel;
+                const distKey = `${districtLabel} (${prov})`;
+
+                const searchTarget = `${cleanName} ${districtLabel} ${displayText} ${prov} เขต อำเภอ อ.`.toLowerCase();
+                const isMatch = !query || searchTarget.includes(query);
+
+                if (isMatch) {
+                    visibleCount++;
+                    const isSelected = selectedDistricts.some(sd => {
+                        const sdClean = sd.replace(/\s*\(.*?\)/, '').replace(/^(เขต|อำเภอ|อ\.)\s*/, '').trim().toLowerCase();
+                        return sd === distKey || 
+                               sd === districtLabel || 
+                               sd === cleanName || 
+                               sdClean === cleanName.toLowerCase();
+                    });
+
+                    // Add chip
+                    const chip = document.createElement('span');
+                    chip.className = 'item-chip district-chip ' + (isSelected ? 'selected' : '');
+                    chip.innerHTML = (isSelected ? '<i class="bi bi-check-circle-fill"></i> ' : '<i class="bi bi-plus-circle"></i> ') + displayText;
+                    chip.onclick = () => toggleDistrictChip(distKey, districtLabel, cleanName, prov);
+                    container.appendChild(chip);
+
+                    // Add option to dropdown
+                    const opt = document.createElement('option');
+                    opt.value = distKey;
+                    opt.textContent = displayText;
+                    dropdown.appendChild(opt);
+
+                    // Add option to datalist
+                    if (datalist) {
+                        const dOpt = document.createElement('option');
+                        dOpt.value = displayText;
+                        datalist.appendChild(dOpt);
+                    }
+                }
+            });
+        });
+
+        if (visibleCount === 0) {
+            container.innerHTML = '<span class="text-muted small p-2">ไม่พบเขต/อำเภอที่ค้นหา</span>';
+        }
+
+        document.getElementById('districtCountBadge').textContent = selectedDistricts.length + ' อำเภอที่เลือก';
+    }
+
+    function filterDistrictChips() {
+        renderDistrictChips();
+    }
+
+    function addCurrentSearchedDistrict() {
+        const input = document.getElementById('districtSearchInput');
+        const val = (input.value || '').trim();
+        if (!val) return;
+
+        // Try exact match or first unselected visible chip
+        const firstChip = document.querySelector('#districtChipContainer .district-chip:not(.selected)');
+        if (firstChip) {
+            firstChip.click();
+            input.value = '';
+            renderDistrictChips();
+        } else {
+            const dropdown = document.getElementById('districtDropdown');
+            if (dropdown.options.length > 1) {
+                dropdown.selectedIndex = 1;
+                addSelectedDistrict();
+                input.value = '';
             }
+        }
+    }
+
+    function handleDistrictSearchKeyDown(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addCurrentSearchedDistrict();
+        }
+    }
+
+    function toggleDistrictChip(distKey, districtLabel, cleanName, prov) {
+        const idx = selectedDistricts.findIndex(sd => {
+            const sdClean = sd.replace(/\s*\(.*?\)/, '').replace(/^(เขต|อำเภอ|อ\.)\s*/, '').trim().toLowerCase();
+            return sd === distKey || 
+                   sd === districtLabel || 
+                   sd === cleanName || 
+                   sdClean === cleanName.toLowerCase();
         });
 
-        Array.from(availableDistricts).sort().forEach(d => {
-            const opt = document.createElement('option');
-            opt.value = d;
-            opt.textContent = d;
-            districtDropdown.appendChild(opt);
+        if (idx >= 0) {
+            selectedDistricts.splice(idx, 1);
+        } else {
+            if (prov && !selectedProvinces.includes(prov)) {
+                selectedProvinces.push(prov);
+                renderProvinceChips();
+                renderProvinceTags();
+            }
+            selectedDistricts.push(distKey);
+        }
+        renderDistrictChips();
+        renderDistrictTags();
+    }
+
+    function selectAllFilteredDistricts() {
+        const query = (document.getElementById('districtSearchInput').value || '').trim().toLowerCase();
+        const provsToUse = selectedProvinces.length > 0 ? selectedProvinces : Object.keys(provinceDistrictsMap);
+
+        provsToUse.forEach(prov => {
+            const dists = getDistrictsForProvince(prov);
+            const isBkk = prov.includes('กรุงเทพ') || prov.includes('กทม');
+
+            dists.forEach(d => {
+                const cleanName = d.replace(/^(เขต|อำเภอ|อ\.)\s*/, '').trim();
+                const districtLabel = isBkk ? ('เขต' + cleanName) : ('อ.' + cleanName);
+                const distKey = `${districtLabel} (${prov})`;
+                const searchTarget = `${cleanName} ${districtLabel} ${distKey} ${prov} เขต อำเภอ อ.`.toLowerCase();
+
+                const isMatch = !query || searchTarget.includes(query);
+
+                if (isMatch) {
+                    const isSelected = selectedDistricts.some(sd => {
+                        const sdClean = sd.replace(/\s*\(.*?\)/, '').replace(/^(เขต|อำเภอ|อ\.)\s*/, '').trim().toLowerCase();
+                        return sd === distKey || 
+                               sd === districtLabel || 
+                               sd === cleanName || 
+                               sdClean === cleanName.toLowerCase();
+                    });
+                    if (!isSelected) {
+                        if (prov && !selectedProvinces.includes(prov)) {
+                            selectedProvinces.push(prov);
+                        }
+                        selectedDistricts.push(distKey);
+                    }
+                }
+            });
         });
+        renderProvinceChips();
+        renderProvinceTags();
+        renderDistrictChips();
+        renderDistrictTags();
     }
 
     function addSelectedDistrict() {
-        const dist = document.getElementById('districtDropdown').value;
-        if (dist && !selectedDistricts.includes(dist)) {
-            selectedDistricts.push(dist);
-            renderDistrictTags();
+        const val = document.getElementById('districtDropdown').value;
+        if (val) {
+            const match = val.match(/^(.*?)\s*\((.*?)\)$/);
+            const label = match ? match[1].trim() : val.trim();
+            const prov = match ? match[2].trim() : '';
+            const clean = label.replace(/^(เขต|อำเภอ|อ\.)\s*/, '').trim();
+            toggleDistrictChip(val, label, clean, prov);
+            document.getElementById('districtDropdown').value = '';
         }
     }
 
     function removeDistrict(dist) {
         selectedDistricts = selectedDistricts.filter(d => d !== dist);
+        renderDistrictChips();
         renderDistrictTags();
     }
 
@@ -680,6 +956,7 @@
             container.appendChild(span);
         });
         document.getElementById('allowedDistrictsHidden').value = selectedDistricts.join(', ');
+        document.getElementById('districtCountBadge').textContent = selectedDistricts.length + ' อำเภอที่เลือก';
     }
 
     // --- SALES REP CHIP BROWSER ---
@@ -755,6 +1032,8 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         renderProvinceChips();
+        renderDistrictChips();
+        renderDistrictTags();
         renderSalesRepChips();
     });
 </script>
