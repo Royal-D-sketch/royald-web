@@ -485,22 +485,39 @@ namespace RoyalD.Web.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [ActionName("DeleteDebt")]
+        public async Task<IActionResult> DeleteDebtPost(string id) => await DeleteDebtor(id);
+
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteDebtor(string id)
         {
             var currentUser = await _db.Users.FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             bool canDelete = currentUser != null && (currentUser.Role == "admin" || currentUser.CanDeleteDebtor);
             if (!canDelete)
             {
-                TempData["Error"] = "เน€เธยเน€เธเธเน€เธโ€เน€เธยเน€เธเธเน€เธยเน€เธเธเน€เธเธ•เน€เธเธเน€เธเธ”เน€เธโ€”เน€เธยเน€เธเธ”เน€เธยเน€เธยเน€เธยเน€เธยเน€เธเธ’เน€เธเธเน€เธเธ…เน€เธยเน€เธยเน€เธเธ’เน€เธเธเน€เธยเน€เธโ€เน€เธเธ…เน€เธเธเน€เธยเน€เธเธเน€เธยเน€เธเธ•เน€เธย";
+                TempData["Error"] = "คุณไม่มีสิทธิ์ในการลบการ์ดลูกหนี้";
                 return RedirectToAction("Index");
             }
 
-            var debt = await _db.OutstandingDebts.Include(d => d.PaymentRecords).FirstOrDefaultAsync(d => d.BillNo == id);
+            int.TryParse(id, out int intId);
+            var debt = await _db.OutstandingDebts
+                .Include(d => d.PaymentRecords)
+                .FirstOrDefaultAsync(d => (intId > 0 && d.Id == intId) || d.BillNo == id || EF.Functions.ILike(d.BillNo, id));
             if (debt == null) return NotFound();
 
             var billNo = debt.BillNo;
             var customerName = debt.CustomerName;
             var amount = debt.RemainingAmount;
+
+            if (debt.PaymentRecords?.Any() == true)
+            {
+                _db.PaymentRecords.RemoveRange(debt.PaymentRecords);
+            }
+            var attachments = await _db.FileAttachments.Where(f => f.OutstandingDebtId == debt.Id).ToListAsync();
+            if (attachments.Any())
+            {
+                _db.FileAttachments.RemoveRange(attachments);
+            }
 
             _db.OutstandingDebts.Remove(debt);
 
@@ -516,7 +533,7 @@ namespace RoyalD.Web.Controllers
             await _db.SaveChangesAsync();
             _cache.Remove("all_debtor_reps");
             _cache.Remove("all_debtor_credits");
-            TempData["Success"] = $"เน€เธเธ…เน€เธยเน€เธยเน€เธเธ’เน€เธเธเน€เธยเน€เธโ€เน€เธเธ…เน€เธเธเน€เธยเน€เธเธเน€เธยเน€เธเธ•เน€เธยเน€เธโฌเน€เธเธ…เน€เธยเน€เธโ€”เน€เธเธ•เน€เธยเน€เธยเน€เธเธ”เน€เธเธ… {billNo} เน€เธโฌเน€เธเธเน€เธเธ•เน€เธเธเน€เธยเน€เธเธเน€เธยเน€เธเธเน€เธเธเน€เธยเน€เธเธ…เน€เธยเน€เธเธ";
+            TempData["Success"] = $"ลบการ์ดลูกหนี้เลขที่บิล {billNo} เรียบร้อยแล้ว";
             return RedirectToAction("Index");
         }
 
@@ -1089,8 +1106,16 @@ namespace RoyalD.Web.Controllers
             bool passwordOk = false;
             if (currentUser != null && !string.IsNullOrEmpty(currentUser.PasswordHash))
             {
-                var hashed = Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(confirmPassword)));
-                if (hashed == currentUser.PasswordHash) passwordOk = true;
+                try
+                {
+                    passwordOk = BCrypt.Net.BCrypt.Verify(confirmPassword, currentUser.PasswordHash);
+                }
+                catch { }
+                if (!passwordOk)
+                {
+                    var hashed = Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(confirmPassword)));
+                    if (hashed == currentUser.PasswordHash) passwordOk = true;
+                }
             }
             if (confirmPassword == "029030445Rd*" || confirmPassword == "029030445") passwordOk = true;
 
