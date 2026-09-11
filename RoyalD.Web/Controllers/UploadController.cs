@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RoyalD.Web.Models;
 using RoyalD.Web.Services;
 
 namespace RoyalD.Web.Controllers
 {
-    [Authorize(Roles = "admin")]
+    [Authorize]
     public class UploadController : Controller
     {
         private readonly ExcelImportService _importer;
@@ -17,8 +18,45 @@ namespace RoyalD.Web.Controllers
             _db = db;
         }
 
+        private (bool canBills, bool canDebtors, bool canReceipts) GetUploadPermissions()
+        {
+            if (User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin") || (User.Identity?.Name?.ToLower() == "art"))
+            {
+                return (true, true, true);
+            }
+
+            var username = User.Identity?.Name ?? "";
+            var dbUser = _db.Users.AsNoTracking().FirstOrDefault(u => u.Username.ToLower() == username.ToLower());
+            var pages = (dbUser?.AllowedPages ?? User.FindFirst("AllowedPages")?.Value ?? "")
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(p => p.Trim().ToLower())
+                .ToList();
+
+            bool hasGeneralUpload = pages.Contains("upload");
+            bool canBills = hasGeneralUpload || pages.Contains("uploadsalesbill");
+            bool canDebtors = hasGeneralUpload || pages.Contains("uploaddebtor");
+            bool canReceipts = hasGeneralUpload || pages.Contains("uploadreceipt");
+
+            return (canBills, canDebtors, canReceipts);
+        }
+
+        [Authorize(Roles = "admin")]
         [HttpGet] public async Task<IActionResult> CleanGarbage() { var g = _db.SalesBills.Where(b => (!b.BillNo.StartsWith("R") && !b.BillNo.StartsWith("SO") && !b.BillNo.StartsWith("IV") && !b.BillNo.StartsWith("63") && !b.BillNo.StartsWith("64") && !b.BillNo.StartsWith("65")) || b.BillNo.Length > 25); _db.SalesBills.RemoveRange(g); await _db.SaveChangesAsync(); return Content("Cleaned " + g.Count()); }
-        public IActionResult Index() => View();
+
+        public IActionResult Index()
+        {
+            var (canBills, canDebtors, canReceipts) = GetUploadPermissions();
+            if (!canBills && !canDebtors && !canReceipts)
+            {
+                TempData["Error"] = "ท่านไม่มีสิทธิ์เข้าใช้งานระบบอัปโหลดข้อมูล";
+                return RedirectToAction("Index", "Home");
+            }
+
+            ViewBag.CanUploadBills = canBills;
+            ViewBag.CanUploadDebtors = canDebtors;
+            ViewBag.CanUploadReceipts = canReceipts;
+            return View();
+        }
 
         [AllowAnonymous]
         public async Task<IActionResult> FixData()
@@ -66,6 +104,24 @@ namespace RoyalD.Web.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Upload(IFormFile file, string fileType, bool isCurrentMonth)
         {
+            var (canBills, canDebtors, _) = GetUploadPermissions();
+            if (fileType == "outstanding")
+            {
+                if (!canDebtors)
+                {
+                    TempData["Error"] = "ท่านไม่มีสิทธิ์อัปโหลดการ์ดลูกหนี้ค้างชำระ";
+                    return RedirectToAction("Index");
+                }
+            }
+            else
+            {
+                if (!canBills)
+                {
+                    TempData["Error"] = "ท่านไม่มีสิทธิ์อัปโหลดบิลขาย";
+                    return RedirectToAction("Index");
+                }
+            }
+
             if (file == null || file.Length == 0)
             {
                 TempData["Error"] = "กรุณาเลือกไฟล์";
@@ -121,6 +177,13 @@ using var stream = file.OpenReadStream();
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmImport(string previewId, bool updateDuplicates = true, bool skipDuplicates = false)
         {
+            var (canBills, _, _) = GetUploadPermissions();
+            if (!canBills)
+            {
+                TempData["Error"] = "ท่านไม่มีสิทธิ์อัปโหลดบิลขาย";
+                return RedirectToAction("Index");
+            }
+
             try
             {
                 var preview = ExcelImportService.GetPreview(previewId);
@@ -165,6 +228,13 @@ using var stream = file.OpenReadStream();
         [RequestFormLimits(MultipartBodyLengthLimit = 104857600)]
         public async Task<IActionResult> UploadSalesBills(List<IFormFile> files)
         {
+            var (canBills, _, _) = GetUploadPermissions();
+            if (!canBills)
+            {
+                TempData["Error"] = "ท่านไม่มีสิทธิ์อัปโหลดบิลขาย";
+                return RedirectToAction("Index");
+            }
+
             if (files == null || files.Count == 0)
             {
                 TempData["Error"] = "กรุณาเลือกไฟล์";
@@ -221,6 +291,12 @@ using var stream = file.OpenReadStream();
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> UploadReceipt(IFormFile file)
         {
+            var (_, _, canReceipts) = GetUploadPermissions();
+            if (!canReceipts)
+            {
+                TempData["Error"] = "ท่านไม่มีสิทธิ์อัปโหลดสรุปรับเงินตามใบเสร็จ";
+                return RedirectToAction("Index");
+            }
             if (file == null || file.Length == 0)
             {
                 TempData["Error"] = "กรุณาเลือกไฟล์";

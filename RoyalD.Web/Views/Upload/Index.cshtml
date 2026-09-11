@@ -1,85 +1,121 @@
-﻿@{
+@{
     ViewData["Title"] = "อัปโหลดข้อมูล";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    bool canUploadBills = (ViewBag.CanUploadBills as bool?) ?? true;
+    bool canUploadDebtors = (ViewBag.CanUploadDebtors as bool?) ?? true;
+    bool canUploadReceipts = (ViewBag.CanUploadReceipts as bool?) ?? true;
 }
 
 <div class="container py-4">
-  <h3><i class="bi bi-cloud-upload"></i> Data Upload Portal</h3>
+  <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+    <h3 class="mb-0 text-primary fw-bold"><i class="bi bi-cloud-upload"></i> ศูนย์นำเข้าข้อมูล (Data Upload Portal)</h3>
+  </div>
 
-  <div class="row g-4 mt-2">
-
-    <!-- กล่องที่ 1: บิลขาย -->
-    <div class="col-12">
-      <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-          <i class="bi bi-file-earmark-spreadsheet"></i> ส่วนที่ 1: อัปโหลดไฟล์รายละเอียดบิลขาย
-          <small class="ms-2">(รองรับสูงสุด 8 ไฟล์พร้อมกัน)</small>
-        </div>
-        <div class="card-body">
-          <form asp-action="UploadSalesBills" method="post" enctype="multipart/form-data" id="formBills">
-            @Html.AntiForgeryToken()
-            <div class="mb-3">
-              <label class="form-label">เลือกไฟล์บิลขาย (.xls / .xlsx / .csv)</label>
-              <input type="file" name="files" multiple accept=".xls,.xlsx,.csv" class="form-control" id="billFiles" required>
-              <div class="form-text">เลือกได้สูงสุด 8 ไฟล์ในครั้งเดียว ระบบจะรวมไฟล์และนำเข้าอัตโนมัติ</div>
-            </div>
-            <div id="billFileList" class="mb-3"></div>
-            <div class="progress mb-3 d-none" id="billProgress">
-              <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width:100%">กำลังประมวลผล...</div>
-            </div>
-            <button type="submit" class="btn btn-primary" onclick="showProgress('billProgress')"><i class="bi bi-upload"></i> อัปโหลดบิลขาย</button>
-          </form>
-        </div>
+  @if (TempData["Success"] != null)
+  {
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <i class="bi bi-check-circle-fill me-2"></i> @TempData["Success"]
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>
-    </div>
-
-    <!-- กล่องที่ 2: การ์ดลูกหนี้ -->
-    <div class="col-md-6">
-      <div class="card shadow-sm">
-        <div class="card-header bg-warning text-dark">
-          <i class="bi bi-person-lines-fill"></i> ส่วนที่ 2: อัปโหลดการ์ดลูกหนี้ค้างชำระ
-        </div>
-        <div class="card-body">
-          <form asp-action="Upload" method="post" enctype="multipart/form-data">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="fileType" value="outstanding">
-            <input type="hidden" name="isCurrentMonth" value="false">
-            <div class="mb-3">
-              <label class="form-label">เลือกไฟล์การ์ดลูกหนี้ (.xls / .xlsx / .csv)</label>
-              <input type="file" name="file" accept=".xls,.xlsx,.csv" class="form-control" required>
-              <div class="form-text">ระบบจะเขียนทับข้อมูลลูกหนี้ทั้งหมดที่สถานะ Outstanding</div>
-            </div>
-            <div class="progress mb-3 d-none" id="debtProgress">
-              <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" style="width:100%">กำลังประมวลผล...</div>
-            </div>
-            <button type="submit" class="btn btn-warning" onclick="showProgress('debtProgress')"><i class="bi bi-upload"></i> อัปโหลดการ์ดลูกหนี้</button>
-          </form>
-        </div>
+  }
+  @if (TempData["Error"] != null)
+  {
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["Error"]
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>
-    </div>
-
-    <!-- กล่องที่ 3: สรุปรับเงิน -->
-    <div class="col-md-6">
-      <div class="card shadow-sm">
-        <div class="card-header bg-success text-white">
-          <i class="bi bi-receipt"></i> ส่วนที่ 3: อัปโหลดสรุปการรับเงินตามใบเสร็จ
-        </div>
-        <div class="card-body">
-          <form asp-action="UploadReceipt" method="post" enctype="multipart/form-data">
-            @Html.AntiForgeryToken()
-            <div class="mb-3">
-              <label class="form-label">เลือกไฟล์สรุปรับเงิน (.xls / .xlsx / .csv)</label>
-              <input type="file" name="file" accept=".xls,.xlsx,.csv" class="form-control" required>
-              <div class="form-text">ระบบจะจับคู่ข้อมูลเลขที่ใบเสร็จและวันที่รับเงินเข้าสู่การ์ดลูกหนี้</div>
-            </div>
-            <div class="progress mb-3 d-none" id="receiptProgress">
-              <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width:100%">กำลังประมวลผล...</div>
-            </div>
-            <button type="submit" class="btn btn-success" onclick="showProgress('receiptProgress')"><i class="bi bi-upload"></i> อัปโหลดสรุปรับเงิน</button>
-          </form>
-        </div>
+  }
+  @if (TempData["Info"] != null)
+  {
+      <div class="alert alert-info alert-dismissible fade show" role="alert">
+          <i class="bi bi-info-circle-fill me-2"></i> @TempData["Info"]
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>
-    </div>
+  }
+
+  <div class="row g-4 mt-1">
+
+    @if (canUploadBills)
+    {
+        <!-- กล่องที่ 1: บิลขาย -->
+        <div class="col-12">
+          <div class="card shadow-sm border-primary">
+            <div class="card-header bg-primary text-white fw-bold">
+              <i class="bi bi-file-earmark-spreadsheet me-1"></i> ส่วนที่ 1: อัปโหลดไฟล์รายละเอียดบิลขาย
+              <small class="ms-2 fw-normal opacity-75">(รองรับสูงสุด 8 ไฟล์พร้อมกัน)</small>
+            </div>
+            <div class="card-body">
+              <form asp-action="UploadSalesBills" method="post" enctype="multipart/form-data" id="formBills">
+                @Html.AntiForgeryToken()
+                <div class="mb-3">
+                  <label class="form-label fw-bold">เลือกไฟล์บิลขาย (.xls / .xlsx / .csv)</label>
+                  <input type="file" name="files" multiple accept=".xls,.xlsx,.csv" class="form-control" id="billFiles" required>
+                  <div class="form-text">เลือกได้สูงสุด 8 ไฟล์ในครั้งเดียว ระบบจะรวมไฟล์และนำเข้าอัตโนมัติ</div>
+                </div>
+                <div id="billFileList" class="mb-3"></div>
+                <div class="progress mb-3 d-none" id="billProgress">
+                  <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width:100%">กำลังประมวลผล...</div>
+                </div>
+                <button type="submit" class="btn btn-primary fw-bold" onclick="showProgress('billProgress')"><i class="bi bi-upload"></i> อัปโหลดบิลขาย</button>
+              </form>
+            </div>
+          </div>
+        </div>
+    }
+
+    @if (canUploadDebtors)
+    {
+        <!-- กล่องที่ 2: การ์ดลูกหนี้ -->
+        <div class="@(canUploadBills && canUploadReceipts ? "col-md-6" : (canUploadReceipts ? "col-md-6" : "col-12"))">
+          <div class="card shadow-sm border-warning h-100">
+            <div class="card-header bg-warning text-dark fw-bold">
+              <i class="bi bi-person-lines-fill me-1"></i> ส่วนที่ 2: อัปโหลดการ์ดลูกหนี้ค้างชำระ
+            </div>
+            <div class="card-body">
+              <form asp-action="Upload" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="fileType" value="outstanding">
+                <input type="hidden" name="isCurrentMonth" value="false">
+                <div class="mb-3">
+                  <label class="form-label fw-bold">เลือกไฟล์การ์ดลูกหนี้ (.xls / .xlsx / .csv)</label>
+                  <input type="file" name="file" accept=".xls,.xlsx,.csv" class="form-control" required>
+                  <div class="form-text">ระบบจะเขียนทับข้อมูลลูกหนี้ทั้งหมดที่สถานะ Outstanding</div>
+                </div>
+                <div class="progress mb-3 d-none" id="debtProgress">
+                  <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" style="width:100%">กำลังประมวลผล...</div>
+                </div>
+                <button type="submit" class="btn btn-warning fw-bold text-dark" onclick="showProgress('debtProgress')"><i class="bi bi-upload"></i> อัปโหลดการ์ดลูกหนี้</button>
+              </form>
+            </div>
+          </div>
+        </div>
+    }
+
+    @if (canUploadReceipts)
+    {
+        <!-- กล่องที่ 3: สรุปรับเงิน -->
+        <div class="@(canUploadBills && canUploadDebtors ? "col-md-6" : (canUploadDebtors ? "col-md-6" : "col-12"))">
+          <div class="card shadow-sm border-success h-100">
+            <div class="card-header bg-success text-white fw-bold">
+              <i class="bi bi-receipt me-1"></i> ส่วนที่ 3: อัปโหลดสรุปการรับเงินตามใบเสร็จ
+            </div>
+            <div class="card-body">
+              <form asp-action="UploadReceipt" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div class="mb-3">
+                  <label class="form-label fw-bold">เลือกไฟล์สรุปรับเงิน (.xls / .xlsx / .csv)</label>
+                  <input type="file" name="file" accept=".xls,.xlsx,.csv" class="form-control" required>
+                  <div class="form-text">ระบบจะจับคู่ข้อมูลเลขที่ใบเสร็จและวันที่รับเงินเข้าสู่การ์ดลูกหนี้</div>
+                </div>
+                <div class="progress mb-3 d-none" id="receiptProgress">
+                  <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width:100%">กำลังประมวลผล...</div>
+                </div>
+                <button type="submit" class="btn btn-success fw-bold" onclick="showProgress('receiptProgress')"><i class="bi bi-upload"></i> อัปโหลดสรุปรับเงิน</button>
+              </form>
+            </div>
+          </div>
+        </div>
+    }
 
   </div><!-- /row -->
 </div>

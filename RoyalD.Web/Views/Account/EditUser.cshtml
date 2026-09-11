@@ -276,16 +276,39 @@
                         <div class="col-md-3">
                             <div class="p-3 perm-card">
                                 <div class="form-check">
-                                    <input class="form-check-input page-check" type="checkbox" name="pages" value="Upload" id="p_up"
-                                           checked="@(Model.Role == "admin" || userPages.Contains("upload"))">
-                                    <label class="form-check-label fw-bold" for="p_up">
-                                        <i class="bi bi-cloud-upload text-dark me-1"></i> อัปโหลดบิลขาย
+                                    <input class="form-check-input page-check" type="checkbox" name="pages" value="UploadSalesBill" id="p_up_salesbill"
+                                           checked="@(Model.Role == "admin" || userPages.Contains("uploadsalesbill") || userPages.Contains("upload"))">
+                                    <label class="form-check-label fw-bold text-primary" for="p_up_salesbill">
+                                        <i class="bi bi-file-earmark-spreadsheet me-1"></i> อัปโหลดบิลขาย
                                     </label>
                                 </div>
-                                <small class="text-muted d-block ms-4" style="font-size:0.78rem;">นำเข้าไฟล์ Excel สู่ระบบ</small>
+                                <small class="text-muted d-block ms-4" style="font-size:0.78rem;">นำเข้าไฟล์รายละเอียดบิลขาย</small>
                             </div>
                         </div>
-                    </div>
+                        <div class="col-md-3">
+                            <div class="p-3 perm-card">
+                                <div class="form-check">
+                                    <input class="form-check-input page-check" type="checkbox" name="pages" value="UploadDebtor" id="p_up_debtor"
+                                           checked="@(Model.Role == "admin" || userPages.Contains("uploaddebtor") || userPages.Contains("upload"))">
+                                    <label class="form-check-label fw-bold" for="p_up_debtor" style="color:#d97706;">
+                                        <i class="bi bi-person-lines-fill text-warning me-1"></i> อัปโหลดการ์ดลูกหนี้
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block ms-4" style="font-size:0.78rem;">นำเข้าการ์ดลูกหนี้ค้างชำระ</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 perm-card">
+                                <div class="form-check">
+                                    <input class="form-check-input page-check" type="checkbox" name="pages" value="UploadReceipt" id="p_up_receipt"
+                                           checked="@(Model.Role == "admin" || userPages.Contains("uploadreceipt") || userPages.Contains("upload"))">
+                                    <label class="form-check-label fw-bold text-success" for="p_up_receipt">
+                                        <i class="bi bi-receipt me-1"></i> อัปโหลดสรุปรับเงิน
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block ms-4" style="font-size:0.78rem;">นำเข้าสรุปรับเงินตามใบเสร็จ</small>
+                            </div>
+                        </div>
                           <div class="col-md-3">
                               <div class="p-3 perm-card">
                                   <div class="form-check">
@@ -341,6 +364,7 @@
                                   <small class="text-muted d-block ms-4" style="font-size:0.78rem;">รายการรับคืน</small>
                               </div>
                           </div>
+                    </div>
 
                     <!-- 3. ขอบเขตพื้นที่และข้อมูลที่รับผิดชอบ -->
                     <h5 class="fw-bold mb-3" style="color:#0f766e; border-bottom:2px solid #ccfbf1; padding-bottom:8px;">

@@ -36,7 +36,7 @@
     bool hasInstallment = isAdmin || allowedPagesList.Contains("installment");
     bool hasBadDebt = isAdmin || allowedPagesList.Contains("baddebt");
     bool hasReturnNotes = isAdmin || allowedPagesList.Contains("returnnotes");
-    bool hasUpload = isAdmin || allowedPagesList.Contains("upload");
+    bool hasUpload = isAdmin || allowedPagesList.Contains("upload") || allowedPagesList.Contains("uploadsalesbill") || allowedPagesList.Contains("uploaddebtor") || allowedPagesList.Contains("uploadreceipt");
 }
 <!DOCTYPE html>
 <html lang="th">

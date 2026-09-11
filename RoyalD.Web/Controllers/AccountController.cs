@@ -258,7 +258,7 @@ namespace RoyalD.Web.Controllers
                 new Claim("SessionTimeout", (user.SessionTimeoutMinutes.HasValue && user.SessionTimeoutMinutes > 0 ? user.SessionTimeoutMinutes.Value : (isSalesRep ? 10 : 0)).ToString()),
                 new Claim("CanDownload", canDownloadFinal ? "true" : "false"),
                 new Claim("CanScreenCapture", canCaptureFinal ? "true" : "false"),
-                new Claim("AllowedPages", isMasterAdmin ? "Dashboard,SalesBill,Debtor,DebtorHistory,Cancelled,WaitingGoods,SalesReport,Audit,Users,Upload,PaymentDetails" : (user.AllowedPages ?? "")),
+                new Claim("AllowedPages", isMasterAdmin ? "Dashboard,SalesBill,Debtor,DebtorHistory,Cancelled,WaitingGoods,SalesReport,Audit,Users,Upload,UploadSalesBill,UploadDebtor,UploadReceipt,PaymentDetails" : (user.AllowedPages ?? "")),
                 new Claim("AllowedRegion", user.AllowedRegion ?? ""),
                 new Claim("AllowedProvinces", user.AllowedProvinces ?? ""),
                 new Claim("AllowedDistricts", user.AllowedDistricts ?? "")

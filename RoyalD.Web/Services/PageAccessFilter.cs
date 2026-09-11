@@ -95,7 +95,7 @@ namespace RoyalD.Web.Services
                 }
                 else if (controller == "debtorcard" && allowedList.Contains("debtor")) isAllowed = true;
                 else if (controller == "audit" && allowedList.Contains("audit")) isAllowed = true;
-                else if (controller == "upload" && allowedList.Contains("upload")) isAllowed = true;
+                else if (controller == "upload" && (allowedList.Contains("upload") || allowedList.Contains("uploadsalesbill") || allowedList.Contains("uploaddebtor") || allowedList.Contains("uploadreceipt"))) isAllowed = true;
                 else if ((controller == "users" || controller == "usermanagement" || (controller == "account" && (action == "users" || action == "createuser" || action == "edituser"))) && allowedList.Contains("users")) isAllowed = true;
 
                 if (!isAllowed)
