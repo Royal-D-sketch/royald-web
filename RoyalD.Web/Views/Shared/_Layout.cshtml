@@ -881,8 +881,42 @@ else
                 triggerScreenCaptureBlackout('BEFORE_PRINT');
             });
 
-            // 6. ปิดระบบจอดำเมื่อไม่มีการใช้งาน (Disabled idle blackout)
-            // เพื่อให้ผู้ใช้สามารถเปิดหน้าจอค้างไว้ใช้งานได้ตลอดทั้งวันโดยไม่จอดำ
+            // 6. Idle Timeout: ถ้าไม่มีการเคลื่อนไหว 5 นาที → จอดำ → logout อัตโนมัติ
+            (function() {
+                var IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 นาที
+                var idleTimer = null;
+
+                function resetIdleTimer() {
+                    clearTimeout(idleTimer);
+                    idleTimer = setTimeout(function() {
+                        // จอดำทันที
+                        var blocker = document.createElement('div');
+                        blocker.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;color:#fff;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;';
+                        blocker.innerHTML = '<div style="font-size:2rem;font-weight:bold;color:#fbbf24;margin-bottom:16px;"><i class="bi bi-clock-history me-2"></i>หมดเวลาใช้งาน</div>' +
+                            '<div style="font-size:1.1rem;color:#fca5a5;margin-bottom:8px;">ไม่มีการเคลื่อนไหวนาน 5 นาที — ระบบออกจากบัญชีอัตโนมัติ</div>' +
+                            '<div style="font-size:0.95rem;color:#94a3b8;">กรุณาล็อกอินใหม่เพื่อใช้งาน</div>';
+                        document.body.appendChild(blocker);
+                        document.body.style.pointerEvents = 'none';
+
+                        // logout
+                        fetch('/Account/ForceLogout', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ reason: 'IDLE_TIMEOUT_5_MINS', lat: '', lng: '' })
+                        }).then(function() {
+                            window.location.replace('/Account/Login?blocked=idle');
+                        }).catch(function() {
+                            window.location.replace('/Account/Login?blocked=idle');
+                        });
+                    }, IDLE_TIMEOUT_MS);
+                }
+
+                // ตรวจจับการเคลื่อนไหวทุกประเภท
+                ['mousemove','mousedown','keydown','touchstart','touchmove','scroll','click','wheel'].forEach(function(evt) {
+                    document.addEventListener(evt, resetIdleTimer, true);
+                });
+                resetIdleTimer(); // เริ่มนับทันทีที่โหลดหน้า
+            })();
 
         })();
         </script>
@@ -892,12 +926,15 @@ else
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // Auto-ping เพื่อรักษา session ไม่ให้หมดอายุ
+        // Auto-ping เพื่อรักษา session ไม่ให้หมดอายุ (เฉพาะ Admin และผู้ที่ไม่ใช่ผู้แทนขาย)
         (function(){
             if(!document.cookie.includes('.AspNetCore.Cookies')) return;
+            // ผู้แทนขาย: ไม่ ping → session จะหมดตาม idle timeout 5 นาที
+            var isRestrictedUser = @(canScreenCapture ? "false" : "true");
+            if(isRestrictedUser) return; // ผู้แทนขาย/ผู้ถูกจำกัดสิทธิ์ ไม่ ping
             setInterval(function(){
                 fetch('/Account/Ping',{credentials:'same-origin'}).catch(function(){});
-            }, 10 * 60 * 1000); // ทุก 10 นาที
+            }, 10 * 60 * 1000); // Admin/ซูเปอร์ไวเซอร์: ping ทุก 10 นาที
         })();
         
         // SweetAlert สำหรับแสดงผล TempData
