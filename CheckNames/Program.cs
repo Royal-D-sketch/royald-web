@@ -6,23 +6,20 @@ var connStr = "Host=aws-0-ap-southeast-1.pooler.supabase.com;Port=5432;Database=
 using var conn = new NpgsqlConnection(connStr);
 conn.Open();
 
-Console.WriteLine("=== SUPERVISOR USERS ===");
-var sql = @"SELECT ""Id"", ""Username"", ""FullName"", ""Role"", ""Position"", ""SalesRepCode"",
-           ""AllowedRegion"", ""AllowedProvinces"", ""IsActive""
-    FROM ""Users""
-    WHERE ""Username"" IN ('Sunya','Weeranut','Namphet')
-       OR ""FullName"" ILIKE '%สัญญา%'
-       OR ""FullName"" ILIKE '%วีรนุช%'
-       OR ""FullName"" ILIKE '%น้ำเพชร%'
-    ORDER BY ""Id""";
+// อัปเดต Weeranut: ภาคกลาง, ภาคตะวันออก, ภาคอีสาน
+using var cmd1 = new NpgsqlCommand(@"UPDATE ""Users"" SET ""AllowedRegion"" = @r WHERE ""Username"" = 'Weeranut'", conn);
+cmd1.Parameters.AddWithValue("r", "ภาคกลาง,ภาคตะวันออก,ภาคอีสาน");
+int r1 = cmd1.ExecuteNonQuery();
+Console.WriteLine($"Weeranut updated: {r1} row(s)");
 
-using var cmd = new NpgsqlCommand(sql, conn);
-using var reader = cmd.ExecuteReader();
-while (reader.Read())
-{
-    Console.WriteLine($"ID:{reader["Id"]} | User:'{reader["Username"]}' | Name:'{reader["FullName"]}' | SalesRepCode:'{reader["SalesRepCode"]}'");
-    Console.WriteLine($"  AllowedRegion:    '{reader["AllowedRegion"]}'");
-    Console.WriteLine($"  AllowedProvinces: '{reader["AllowedProvinces"]}'");
-    Console.WriteLine($"  IsActive: {reader["IsActive"]}");
+// ตรวจสอบทั้ง 3 คน
+using var cmd2 = new NpgsqlCommand(@"SELECT ""Username"", ""FullName"", ""SalesRepCode"", ""AllowedRegion"", ""AllowedProvinces"" FROM ""Users"" WHERE ""Username"" IN ('Sunya','Weeranut','NamPetCh32') ORDER BY ""Id""", conn);
+using var rdr = cmd2.ExecuteReader();
+Console.WriteLine("=== Current Supervisor Settings ===");
+while (rdr.Read()) {
+    Console.WriteLine($"User: {rdr["Username"]} | Name: {rdr["FullName"]}");
+    Console.WriteLine($"  SalesRepCode:    {rdr["SalesRepCode"]}");
+    Console.WriteLine($"  AllowedRegion:   {rdr["AllowedRegion"]}");
+    Console.WriteLine($"  AllowedProvinces:{rdr["AllowedProvinces"]}");
     Console.WriteLine("---");
 }

@@ -124,7 +124,7 @@ namespace RoyalD.Web.Controllers
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
 
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion))
+            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion) && string.IsNullOrEmpty(currentUser?.AllowedProvinces))
             {
                 salesRep = currentUser.SalesRepCode;
             }
@@ -343,7 +343,7 @@ if (!string.IsNullOrEmpty(poSearch))
             
             ViewBag.AllProvincesMap = RegionHelper.DisplayProvinces;
 
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion))
+            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion) && string.IsNullOrEmpty(currentUser?.AllowedProvinces))
             {
                 var userRepInputs = currentUser.SalesRepCode.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList();
                 var matchedForUser = allDbReps.Where(dbRep => 
@@ -524,7 +524,7 @@ if (!string.IsNullOrEmpty(poSearch))
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
 
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion))
+            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion) && string.IsNullOrEmpty(currentUser?.AllowedProvinces))
             {
                 salesRep = currentUser.SalesRepCode;
             }
