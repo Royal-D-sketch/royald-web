@@ -724,18 +724,20 @@ else
                 if (isBlackoutTriggered) return;
                 isBlackoutTriggered = true;
 
-                // สร้างหน้าจอดำชั่วคราวทับทันทีเพื่อทำลายภาพแคป/วิดีโอที่พยายามบันทึก
+                // ปิดกั้นทุก input ทันที
+                document.body.style.pointerEvents = 'none';
+
+                // จอดำถาวร — ไม่กลับมาหน้าเดิมเด็ดขาด
                 const blocker = document.createElement('div');
                 blocker.id = 'tempCaptureBlocker';
-                blocker.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000000;color:#ffffff;z-index:9999999;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;';
-                blocker.innerHTML = '<div style="color:#ef4444;font-size:2.2rem;font-weight:bold;margin-bottom:12px;"><i class="bi bi-shield-x me-2"></i>ตรวจพบการพยายามบันทึกภาพ/วิดีโอ</div><div style="font-size:1.15rem;color:#f87171;font-weight:600;">เอกสารลับเฉพาะภายใน บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด ห้ามเผยแพร่โดยเด็ดขาด</div>';
+                blocker.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000000;color:#ffffff;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;';
+                blocker.innerHTML = '<div style="color:#ef4444;font-size:2.2rem;font-weight:bold;margin-bottom:18px;"><i class="bi bi-shield-x me-2"></i>ตรวจพบการพยายามบันทึกภาพ/วิดีโอ</div>' +
+                    '<div style="font-size:1.15rem;color:#f87171;font-weight:600;margin-bottom:12px;">เอกสารลับเฉพาะภายใน บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด</div>' +
+                    '<div style="font-size:1rem;color:#fca5a5;margin-bottom:24px;">บัญชีของคุณถูกตัดออกจากระบบอัตโนมัติ — กรุณาติดต่อผู้ดูแลระบบ</div>' +
+                    '<div id="logoutCountdown" style="font-size:1.4rem;color:#fbbf24;font-weight:bold;">กำลังออกจากระบบ...</div>';
                 document.body.appendChild(blocker);
 
-                setTimeout(function() {
-                    if (blocker && blocker.parentNode) blocker.parentNode.removeChild(blocker);
-                    isBlackoutTriggered = false;
-                }, 2000);
-
+                // บันทึกล็อกและ Logout ทันที
                 try {
                     fetch('/Account/LogSecurityViolation', {
                         method: 'POST',
@@ -743,6 +745,20 @@ else
                         body: 'action=' + encodeURIComponent(reason)
                     }).catch(function(){});
                 } catch(err) {}
+
+                // Force logout ทันทีหลัง 1.5 วินาที (เพื่อให้จอดำขึ้นก่อน)
+                setTimeout(function() {
+                    // เรียก ForceLogout endpoint (รองรับ JSON body)
+                    fetch('/Account/ForceLogout', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ reason: 'SCREEN_CAPTURE_BLOCKED', lat: '', lng: '' })
+                    }).then(function() {
+                        window.location.replace('/Account/Login?blocked=capture');
+                    }).catch(function() {
+                        window.location.replace('/Account/Login?blocked=capture');
+                    });
+                }, 1500);
             }
 
             // 2. ดักจับการใช้ Screen Recording API (WebRTC getDisplayMedia & MediaRecorder)

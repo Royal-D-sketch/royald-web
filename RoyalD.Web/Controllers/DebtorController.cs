@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -41,7 +41,7 @@ namespace RoyalD.Web.Controllers
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
 
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode))
+            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion))
             {
                 salesRep = currentUser.SalesRepCode;
             }
@@ -195,7 +195,7 @@ namespace RoyalD.Web.Controllers
                 .OrderBy(s => s)
                 .ToList();
 
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode))
+            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion))
             {
                 var userRepInputs = currentUser.SalesRepCode.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList();
                 var matchedForUser = allDbReps.Where(dbRep => 
@@ -253,7 +253,7 @@ namespace RoyalD.Web.Controllers
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
 
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode)) salesRep = currentUser.SalesRepCode;
+            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion)) salesRep = currentUser.SalesRepCode;
             if (isRestricted && !string.IsNullOrEmpty(userAllowedRegion)) region = userAllowedRegion;
 
             var debts = await _svc.GetDebtorsAsync(
@@ -341,7 +341,7 @@ namespace RoyalD.Web.Controllers
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
 
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode)) salesRep = currentUser.SalesRepCode;
+            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion)) salesRep = currentUser.SalesRepCode;
             if (isRestricted && !string.IsNullOrEmpty(userAllowedRegion)) region = userAllowedRegion;
 
             var debts = await _svc.GetDebtorsAsync(search, region, province, salesRep, null, credit, userAllowedRegion, userAllowedProvinces, userAllowedDistricts);
@@ -398,7 +398,7 @@ namespace RoyalD.Web.Controllers
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
 
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode))
+            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion))
             {
                 salesRep = currentUser.SalesRepCode;
             }
@@ -545,7 +545,7 @@ namespace RoyalD.Web.Controllers
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
 
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode))
+            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion))
             {
                 salesRep = currentUser.SalesRepCode;
             }
@@ -615,7 +615,7 @@ namespace RoyalD.Web.Controllers
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
 
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode))
+            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion))
             {
                 salesRep = currentUser.SalesRepCode;
             }
@@ -1010,7 +1010,7 @@ namespace RoyalD.Web.Controllers
             string? userAllowedRegion = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedRegion) ? currentUser.AllowedRegion : null;
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode)) salesRep = currentUser.SalesRepCode;
+            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion)) salesRep = currentUser.SalesRepCode;
 
             var q = _db.OutstandingDebts
                 .Include(d => d.PaymentRecords)
@@ -1038,7 +1038,7 @@ namespace RoyalD.Web.Controllers
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
 
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode)) salesRep = currentUser.SalesRepCode;
+            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion)) salesRep = currentUser.SalesRepCode;
 
             var debts = await _svc.GetDebtorsAsync(search, userAllowedRegion, userAllowedProvinces, salesRep, "BadDebt", null, userAllowedRegion, userAllowedProvinces, userAllowedDistricts);
 
@@ -1058,7 +1058,7 @@ namespace RoyalD.Web.Controllers
             if (!canDownload) return Forbid();
 
             bool isRestricted = currentUser != null && currentUser.Role != "admin";
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode)) salesRep = currentUser.SalesRepCode;
+            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion)) salesRep = currentUser.SalesRepCode;
 
             var debts = await _svc.GetCancelledDebtsAsync(search, salesRep, 
                 isRestricted ? currentUser?.AllowedRegion : null,
@@ -1077,7 +1077,7 @@ namespace RoyalD.Web.Controllers
             if (!canDownload) return Forbid();
 
             bool isRestricted = currentUser != null && currentUser.Role != "admin";
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode)) salesRep = currentUser.SalesRepCode;
+            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion)) salesRep = currentUser.SalesRepCode;
 
             var debts = await _svc.GetCancelledDebtsAsync(search, salesRep, 
                 isRestricted ? currentUser?.AllowedRegion : null,
