@@ -85,7 +85,12 @@ namespace RoyalD.Web.Controllers
             return View(data);
         }
 
-        public async Task<IActionResult> CustomerPurchaseSummary(string? salesRep = null, string? month = null) 
+        public async Task<IActionResult> CustomerPurchaseSummary(
+            string? salesRep = null, 
+            string? month = null,
+            string? searchCustomerCode = null,
+            string? searchCustomerName = null,
+            string? searchProductCode = null) 
         { 
             if (!CheckPerm("customerpurchasesummary")) return RedirectToAction("Index", "SalesBill");
 
@@ -103,7 +108,7 @@ namespace RoyalD.Web.Controllers
                 username = User.Identity?.Name;
             }
 
-            var vm = await _svc.GetCustomerPurchaseSummaryAsync(salesRep, month, userRepCode, userFullName, username);
+            var vm = await _svc.GetCustomerPurchaseSummaryAsync(salesRep, month, userRepCode, userFullName, username, searchCustomerCode, searchCustomerName, searchProductCode);
             return View(vm);
         }
 

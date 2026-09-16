@@ -1077,7 +1077,10 @@ namespace RoyalD.Web.Services
             string? selectedMonth = null,
             string? userSalesRepCode = null,
             string? userFullName = null,
-            string? username = null)
+            string? username = null,
+            string? searchCustomerCode = null,
+            string? searchCustomerName = null,
+            string? searchProductCode = null)
         {
             var allDbReps = await _db.SalesBills
                 .Where(b => b.SalesRep != null && b.SalesRep != "")
@@ -1156,8 +1159,40 @@ namespace RoyalD.Web.Services
                     itemQuery = itemQuery.Where(i => i.SalesBill.SourceMonth == selectedMonth);
                 }
             }
+            
+            // Apply new search filters
+            if (!string.IsNullOrWhiteSpace(searchCustomerCode))
+            {
+                var code = searchCustomerCode.Trim();
+                itemQuery = itemQuery.Where(i => EF.Functions.ILike(i.SalesBill.CustomerCode ?? "", "%" + code + "%"));
+            }
+            if (!string.IsNullOrWhiteSpace(searchCustomerName))
+            {
+                var name = searchCustomerName.Trim();
+                itemQuery = itemQuery.Where(i => EF.Functions.ILike(i.SalesBill.CustomerName ?? "", "%" + name + "%"));
+            }
+            if (!string.IsNullOrWhiteSpace(searchProductCode))
+            {
+                var pcode = searchProductCode.Trim();
+                itemQuery = itemQuery.Where(i => EF.Functions.ILike(i.ProductCode ?? "", "%" + pcode + "%"));
+            }
 
             var allItems = await itemQuery.ToListAsync();
+            
+            // All customers for autocomplete (from non-filtered base query)
+            vm.AllCustomers = await _db.SalesBills
+                .Where(b => b.CustomerCode != null && b.CustomerName != null)
+                .Select(b => new { b.CustomerCode, b.CustomerName })
+                .Distinct()
+                .OrderBy(x => x.CustomerName)
+                .Select(x => new { x.CustomerCode, x.CustomerName })
+                .ToListAsync()
+                .ContinueWith(t => t.Result.Select(x => (x.CustomerCode ?? "", x.CustomerName ?? "")).Distinct().ToList());
+
+            // Set search fields in VM
+            vm.SearchCustomerCode = searchCustomerCode ?? "";
+            vm.SearchCustomerName = searchCustomerName ?? "";
+            vm.SearchProductCode = searchProductCode ?? "";
 
             // Group by Customer + Product + UnitPrice (price split logic - separate rows per price)
             vm.Rows = allItems
@@ -1231,6 +1266,14 @@ namespace RoyalD.Web.Services
         public string SelectedMonth { get; set; } = "";
         public string SelectedSalesRep { get; set; } = "";
         public List<CustomerPurchaseSummaryRow> Rows { get; set; } = new();
+        
+        // New search filters
+        public string SearchCustomerCode { get; set; } = "";
+        public string SearchCustomerName { get; set; } = "";
+        public string SearchProductCode { get; set; } = "";
+        
+        // For autocomplete
+        public List<(string Code, string Name)> AllCustomers { get; set; } = new();
     }
 }
 
