@@ -552,71 +552,148 @@ namespace RoyalD.Web.Services
             return result;
         }
 
-                public async Task<(int matched, int notFound)> ImportReceiptMatchAsync(Stream stream, string fileName = "")
+        // ---- Receipt Upload: Preview / Confirm flow ----
+
+        private static readonly Dictionary<string, ReceiptPreviewResult> _receiptPreviews = new();
+
+        public async Task<ReceiptPreviewResult> PreviewReceiptMatchAsync(Stream stream, string fileName = "")
         {
             var conf = new ExcelReaderConfiguration { FallbackEncoding = System.Text.Encoding.GetEncoding(874) };
-              using var reader = fileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase) 
-                  ? ExcelReaderFactory.CreateCsvReader(stream, conf) 
-                  : ExcelReaderFactory.CreateReader(stream, conf);
+            using var reader = fileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
+                ? ExcelReaderFactory.CreateCsvReader(stream, conf)
+                : ExcelReaderFactory.CreateReader(stream, conf);
             var ds = reader.AsDataSet(new ExcelDataSetConfiguration { ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = false } });
             var tbl = ds.Tables[0];
-            if (tbl == null) return (0, 0);
 
-            int matched = 0, notFound = 0;
-            int headerRow = FindHeaderRow(tbl, out var map, "เธเธดเธฅ", "เนเธเน€เธชเธฃเนเธ", "เธงเธฑเธเธ—เธตเนเธฃเธฑเธเน€เธเธดเธ");
+            var result = new ReceiptPreviewResult { FileName = fileName };
+            if (tbl == null)
+            {
+                result.PreviewId = Guid.NewGuid().ToString("N");
+                lock (_receiptPreviews) { _receiptPreviews[result.PreviewId] = result; }
+                return result;
+            }
+
+            int headerRow = FindHeaderRow(tbl, out var map, "บิล", "ใบเสร็จ", "วันที่รับเงิน");
             if (headerRow < 0) headerRow = 3;
 
-            int billColIndex = GetCol(map, "เธเธดเธฅ", "เน€เธฅเธเธ—เธตเนเธเธดเธฅ", "เน€เธฅเธเธ—เธตเนเน€เธญเธเธชเธฒเธฃ");
-            int receiptColIndex = GetCol(map, "เนเธเน€เธชเธฃเนเธ", "เน€เธฅเธเธ—เธตเนเนเธเน€เธชเธฃเนเธ");
-            int dateColIndex = GetCol(map, "เธงเธฑเธเธ—เธตเนเธฃเธฑเธเน€เธเธดเธ", "เธงเธฑเธเธ—เธตเน");
-            int custColIndex = GetCol(map, "เธฃเธซเธฑเธช", "เธฅเธนเธเธเนเธฒ", "เธฃเธซเธฑเธชเธฅเธนเธเธเนเธฒ");
+            int billColIndex = GetCol(map, "บิล", "เลขที่บิล", "เลขที่เอกสาร");
+            int receiptColIndex = GetCol(map, "ใบเสร็จ", "เลขที่ใบเสร็จ");
+            int dateColIndex = GetCol(map, "วันที่รับเงิน", "วันที่");
+            int custColIndex = GetCol(map, "รหัส", "ลูกค้า", "รหัสลูกค้า");
 
             if (billColIndex < 0) billColIndex = 2;
             if (receiptColIndex < 0) receiptColIndex = 1;
             if (dateColIndex < 0) dateColIndex = 0;
 
+            var billNosInFile = new List<string>();
             for (int r = headerRow + 1; r < tbl.Rows.Count; r++)
             {
                 var row = tbl.Rows[r];
-                var billNo = billColIndex >= 0 && billColIndex < tbl.Columns.Count ? row[billColIndex]?.ToString()?.Trim() : null;
-                var receiptNo = receiptColIndex >= 0 && receiptColIndex < tbl.Columns.Count ? row[receiptColIndex]?.ToString()?.Trim() : null;
-                var receiptDateStr = dateColIndex >= 0 && dateColIndex < tbl.Columns.Count ? row[dateColIndex]?.ToString()?.Trim() : null;
+                var bn = billColIndex < tbl.Columns.Count ? row[billColIndex]?.ToString()?.Trim() : null;
+                var rn = receiptColIndex < tbl.Columns.Count ? row[receiptColIndex]?.ToString()?.Trim() : null;
+                if (!string.IsNullOrEmpty(bn) && !string.IsNullOrEmpty(rn)) billNosInFile.Add(bn);
+            }
+
+            var existingBillsWithReceipt = await _db.SalesBills
+                .Where(b => billNosInFile.Contains(b.BillNo) && b.ReceiptNo != null && b.ReceiptNo != "")
+                .ToDictionaryAsync(b => b.BillNo, b => b.ReceiptNo);
+
+            for (int r = headerRow + 1; r < tbl.Rows.Count; r++)
+            {
+                var row = tbl.Rows[r];
+                var billNo = billColIndex < tbl.Columns.Count ? row[billColIndex]?.ToString()?.Trim() : null;
+                var receiptNo = receiptColIndex < tbl.Columns.Count ? row[receiptColIndex]?.ToString()?.Trim() : null;
+                var receiptDateStr = dateColIndex < tbl.Columns.Count ? row[dateColIndex]?.ToString()?.Trim() : null;
                 var custCode = custColIndex >= 0 && custColIndex < tbl.Columns.Count ? row[custColIndex]?.ToString()?.Trim() : null;
 
                 if (string.IsNullOrEmpty(billNo) || string.IsNullOrEmpty(receiptNo)) continue;
-                
+
+                var previewRow = new ReceiptPreviewRow
+                {
+                    BillNo = billNo,
+                    NewReceiptNo = receiptNo,
+                    ReceiptDateStr = receiptDateStr ?? "",
+                    CustomerCode = custCode ?? "",
+                };
+
+                if (existingBillsWithReceipt.TryGetValue(billNo, out var existingReceipt))
+                {
+                    previewRow.ExistingReceiptNo = existingReceipt ?? "";
+                    previewRow.IsDuplicate = true;
+                    result.Duplicates.Add(previewRow);
+                }
+                else
+                {
+                    result.NewRows.Add(previewRow);
+                }
+            }
+
+            result.PreviewId = Guid.NewGuid().ToString("N");
+            lock (_receiptPreviews) { _receiptPreviews[result.PreviewId] = result; }
+            return result;
+        }
+
+        public static ReceiptPreviewResult? GetReceiptPreview(string previewId)
+        {
+            lock (_receiptPreviews) { return _receiptPreviews.TryGetValue(previewId, out var r) ? r : null; }
+        }
+
+        public static void RemoveReceiptPreview(string previewId)
+        {
+            lock (_receiptPreviews) { _receiptPreviews.Remove(previewId); }
+        }
+
+        public async Task<(int matched, int notFound)> ConfirmReceiptMatchAsync(
+            string previewId, bool updateDuplicates, List<string>? selectedDuplicateBillNos = null)
+        {
+            ReceiptPreviewResult? preview;
+            lock (_receiptPreviews) { _receiptPreviews.TryGetValue(previewId, out preview); }
+
+            var rowsToProcess = new List<ReceiptPreviewRow>();
+            if (preview != null)
+            {
+                rowsToProcess.AddRange(preview.NewRows);
+                if (updateDuplicates)
+                {
+                    var dups = selectedDuplicateBillNos != null && selectedDuplicateBillNos.Count > 0
+                        ? preview.Duplicates.Where(d => selectedDuplicateBillNos.Contains(d.BillNo)).ToList()
+                        : preview.Duplicates;
+                    rowsToProcess.AddRange(dups);
+                }
+            }
+
+            int matched = 0, notFound = 0;
+
+            foreach (var pr in rowsToProcess)
+            {
                 bool isMatch = false;
 
-                // 1. Update SalesBills
-                var existingBills = await _db.SalesBills.Where(b => b.BillNo == billNo).ToListAsync();
-                if (!string.IsNullOrEmpty(custCode)) {
-                    existingBills = existingBills.Where(b => b.CustomerCode == custCode).ToList();
-                }
+                var existingBills = await _db.SalesBills.Where(b => b.BillNo == pr.BillNo).ToListAsync();
+                if (!string.IsNullOrEmpty(pr.CustomerCode))
+                    existingBills = existingBills.Where(b => b.CustomerCode == pr.CustomerCode).ToList();
 
                 if (existingBills.Any())
                 {
                     foreach (var b in existingBills)
                     {
-                        b.ReceiptNo = receiptNo;
-                        var rDate = ParseDate((object)receiptDateStr);
+                        b.ReceiptNo = pr.NewReceiptNo;
+                        var rDate = ParseDate((object)pr.ReceiptDateStr);
                         if (rDate != DateTime.MinValue) b.ReceiptDate = rDate;
                         b.IsFullyPaid = true;
                     }
                     isMatch = true;
                 }
 
-                // 2. Update OutstandingDebts
-                var existingDebts = await _db.OutstandingDebts.Where(d => d.BillNo == billNo).ToListAsync();
-                if (!string.IsNullOrEmpty(custCode)) {
-                    existingDebts = existingDebts.Where(d => d.CustomerCode == custCode).ToList();
-                }
-                
+                var existingDebts = await _db.OutstandingDebts.Where(d => d.BillNo == pr.BillNo).ToListAsync();
+                if (!string.IsNullOrEmpty(pr.CustomerCode))
+                    existingDebts = existingDebts.Where(d => d.CustomerCode == pr.CustomerCode).ToList();
+
                 if (existingDebts.Any())
                 {
                     foreach (var d in existingDebts)
                     {
-                        d.ReceiptNo = receiptNo;
-                        var rDate = ParseDate((object)receiptDateStr);
+                        d.ReceiptNo = pr.NewReceiptNo;
+                        var rDate = ParseDate((object)pr.ReceiptDateStr);
                         if (rDate != DateTime.MinValue) d.ReceiptDate = rDate;
                         d.RemainingAmount = 0;
                         d.Status = DebtStatus.PaidTransfer;
@@ -625,12 +702,13 @@ namespace RoyalD.Web.Services
                     }
                     isMatch = true;
                 }
-                
-                if (isMatch) matched++; else notFound++;
 
+                if (isMatch) matched++; else notFound++;
                 if ((matched + notFound) % 200 == 0) await _db.SaveChangesAsync();
             }
+
             await _db.SaveChangesAsync();
+            if (preview != null) RemoveReceiptPreview(previewId);
             return (matched, notFound);
         }
 
@@ -673,8 +751,23 @@ namespace RoyalD.Web.Services
     }
 }
 
+namespace RoyalD.Web.Services
+{
+    public class ReceiptPreviewRow
+    {
+        public string BillNo { get; set; } = "";
+        public string NewReceiptNo { get; set; } = "";
+        public string ExistingReceiptNo { get; set; } = "";
+        public string ReceiptDateStr { get; set; } = "";
+        public string CustomerCode { get; set; } = "";
+        public bool IsDuplicate { get; set; }
+    }
 
-
-
-
-
+    public class ReceiptPreviewResult
+    {
+        public string PreviewId { get; set; } = "";
+        public string FileName { get; set; } = "";
+        public List<ReceiptPreviewRow> NewRows { get; set; } = new();
+        public List<ReceiptPreviewRow> Duplicates { get; set; } = new();
+    }
+}

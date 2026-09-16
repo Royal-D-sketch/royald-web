@@ -317,15 +317,64 @@ Directory.CreateDirectory(debugDir);
 var debugPath = Path.Combine(debugDir, file.FileName);
 using (var fs = new FileStream(debugPath, FileMode.Create)) { await file.CopyToAsync(fs); }
 using var stream = file.OpenReadStream();
-                var (matched, notFound) = await _importer.ImportReceiptMatchAsync(stream, file.FileName);
+                var preview = await _importer.PreviewReceiptMatchAsync(stream, file.FileName);
                 
-                TempData["Success"] = $"จับคู่ใบเสร็จสำเร็จ {matched} รายการ (ไม่พบ: {notFound})";
+                // If no duplicates at all, just confirm immediately
+                if (!preview.Duplicates.Any())
+                {
+                    var (matched, notFound) = await _importer.ConfirmReceiptMatchAsync(preview.PreviewId, updateDuplicates: false);
+                    TempData["Success"] = $"จับคู่ใบเสร็จสำเร็จ {matched} รายการ (ไม่พบในระบบ: {notFound})";
+                    _db.AuditLogs.Add(new AuditLog
+                    {
+                        Username = User.Identity?.Name ?? "",
+                        Action = "UPLOAD_RECEIPTS",
+                        Detail = $"File={file.FileName}, Matched={matched}, NotFound={notFound}",
+                        IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
+                        CreatedAt = DateTime.Now
+                    });
+                    await _db.SaveChangesAsync();
+                    return RedirectToAction("Index");
+                }
+                
+                // Has duplicates → show preview page
+                return View("ReceiptPreview", preview);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"เกิดข้อผิดพลาด: {ex.InnerException?.Message ?? ex.Message}";
+                return RedirectToAction("Index");
+            }
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmReceiptImport(string previewId, List<string>? selectedDuplicates)
+        {
+            var (_, _, canReceipts) = GetUploadPermissions();
+            if (!canReceipts)
+            {
+                TempData["Error"] = "ท่านไม่มีสิทธิ์อัปโหลดสรุปรับเงินตามใบเสร็จ";
+                return RedirectToAction("Index");
+            }
+
+            var preview = ExcelImportService.GetReceiptPreview(previewId);
+            if (preview == null)
+            {
+                TempData["Error"] = "ไม่พบข้อมูลพรีวิวที่รอยืนยัน หรือเซสชันหมดอายุ กรุณาอัปโหลดไฟล์ใหม่";
+                return RedirectToAction("Index");
+            }
+
+            try
+            {
+                bool updateDups = selectedDuplicates != null && selectedDuplicates.Count > 0;
+                var (matched, notFound) = await _importer.ConfirmReceiptMatchAsync(previewId, updateDups, selectedDuplicates);
+                int skippedDups = preview.Duplicates.Count - (selectedDuplicates?.Count ?? 0);
+                TempData["Success"] = $"จับคู่ใบเสร็จสำเร็จ {matched} รายการ, ข้ามซ้ำ {skippedDups} รายการ (ไม่พบในระบบ: {notFound})";
 
                 _db.AuditLogs.Add(new AuditLog
                 {
                     Username = User.Identity?.Name ?? "",
-                    Action = "UPLOAD_RECEIPTS",
-                    Detail = $"File={file.FileName}, Matched={matched}, NotFound={notFound}",
+                    Action = "CONFIRM_RECEIPT_IMPORT",
+                    Detail = $"File={preview.FileName}, Matched={matched}, NotFound={notFound}, Skipped={skippedDups}",
                     IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
                     CreatedAt = DateTime.Now
                 });
@@ -333,10 +382,18 @@ using var stream = file.OpenReadStream();
             }
             catch (Exception ex)
             {
-                TempData["Error"] = $"เกิดข้อผิดพลาด: {ex.InnerException?.Message ?? ex.Message}";
+                TempData["Error"] = $"เกิดข้อผิดพลาด: {ex.Message}";
             }
 
             return RedirectToAction("Index");
         }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public IActionResult CancelReceiptPreview(string previewId)
+        {
+            ExcelImportService.RemoveReceiptPreview(previewId);
+            TempData["Info"] = "ยกเลิกการนำเข้าใบเสร็จเรียบร้อยแล้ว";
+            return RedirectToAction("Index");
+        }
     }
-}
+}
