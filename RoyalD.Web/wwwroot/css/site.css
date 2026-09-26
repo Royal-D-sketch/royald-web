@@ -87,3 +87,33 @@ table, input, textarea, select, button, .btn {
         font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-serif !important;
     }
 }
+
+/* ===== Customer Name Full-Text Display & Table Wrapping ===== */
+.col-customer-name,
+.customer-name,
+td[data-custname],
+th.th-customer-name,
+td.td-customer-name,
+.table th.col-customer-name,
+.table td.col-customer-name,
+.table th.col-cust-name,
+.table td.col-cust-name,
+.table-customer-name {
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    text-overflow: unset !important;
+    overflow: visible !important;
+    min-width: 200px !important;
+    max-width: none !important;
+}
+
+.table td.text-wrap-cust,
+.table th.text-wrap-cust {
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    min-width: 200px !important;
+}

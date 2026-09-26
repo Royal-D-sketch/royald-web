@@ -153,8 +153,8 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    white-space: nowrap;
-}
+    }
+
 
 /* Detail Table */
 .detail-table th {
@@ -170,8 +170,8 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
     font-size: 0.85rem;
     vertical-align: middle;
     padding: 8px 10px;
-    white-space: nowrap;
-}
+    }
+
 .detail-table tbody tr:hover {
     background-color: #f1f5f9;
 }
@@ -449,7 +449,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                     <th style="width: 110px;" class="text-center">เลขที่บิล</th>
                     <th style="width: 95px;" class="text-center">วันที่บิล</th>
                     <th style="width: 95px;" class="text-center">รหัสลูกค้า</th>
-                    <th>ชื่อลูกค้า</th>
+                    <th class="col-customer-name" style="min-width: 220px;">ชื่อลูกค้า</th>
                     <th style="width: 100px;">อำเภอ</th>
                     <th style="width: 100px;">จังหวัด</th>
                     <th style="width: 60px;" class="text-center">เครดิต</th>
@@ -484,7 +484,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                         </td>
                         <td class="text-center text-muted">@b.BillDate.ToString("dd/MM/yyyy")</td>
                         <td class="text-center"><code class="text-dark fw-bold">@b.CustomerCode</code></td>
-                        <td class="fw-bold text-dark text-truncate" style="max-width:200px;" title="@b.CustomerName">@b.CustomerName</td>
+                        <td class="fw-bold text-dark col-customer-name" style="min-width: 220px; white-space: normal !important; word-break: break-word !important;">@b.CustomerName</td>
                         <td>@b.District</td>
                         <td>@b.Province</td>
                         <td class="text-center">@(b.Credit > 0 ? b.Credit.ToString() : "สด")</td>

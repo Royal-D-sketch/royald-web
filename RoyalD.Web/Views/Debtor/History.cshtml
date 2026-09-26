@@ -89,7 +89,7 @@
                     <th class="py-3 px-3">วันที่ใบเสร็จ</th>
                     <th>เลขที่ใบเสร็จ</th>
                     <th>รหัสลูกค้า</th>
-                    <th>ชื่อลูกค้า</th>
+                    <th class="col-customer-name" style="min-width: 220px;">ชื่อลูกค้า</th>
                     <th>วันที่บิล</th>
                     <th>เลขที่บิล</th>
                     <th class="text-end pe-3">จำนวนเงินบิล (บาท)</th>
@@ -105,7 +105,7 @@
                             <td class="px-3 fw-bold text-success">@(displayDate?.ToString("dd/MM/yyyy") ?? "-")</td>
                             <td class="fw-bold" style="color:#0369a1;">@(string.IsNullOrEmpty(d.ReceiptNo) ? "-" : d.ReceiptNo)</td>
                             <td class="text-muted">@d.CustomerCode</td>
-                            <td class="fw-bold text-dark">@d.CustomerName</td>
+                            <td class="fw-bold text-dark col-customer-name" style="min-width: 220px; white-space: normal !important; word-break: break-word !important;">@d.CustomerName</td>
                             <td class="text-muted">@d.BillDate.ToString("dd/MM/yyyy")</td>
                             <td>
                                 <a href="/SalesBill/Detail/@Uri.EscapeDataString(d.BillNo)" class="text-decoration-none fw-bold" style="color:#0f766e;">

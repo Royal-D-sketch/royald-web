@@ -446,7 +446,7 @@ namespace RoyalD.Web.Controllers
 
             ws.Cells.AutoFitColumns();
             ws.Column(1).Width = 5;
-            ws.Column(6).Width = 30;
+            ws.Column(6).Width = Math.Max(ws.Column(6).Width, 35);
             ws.Column(9).Width = 18;
 
             var fileBytes = package.GetAsByteArray();
@@ -605,7 +605,7 @@ namespace RoyalD.Web.Controllers
 
                 ws.Cells.AutoFitColumns();
                 ws.Column(1).Width = 5;
-                ws.Column(5).Width = 30;
+                ws.Column(5).Width = Math.Max(ws.Column(5).Width, 35);
                 ws.Column(10).Width = 18;
             };
 

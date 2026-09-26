@@ -421,7 +421,7 @@ namespace RoyalD.Web.Controllers
 
             ws.Cells.AutoFitColumns();
             ws.Column(1).Width = 5;
-            ws.Column(5).Width = 30;
+            ws.Column(5).Width = Math.Max(ws.Column(5).Width, 35);
             ws.Column(10).Width = 25;
             ws.Column(13).Width = 18;
 

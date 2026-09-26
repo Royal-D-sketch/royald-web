@@ -118,14 +118,14 @@
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0 text-nowrap">
+                <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr class="text-secondary small fw-bold">
                             <th class="text-center" style="width: 50px;">#</th>
                             <th>เลขที่บิล</th>
                             <th>วันที่บิล</th>
                             <th>รหัสลูกค้า</th>
-                            <th>ชื่อลูกค้า</th>
+                            <th class="col-customer-name" style="min-width: 220px;">ชื่อลูกค้า</th>
                             <th>ผู้แทนขาย</th>
                             <th>วันที่รับบิลจากจัดส่ง</th>
                             <th>เหตุผลที่ส่งคืนบัญชี</th>
@@ -151,7 +151,7 @@
                                     </td>
                                     <td>@item.BillDate.ToString("dd/MM/yyyy")</td>
                                     <td><code>@item.CustomerCode</code></td>
-                                    <td style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@item.CustomerName">
+                                    <td class="col-customer-name fw-bold text-dark" style="min-width: 220px; white-space: normal !important; word-break: break-word !important;">
                                         @item.CustomerName
                                     </td>
                                     <td>
@@ -169,7 +169,7 @@
                                             <span class="text-muted">-</span>
                                         }
                                     </td>
-                                    <td style="max-width: 230px; overflow: hidden; text-overflow: ellipsis; white-space: normal;" title="@item.ReturnedToAccountReason">
+                                    <td style="min-width: 200px; white-space: normal; word-break: break-word;" title="@item.ReturnedToAccountReason">
                                         @if (!string.IsNullOrWhiteSpace(item.ReturnedToAccountReason))
                                         {
                                             <span class="badge bg-secondary bg-opacity-10 text-dark border">

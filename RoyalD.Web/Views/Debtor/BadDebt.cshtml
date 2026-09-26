@@ -119,7 +119,7 @@ else
                             <th>วันที่บิล</th>
                             <th>เลขที่บิล</th>
                             <th>รหัสลูกค้า</th>
-                            <th>ชื่อลูกค้า</th>
+                            <th class="col-customer-name" style="min-width: 200px;">ชื่อลูกค้า</th>
                             <th>ผู้แทนขาย</th>
                             <th class="text-end">ยอดหนี้สูญ</th>
                             <th>วันที่บันทึก</th>
@@ -140,7 +140,7 @@ else
                                     </a>
                                 </td>
                                 <td><code>@item.CustomerCode</code></td>
-                                <td class="fw-bold">@item.CustomerName</td>
+                                <td class="fw-bold col-customer-name" style="min-width: 200px; white-space: normal !important; word-break: break-word !important;">@item.CustomerName</td>
                                 <td><span class="badge bg-light text-dark border">@item.SalesRep</span></td>
                                 <td class="text-end fw-bold text-danger">
                                     @((item.BadDebtAmount ?? item.RemainingAmount).ToString("N2"))
