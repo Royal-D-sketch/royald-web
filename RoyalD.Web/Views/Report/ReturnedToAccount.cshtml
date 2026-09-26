@@ -202,15 +202,18 @@
                                     <td class="text-center">
                                         @if (isReturnedToDelivery)
                                         {
-                                            <span class="badge py-2 px-3 fw-bold text-white shadow-sm" style="background:#475569; font-size:0.80rem;">
-                                                <i class="bi bi-truck me-1"></i>[ บิลอยู่จัดส่ง ]
-                                            </span>
+                                            <button type="button" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 shadow-sm px-2 py-1 fw-bold"
+                                                    onclick="handleReturnToDeliveryClick(@item.Id, '@item.BillNo', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.CustomerName))', '@(item.ReturnedToDeliveryDate?.ToString("yyyy-MM-dd") ?? "")', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.Note ?? ""))')"
+                                                    title="คลิกเพื่อแก้ไข/เปลี่ยนวันที่ส่งคืนไปจัดส่ง">
+                                                <i class="bi bi-truck me-1"></i> [ บิลอยู่จัดส่ง ]
+                                            </button>
                                         }
                                         else
                                         {
                                             <button type="button" class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1 shadow-sm px-2 py-1 fw-bold"
-                                                    onclick="handleReturnToDeliveryClick(@item.Id, '@item.BillNo', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.CustomerName))')">
-                                                <i class="bi bi-truck"></i> ส่งคืนไปจัดส่ง
+                                                    onclick="handleReturnToDeliveryClick(@item.Id, '@item.BillNo', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.CustomerName))', '', '')"
+                                                    title="คลิกเพื่อส่งคืนบิลไปจัดส่ง">
+                                                <i class="bi bi-truck me-1"></i> ส่งคืนไปจัดส่ง
                                             </button>
                                         }
                                     </td>
@@ -271,7 +274,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold small mb-1">หมายเหตุเพิ่มเติม</label>
-                        <input type="text" name="returnNote" class="form-control form-control-sm" placeholder="เช่น พร้อมส่งมอบรอบใหม่, นัดส่งรอบถัดไป" />
+                        <input type="text" name="returnNote" id="modalReturnNote" class="form-control form-control-sm" placeholder="เช่น พร้อมส่งมอบรอบใหม่, นัดส่งรอบถัดไป" />
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
@@ -313,19 +316,23 @@
 <script>
     const isUserAuthorized = @(isAuthorized ? "true" : "false");
 
-    function handleReturnToDeliveryClick(debtId, billNo, customerName) {
+    function handleReturnToDeliveryClick(debtId, billNo, customerName, defaultDate, defaultNote) {
         if (!isUserAuthorized) {
             var alertModal = new bootstrap.Modal(document.getElementById('unauthorizedAlertModal'));
             alertModal.show();
             return;
         }
-        openReturnToDeliveryModal(debtId, billNo, customerName);
+        openReturnToDeliveryModal(debtId, billNo, customerName, defaultDate, defaultNote);
     }
 
-    function openReturnToDeliveryModal(debtId, billNo, customerName) {
+    function openReturnToDeliveryModal(debtId, billNo, customerName, defaultDate, defaultNote) {
         document.getElementById('modalDebtId').value = debtId;
         document.getElementById('modalBillInfo').innerText = billNo + ' - ' + customerName;
-        document.getElementById('modalDeliveryDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('modalDeliveryDate').value = defaultDate || new Date().toISOString().split('T')[0];
+        const noteInput = document.getElementById('modalReturnNote');
+        if (noteInput) {
+            noteInput.value = defaultNote || '';
+        }
         var myModal = new bootstrap.Modal(document.getElementById('returnToDeliveryModal'));
         myModal.show();
     }

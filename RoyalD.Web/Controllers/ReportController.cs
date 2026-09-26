@@ -197,11 +197,11 @@ namespace RoyalD.Web.Controllers
                 return true;
             }
 
-            // 4. ตรวจสอบรหัสผู้ใช้ (Username) หรือ ชื่อ-นามสกุล (FullName) เช่น ART, nid, admin, นิด, อาร์ต
+            // 4. ตรวจสอบรหัสผู้ใช้ (Username) หรือ ชื่อ-นามสกุล (FullName) เช่น ART, nid, admin, นิด, อาร์ต, ปภาวดี, อินจันทร์
             var uName = (user.Identity.Name ?? "").Trim().ToLower();
             var fName = (user.FindFirst("FullName")?.Value ?? "").Trim().ToLower();
 
-            var allowedKeywords = new[] { "nid", "art", "admin", "หัวหน้า", "ผู้บริหาร", "นิด", "อาร์ต" };
+            var allowedKeywords = new[] { "nid", "art", "admin", "หัวหน้า", "ผู้บริหาร", "นิด", "อาร์ต", "ปภาวดี", "อินจันทร์" };
             return allowedKeywords.Any(a =>
                 uName.Equals(a, StringComparison.OrdinalIgnoreCase) ||
                 uName.Contains(a) ||
