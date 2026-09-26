@@ -177,11 +177,11 @@
 @functions {
     void RenderRepMatrix(SalesRepMonthlyReport data, string key)
     {
-        <div class="card border-0 mb-3" style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#0070B9 100%); color:white; border-radius:14px; padding:18px 22px; box-shadow:0 4px 18px rgba(0,112,185,.25);">
-            <div class="fw-bold" style="font-size:1.1rem; opacity:.85; margin-bottom:4px;">
-                <i class="bi bi-person-badge me-2 text-warning"></i>@data.SalesRep
+        <div class="card border-0 mb-3" style="background:linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #3b82f6 100%); color:white; border-radius:14px; padding:18px 22px; box-shadow:0 4px 18px rgba(37,99,235,.25);">
+            <div class="fw-bold" style="font-size:1.15rem; opacity:.95; margin-bottom:4px;">
+                <i class="bi bi-journal-bookmark-fill me-2 text-warning"></i>@data.SalesRep
             </div>
-            <div class="small" style="opacity:.7;">สรุปยอดขายและการเก็บเงิน ไทม์ไลน์ 8 เดือน ปี 2569</div>
+            <div class="small" style="opacity:.9;">สรุปยอดขายและการเก็บเงิน ไทม์ไลน์ @(Model.Months.Count) เดือน ปี 2569</div>
         </div>
         
         <div class="matrix-scroll-wrap mb-4">
