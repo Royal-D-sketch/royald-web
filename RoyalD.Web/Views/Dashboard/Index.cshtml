@@ -16,6 +16,13 @@
     double pctCash7 = (double)Math.Round((pieCash7 / totalArPie) * 100, 1);
     double pctCashTimeline = (double)Math.Round((pieCashTimeline / totalArPie) * 100, 1);
     double pctUpcountry = (double)Math.Round((pieUpcountry / totalArPie) * 100, 1);
+
+    var salesRepList = drilldownBills
+        .Select(x => x.SalesRep?.Trim())
+        .Where(x => !string.IsNullOrWhiteSpace(x))
+        .Distinct()
+        .OrderBy(x => x)
+        .ToList();
 }
 
 <style>
@@ -451,7 +458,26 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
         </div>
         <div class="col-12 col-md-2">
             <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-person-fill"></i> 4. ผู้แทนขาย</label>
-            <input type="text" id="inputSearchSalesRep" class="form-control" placeholder="พิมพ์ชื่อผู้แทน..." oninput="applyFilters()" />
+            <div class="input-group">
+                <input type="text" id="inputSearchSalesRep" class="form-control" list="salesRepList" placeholder="เลือก/พิมพ์ชื่อผู้แทน..." oninput="applyFilters()" />
+                <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false" title="เลือกรายชื่อผู้แทนขาย">
+                    <span class="visually-hidden">Toggle Dropdown</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow" style="max-height: 300px; overflow-y: auto;">
+                    <li><a class="dropdown-item fw-bold text-primary" href="javascript:void(0)" onclick="setSalesRep('')"><i class="bi bi-x-circle me-1"></i> (ผู้แทนทั้งหมด)</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    @foreach (var rep in salesRepList)
+                    {
+                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="setSalesRep('@rep')">@rep</a></li>
+                    }
+                </ul>
+            </div>
+            <datalist id="salesRepList">
+                @foreach (var rep in salesRepList)
+                {
+                    <option value="@rep">@rep</option>
+                }
+            </datalist>
         </div>
         <div class="col-12 col-md-1 d-flex align-items-end">
             <button type="button" class="btn btn-outline-secondary w-100 btn-sm py-2" onclick="clearFilters()" title="ล้างตัวกรองทั้งหมด">
@@ -859,6 +885,14 @@ function applyFilters() {
     if (arPieChart) {
         arPieChart.data.datasets[0].data = [sumCash7, sumCash10, sumUpcountry];
         arPieChart.update();
+    }
+}
+
+function setSalesRep(name) {
+    const input = document.getElementById('inputSearchSalesRep');
+    if (input) {
+        input.value = name;
+        applyFilters();
     }
 }
 

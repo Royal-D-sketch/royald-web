@@ -21,39 +21,132 @@ namespace RoyalD.Web.Controllers
         public DashboardController(AppDbContext db) => _db = db;
 
         // ==========================================
-        // MODERN TRADE EXCLUSION LIST (by Customer Code)
-        // กรองร้านค้า Modern Trade ออกจากหนี้วิกฤต > 120 วัน
-        // อ้างอิงจากรหัสลูกค้าจริงในฐานข้อมูล (ไม่ใช้ชื่อร้าน)
+        // MODERN TRADE EXCLUSION LIST (Corporate Legal Entities & Customer Codes)
+        // กรองร้านค้า Modern Trade (ห้าง/ร้านสะดวกซื้อ) ออกจากหนี้วิกฤต > 120 วัน
+        // รองรับทั้งรหัสลูกค้า และชื่อบริษัทนิติบุคคลที่เปิดบิลจริง (เช่น ซีพี แอ็กซ์ตร้า, ซีพี ออลล์, เซ็นทรัล ฟู้ด)
         // ==========================================
         private static readonly HashSet<string> ModernTradeCodes = new(StringComparer.OrdinalIgnoreCase)
         {
-            // BigC
+            // 1. 7-Eleven (บริษัท ซีพี ออลล์ จำกัด (มหาชน) / เครือข่ายเซเว่น)
+            "101901", "10501", "103166", "110472", "110473",
+
+            // 2. Big C / Pure / Big C Mini (บริษัท บิ๊กซี ซูเปอร์เซ็นเตอร์ จำกัด (มหาชน))
             "102003",
-            // Watson / Central Watson
-            "101298",
-            // UCare
+
+            // 3. Jiffy (บริษัท ปตท. บริหารธุรกิจค้าปลีก จำกัด)
+            "102719",
+
+            // 4. Tops / Tops Daily / Tops Care (บริษัท เซ็นทรัล ฟู้ด รีเทล จำกัด)
+            "1020379", "103373", "103374", "103375", "103376", "110239", "110547", "110571",
+
+            // 5. Makro (บริษัท ซีพี แอ็กซ์ตร้า จำกัด (มหาชน) / สยามแม็คโคร)
+            "102445", "103468",
+
+            // 6. Go Wholesale (บริษัท เซ็นทรัล ฟู้ด โฮลเซลล์ จำกัด)
+            "1020441", "1020453", "103281", "103282", "103283", "120349", "200335", "200336",
+            "400182", "410135", "500224", "830063", "830064", "900186",
+
+            // 7. UCare (บริษัท ยูแคร์ จำกัด)
             "102540",
-            // Lawson108 / สห ลอว์สัน
-            "102410",
-            // Boots รีเทล
+
+            // 8. Watsons (บริษัท เซ็นทรัล วัตสัน จำกัด)
+            "101298",
+
+            // 9. Golden Place (บริษัท สุวรรณชาด จำกัด)
+            "102275", "102276", "102293", "102309", "102556", "102648", "102716", "102736",
+            "102751", "102767", "103085", "103424", "240089", "600089", "760064", "770033",
+
+            // 10. Tsuruha (บริษัท ซูรูฮะ (ประเทศไทย) จำกัด)
+            "102307",
+
+            // 11. PT.max (บริษัท ปิโตรเลียมไทยคอร์ปอเรชั่น จำกัด)
+            "102265",
+
+            // 12. P&F (บริษัท พี แอนด์ เอฟ อินทิเกรท จำกัด)
+            "100783",
+
+            // 13. MaxValu (บริษัท อิออน (ไทยแลนด์) จำกัด)
+            "103329",
+
+            // 14. CJ More / CJ Express (บริษัท ซี.เจ.เอ็กซ์เพรส กรุ๊ป จำกัด)
+            "700084",
+
+            // 15. Foodland (บริษัท ฟู้ดแลนด์ซุปเปอร์มาร์เก็ต จำกัด - ทุกสาขา)
+            "1020359", "1020363", "102660", "102661", "102662", "102663", "102664", "102665",
+            "102666", "102667", "102668", "102669", "102670", "102671", "102672", "102673",
+            "102674", "102740", "103058", "103073", "200263", "200265", "300320", "730168", "740156",
+
+            // 16. Harborland (บริษัท ฮาร์เบอร์ แลนด์ จำกัด)
+            "102955", "102956", "103065", "103205", "103290", "110463", "110499", "110540", "730185",
+
+            // 17. Boots (บริษัท บู๊ทส์ รีเทล (ประเทศไทย) จำกัด)
             "102677",
-            // Villa Market
-            "103456", "740207",
-            // Foodland (ทุกสาขา)
-            "102660", "102661", "102662", "102664", "102665",
-            "102666", "102667", "102668", "102669", "102670",
-            "102671", "102672", "102673", "102674", "102740",
-            "103058", "103073", "200263", "200265",
-            "300320", "730168", "1020359", "1020363",
-            // Winning Seven (7-Eleven network)
-            "103166",
-            // Seven Pharma chains
-            "110472", "110473",
+
+            // 18. Gourmet Market (บริษัท เดอะมอลล์ กรุ๊ป จำกัด)
+            "1020327",
+
+            // 19. Lawson 108 (บริษัท สห ลอว์สัน จำกัด)
+            "102410",
+
+            // 20. Villa Market (บริษัท วิลล่า มาร์เก็ท เจพี จำกัด)
+            "103456",
+
+            // 21. Fascino (บริษัท ฟาร์มาฮอฟ จำกัด)
+            "102244", "200305", "730045"
         };
 
-        /// <summary>คืนค่า true ถ้ารหัสลูกค้าเป็น Modern Trade ที่ต้องกรองออกจาก Over120</summary>
-        private static bool IsModernTrade(string? customerCode)
-            => !string.IsNullOrEmpty(customerCode) && ModernTradeCodes.Contains(customerCode.Trim());
+        // คีย์เวิร์ดชื่อนิติบุคคล / บริษัทที่เปิดบิลจริง สำหรับตรวจสอบแบบ dynamic ป้องกันชื่อร้านไม่ตรง
+        private static readonly string[] ModernTradeNameKeywords = new[]
+        {
+            "ซีพี แอ็กซ์ตร้า", "ซีพี แอ๊กซ์ตร้า", "สยามแม็คโคร", "สยาม แม็คโคร", "แม็คโคร",
+            "ซีพี ออลล์", "ซีพีออลล์",
+            "เซ็นทรัล ฟู้ด",
+            "บิ๊กซี", "big c",
+            "สุวรรณชาด",
+            "ปตท. บริหารธุรกิจค้าปลีก",
+            "ปิโตรเลียมไทยคอร์ปอเรชั่น",
+            "พี แอนด์ เอฟ อินทิเกรท",
+            "อิออน (ไทยแลนด์)",
+            "ซี.เจ.เอ็กซ์เพรส", "ซี.เจ. เอ็กซ์เพรส",
+            "ฟู้ดแลนด์",
+            "ฮาร์เบอร์ แลนด์", "ฮาร์เบอร์แลนด์",
+            "บู๊ทส์ รีเทล",
+            "เดอะมอลล์ กรุ๊ป",
+            "วิลล่า มาร์เก็ท",
+            "สห ลอว์สัน",
+            "เซ็นทรัล วัตสัน",
+            "ซูรูฮะ (ประเทศไทย)",
+            "ฟาร์มาฮอฟ", "ฟาร์มมาฮอฟ", "pharmahof",
+            "ไทยฟู้ดส์", "ฟาสซิโน", "ใบเมี่ยง"
+        };
+
+        /// <summary>คืนค่า true ถ้ารหัสลูกค้าหรือชื่อบริษัทเป็นกลุ่ม Modern Trade ที่ต้องกรองออกจาก Over120</summary>
+        public static bool IsModernTrade(string? customerCode, string? customerName = null)
+        {
+            if (!string.IsNullOrEmpty(customerCode) && ModernTradeCodes.Contains(customerCode.Trim()))
+                return true;
+
+            if (!string.IsNullOrEmpty(customerName))
+            {
+                var name = customerName.Trim();
+                // ข้อยกเว้น: บุคคลหรือร้านท้องถิ่นที่มีคำคล้ายแต่ไม่ใช่ห้าง Modern Trade
+                if (name.Contains("สาลี่สุพรรณ") || name.Contains("คุณเอกชัย") || name.Contains("ยากาแร็ต") ||
+                    name.Contains("คลองสี่วา") || name.Contains("เอกชัยกอล์ฟ") || name.Contains("เพียวเคมม์") ||
+                    name.Contains("ปรีชา  วิลล่า") || name.Contains("มหาชัยวิลล่า") || name.Contains("ท็อป ไฮเทค") ||
+                    name.Contains("ท็อป พาร์ทเนอร์"))
+                {
+                    return false;
+                }
+
+                foreach (var kw in ModernTradeNameKeywords)
+                {
+                    if (name.IndexOf(kw, StringComparison.OrdinalIgnoreCase) >= 0)
+                        return true;
+                }
+            }
+
+            return false;
+        }
 
 
 
@@ -159,7 +252,7 @@ namespace RoyalD.Web.Controllers
                         summary.UpcountryDebts.TotalAmount += d.RemainingAmount;
                     }
 
-                    if (aging > 120 && !IsModernTrade(d.CustomerCode))
+                    if (aging > 120 && !IsModernTrade(d.CustomerCode, d.CustomerName))
                     {
                         summary.Overdue120Days.BillCount++;
                         summary.Overdue120Days.TotalAmount += d.RemainingAmount;
@@ -182,12 +275,12 @@ namespace RoyalD.Web.Controllers
                 {
                     region.OutstandingTotal.BillCount++;
                     region.OutstandingTotal.TotalAmount += d.RemainingAmount;
-                    if (aging > 120)
+                    if (aging > 120 && !IsModernTrade(d.CustomerCode, d.CustomerName))
                     {
                         region.Over120Days.BillCount++;
                         region.Over120Days.TotalAmount += d.RemainingAmount;
                     }
-                    else
+                    else if (aging <= 120)
                     {
                         region.LessThan120Days.BillCount++;
                         region.LessThan120Days.TotalAmount += d.RemainingAmount;
@@ -213,7 +306,7 @@ namespace RoyalD.Web.Controllers
                     StatusName = isPaid ? "เก็บเงินสำเร็จ" : (aging > 120 ? "เกิน 120 วัน" : (aging > 0 ? $"เกินกำหนด {aging} วัน" : "ยังไม่ถึงกำหนด")),
                     IsPaid = isPaid,
                     IsBkk = isBkkArea,
-                    IsModernTrade = IsModernTrade(d.CustomerCode)
+                    IsModernTrade = IsModernTrade(d.CustomerCode, d.CustomerName)
                 };
 
                 drilldownBills.Add(billItem);
@@ -264,7 +357,8 @@ namespace RoyalD.Web.Controllers
                         AgingDays = 0,
                         StatusName = "เก็บเงินสำเร็จ",
                         IsPaid = true,
-                        IsBkk = isBkkArea
+                        IsBkk = isBkkArea,
+                        IsModernTrade = IsModernTrade(sb.CustomerCode, sb.CustomerName)
                     };
                     drilldownBills.Add(item);
                 }
@@ -563,7 +657,7 @@ namespace RoyalD.Web.Controllers
                 {
                     if (filterType == "outstanding" && b.IsPaid) return false;
                     if (filterType == "under120" && (b.IsPaid || b.AgingDays > 120)) return false;
-                    if (filterType == "over120" && (b.IsPaid || b.AgingDays <= 120)) return false;
+                    if (filterType == "over120" && (b.IsPaid || b.AgingDays <= 120 || b.IsModernTrade)) return false;
                     if (filterType == "collected" && !b.IsPaid) return false;
                 }
 
@@ -709,7 +803,7 @@ namespace RoyalD.Web.Controllers
                 {
                     if (filterType == "outstanding" && b.IsPaid) return false;
                     if (filterType == "under120" && (b.IsPaid || b.AgingDays > 120)) return false;
-                    if (filterType == "over120" && (b.IsPaid || b.AgingDays <= 120)) return false;
+                    if (filterType == "over120" && (b.IsPaid || b.AgingDays <= 120 || b.IsModernTrade)) return false;
                     if (filterType == "collected" && !b.IsPaid) return false;
                 }
 

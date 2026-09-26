@@ -3,6 +3,12 @@
     ViewData["Title"] = "2. กระดานเปรียบเทียบข้อมูล (AR Detailed Comparison Board)";
     var summary = Model.Summary;
     var allBills = Model.AllBills;
+    var compSalesReps = allBills
+        .Select(x => x.SalesRep?.Trim())
+        .Where(x => !string.IsNullOrWhiteSpace(x))
+        .Distinct()
+        .OrderBy(x => x)
+        .ToList();
 }
 
 <style>
@@ -431,7 +437,26 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
         </div>
         <div class="col-12 col-md-2">
             <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-person-fill"></i> 4. ผู้แทนขาย</label>
-            <input type="text" id="compSearchSalesRep" class="form-control form-control-sm" placeholder="พิมพ์ชื่อผู้แทน..." oninput="applyAllFilters()" />
+            <div class="input-group input-group-sm">
+                <input type="text" id="compSearchSalesRep" class="form-control form-control-sm" list="compSalesRepList" placeholder="เลือก/พิมพ์ผู้แทน..." oninput="applyAllFilters()" />
+                <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false" title="เลือกรายชื่อผู้แทนขาย">
+                    <span class="visually-hidden">Toggle Dropdown</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow" style="max-height: 300px; overflow-y: auto;">
+                    <li><a class="dropdown-item fw-bold text-primary" href="javascript:void(0)" onclick="setCompSalesRep('')"><i class="bi bi-x-circle me-1"></i> (ผู้แทนทั้งหมด)</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    @foreach (var rep in compSalesReps)
+                    {
+                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="setCompSalesRep('@rep')">@rep</a></li>
+                    }
+                </ul>
+            </div>
+            <datalist id="compSalesRepList">
+                @foreach (var rep in compSalesReps)
+                {
+                    <option value="@rep">@rep</option>
+                }
+            </datalist>
         </div>
         <div class="col-12 col-md-1 d-flex align-items-end">
             <button type="button" class="btn btn-outline-secondary w-100 btn-sm py-1" onclick="clearFilters()" title="ล้างตัวกรอง">
@@ -478,6 +503,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                         data-credit="@b.Credit"
                         data-ispaid="@(b.IsPaid ? "true" : "false")"
                         data-aging="@b.AgingDays"
+                        data-ismt="@(b.IsModernTrade ? "true" : "false")"
                         data-amount="@b.Amount">
                         <td class="text-center text-muted row-idx">@(i + 1)</td>
                         <td class="text-center fw-bold">
@@ -638,6 +664,7 @@ function applyAllFilters() {
         const amt = parseFloat(row.getAttribute('data-amount') || '0');
         const isPaid = row.getAttribute('data-ispaid') === 'true';
         const aging = parseInt(row.getAttribute('data-aging') || '0', 10);
+        const isMt = row.getAttribute('data-ismt') === 'true';
 
         // Search match
         const matchSearch = (!sBill || billNo.includes(sBill)) &&
@@ -651,22 +678,22 @@ function applyAllFilters() {
                 if (isPaid) { g1_colAmt += amt; g1_colCnt++; }
                 else {
                     g1_outAmt += amt; g1_outCnt++;
-                    if (aging > 120) { g1_overAmt += amt; g1_overCnt++; }
-                    else { g1_underAmt += amt; g1_underCnt++; }
+                    if (aging > 120 && !isMt) { g1_overAmt += amt; g1_overCnt++; }
+                    else if (aging <= 120) { g1_underAmt += amt; g1_underCnt++; }
                 }
             } else if (grp === '2') {
                 if (isPaid) { g2_colAmt += amt; g2_colCnt++; }
                 else {
                     g2_outAmt += amt; g2_outCnt++;
-                    if (aging > 120) { g2_overAmt += amt; g2_overCnt++; }
-                    else { g2_underAmt += amt; g2_underCnt++; }
+                    if (aging > 120 && !isMt) { g2_overAmt += amt; g2_overCnt++; }
+                    else if (aging <= 120) { g2_underAmt += amt; g2_underCnt++; }
                 }
             } else if (grp === '3') {
                 if (isPaid) { g3_colAmt += amt; g3_colCnt++; }
                 else {
                     g3_outAmt += amt; g3_outCnt++;
-                    if (aging > 120) { g3_overAmt += amt; g3_overCnt++; }
-                    else { g3_underAmt += amt; g3_underCnt++; }
+                    if (aging > 120 && !isMt) { g3_overAmt += amt; g3_overCnt++; }
+                    else if (aging <= 120) { g3_underAmt += amt; g3_underCnt++; }
                 }
             }
         }
@@ -676,7 +703,7 @@ function applyAllFilters() {
         let matchSub = true;
         if (currentSubFilter === 'outstanding') matchSub = !isPaid;
         else if (currentSubFilter === 'under120') matchSub = (!isPaid && aging <= 120);
-        else if (currentSubFilter === 'over120') matchSub = (!isPaid && aging > 120);
+        else if (currentSubFilter === 'over120') matchSub = (!isPaid && aging > 120 && !isMt);
         else if (currentSubFilter === 'collected') matchSub = isPaid;
 
         if (matchSearch && matchGroup && matchSub) {
@@ -731,6 +758,14 @@ function applyAllFilters() {
     // Update Table Footer
     document.getElementById('visibleRowCount').innerText = visibleCount.toLocaleString('en-US');
     document.getElementById('visibleTotalAmount').innerText = visibleSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function setCompSalesRep(name) {
+    const input = document.getElementById('compSearchSalesRep');
+    if (input) {
+        input.value = name;
+        applyAllFilters();
+    }
 }
 
 function clearFilters() {
