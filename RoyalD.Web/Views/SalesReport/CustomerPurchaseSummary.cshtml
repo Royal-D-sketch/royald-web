@@ -121,7 +121,7 @@
         <thead>
             <tr>
                 <th style="width:120px;">รหัสลูกค้า</th>
-                <th style="min-width:200px;">ชื่อลูกค้า</th>
+                <th class="col-customer-name" style="min-width: 260px; white-space: normal !important;">ชื่อลูกค้า</th>
                 <th style="width:120px;">รหัสสินค้า</th>
                 <th style="min-width:180px;">ชื่อสินค้า</th>
                 <th style="width:100px;" class="text-center">หน่วยสินค้า</th>
@@ -147,7 +147,7 @@
                         <td class="@(isNewCustomer ? "fw-bold text-primary" : "text-muted")" style="@(isNewCustomer ? "" : "border-top:none;")">
                             @(isNewCustomer ? row.CustomerId : "")
                         </td>
-                        <td class="@(isNewCustomer ? "fw-bold text-dark" : "text-muted")" style="@(isNewCustomer ? "" : "border-top:none;")">
+                        <td class="@(isNewCustomer ? "fw-bold text-dark" : "text-muted") col-customer-name" style="min-width: 260px; white-space: normal !important; word-break: break-word !important; @(isNewCustomer ? "" : "border-top:none;")">
                             @(isNewCustomer ? row.CustomerName : "")
                         </td>
                         <td class="text-secondary">@row.ProductCode</td>

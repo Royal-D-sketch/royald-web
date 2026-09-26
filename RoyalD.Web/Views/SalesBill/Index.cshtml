@@ -255,7 +255,7 @@
                     <th>วันที่</th>
                     <th>ใบสั่งซื้อเลขที่</th>
                     <th>รหัสลูกค้า</th>
-                    <th class="col-customer-name" style="min-width: 220px;">ชื่อลูกค้า</th>
+                    <th class="col-customer-name" style="min-width: 260px; white-space: normal !important;">ชื่อลูกค้า</th>
                     <th>เขต/อำเภอ</th>
                     <th>จังหวัด</th>
                     <th class="text-center">เครดิต</th><th class="text-center">ครบกำหนด</th>
@@ -284,7 +284,7 @@
                         <td>@b.BillDate.ToString("dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture)</td>
                         <td>@(!string.IsNullOrEmpty(b.PoNumber) ? b.PoNumber : "-")</td>
                         <td><code>@b.CustomerCode</code></td>
-                        <td class="fw-semibold text-dark col-customer-name" style="min-width: 220px; white-space: normal !important; word-break: break-word !important;">@b.CustomerName</td>
+                        <td class="fw-semibold text-dark col-customer-name" style="min-width: 260px; white-space: normal !important; word-break: break-word !important;">@b.CustomerName</td>
                         <td>@(!string.IsNullOrEmpty(b.District) ? b.District : "-")</td>
                         <td>@(!string.IsNullOrEmpty(b.Province) ? b.Province : "-")</td>
                         <td class="text-center">

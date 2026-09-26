@@ -408,7 +408,7 @@
                     <tr>
                         <th style="width: 125px;">เลขที่บิล / วันที่</th>
                         <th style="width: 110px;">PO Number</th>
-                        <th style="min-width: 220px;">ชื่อลูกค้า / รหัส</th>
+                        <th class="col-customer-name" style="min-width: 260px; white-space: normal !important;">ชื่อลูกค้า / รหัส</th>
                         <th style="width: 130px;">เขต/อำเภอ - จังหวัด</th>
                         <th class="text-center" style="width: 80px;">เครดิต</th>
                         <th class="text-center" style="width: 110px;">อายุหนี้ / ครบกำหนด</th>
@@ -487,7 +487,7 @@
 
                             <!-- 2. ชื่อลูกค้า / รหัสลูกค้า -->
                             <td>
-                                <div class="customer-name" style="white-space: normal; word-break: break-word; line-height: 1.35; font-size: 0.92rem;">
+                                <div class="customer-name fw-bold text-dark" style="white-space: normal !important; word-break: break-word !important; line-height: 1.35; font-size: 0.92rem; min-width: 260px;">
                                     @(d.Customer?.Name ?? d.CustomerName)
                                 </div>
                                 <small class="text-muted d-block font-monospace mt-1" style="font-size: 0.74rem;">

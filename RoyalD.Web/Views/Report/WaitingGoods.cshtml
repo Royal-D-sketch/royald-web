@@ -44,7 +44,7 @@
                     <th>เลขที่บิล</th>
                     <th>วันที่บิล</th>
                     <th>รหัสลูกค้า</th>
-                    <th>ชื่อลูกค้า</th>
+                    <th class="col-customer-name" style="min-width: 260px; white-space: normal !important;">ชื่อลูกค้า</th>
                     <th>ผู้แทนขาย</th>
                     <th>วันที่อัปเดต</th>
                     <th style="min-width: 140px;">รหัสสินค้า</th>
@@ -60,7 +60,7 @@
                         <td><a href="/SalesBill/Detail?id=@Uri.EscapeDataString(item.BillNo)" class="text-decoration-none fw-bold">@item.BillNo</a></td>
                         <td>@item.BillDate.ToString("dd/MM/yyyy")</td>
                         <td><code>@item.CustomerCode</code></td>
-                        <td>@item.CustomerName</td>
+                        <td class="col-customer-name fw-bold" style="min-width: 260px; white-space: normal !important; word-break: break-word !important;">@item.CustomerName</td>
                         <td><span class="badge bg-light text-dark border">@item.SalesRep</span></td>
                         <td>@(item.UpdatedAt != null ? ((DateTime)item.UpdatedAt).ToString("dd/MM/yyyy") : "-")</td>
                         <td><code style="white-space: nowrap;">@item.ProductCode</code></td>

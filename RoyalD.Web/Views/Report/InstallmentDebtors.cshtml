@@ -17,7 +17,7 @@
                     <th>เลขที่บิล</th>
                     <th>วันที่บิล</th>
                     <th>รหัสลูกค้า</th>
-                    <th>ชื่อลูกค้า</th>
+                    <th class="col-customer-name" style="min-width: 260px; white-space: normal !important;">ชื่อลูกค้า</th>
                     <th>จังหวัด</th>
                     <th>ผู้แทนขาย</th>
                     <th class="text-end">ยอดคงเหลือ</th>
@@ -31,7 +31,7 @@
                         <td class="fw-bold">@d.BillNo</td>
                         <td>@d.BillDate.ToString("dd/MM/yyyy")</td>
                         <td><code>@d.CustomerCode</code></td>
-                        <td>@d.CustomerName</td>
+                        <td class="col-customer-name fw-bold" style="min-width: 260px; white-space: normal !important; word-break: break-word !important;">@d.CustomerName</td>
                         <td>@d.Province</td>
                         <td><span class="badge bg-light text-dark border">@d.SalesRep</span></td>
                         <td class="text-end fw-bold text-danger">@d.RemainingAmount.ToString("N2")</td>

@@ -42,7 +42,7 @@
             <thead class="table-light">
                 <tr>
                     <th>เลขที่บิล</th>
-                    <th>ชื่อลูกค้า</th>
+                    <th class="col-customer-name" style="min-width: 260px; white-space: normal !important;">ชื่อลูกค้า</th>
                     <th>ผู้แทนขาย</th>
                     <th>วันที่บิล</th>
                     <th>สถานะการคืน</th>
@@ -56,7 +56,7 @@
                 {
                     <tr>
                         <td><a href="/SalesBill/Detail?id=@Uri.EscapeDataString(item.BillNo)" class="text-decoration-none fw-bold">@item.BillNo</a></td>
-                        <td>@item.CustomerName</td>
+                        <td class="col-customer-name fw-bold" style="min-width: 260px; white-space: normal !important; word-break: break-word !important;">@item.CustomerName</td>
                         <td><span class="badge bg-light text-dark border">@item.SalesRep</span></td>
                         <td>@(item.PaidDate?.ToString("dd/MM/yyyy") ?? item.BillDate.ToString("dd/MM/yyyy"))</td>
                         <td>
