@@ -169,22 +169,44 @@ namespace RoyalD.Web.Controllers
         // ==============================================================
         // ==============================================================
         // HELPER: ตรวจสอบสิทธิ์ผู้ใช้ที่มีสิทธิ์กดส่งคืนไปจัดส่ง
-        // กำหนดเฉพาะ: ['nid', 'admin', 'หัวหน้า', 'ผู้บริหาร']
+        // ตำแหน่ง/บทบาท: admin, ผู้ดูแลระบบ, หัวหน้า, ผู้บริหาร
+        // รหัสผู้ใช้ / ชื่อ: nid, art, admin, นิด, อาร์ต หรือมีสิทธิ์ CanChangeDebtStatus
         // ==============================================================
         public static bool IsAuthorizedUserForReturn(System.Security.Claims.ClaimsPrincipal user)
         {
             if (user?.Identity?.IsAuthenticated != true) return false;
-            var allowed = new[] { "nid", "admin", "หัวหน้า", "ผู้บริหาร" };
+
+            // 1. ตรวจสอบสิทธิ์ระดับ Role / Identity Role (admin)
+            if (user.IsInRole("admin")) return true;
+            var role = (user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? user.FindFirst("Role")?.Value ?? "").Trim().ToLower();
+            if (role == "admin") return true;
+
+            // 2. ตรวจสอบจาก ตำแหน่ง (Position) เช่น admin, ผู้ดูแลระบบ, หัวหน้างาน, หัวหน้า, ผู้บริหาร
+            var position = (user.FindFirst("Position")?.Value ?? "").Trim().ToLower();
+            if (!string.IsNullOrEmpty(position))
+            {
+                if (position.Contains("admin") || position.Contains("ผู้ดูแลระบบ") || position.Contains("หัวหน้า") || position.Contains("ผู้บริหาร"))
+                {
+                    return true;
+                }
+            }
+
+            // 3. ตรวจสอบสิทธิ์เปลี่ยนสถานะหนี้ (CanChangeDebtStatus)
+            if (user.FindFirst("CanChangeDebtStatus")?.Value?.Equals("true", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                return true;
+            }
+
+            // 4. ตรวจสอบรหัสผู้ใช้ (Username) หรือ ชื่อ-นามสกุล (FullName) เช่น ART, nid, admin, นิด, อาร์ต
             var uName = (user.Identity.Name ?? "").Trim().ToLower();
             var fName = (user.FindFirst("FullName")?.Value ?? "").Trim().ToLower();
-            var role = (user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "").Trim().ToLower();
 
-            return allowed.Any(a =>
+            var allowedKeywords = new[] { "nid", "art", "admin", "หัวหน้า", "ผู้บริหาร", "นิด", "อาร์ต" };
+            return allowedKeywords.Any(a =>
                 uName.Equals(a, StringComparison.OrdinalIgnoreCase) ||
                 uName.Contains(a) ||
                 fName.Equals(a, StringComparison.OrdinalIgnoreCase) ||
-                fName.Contains(a) ||
-                role.Equals(a, StringComparison.OrdinalIgnoreCase)
+                fName.Contains(a)
             );
         }
 
