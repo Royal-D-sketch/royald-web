@@ -67,15 +67,13 @@ namespace RoyalD.Web.Controllers
                 string catName = "";
                 string groupCode = "3"; // default upcountry
 
+                var bDateNorm = d.BillDate.Year > 2500 ? d.BillDate.AddYears(-543) : d.BillDate;
+
                 if (isBkkArea)
                 {
-                    if (d.BillDate >= cutoffDate && d.Credit <= 7)
+                    if (bDateNorm.Date >= cutoffDate.Date && d.Credit <= 7)
                     {
                         groupCode = "1";
-                    }
-                    else if ((d.BillDate < cutoffDate && d.Credit <= 7) || (d.BillDate >= cutoffDate && (d.Credit == 10 || (d.Credit > 7 && d.Credit <= 10))))
-                    {
-                        groupCode = "2";
                     }
                     else
                     {
@@ -196,10 +194,11 @@ namespace RoyalD.Web.Controllers
                 if (!seenPaidBillNos.Contains(sb.BillNo))
                 {
                     bool isBkkArea = RegionHelper.IsBkkAndVicinity(sb.Province, sb.District);
+                    var sbDateNorm = sb.BillDate.Year > 2500 ? sb.BillDate.AddYears(-543) : sb.BillDate;
                     string groupCode = "3";
                     if (isBkkArea)
                     {
-                        if (sb.BillDate >= cutoffDate && sb.Credit <= 7) groupCode = "1";
+                        if (sbDateNorm.Date >= cutoffDate.Date && sb.Credit <= 7) groupCode = "1";
                         else groupCode = "2";
                     }
 

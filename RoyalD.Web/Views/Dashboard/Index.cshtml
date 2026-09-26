@@ -308,7 +308,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
         <div class="chart-panel">
             <div class="panel-title">
                 <i class="bi bi-pie-chart-fill" style="color:#0f766e;"></i>
-                กราฟโดนัทสรุปสัดส่วนหนี้ค้างชำระรวม (AR Allocation Donut Chart)
+                กราฟวงกลมสรุปสัดส่วนหนี้ค้างชำระรวม (AR Allocation Pie Chart)
             </div>
             <div class="d-flex justify-content-center align-items-center" style="position:relative; min-height: 270px;">
                 <canvas id="arAllocationPieChart" style="max-height: 260px; max-width: 100%;"></canvas>
@@ -570,7 +570,7 @@ const categoryTitles = {
     'collected': 'ยอดเก็บสำเร็จ'
 };
 
-// Global Donut Chart instance
+// Global Pie Chart instance
 let arPieChart = null;
 
 function initPieChart() {
@@ -578,7 +578,7 @@ function initPieChart() {
     if (!ctx) return;
 
     arPieChart = new Chart(ctx, {
-        type: 'doughnut',
+        type: 'pie',
         data: {
             labels: [
                 '1. เก็บสด 7 วัน (กทม.&ปริมณฑล)',
@@ -600,7 +600,6 @@ function initPieChart() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            cutout: '52%',
             layout: {
                 padding: {
                     top: 10,
@@ -633,7 +632,7 @@ function initPieChart() {
 (${amtStr})`;
                     },
                     textAlign: 'center',
-                    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+                    textShadowColor: 'rgba(0, 0, 0, 0.55)',
                     textShadowBlur: 4
                 },
                 legend: {
@@ -829,7 +828,7 @@ function applyFilters() {
     document.getElementById('breakdownCount-upcountry').innerText = countUpcountry.toLocaleString('en-US');
     document.getElementById('progBar-upcountry').style.width = pUpc + '%';
 
-    // Update Donut Chart in Real-time
+    // Update Pie Chart in Real-time
     if (arPieChart) {
         arPieChart.data.datasets[0].data = [sumCash7, sumCash10, sumUpcountry];
         arPieChart.update();
