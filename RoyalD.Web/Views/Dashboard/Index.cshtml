@@ -1,20 +1,69 @@
 @model List<RoyalD.Web.Models.OutstandingDebt>
 @{
-    ViewData["Title"] = "Accounts Receivable Dashboard";
+    ViewData["Title"] = "1. หน้าหลักภาพรวมและแดชบอร์ด (AR Executive Summary)";
     var summary = ViewBag.Summary as RoyalD.Web.Models.DashboardSummary ?? new RoyalD.Web.Models.DashboardSummary();
     var drilldownBills = ViewBag.DrilldownBills as List<RoyalD.Web.Models.DashboardBillItem> ?? new List<RoyalD.Web.Models.DashboardBillItem>();
     var today = DateTime.Today;
+
+    // Calculate AR 3 Segments for Pie Chart
+    decimal pieCash7 = summary.Cash7Days.TotalAmount;
+    decimal pieCashTimeline = summary.Cash10Days.TotalAmount;
+    decimal pieUpcountry = summary.UpcountryDebts.TotalAmount;
+    decimal totalArPie = pieCash7 + pieCashTimeline + pieUpcountry;
+    if (totalArPie == 0) totalArPie = summary.TotalOutstandingAmount;
+    if (totalArPie == 0) totalArPie = 1; // avoid divide by zero
+
+    double pctCash7 = (double)Math.Round((pieCash7 / totalArPie) * 100, 1);
+    double pctCashTimeline = (double)Math.Round((pieCashTimeline / totalArPie) * 100, 1);
+    double pctUpcountry = (double)Math.Round((pieUpcountry / totalArPie) * 100, 1);
 }
 
 <style>
-/* ===== DASHBOARD STYLES ===== */
-body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', 'Leelawadee', Tahoma, Arial, sans-serif !important; }
+/* ===== EXECUTIVE DASHBOARD STYLES ===== */
+body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-serif !important; }
 
-/* Interactive Top Stat Cards */
-.dash-card {
+/* Sub-Nav Bar (2 Main Pages Switcher) */
+.ar-nav-bar {
+    display: flex;
+    gap: 12px;
+    background: #ffffff;
+    padding: 8px;
+    border-radius: 14px;
+    margin-bottom: 22px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.ar-nav-btn {
+    flex: 1;
+    text-align: center;
+    padding: 12px 18px;
+    font-weight: 800;
+    font-size: 0.96rem;
+    color: #475569;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: all .2s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+.ar-nav-btn:hover {
+    background: #f1f5f9;
+    color: #0f766e;
+    transform: translateY(-1px);
+}
+.ar-nav-btn.active {
+    background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+}
+
+/* 4 Main Top Cards */
+.exec-card {
     border-radius: 16px;
     padding: 20px 22px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.07);
     border: 2px solid transparent;
     color: white;
     position: relative;
@@ -22,45 +71,74 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', 'Leelawadee', 
     cursor: pointer;
     transition: all 0.25s ease-in-out;
 }
-.dash-card:hover {
+.exec-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.18);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.16);
     filter: brightness(1.03);
 }
-.dash-card.active-card {
+.exec-card.active-card {
     border-color: #facc15 !important;
-    box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.4), 0 8px 25px rgba(0,0,0,0.2) !important;
+    box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.45), 0 8px 25px rgba(0,0,0,0.2) !important;
 }
-.dash-card::before {
+.exec-card::before {
     content: '';
     position: absolute;
-    top: -20px; right: -20px;
-    width: 90px; height: 90px;
+    top: -25px; right: -25px;
+    width: 95px; height: 95px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.14);
 }
-.dash-label { font-size: 0.86rem; font-weight: 700; opacity: 0.92; letter-spacing: 0.3px; display: flex; align-items: center; justify-content: space-between; }
-.dash-value { font-size: 2.1rem; font-weight: 900; line-height: 1.15; letter-spacing: -0.5px; margin: 8px 0 4px 0; }
-.dash-sub { font-size: 0.78rem; opacity: 0.85; }
+.exec-card-label { font-size: 0.88rem; font-weight: 700; opacity: 0.95; display: flex; align-items: center; justify-content: space-between; }
+.exec-card-value { font-size: 2.15rem; font-weight: 900; line-height: 1.15; letter-spacing: -0.5px; margin: 8px 0 4px 0; }
+.exec-card-sub { font-size: 0.80rem; opacity: 0.90; }
+.collection-rate-tag {
+    display: inline-block;
+    background: rgba(255,255,255,0.22);
+    border: 1px solid rgba(255,255,255,0.4);
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 800;
+    font-size: 0.85rem;
+    margin-top: 6px;
+}
 
-.bg-cash7 { background: linear-gradient(135deg, #0284c7, #0369a1); }
-.bg-cash10 { background: linear-gradient(135deg, #0d9488, #0f766e); }
-.bg-over120 { background: linear-gradient(135deg, #e11d48, #9f1239); }
-.bg-collected { background: linear-gradient(135deg, #16a34a, #15803d); }
+.theme-blue { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+.theme-orange { background: linear-gradient(135deg, #ea580c, #c2410c); }
+.theme-red { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+.theme-green { background: linear-gradient(135deg, #16a34a, #15803d); }
+
+/* Section Cards */
+.chart-panel {
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    padding: 22px;
+    height: 100%;
+}
+.panel-title {
+    font-size: 1.08rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
 
 /* Drilldown & Table Container */
 .drilldown-container {
     border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    border: none;
-    background: white;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
     padding: 24px;
     margin-bottom: 30px;
 }
 .category-btn {
     border-radius: 20px;
     font-weight: 700;
-    font-size: 0.83rem;
+    font-size: 0.84rem;
     padding: 6px 16px;
     transition: all 0.2s ease;
 }
@@ -81,52 +159,19 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', 'Leelawadee', 
 .detail-table th {
     font-size: 0.83rem;
     font-weight: 700;
-    background-color: #1e293b;
+    background-color: #0f766e;
     color: #ffffff;
-    padding: 11px 12px;
+    padding: 10px 10px;
     white-space: nowrap;
 }
 .detail-table td {
     font-size: 0.86rem;
     vertical-align: middle;
-    padding: 9px 12px;
+    padding: 8px 10px;
 }
 .detail-table tbody tr:hover {
     background-color: #f8fafc;
 }
-
-/* Comparison Cards */
-.compare-panel {
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.09);
-    overflow: hidden;
-    border: none;
-}
-.compare-header {
-    padding: 14px 20px;
-    font-weight: 800;
-    font-size: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.compare-header.bkk { background: linear-gradient(90deg, #4361ee, #3a0ca3); color: white; }
-.compare-header.upc { background: linear-gradient(90deg, #2d6a4f, #1b4332); color: white; }
-.compare-body { background: #fff; padding: 18px 20px; }
-.compare-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid #f0f0f0;
-}
-.compare-row:last-child { border-bottom: none; }
-.compare-row-label { font-size: 0.83rem; font-weight: 700; color: #6b7a99; }
-.compare-amount { font-size: 1.5rem; font-weight: 900; color: #1a1a2e; line-height: 1; }
-.compare-amount.danger { color: #c1121f; }
-.compare-amount.success { color: #1a7a4a; }
-.compare-amount.warning { color: #b5540b; }
-.compare-bills { font-size: 0.72rem; color: #9aa3b0; font-weight: 600; }
 
 .blink-icon {
     animation: blinkIcon 1.2s infinite;
@@ -136,21 +181,23 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', 'Leelawadee', 
     0%, 100% { opacity: 1; }
     50% { opacity: 0.2; }
 }
-
-.chart-card {
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    border: none;
-    padding: 20px;
-    background: white;
-}
 </style>
 
-<!-- ===== HEADER ===== -->
+<!-- ===== SUB-NAV BAR: 2 MAIN PAGES SWITCHER ===== -->
+<div class="ar-nav-bar">
+    <a href="/Dashboard" class="ar-nav-btn active">
+        <i class="bi bi-speedometer2 fs-5"></i> 1. หน้าหลักภาพรวมและแดชบอร์ด (AR Executive Summary)
+    </a>
+    <a href="/Dashboard/Comparison" class="ar-nav-btn">
+        <i class="bi bi-layout-three-columns fs-5"></i> 2. กระดานเปรียบเทียบข้อมูล 3 ส่วนคู่ขนาน (AR Detailed Comparison Board)
+    </a>
+</div>
+
+<!-- ===== PAGE HEADER ===== -->
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
     <div>
         <h4 class="mb-0 fw-bold" style="color:#0f766e; font-size:1.55rem;">
-            <i class="bi bi-speedometer2" style="color:#0d9488;"></i> AR Dashboard & รายงานภาพรวมลูกหนี้
+            <i class="bi bi-pie-chart-fill" style="color:#0d9488;"></i> แดชบอร์ดวิเคราะห์เครดิตเชิงกลยุทธ์ (AR Executive Summary)
         </h4>
         <small class="text-muted">
             <i class="bi bi-calendar3"></i>
@@ -173,8 +220,8 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', 'Leelawadee', 
         <button onclick="window.print()" class="btn btn-outline-secondary btn-sm fw-bold">
             <i class="bi bi-printer"></i> พิมพ์หน้าจอ
         </button>
-        <a href="/Debtor" class="btn btn-outline-primary btn-sm fw-bold">
-            <i class="bi bi-person-lines-fill"></i> การ์ดลูกหนี้
+        <a href="/Dashboard/Comparison" class="btn btn-warning btn-sm fw-bold text-dark">
+            <i class="bi bi-layout-three-columns me-1"></i> ดูกระดานเปรียบเทียบ 3 ส่วน
         </a>
         <a href="/SalesBill" class="btn btn-primary btn-sm fw-bold" style="background:#0f766e; border-color:#0f766e;">
             <i class="bi bi-receipt"></i> บิลขายทั้งหมด
@@ -182,68 +229,170 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', 'Leelawadee', 
     </div>
 </div>
 
-<!-- ===== 4 MAIN CLICKABLE DASHBOARD SUMMARY CARDS ===== -->
+<!-- ===== 1. ส่วนบนสุด: กล่องแดชบอร์ดสรุปภาพรวม 4 การ์ดหลัก ===== -->
 <div class="row g-3 mb-4">
-    <!-- Card 1: เก็บสด 7 วัน (กทม.&ปริมณฑล) -->
+    <!-- Card 1: 7 วัน กทม. ธีมสีน้ำเงิน -->
     <div class="col-6 col-lg-3">
-        <div class="dash-card bg-cash7" id="card-cash7" onclick="selectCategory('cash7')" title="คลิกเพื่อดูรายละเอียดบิล เก็บสด 7 วัน">
-            <div class="dash-label">
-                <span><i class="bi bi-buildings-fill me-1"></i> เก็บสด 7 วัน</span>
+        <div class="exec-card theme-blue" id="card-cash7" onclick="selectCategory('cash7')" title="คลิกเพื่อดูรายละเอียดบิล เก็บสด 7 วัน">
+            <div class="exec-card-label">
+                <span><i class="bi bi-buildings-fill me-1"></i> 7 วัน กทม.&ปริมณฑล</span>
                 <span class="badge bg-white text-primary fw-bold" id="badgeCount-cash7">@summary.Cash7Days.BillCount.ToString("N0") บิล</span>
             </div>
-            <div class="dash-value" id="cardAmount-cash7">@summary.Cash7Days.TotalAmount.ToString("N0")</div>
-            <div class="dash-sub">
+            <div class="exec-card-value" id="cardAmount-cash7">@summary.Cash7Days.TotalAmount.ToString("N0")</div>
+            <div class="exec-card-sub">
                 กทม.&ปริมณฑล ณ 14/09+ <i class="bi bi-arrow-down-circle ms-1"></i>
+            </div>
+            <div class="collection-rate-tag">
+                สัดส่วนหนี้: <strong id="tagPct-cash7">@pctCash7.ToString("0.0")%</strong>
             </div>
         </div>
     </div>
 
-    <!-- Card 2: เงินสด 10 วัน (กทม.&ปริมณฑล) -->
+    <!-- Card 2: นโยบายรวมสายเวลาเงินสด กทม. ธีมสีส้ม -->
     <div class="col-6 col-lg-3">
-        <div class="dash-card bg-cash10" id="card-cash10" onclick="selectCategory('cash10')" title="คลิกเพื่อดูรายละเอียดบิล เงินสด 10 วัน">
-            <div class="dash-label">
-                <span><i class="bi bi-geo-alt-fill me-1"></i> เงินสด 10 วัน</span>
+        <div class="exec-card theme-orange" id="card-cash10" onclick="selectCategory('cash10')" title="คลิกเพื่อดูรายละเอียดบิล เงินสดรวมสายเวลา">
+            <div class="exec-card-label">
+                <span><i class="bi bi-hourglass-split me-1"></i> รวมสายเวลาเงินสด กทม.</span>
                 <span class="badge bg-white text-dark fw-bold" id="badgeCount-cash10">@summary.Cash10Days.BillCount.ToString("N0") บิล</span>
             </div>
-            <div class="dash-value" id="cardAmount-cash10">@summary.Cash10Days.TotalAmount.ToString("N0")</div>
-            <div class="dash-sub">
-                กทม.&ปริมณฑล ณ 14/09+ <i class="bi bi-arrow-down-circle ms-1"></i>
+            <div class="exec-card-value" id="cardAmount-cash10">@summary.Cash10Days.TotalAmount.ToString("N0")</div>
+            <div class="exec-card-sub">
+                กทม. ก่อน 14/09 (7 วัน) + หลัง 14/09 (10 วัน) <i class="bi bi-arrow-down-circle ms-1"></i>
+            </div>
+            <div class="collection-rate-tag">
+                สัดส่วนหนี้: <strong id="tagPct-cash10">@pctCashTimeline.ToString("0.0")%</strong>
             </div>
         </div>
     </div>
 
-    <!-- Card 3: ค้างชำระ > 120 วัน -->
+    <!-- Card 3: ค้างวิกฤต > 120 วัน ธีมสีแดง -->
     <div class="col-6 col-lg-3">
-        <div class="dash-card bg-over120" id="card-over120" onclick="selectCategory('over120')" title="คลิกเพื่อดูรายละเอียดบิล ค้างชำระเกิน 120 วัน">
-            <div class="dash-label">
-                <span><span class="blink-icon">⚠️</span> ค้างชำระ > 120 วัน</span>
+        <div class="exec-card theme-red" id="card-over120" onclick="selectCategory('over120')" title="คลิกเพื่อดูรายละเอียดบิล ค้างชำระเกิน 120 วัน">
+            <div class="exec-card-label">
+                <span><span class="blink-icon">⚠️</span> ค้างวิกฤต > 120 วัน</span>
                 <span class="badge bg-white text-danger fw-bold" id="badgeCount-over120">@summary.Overdue120Days.BillCount.ToString("N0") บิล</span>
             </div>
-            <div class="dash-value" id="cardAmount-over120">@summary.Overdue120Days.TotalAmount.ToString("N0")</div>
-            <div class="dash-sub">
-                หนี้เกินกำหนด 120 วัน <i class="bi bi-arrow-down-circle ms-1"></i>
+            <div class="exec-card-value" id="cardAmount-over120">@summary.Overdue120Days.TotalAmount.ToString("N0")</div>
+            <div class="exec-card-sub">
+                หนี้เกินกำหนดชำระ 120 วัน <i class="bi bi-arrow-down-circle ms-1"></i>
+            </div>
+            <div class="collection-rate-tag">
+                หนี้วิกฤต: <strong id="tagPct-over120">@(((summary.TotalSalesAmount > 0) ? (summary.Overdue120Days.TotalAmount / summary.TotalSalesAmount * 100) : 0).ToString("0.0"))%</strong> ของยอดขาย
             </div>
         </div>
     </div>
 
-    <!-- Card 4: ยอดเก็บเงินสำเร็จ -->
+    <!-- Card 4: ยอดเก็บสำเร็จประจำเดือน ธีมสีเขียว -->
     <div class="col-6 col-lg-3">
-        <div class="dash-card bg-collected" id="card-collected" onclick="selectCategory('collected')" title="คลิกเพื่อดูรายละเอียดบิล ยอดเก็บเงินสำเร็จ">
-            <div class="dash-label">
-                <span><i class="bi bi-check-circle-fill me-1"></i> ยอดเก็บเงินสำเร็จ</span>
+        <div class="exec-card theme-green" id="card-collected" onclick="selectCategory('collected')" title="คลิกเพื่อดูรายละเอียดบิล ยอดเก็บเงินสำเร็จ">
+            <div class="exec-card-label">
+                <span><i class="bi bi-check-circle-fill me-1"></i> ยอดเก็บสำเร็จ</span>
                 <span class="badge bg-white text-success fw-bold" id="badgeCount-collected">@summary.Collected.BillCount.ToString("N0") บิล</span>
             </div>
-            <div class="dash-value" id="cardAmount-collected">@summary.Collected.TotalAmount.ToString("N0")</div>
-            <div class="dash-sub">
-                ชำระเรียบร้อยแล้ว <i class="bi bi-arrow-down-circle ms-1"></i>
+            <div class="exec-card-value" id="cardAmount-collected">@summary.Collected.TotalAmount.ToString("N0")</div>
+            <div class="exec-card-sub">
+                ชำระเงินเรียบร้อยแล้ว <i class="bi bi-arrow-down-circle ms-1"></i>
+            </div>
+            <div class="collection-rate-tag" style="background: rgba(255,255,255,0.32); border-color:#ffffff;">
+                % Collection Rate = <strong style="font-size:0.92rem;" id="tagCollectionRate">@summary.CollectionRate.ToString("0.00")%</strong>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ===== INTERACTIVE DRILLDOWN DETAIL TABLE SECTION ===== -->
+<!-- ===== 2. ส่วนกลาง: ระบบกราฟวงกลมพรีเซนต์ (AR Allocation Pie Chart) ===== -->
+<div class="row g-3 mb-4">
+    <!-- Chart: AR Allocation Pie Chart -->
+    <div class="col-12 col-lg-6">
+        <div class="chart-panel">
+            <div class="panel-title">
+                <i class="bi bi-pie-chart-fill" style="color:#0284c7;"></i>
+                กราฟวงกลมสรุปสัดส่วนหนี้ค้างชำระรวม (AR Allocation Pie Chart)
+            </div>
+            <div class="d-flex justify-content-center align-items-center" style="position:relative; min-height: 270px;">
+                <canvas id="arAllocationPieChart" style="max-height: 260px; max-width: 100%;"></canvas>
+            </div>
+            <div class="text-center mt-2 text-muted small">
+                * กราฟคำนวณและปรับสัดส่วนแบบ Real-time ตามเงื่อนไขการพิมพ์ค้นหาด้านล่าง
+            </div>
+        </div>
+    </div>
+
+    <!-- Strategic Insights & Group Breakdown -->
+    <div class="col-12 col-lg-6">
+        <div class="chart-panel">
+            <div class="panel-title">
+                <i class="bi bi-bar-chart-steps" style="color:#0d9488;"></i>
+                สรุปมูลค่าหนี้และสัดส่วนตามเกณฑ์พื้นที่และเวลา (Strategic AR Breakdown)
+            </div>
+
+            <!-- Group 1: 7 วัน กทม. -->
+            <div class="p-3 mb-2 rounded-3 border" style="background:#eff6ff; border-color:#bfdbfe !important;">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-bold" style="color:#1d4ed8;">
+                        <i class="bi bi-square-fill me-1" style="color:#2563eb;"></i> 1. บิลเก็บสด 7 วัน (กทม. & ปริมณฑล)
+                    </span>
+                    <span class="badge bg-primary px-2 py-1" id="pctText-cash7">@pctCash7.ToString("0.0")%</span>
+                </div>
+                <div class="d-flex justify-content-between text-muted small">
+                    <span>ยอดหนี้คงค้าง: <strong class="text-dark fs-6" id="breakdownAmount-cash7">@pieCash7.ToString("N0")</strong> บาท</span>
+                    <span>จำนวน: <strong class="text-dark" id="breakdownCount-cash7">@summary.Cash7Days.BillCount.ToString("N0")</strong> บิล</span>
+                </div>
+                <div class="progress mt-2" style="height: 6px;">
+                    <div class="progress-bar bg-primary" id="progBar-cash7" role="progressbar" style="width: @pctCash7%;"></div>
+                </div>
+            </div>
+
+            <!-- Group 2: รวมสายเวลา กทม. -->
+            <div class="p-3 mb-2 rounded-3 border" style="background:#fff7ed; border-color:#fed7aa !important;">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-bold" style="color:#c2410c;">
+                        <i class="bi bi-square-fill me-1" style="color:#ea580c;"></i> 2. บิลเงินสดรวมสายเวลาต่อเนื่อง (กทม. & ปริมณฑล)
+                    </span>
+                    <span class="badge bg-warning text-dark px-2 py-1" id="pctText-cash10">@pctCashTimeline.ToString("0.0")%</span>
+                </div>
+                <div class="d-flex justify-content-between text-muted small">
+                    <span>ยอดหนี้คงค้าง: <strong class="text-dark fs-6" id="breakdownAmount-cash10">@pieCashTimeline.ToString("N0")</strong> บาท</span>
+                    <span>จำนวน: <strong class="text-dark" id="breakdownCount-cash10">@summary.Cash10Days.BillCount.ToString("N0")</strong> บิล</span>
+                </div>
+                <div class="progress mt-2" style="height: 6px;">
+                    <div class="progress-bar bg-warning" id="progBar-cash10" role="progressbar" style="width: @pctCashTimeline%;"></div>
+                </div>
+            </div>
+
+            <!-- Group 3: ต่างจังหวัดทั้งหมด -->
+            <div class="p-3 mb-2 rounded-3 border" style="background:#f0fdf4; border-color:#bbf7d0 !important;">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-bold" style="color:#15803d;">
+                        <i class="bi bi-square-fill me-1" style="color:#16a34a;"></i> 3. บิลค้างชำระฝั่งต่างจังหวัดทั้งหมด
+                    </span>
+                    <span class="badge bg-success px-2 py-1" id="pctText-upcountry">@pctUpcountry.ToString("0.0")%</span>
+                </div>
+                <div class="d-flex justify-content-between text-muted small">
+                    <span>ยอดหนี้คงค้าง: <strong class="text-dark fs-6" id="breakdownAmount-upcountry">@pieUpcountry.ToString("N0")</strong> บาท</span>
+                    <span>จำนวน: <strong class="text-dark" id="breakdownCount-upcountry">@summary.UpcountryDebts.BillCount.ToString("N0")</strong> บิล</span>
+                </div>
+                <div class="progress mt-2" style="height: 6px;">
+                    <div class="progress-bar bg-success" id="progBar-upcountry" role="progressbar" style="width: @pctUpcountry%;"></div>
+                </div>
+            </div>
+
+            <!-- Total Overall Collection Rate Highlight -->
+            <div class="p-2 bg-light rounded-3 d-flex justify-content-between align-items-center border mt-3">
+                <span class="small fw-bold text-secondary">
+                    <i class="bi bi-graph-up-arrow text-success me-1"></i> ประสิทธิภาพการจัดเก็บหนี้ (Collection Rate):
+                </span>
+                <span class="fw-black fs-6 text-success" id="totalCollectionRateDisplay">
+                    @summary.CollectionRate.ToString("0.00")%
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== 3. ส่วนล่าง: ตารางรายงานรายบิลพร้อมช่องค้นหา 4 ช่อง และปุ่ม Export ===== -->
 <div class="drilldown-container" id="drilldownSection">
-    <!-- Header Bar: Title + Category Pills + Export Buttons -->
+    <!-- Header Bar: Title + Export Buttons -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3 pb-3 border-bottom">
         <div>
             <h5 class="fw-bold mb-1" style="color:#0f766e;">
@@ -269,61 +418,70 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', 'Leelawadee', 
             ทั้งหมด (@drilldownBills.Count.ToString("N0"))
         </button>
         <button type="button" class="btn btn-outline-primary category-btn" id="pill-cash7" onclick="selectCategory('cash7')">
-            🏢 เก็บสด 7 วัน (@summary.Cash7Days.BillCount.ToString("N0"))
+            🏢 เก็บสด 7 วัน กทม. (@summary.Cash7Days.BillCount.ToString("N0"))
         </button>
-        <button type="button" class="btn btn-outline-info category-btn" id="pill-cash10" onclick="selectCategory('cash10')">
-            📍 เงินสด 10 วัน (@summary.Cash10Days.BillCount.ToString("N0"))
+        <button type="button" class="btn btn-outline-warning category-btn text-dark" id="pill-cash10" onclick="selectCategory('cash10')">
+            ⏳ รวมสายเวลาเงินสด กทม. (@summary.Cash10Days.BillCount.ToString("N0"))
+        </button>
+        <button type="button" class="btn btn-outline-success category-btn" id="pill-upcountry" onclick="selectCategory('upcountry')">
+            🚚 ต่างจังหวัดทั้งหมด (@summary.UpcountryDebts.BillCount.ToString("N0"))
         </button>
         <button type="button" class="btn btn-outline-danger category-btn" id="pill-over120" onclick="selectCategory('over120')">
             ⚠️ ค้างชำระ > 120 วัน (@summary.Overdue120Days.BillCount.ToString("N0"))
         </button>
         <button type="button" class="btn btn-outline-success category-btn" id="pill-collected" onclick="selectCategory('collected')">
-            ✅ ยอดเก็บเงินสำเร็จ (@summary.Collected.BillCount.ToString("N0"))
+            ✅ ยอดเก็บสำเร็จ (@summary.Collected.BillCount.ToString("N0"))
         </button>
     </div>
 
-    <!-- 3 Search Filters Toolbar -->
+    <!-- 4 Real-time Search Input Fields -->
     <div class="row g-2 search-input-group mb-3 p-3 bg-light rounded-3 border">
-        <div class="col-12 col-md-4">
-            <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-receipt"></i> ค้นหาเลขที่บิล</label>
-            <input type="text" id="inputSearchBill" class="form-control" placeholder="พิมพ์เลขที่บิล เช่น 630/..., R..." oninput="applyFilters()" />
-        </div>
-        <div class="col-12 col-md-4">
-            <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-person-badge"></i> ค้นหาชื่อลูกค้า / รหัสลูกค้า</label>
-            <input type="text" id="inputSearchCustomer" class="form-control" placeholder="พิมพ์ชื่อร้านค้า หรือ รหัสลูกค้า..." oninput="applyFilters()" />
+        <div class="col-12 col-md-3">
+            <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-receipt"></i> 1. เลขที่บิล</label>
+            <input type="text" id="inputSearchBill" class="form-control" placeholder="พิมพ์เลขที่บิล..." oninput="applyFilters()" />
         </div>
         <div class="col-12 col-md-3">
-            <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-person-fill"></i> ค้นหาผู้แทนขาย</label>
-            <input type="text" id="inputSearchSalesRep" class="form-control" placeholder="พิมพ์ชื่อผู้แทนขาย..." oninput="applyFilters()" />
+            <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-qr-code"></i> 2. รหัสลูกค้า</label>
+            <input type="text" id="inputSearchCustomerCode" class="form-control" placeholder="พิมพ์รหัสลูกค้า..." oninput="applyFilters()" />
+        </div>
+        <div class="col-12 col-md-3">
+            <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-shop"></i> 3. ชื่อลูกค้า</label>
+            <input type="text" id="inputSearchCustomerName" class="form-control" placeholder="พิมพ์ชื่อร้านค้า / ลูกค้า..." oninput="applyFilters()" />
+        </div>
+        <div class="col-12 col-md-2">
+            <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-person-fill"></i> 4. ผู้แทนขาย</label>
+            <input type="text" id="inputSearchSalesRep" class="form-control" placeholder="พิมพ์ชื่อผู้แทน..." oninput="applyFilters()" />
         </div>
         <div class="col-12 col-md-1 d-flex align-items-end">
-            <button type="button" class="btn btn-outline-secondary w-100 btn-sm py-2" onclick="clearFilters()" title="ล้างตัวกรอง">
+            <button type="button" class="btn btn-outline-secondary w-100 btn-sm py-2" onclick="clearFilters()" title="ล้างตัวกรองทั้งหมด">
                 <i class="bi bi-x-circle"></i> ล้าง
             </button>
         </div>
     </div>
 
-    <!-- Table Responsive -->
+    <!-- Table Responsive (10 Columns) -->
     <div class="table-responsive" style="max-height: 580px; overflow-y: auto;">
         <table class="table table-sm table-bordered table-hover align-middle detail-table mb-0" id="billsTable">
             <thead class="sticky-top">
                 <tr>
-                    <th style="width: 45px;" class="text-center">#</th>
-                    <th style="width: 120px;" class="text-center">เลขที่บิล</th>
-                    <th style="width: 100px;" class="text-center">วันที่บิล</th>
-                    <th style="width: 110px;">ผู้แทนขาย</th>
-                    <th style="width: 100px;" class="text-center">รหัสลูกค้า</th>
+                    <th style="width: 40px;" class="text-center">#</th>
+                    <th style="width: 110px;" class="text-center">เลขที่บิล</th>
+                    <th style="width: 95px;" class="text-center">วันที่บิล</th>
+                    <th style="width: 95px;" class="text-center">รหัสลูกค้า</th>
                     <th>ชื่อลูกค้า</th>
-                    <th style="width: 110px;">อำเภอ</th>
-                    <th style="width: 110px;">จังหวัด</th>
-                    <th style="width: 125px;" class="text-end">จำนวนเงิน</th>
+                    <th style="width: 100px;">อำเภอ</th>
+                    <th style="width: 100px;">จังหวัด</th>
+                    <th style="width: 60px;" class="text-center">เครดิต</th>
+                    <th style="width: 95px;" class="text-center">อายุหนี้</th>
+                    <th style="width: 120px;" class="text-end">จำนวนเงิน (บาท)</th>
+                    <th style="width: 100px;">ผู้แทนขาย</th>
                 </tr>
             </thead>
             <tbody id="tableBody">
                 @if (!drilldownBills.Any())
                 {
                     <tr id="emptyRow">
-                        <td colspan="9" class="text-center text-muted py-4">ไม่พบรายการข้อมูล</td>
+                        <td colspan="11" class="text-center text-muted py-4">ไม่พบรายการข้อมูล</td>
                     </tr>
                 }
                 @for (int i = 0; i < drilldownBills.Count; i++)
@@ -337,6 +495,9 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', 'Leelawadee', 
                         data-salesrep="@b.SalesRep"
                         data-district="@b.District"
                         data-province="@b.Province"
+                        data-credit="@b.Credit"
+                        data-ispaid="@(b.IsPaid ? "true" : "false")"
+                        data-isbkk="@(b.IsBkk ? "true" : "false")"
                         data-billdate="@b.BillDate.ToString("dd/MM/yyyy")"
                         data-amount="@b.Amount">
                         <td class="text-center text-muted row-index">@(i + 1)</td>
@@ -344,135 +505,46 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', 'Leelawadee', 
                             <span class="badge bg-light text-dark border">@b.BillNo</span>
                         </td>
                         <td class="text-center text-muted">@b.BillDate.ToString("dd/MM/yyyy")</td>
-                        <td class="fw-semibold">@b.SalesRep</td>
                         <td class="text-center"><code class="text-dark fw-bold">@b.CustomerCode</code></td>
                         <td class="fw-bold text-dark">@b.CustomerName</td>
                         <td>@b.District</td>
                         <td>@b.Province</td>
+                        <td class="text-center">@(b.Credit > 0 ? b.Credit.ToString() : "สด")</td>
+                        <td class="text-center">
+                            @if (b.IsPaid)
+                            {
+                                <span class="badge bg-success">ชำระแล้ว</span>
+                            }
+                            else if (b.AgingDays > 120)
+                            {
+                                <span class="badge bg-danger">เกิน @b.AgingDays วัน</span>
+                            }
+                            else if (b.AgingDays > 0)
+                            {
+                                <span class="badge bg-warning text-dark">@b.AgingDays วัน</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-muted border">ยังไม่ถึงกำหนด</span>
+                            }
+                        </td>
                         <td class="text-end fw-black text-dark" style="font-size:0.95rem;">@b.Amount.ToString("N2")</td>
+                        <td class="fw-semibold text-muted">@b.SalesRep</td>
                     </tr>
                 }
             </tbody>
             <tfoot class="table-light sticky-bottom" style="font-weight: 800; border-top: 2px solid #0f766e;">
                 <tr>
-                    <td colspan="8" class="text-end py-2">
+                    <td colspan="9" class="text-end py-2">
                         ยอดรวมทั้งสิ้น (<span id="visibleRowCount" class="text-primary">@drilldownBills.Count.ToString("N0")</span> รายการ):
                     </td>
                     <td class="text-end py-2 fs-6 fw-black" style="color:#0f766e;" id="visibleTotalAmount">
                         @drilldownBills.Sum(x => x.Amount).ToString("N2")
                     </td>
+                    <td></td>
                 </tr>
             </tfoot>
         </table>
-    </div>
-</div>
-
-<!-- ===== REGIONAL COMPARISON (กรุงเทพฯ vs ต่างจังหวัด) ===== -->
-<div class="section-title mb-2 fw-bold" style="font-size:1.05rem; color:#1e293b;">
-    <i class="bi bi-bar-chart-steps" style="color:#0d9488;"></i>
-    เปรียบเทียบยอดลูกหนี้ — กรุงเทพฯ (เงินสด/7วัน) vs ต่างจังหวัด
-</div>
-<div class="row g-3 mb-4">
-    <!-- Bangkok (Cash / 7 Days) -->
-    <div class="col-md-6">
-        <div class="compare-panel">
-            <div class="compare-header bkk">
-                <i class="bi bi-buildings"></i> กรุงเทพฯ (เงินสด / 7 วัน)
-                <span class="ms-auto badge bg-white text-primary fw-bold">@summary.Bangkok.BillCount.ToString("N0") บิล</span>
-            </div>
-            <div class="compare-body">
-                <div class="compare-row">
-                    <div class="compare-row-label"><i class="bi bi-cash-stack text-primary me-1"></i> ยอดจำนวนเงินค้างชำระทั้งหมด</div>
-                    <div class="compare-row-value">
-                        <div class="compare-amount">@summary.Bangkok.OutstandingTotal.TotalAmount.ToString("N0") <small style="font-size:0.85rem;">บาท</small></div>
-                        <div class="compare-bills text-primary">@summary.Bangkok.OutstandingTotal.BillCount.ToString("N0") บิล</div>
-                    </div>
-                </div>
-                <div class="compare-row">
-                    <div class="compare-row-label"><i class="bi bi-clock-history text-warning me-1"></i> ยอดเกินกำหนดชำระไม่เกิน 120 วัน</div>
-                    <div class="compare-row-value">
-                        <div class="compare-amount warning">@summary.Bangkok.LessThan120Days.TotalAmount.ToString("N0") <small style="font-size:0.85rem;">บาท</small></div>
-                        <div class="compare-bills text-warning">@summary.Bangkok.LessThan120Days.BillCount.ToString("N0") บิล</div>
-                    </div>
-                </div>
-                <div class="compare-row">
-                    <div class="compare-row-label text-danger"><span class="blink-icon">⚠️</span> ยอดเกินกำหนดชำระเกิน 120 วัน</div>
-                    <div class="compare-row-value">
-                        <div class="compare-amount danger">@summary.Bangkok.Over120Days.TotalAmount.ToString("N0") <small style="font-size:0.85rem;">บาท</small></div>
-                        <div class="compare-bills text-danger">@summary.Bangkok.Over120Days.BillCount.ToString("N0") บิล</div>
-                    </div>
-                </div>
-                <div class="compare-row">
-                    <div class="compare-row-label"><i class="bi bi-check-circle-fill text-success me-1"></i> ยอดเก็บได้แล้ว</div>
-                    <div class="compare-row-value">
-                        <div class="compare-amount success">@summary.Bangkok.Paid.TotalAmount.ToString("N0") <small style="font-size:0.85rem;">บาท</small></div>
-                        <div class="compare-bills text-success">@summary.Bangkok.Paid.BillCount.ToString("N0") บิล</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Upcountry -->
-    <div class="col-md-6">
-        <div class="compare-panel">
-            <div class="compare-header upc">
-                <i class="bi bi-geo-alt"></i> ต่างจังหวัด (ทุกภาค)
-                <span class="ms-auto badge bg-white text-success fw-bold">@summary.Upcountry.BillCount.ToString("N0") บิล</span>
-            </div>
-            <div class="compare-body">
-                <div class="compare-row">
-                    <div class="compare-row-label"><i class="bi bi-cash-stack text-primary me-1"></i> ยอดจำนวนเงินค้างชำระทั้งหมด</div>
-                    <div class="compare-row-value">
-                        <div class="compare-amount">@summary.Upcountry.OutstandingTotal.TotalAmount.ToString("N0") <small style="font-size:0.85rem;">บาท</small></div>
-                        <div class="compare-bills text-primary">@summary.Upcountry.OutstandingTotal.BillCount.ToString("N0") บิล</div>
-                    </div>
-                </div>
-                <div class="compare-row">
-                    <div class="compare-row-label"><i class="bi bi-clock-history text-warning me-1"></i> ยอดเกินกำหนดชำระไม่เกิน 120 วัน</div>
-                    <div class="compare-row-value">
-                        <div class="compare-amount warning">@summary.Upcountry.LessThan120Days.TotalAmount.ToString("N0") <small style="font-size:0.85rem;">บาท</small></div>
-                        <div class="compare-bills text-warning">@summary.Upcountry.LessThan120Days.BillCount.ToString("N0") บิล</div>
-                    </div>
-                </div>
-                <div class="compare-row">
-                    <div class="compare-row-label text-danger"><span class="blink-icon">⚠️</span> ยอดเกินกำหนดชำระเกิน 120 วัน</div>
-                    <div class="compare-row-value">
-                        <div class="compare-amount danger">@summary.Upcountry.Over120Days.TotalAmount.ToString("N0") <small style="font-size:0.85rem;">บาท</small></div>
-                        <div class="compare-bills text-danger">@summary.Upcountry.Over120Days.BillCount.ToString("N0") บิล</div>
-                    </div>
-                </div>
-                <div class="compare-row">
-                    <div class="compare-row-label"><i class="bi bi-check-circle-fill text-success me-1"></i> ยอดเก็บได้แล้ว</div>
-                    <div class="compare-row-value">
-                        <div class="compare-amount success">@summary.Upcountry.Paid.TotalAmount.ToString("N0") <small style="font-size:0.85rem;">บาท</small></div>
-                        <div class="compare-bills text-success">@summary.Upcountry.Paid.BillCount.ToString("N0") บิล</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ===== CHARTS ROW ===== -->
-<div class="row g-3 mb-4">
-    <div class="col-md-8">
-        <div class="chart-card">
-            <div class="section-title fw-bold" style="color:#1e293b;">
-                <i class="bi bi-bar-chart-fill" style="color:#4361ee;"></i>
-                ยอดขาย vs เก็บเงินได้ vs หนี้ค้างชำระ รายเดือน (Grouped Bar)
-            </div>
-            <canvas id="monthlyChart" height="110"></canvas>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="chart-card">
-            <div class="section-title fw-bold" style="color:#1e293b;">
-                <i class="bi bi-pie-chart-fill" style="color:#e63946;"></i>
-                สัดส่วนสถานะหนี้
-            </div>
-            <canvas id="statusChart" height="190"></canvas>
-        </div>
     </div>
 </div>
 
@@ -485,16 +557,69 @@ let currentCategory = 'all';
 const categoryTitles = {
     'all': 'ภาพรวมทั้งหมด',
     'cash7': 'เก็บสด 7 วัน (กทม.&ปริมณฑล)',
-    'cash10': 'เงินสด 10 วัน (กทม.&ปริมณฑล)',
+    'cash10': 'เงินสดรวมสายเวลา (กทม.&ปริมณฑล)',
+    'upcountry': 'บิลค้างชำระต่างจังหวัดทั้งหมด',
     'over120': 'ค้างชำระ > 120 วัน',
-    'collected': 'ยอดเก็บเงินสำเร็จ'
+    'collected': 'ยอดเก็บสำเร็จ'
 };
+
+// Global Pie Chart instance
+let arPieChart = null;
+
+function initPieChart() {
+    const ctx = document.getElementById('arAllocationPieChart');
+    if (!ctx) return;
+
+    arPieChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: [
+                '1. เก็บสด 7 วัน (กทม.&ปริมณฑล)',
+                '2. รวมสายเวลาเงินสด (กทม.&ปริมณฑล)',
+                '3. ค้างชำระต่างจังหวัดทั้งหมด'
+            ],
+            datasets: [{
+                data: [@pieCash7, @pieCashTimeline, @pieUpcountry],
+                backgroundColor: [
+                    '#2563eb', // สีน้ำเงิน
+                    '#ea580c', // สีส้ม
+                    '#16a34a'  // สีเขียว
+                ],
+                borderColor: '#ffffff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: { size: 12, weight: '700' },
+                        padding: 12
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const val = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                            return `${context.label}: ${val.toLocaleString('en-US')} บาท (${pct}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
 
 function selectCategory(cat) {
     currentCategory = cat;
 
     // Update active state on top cards
-    document.querySelectorAll('.dash-card').forEach(c => c.classList.remove('active-card'));
+    document.querySelectorAll('.exec-card').forEach(c => c.classList.remove('active-card'));
     const targetCard = document.getElementById('card-' + cat);
     if (targetCard) targetCard.classList.add('active-card');
 
@@ -506,29 +631,27 @@ function selectCategory(cat) {
     // Update title text
     document.getElementById('currentCategoryTitle').innerText = 'รายงานรายละเอียดรายบิล: ' + (categoryTitles[cat] || 'ภาพรวมทั้งหมด');
 
-    // Apply filters and smooth scroll
+    // Apply filters
     applyFilters();
-
-    const drilldownEl = document.getElementById('drilldownSection');
-    if (drilldownEl) {
-        drilldownEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
 }
 
 function applyFilters() {
     const sBill = (document.getElementById('inputSearchBill').value || '').trim().toLowerCase();
-    const sCust = (document.getElementById('inputSearchCustomer').value || '').trim().toLowerCase();
+    const sCustCode = (document.getElementById('inputSearchCustomerCode').value || '').trim().toLowerCase();
+    const sCustName = (document.getElementById('inputSearchCustomerName').value || '').trim().toLowerCase();
     const sRep = (document.getElementById('inputSearchSalesRep').value || '').trim().toLowerCase();
 
     const rows = document.querySelectorAll('.bill-row');
     let visibleCount = 0;
     let visibleSum = 0;
 
-    // Counters for recalculating top cards dynamically
+    // Counters for recalculating top cards & pie chart dynamically
     let sumCash7 = 0, countCash7 = 0;
     let sumCash10 = 0, countCash10 = 0;
+    let sumUpcountry = 0, countUpcountry = 0;
     let sumOver120 = 0, countOver120 = 0;
     let sumCollected = 0, countCollected = 0;
+    let sumTotalSales = 0;
 
     let index = 1;
     rows.forEach(row => {
@@ -538,22 +661,37 @@ function applyFilters() {
         const custName = (row.getAttribute('data-custname') || '').toLowerCase();
         const salesRep = (row.getAttribute('data-salesrep') || '').toLowerCase();
         const amt = parseFloat(row.getAttribute('data-amount') || '0');
+        const isPaid = row.getAttribute('data-ispaid') === 'true';
+        const isBkk = row.getAttribute('data-isbkk') === 'true';
 
-        // Check search conditions
+        // Check 4 search inputs
         const matchSearch = (!sBill || billNo.includes(sBill)) &&
-                            (!sCust || custName.includes(sCust) || custCode.includes(sCust)) &&
+                            (!sCustCode || custCode.includes(sCustCode)) &&
+                            (!sCustName || custName.includes(sCustName)) &&
                             (!sRep || salesRep.includes(sRep));
 
-        // Tally category amounts matching search
         if (matchSearch) {
-            if (cat === 'cash7') { sumCash7 += amt; countCash7++; }
-            else if (cat === 'cash10') { sumCash10 += amt; countCash10++; }
-            else if (cat === 'over120') { sumOver120 += amt; countOver120++; }
-            else if (cat === 'collected') { sumCollected += amt; countCollected++; }
+            sumTotalSales += amt;
+            if (isPaid) {
+                sumCollected += amt;
+                countCollected++;
+            } else {
+                if (!isBkk) {
+                    sumUpcountry += amt;
+                    countUpcountry++;
+                }
+                if (cat === 'cash7') { sumCash7 += amt; countCash7++; }
+                else if (cat === 'cash10') { sumCash10 += amt; countCash10++; }
+                
+                if (cat === 'over120') { sumOver120 += amt; countOver120++; }
+            }
         }
 
-        // Check category filter for table row display
-        const matchCat = (currentCategory === 'all' || cat === currentCategory);
+        // Category filter matching for table
+        let matchCat = false;
+        if (currentCategory === 'all') matchCat = true;
+        else if (currentCategory === 'upcountry') matchCat = (!isBkk && !isPaid);
+        else matchCat = (cat === currentCategory);
 
         if (matchSearch && matchCat) {
             row.style.display = '';
@@ -569,7 +707,7 @@ function applyFilters() {
     document.getElementById('visibleRowCount').innerText = visibleCount.toLocaleString('en-US');
     document.getElementById('visibleTotalAmount').innerText = visibleSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-    // Update top summary cards dynamically based on active search
+    // Update top summary cards dynamically
     document.getElementById('cardAmount-cash7').innerText = sumCash7.toLocaleString('en-US', { maximumFractionDigits: 0 });
     document.getElementById('badgeCount-cash7').innerText = countCash7.toLocaleString('en-US') + ' บิล';
 
@@ -581,18 +719,54 @@ function applyFilters() {
 
     document.getElementById('cardAmount-collected').innerText = sumCollected.toLocaleString('en-US', { maximumFractionDigits: 0 });
     document.getElementById('badgeCount-collected').innerText = countCollected.toLocaleString('en-US') + ' บิล';
+
+    // Calculate Collection Rate
+    const colRate = sumTotalSales > 0 ? ((sumCollected / sumTotalSales) * 100).toFixed(2) : '0.00';
+    document.getElementById('tagCollectionRate').innerText = colRate + '%';
+    document.getElementById('totalCollectionRateDisplay').innerText = colRate + '%';
+
+    // Calculate AR Pie Chart Percentages & Update UI Breakdown
+    const pieTotal = sumCash7 + sumCash10 + sumUpcountry;
+    const p7 = pieTotal > 0 ? ((sumCash7 / pieTotal) * 100).toFixed(1) : '0.0';
+    const p10 = pieTotal > 0 ? ((sumCash10 / pieTotal) * 100).toFixed(1) : '0.0';
+    const pUpc = pieTotal > 0 ? ((sumUpcountry / pieTotal) * 100).toFixed(1) : '0.0';
+
+    document.getElementById('tagPct-cash7').innerText = p7 + '%';
+    document.getElementById('tagPct-cash10').innerText = p10 + '%';
+
+    document.getElementById('pctText-cash7').innerText = p7 + '%';
+    document.getElementById('breakdownAmount-cash7').innerText = sumCash7.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    document.getElementById('breakdownCount-cash7').innerText = countCash7.toLocaleString('en-US');
+    document.getElementById('progBar-cash7').style.width = p7 + '%';
+
+    document.getElementById('pctText-cash10').innerText = p10 + '%';
+    document.getElementById('breakdownAmount-cash10').innerText = sumCash10.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    document.getElementById('breakdownCount-cash10').innerText = countCash10.toLocaleString('en-US');
+    document.getElementById('progBar-cash10').style.width = p10 + '%';
+
+    document.getElementById('pctText-upcountry').innerText = pUpc + '%';
+    document.getElementById('breakdownAmount-upcountry').innerText = sumUpcountry.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    document.getElementById('breakdownCount-upcountry').innerText = countUpcountry.toLocaleString('en-US');
+    document.getElementById('progBar-upcountry').style.width = pUpc + '%';
+
+    // Update Pie Chart in Real-time
+    if (arPieChart) {
+        arPieChart.data.datasets[0].data = [sumCash7, sumCash10, sumUpcountry];
+        arPieChart.update();
+    }
 }
 
 function clearFilters() {
     document.getElementById('inputSearchBill').value = '';
-    document.getElementById('inputSearchCustomer').value = '';
+    document.getElementById('inputSearchCustomerCode').value = '';
+    document.getElementById('inputSearchCustomerName').value = '';
     document.getElementById('inputSearchSalesRep').value = '';
     applyFilters();
 }
 
 function triggerExportExcel() {
     const sBill = encodeURIComponent((document.getElementById('inputSearchBill').value || '').trim());
-    const sCust = encodeURIComponent((document.getElementById('inputSearchCustomer').value || '').trim());
+    const sCust = encodeURIComponent((document.getElementById('inputSearchCustomerName').value || document.getElementById('inputSearchCustomerCode').value || '').trim());
     const sRep = encodeURIComponent((document.getElementById('inputSearchSalesRep').value || '').trim());
     const url = `/Dashboard/ExportExcel?category=${currentCategory}&searchBill=${sBill}&searchCustomer=${sCust}&searchSalesRep=${sRep}`;
     window.location.href = url;
@@ -600,88 +774,14 @@ function triggerExportExcel() {
 
 function triggerExportPdf() {
     const sBill = encodeURIComponent((document.getElementById('inputSearchBill').value || '').trim());
-    const sCust = encodeURIComponent((document.getElementById('inputSearchCustomer').value || '').trim());
+    const sCust = encodeURIComponent((document.getElementById('inputSearchCustomerName').value || document.getElementById('inputSearchCustomerCode').value || '').trim());
     const sRep = encodeURIComponent((document.getElementById('inputSearchSalesRep').value || '').trim());
     const url = `/Dashboard/ExportPdf?category=${currentCategory}&searchBill=${sBill}&searchCustomer=${sCust}&searchSalesRep=${sRep}`;
     window.open(url, '_blank');
 }
 
-// ===== CHARTS INITIALIZATION =====
-const monthlyCtx = document.getElementById('monthlyChart');
-const labels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.ChartLabels as List<string> ?? new List<string>()));
-const values = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.ChartValues as List<decimal> ?? new List<decimal>()));
-const paidValues = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.PaidValues as List<decimal> ?? new List<decimal>()));
-const overdueValues = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.OverdueValues as List<decimal> ?? new List<decimal>()));
-
-new Chart(monthlyCtx, {
-    type: 'bar',
-    data: {
-        labels: labels,
-        datasets: [
-            {
-                label: 'ยอดขาย (บาท)',
-                data: values,
-                backgroundColor: 'rgba(67,97,238,0.80)',
-                borderColor: '#4361ee',
-                borderWidth: 1.5,
-                borderRadius: 6
-            },
-            {
-                label: 'ยอดเก็บเงินได้ (บาท)',
-                data: paidValues.length > 0 ? paidValues : values.map(v => v * 0.75),
-                backgroundColor: 'rgba(45,198,83,0.80)',
-                borderColor: '#2dc653',
-                borderWidth: 1.5,
-                borderRadius: 6
-            },
-            {
-                label: 'ยอดหนี้ค้างชำระ (บาท)',
-                data: overdueValues.length > 0 ? overdueValues : values.map(v => v * 0.18),
-                backgroundColor: 'rgba(230,57,70,0.85)',
-                borderColor: '#e63946',
-                borderWidth: 1.5,
-                borderRadius: 6
-            }
-        ]
-    },
-    options: {
-        responsive: true,
-        interaction: { mode: 'index', intersect: false },
-        plugins: {
-            legend: { position: 'top', labels: { font: { size: 13, weight: 'bold' }, padding: 15 } }
-        },
-        scales: {
-            x: { ticks: { font: { size: 12, weight: '700' } } },
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    font: { size: 12, weight: '700' },
-                    callback: v => (v >= 1000000 ? (v/1000000).toFixed(1)+'M' : (v/1000).toFixed(0)+'K')
-                },
-                grid: { color: '#f0f0f0' }
-            }
-        }
-    }
-});
-
-const statusCtx = document.getElementById('statusChart');
-new Chart(statusCtx, {
-    type: 'doughnut',
-    data: {
-        labels: ['ค้างชำระ > 120 วัน', 'ผ่อนชำระ', 'เลื่อนนัด', 'หนี้สูญ'],
-        datasets: [{
-            data: [@ViewBag.OverdueCount, @ViewBag.InstallmentCount, @ViewBag.PostponedCount, @ViewBag.BadDebtCount],
-            backgroundColor: ['#e11d48', '#f59e0b', '#64748b', '#334155'],
-            borderWidth: 0
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: { position: 'bottom', labels: { font: { size: 12, weight: '700' }, padding: 10 } }
-        },
-        cutout: '65%'
-    }
+document.addEventListener('DOMContentLoaded', () => {
+    initPieChart();
 });
 </script>
 }

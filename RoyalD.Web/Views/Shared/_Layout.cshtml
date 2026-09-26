@@ -295,10 +295,14 @@
             <nav class="pt-3">
                 @if (hasDash)
                 {
-                    <div class="nav-section">หลัก</div>
-                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")"
+                    <div class="nav-section">ภาพรวมลูกหนี้ (AR)</div>
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" && (ViewContext.RouteData.Values["action"]?.ToString() == "Index" || ViewContext.RouteData.Values["action"] == null) ? "active" : "")"
                        href="/Dashboard">
-                        <i class="bi bi-speedometer2"></i> Accounts Receivable Dashboard
+                        <i class="bi bi-speedometer2"></i> 1. แดชบอร์ดบริหาร (Summary)
+                    </a>
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" && ViewContext.RouteData.Values["action"]?.ToString() == "Comparison" ? "active" : "")"
+                       href="/Dashboard/Comparison">
+                        <i class="bi bi-layout-three-columns"></i> 2. กระดานเปรียบเทียบ 3 ส่วน
                     </a>
                 }
 

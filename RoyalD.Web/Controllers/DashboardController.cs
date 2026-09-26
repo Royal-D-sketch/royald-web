@@ -20,7 +20,7 @@ namespace RoyalD.Web.Controllers
 
         public DashboardController(AppDbContext db) => _db = db;
 
-        private async Task<(DashboardSummary summary, List<DashboardBillItem> drilldownBills)> GetDashboardDataAsync()
+        private async Task<(DashboardSummary summary, List<DashboardBillItem> drilldownBills, ComparisonBoardViewModel comparisonBoard)> GetDashboardDataAsync()
         {
             var today = DateTime.Today;
             var cutoffDate = new DateTime(2026, 9, 14);
@@ -42,10 +42,12 @@ namespace RoyalD.Web.Controllers
             var summary = new DashboardSummary
             {
                 TotalDebtors = allDebts.Where(d => d.RemainingAmount > 0 && !string.IsNullOrEmpty(d.CustomerCode)).Select(d => d.CustomerCode).Distinct().Count(),
+                TotalSalesAmount = allDebts.Sum(d => d.OriginalAmount),
                 TotalAmount = allDebts.Sum(d => d.OriginalAmount)
             };
 
             var drilldownBills = new List<DashboardBillItem>();
+            var comparisonBoard = new ComparisonBoardViewModel();
             var seenPaidBillNos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var d in allDebts)
@@ -59,6 +61,7 @@ namespace RoyalD.Web.Controllers
 
                 var dueByCredit = d.BillDate.AddDays(d.Credit);
                 int aging = (int)(today - dueByCredit).TotalDays;
+                bool isBkkArea = RegionHelper.IsBkkAndVicinity(d.Province, d.District);
 
                 string cat = "";
                 string catName = "";
@@ -74,52 +77,84 @@ namespace RoyalD.Web.Controllers
                     summary.Collected.TotalAmount += paidAmt;
                     seenPaidBillNos.Add(d.BillNo);
                 }
-                else if (aging > 120)
-                {
-                    cat = "over120";
-                    catName = "ค้างชำระ > 120 วัน";
-                    summary.Overdue120Days.BillCount++;
-                    summary.Overdue120Days.TotalAmount += d.RemainingAmount;
-                }
                 else
                 {
-                    bool isBkkVicinity = RegionHelper.IsBkkAndVicinity(d.Province, d.District);
+                    summary.TotalOutstandingAmount += d.RemainingAmount;
 
-                    if (d.BillDate >= cutoffDate)
+                    if (!isBkkArea)
                     {
-                        // บิลตั้งแต่วันที่ 14/09/2026:
-                        // 1. เครดิต 7 วัน กทม.&ปริมณฑล -> เก็บสด 7 วัน
-                        // 2. เครดิต 10 วัน กทม.&ปริมณฑล -> เงินสด 10 วัน
-                        if (isBkkVicinity && d.Credit <= 7)
+                        // บิลค้างชำระต่างจังหวัดทั้งหมด
+                        summary.UpcountryDebts.BillCount++;
+                        summary.UpcountryDebts.TotalAmount += d.RemainingAmount;
+
+                        if (aging > 120)
                         {
-                            cat = "cash7";
-                            catName = "เก็บสด 7 วัน (กทม.&ปริมณฑล)";
-                            summary.Cash7Days.BillCount++;
-                            summary.Cash7Days.TotalAmount += d.RemainingAmount;
+                            summary.Overdue120Days.BillCount++;
+                            summary.Overdue120Days.TotalAmount += d.RemainingAmount;
+                            cat = "over120";
+                            catName = "ค้างชำระ > 120 วัน";
                         }
-                        else if (isBkkVicinity && (d.Credit == 10 || (d.Credit > 7 && d.Credit <= 10)))
+                        else
                         {
-                            cat = "cash10";
-                            catName = "เงินสด 10 วัน (กทม.&ปริมณฑล)";
-                            summary.Cash10Days.BillCount++;
-                            summary.Cash10Days.TotalAmount += d.RemainingAmount;
+                            cat = "upcountry";
+                            catName = "ต่างจังหวัดทั้งหมด";
                         }
                     }
                     else
                     {
-                        // บิลก่อนวันที่ 14/09/2026 ที่เป็นบิลกรุงเทพและปริมณฑลที่ค้างชำระเครดิต 7 วัน ให้เอามาอยู่ในประเภทเงินสด 10 วัน
-                        if (isBkkVicinity && d.Credit <= 7)
+                        // กทม. และปริมณฑล
+                        if (aging > 120)
                         {
-                            cat = "cash10";
-                            catName = "เงินสด 10 วัน (กทม.&ปริมณฑล)";
-                            summary.Cash10Days.BillCount++;
-                            summary.Cash10Days.TotalAmount += d.RemainingAmount;
+                            summary.Overdue120Days.BillCount++;
+                            summary.Overdue120Days.TotalAmount += d.RemainingAmount;
+                            cat = "over120";
+                            catName = "ค้างชำระ > 120 วัน";
+                        }
+                        else
+                        {
+                            if (d.BillDate >= cutoffDate)
+                            {
+                                if (d.Credit <= 7)
+                                {
+                                    cat = "cash7";
+                                    catName = "เก็บสด 7 วัน (กทม.&ปริมณฑล)";
+                                    summary.Cash7Days.BillCount++;
+                                    summary.Cash7Days.TotalAmount += d.RemainingAmount;
+                                }
+                                else if (d.Credit == 10 || (d.Credit > 7 && d.Credit <= 10))
+                                {
+                                    cat = "cash10";
+                                    catName = "เงินสดรวมสายเวลา (กทม.&ปริมณฑล)";
+                                    summary.Cash10Days.BillCount++;
+                                    summary.Cash10Days.TotalAmount += d.RemainingAmount;
+                                }
+                                else
+                                {
+                                    cat = "other";
+                                    catName = "อื่นๆ";
+                                }
+                            }
+                            else
+                            {
+                                // บิลก่อนวันที่ 14/09/2026 ที่เป็นบิลกรุงเทพและปริมณฑลที่ค้างชำระเครดิต 7 วัน
+                                if (d.Credit <= 7)
+                                {
+                                    cat = "cash10";
+                                    catName = "เงินสดรวมสายเวลา (กทม.&ปริมณฑล)";
+                                    summary.Cash10Days.BillCount++;
+                                    summary.Cash10Days.TotalAmount += d.RemainingAmount;
+                                }
+                                else
+                                {
+                                    cat = "other";
+                                    catName = "อื่นๆ";
+                                }
+                            }
                         }
                     }
                 }
 
-                // Region comparison breakdown (Bangkok vs Upcountry)
-                bool isBkkArea = RegionHelper.IsBkkAndVicinity(d.Province, d.District);
+                // Region comparison breakdown
                 var region = isBkkArea ? summary.Bangkok : summary.Upcountry;
                 region.BillCount++;
                 region.TotalAmount += d.OriginalAmount;
@@ -147,7 +182,7 @@ namespace RoyalD.Web.Controllers
                     }
                 }
 
-                drilldownBills.Add(new DashboardBillItem
+                var billItem = new DashboardBillItem
                 {
                     BillNo = d.BillNo,
                     BillDate = d.BillDate,
@@ -162,8 +197,29 @@ namespace RoyalD.Web.Controllers
                     Credit = d.Credit,
                     DueDate = dueByCredit,
                     AgingDays = aging,
-                    StatusName = isPaid ? "เก็บเงินสำเร็จ" : (aging > 120 ? "เกิน 120 วัน" : (aging > 0 ? $"เกินกำหนด {aging} วัน" : "ยังไม่ถึงกำหนด"))
-                });
+                    StatusName = isPaid ? "เก็บเงินสำเร็จ" : (aging > 120 ? "เกิน 120 วัน" : (aging > 0 ? $"เกินกำหนด {aging} วัน" : "ยังไม่ถึงกำหนด")),
+                    IsPaid = isPaid,
+                    IsBkk = isBkkArea
+                };
+
+                drilldownBills.Add(billItem);
+
+                // Populate 3 comparison tables (for outstanding debts)
+                if (!isPaid)
+                {
+                    if (isBkkArea && d.BillDate >= cutoffDate && d.Credit <= 7)
+                    {
+                        comparisonBoard.Table1_Cash7Bkk.Add(billItem);
+                    }
+                    else if (isBkkArea && ((d.BillDate < cutoffDate && d.Credit <= 7) || (d.BillDate >= cutoffDate && (d.Credit == 10 || (d.Credit > 7 && d.Credit <= 10)))))
+                    {
+                        comparisonBoard.Table2_CashTimelineBkk.Add(billItem);
+                    }
+                    else if (!isBkkArea)
+                    {
+                        comparisonBoard.Table3_Upcountry.Add(billItem);
+                    }
+                }
             }
 
             // Include any additional paid sales bills from SalesBills table
@@ -173,6 +229,8 @@ namespace RoyalD.Web.Controllers
                 {
                     summary.Collected.BillCount++;
                     summary.Collected.TotalAmount += sb.TotalAmount;
+                    summary.TotalSalesAmount += sb.TotalAmount;
+                    summary.TotalAmount += sb.TotalAmount;
                     seenPaidBillNos.Add(sb.BillNo);
 
                     drilldownBills.Add(new DashboardBillItem
@@ -190,15 +248,23 @@ namespace RoyalD.Web.Controllers
                         Credit = sb.Credit,
                         DueDate = sb.BillDate.AddDays(sb.Credit),
                         AgingDays = 0,
-                        StatusName = "เก็บเงินสำเร็จ"
+                        StatusName = "เก็บเงินสำเร็จ",
+                        IsPaid = true,
+                        IsBkk = RegionHelper.IsBkkAndVicinity(sb.Province, sb.District)
                     });
                 }
             }
 
+            summary.TotalCollectedAmount = summary.Collected.TotalAmount;
             summary.AllDrilldownBills = drilldownBills;
-            return (summary, drilldownBills);
+            comparisonBoard.Summary = summary;
+
+            return (summary, drilldownBills, comparisonBoard);
         }
 
+        // ==========================================
+        // PAGE 1: AR EXECUTIVE SUMMARY & DASHBOARD
+        // ==========================================
         public async Task<IActionResult> Index()
         {
             var allowedPages = User.FindFirst("AllowedPages")?.Value?.Split(',').Select(p => p.Trim().ToLower()) ?? Array.Empty<string>();
@@ -210,13 +276,13 @@ namespace RoyalD.Web.Controllers
             var cancelledCount = await _db.OutstandingDebts.CountAsync(d => d.Status == DebtStatus.Cancelled);
             ViewBag.TotalBills = (await _db.SalesBills.CountAsync()) - cancelledCount;
 
-            var (summary, drilldownBills) = await GetDashboardDataAsync();
+            var (summary, drilldownBills, comparisonBoard) = await GetDashboardDataAsync();
 
             ViewBag.Summary = summary;
             ViewBag.DrilldownBills = drilldownBills;
 
             // Overall totals
-            ViewBag.TotalOutstanding = summary.Cash7Days.TotalAmount + summary.Cash10Days.TotalAmount + summary.Overdue120Days.TotalAmount;
+            ViewBag.TotalOutstanding = summary.TotalOutstandingAmount;
             ViewBag.TotalDebtors = summary.TotalDebtors;
 
             // Chart Status Counts
@@ -283,12 +349,25 @@ namespace RoyalD.Web.Controllers
         }
 
         // ==========================================
-        // EXPORT EXCEL ENDPOINT
+        // PAGE 2: AR DETAILED COMPARISON BOARD
+        // ==========================================
+        public async Task<IActionResult> Comparison()
+        {
+            var allowedPages = User.FindFirst("AllowedPages")?.Value?.Split(',').Select(p => p.Trim().ToLower()) ?? Array.Empty<string>();
+            if (!User.IsInRole("admin") && !allowedPages.Contains("dashboard"))
+                return RedirectToAction("Index", "SalesBill");
+
+            var (summary, drilldownBills, comparisonBoard) = await GetDashboardDataAsync();
+            return View(comparisonBoard);
+        }
+
+        // ==========================================
+        // EXPORT EXCEL ENDPOINTS (PAGE 1)
         // ==========================================
         [HttpGet]
         public async Task<IActionResult> ExportExcel(string? category, string? searchBill, string? searchCustomer, string? searchSalesRep)
         {
-            var (summary, bills) = await GetDashboardDataAsync();
+            var (summary, bills, _) = await GetDashboardDataAsync();
             var query = bills.AsEnumerable();
 
             if (!string.IsNullOrEmpty(category) && category.ToLower() != "all")
@@ -307,12 +386,13 @@ namespace RoyalD.Web.Controllers
 
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             using var package = new ExcelPackage();
-            var ws = package.Workbook.Worksheets.Add("Dashboard_Report");
+            var ws = package.Workbook.Worksheets.Add("Executive_Summary");
 
             string groupTitle = category?.ToLower() switch
             {
                 "cash7" => "เก็บสด 7 วัน (กทม.&ปริมณฑล)",
-                "cash10" => "เงินสด 10 วัน (กทม.&ปริมณฑล)",
+                "cash10" => "เงินสดรวมสายเวลา (กทม.&ปริมณฑล)",
+                "upcountry" => "บิลค้างชำระต่างจังหวัดทั้งหมด",
                 "over120" => "ค้างชำระ > 120 วัน",
                 "collected" => "ยอดเก็บเงินสำเร็จ",
                 _ => "รายงานภาพรวมทุกกลุ่ม"
@@ -408,12 +488,12 @@ namespace RoyalD.Web.Controllers
         }
 
         // ==========================================
-        // EXPORT PDF ENDPOINT
+        // EXPORT PDF ENDPOINT (PAGE 1)
         // ==========================================
         [HttpGet]
         public async Task<IActionResult> ExportPdf(string? category, string? searchBill, string? searchCustomer, string? searchSalesRep)
         {
-            var (summary, bills) = await GetDashboardDataAsync();
+            var (summary, bills, _) = await GetDashboardDataAsync();
             var query = bills.AsEnumerable();
 
             if (!string.IsNullOrEmpty(category) && category.ToLower() != "all")
@@ -434,7 +514,8 @@ namespace RoyalD.Web.Controllers
             ViewBag.CategoryTitle = category?.ToLower() switch
             {
                 "cash7" => "เก็บสด 7 วัน (กทม.&ปริมณฑล)",
-                "cash10" => "เงินสด 10 วัน (กทม.&ปริมณฑล)",
+                "cash10" => "เงินสดรวมสายเวลา (กทม.&ปริมณฑล)",
+                "upcountry" => "บิลค้างชำระต่างจังหวัดทั้งหมด",
                 "over120" => "ค้างชำระ > 120 วัน",
                 "collected" => "ยอดเก็บเงินสำเร็จ",
                 _ => "รายงานภาพรวมทุกกลุ่ม"
@@ -446,5 +527,169 @@ namespace RoyalD.Web.Controllers
 
             return View("PrintPdf", filteredList);
         }
+
+        // ==========================================
+        // EXPORT EXCEL ENDPOINT (PAGE 2: COMPARISON)
+        // ==========================================
+        [HttpGet]
+        public async Task<IActionResult> ExportComparisonExcel(string? section, string? searchBill, string? searchCustomer, string? searchSalesRep)
+        {
+            var (_, _, comp) = await GetDashboardDataAsync();
+
+            Func<DashboardBillItem, bool> filterFunc = b =>
+            {
+                if (!string.IsNullOrEmpty(searchBill) && !b.BillNo.Contains(searchBill, StringComparison.OrdinalIgnoreCase)) return false;
+                if (!string.IsNullOrEmpty(searchCustomer) && !b.CustomerName.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase) && !b.CustomerCode.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase)) return false;
+                if (!string.IsNullOrEmpty(searchSalesRep) && !b.SalesRep.Contains(searchSalesRep, StringComparison.OrdinalIgnoreCase)) return false;
+                return true;
+            };
+
+            var list1 = comp.Table1_Cash7Bkk.Where(filterFunc).OrderBy(b => b.BillDate).ToList();
+            var list2 = comp.Table2_CashTimelineBkk.Where(filterFunc).OrderBy(b => b.BillDate).ToList();
+            var list3 = comp.Table3_Upcountry.Where(filterFunc).OrderBy(b => b.BillDate).ToList();
+
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            using var package = new ExcelPackage();
+
+            Action<ExcelWorksheet, string, List<DashboardBillItem>, Color> buildSheet = (ws, title, list, headerBg) =>
+            {
+                ws.Cells["A1:J1"].Merge = true;
+                ws.Cells["A1"].Value = "บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด";
+                ws.Cells["A1"].Style.Font.Size = 15;
+                ws.Cells["A1"].Style.Font.Bold = true;
+                ws.Cells["A1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                ws.Cells["A2:J2"].Merge = true;
+                ws.Cells["A2"].Value = $"กระดานเปรียบเทียบ: {title} (พิมพ์ ณ {DateTime.Now:dd/MM/yyyy HH:mm} น.)";
+                ws.Cells["A2"].Style.Font.Size = 11;
+                ws.Cells["A2"].Style.Font.Bold = true;
+                ws.Cells["A2"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                string[] cols = new[] { "#", "เลขที่บิล", "วันที่บิล", "รหัสลูกค้า", "ชื่อลูกค้า", "อำเภอ", "จังหวัด", "เครดิต", "อายุหนี้", "จำนวนเงิน (บาท)", "ผู้แทนขาย" };
+                for (int c = 0; c < cols.Length; c++)
+                {
+                    var cell = ws.Cells[4, c + 1];
+                    cell.Value = cols[c];
+                    cell.Style.Font.Bold = true;
+                    cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    cell.Style.Fill.BackgroundColor.SetColor(headerBg);
+                    cell.Style.Font.Color.SetColor(Color.White);
+                    cell.Style.HorizontalAlignment = (c == 0 || c == 1 || c == 2 || c == 3 || c == 7 || c == 8) ? ExcelHorizontalAlignment.Center : (c == 9 ? ExcelHorizontalAlignment.Right : ExcelHorizontalAlignment.Left);
+                    cell.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                }
+
+                int row = 5;
+                for (int i = 0; i < list.Count; i++)
+                {
+                    var item = list[i];
+                    ws.Cells[row, 1].Value = i + 1;
+                    ws.Cells[row, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    ws.Cells[row, 2].Value = item.BillNo;
+                    ws.Cells[row, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    ws.Cells[row, 3].Value = item.BillDate.ToString("dd/MM/yyyy");
+                    ws.Cells[row, 3].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    ws.Cells[row, 4].Value = item.CustomerCode;
+                    ws.Cells[row, 4].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    ws.Cells[row, 5].Value = item.CustomerName;
+                    ws.Cells[row, 6].Value = item.District;
+                    ws.Cells[row, 7].Value = item.Province;
+                    ws.Cells[row, 8].Value = item.Credit;
+                    ws.Cells[row, 8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    ws.Cells[row, 9].Value = item.AgingDays > 0 ? $"{item.AgingDays} วัน" : "ยังไม่ถึงกำหนด";
+                    ws.Cells[row, 9].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    ws.Cells[row, 10].Value = item.Amount;
+                    ws.Cells[row, 10].Style.Numberformat.Format = "#,##0.00";
+                    ws.Cells[row, 10].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+                    ws.Cells[row, 11].Value = item.SalesRep;
+
+                    for (int c = 1; c <= 11; c++)
+                        ws.Cells[row, c].Style.Border.BorderAround(ExcelBorderStyle.Thin, Color.LightGray);
+
+                    row++;
+                }
+
+                // Summary Row
+                ws.Cells[row, 1, row, 9].Merge = true;
+                ws.Cells[row, 1].Value = $"ยอดรวมทั้งสิ้น ({list.Count:N0} รายการ):";
+                ws.Cells[row, 1].Style.Font.Bold = true;
+                ws.Cells[row, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+
+                ws.Cells[row, 10].Value = list.Sum(x => x.Amount);
+                ws.Cells[row, 10].Style.Font.Bold = true;
+                ws.Cells[row, 10].Style.Numberformat.Format = "#,##0.00";
+                ws.Cells[row, 10].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+
+                for (int c = 1; c <= 11; c++)
+                {
+                    ws.Cells[row, c].Style.Border.Top.Style = ExcelBorderStyle.Thin;
+                    ws.Cells[row, c].Style.Border.Bottom.Style = ExcelBorderStyle.Double;
+                    ws.Cells[row, c].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    ws.Cells[row, c].Style.Fill.BackgroundColor.SetColor(Color.FromArgb(241, 245, 249));
+                }
+
+                ws.Cells.AutoFitColumns();
+                ws.Column(1).Width = 5;
+                ws.Column(5).Width = 30;
+                ws.Column(10).Width = 18;
+            };
+
+            if (section == "1")
+            {
+                var ws1 = package.Workbook.Worksheets.Add("7 วัน กทม.");
+                buildSheet(ws1, "1. บิลเก็บสด 7 วัน (กทม.&ปริมณฑล)", list1, Color.FromArgb(37, 99, 235));
+            }
+            else if (section == "2")
+            {
+                var ws2 = package.Workbook.Worksheets.Add("รวมสายเวลา กทม.");
+                buildSheet(ws2, "2. บิลเงินสดนโยบายรวมสายเวลา (กทม.&ปริมณฑล)", list2, Color.FromArgb(234, 88, 12));
+            }
+            else if (section == "3")
+            {
+                var ws3 = package.Workbook.Worksheets.Add("ต่างจังหวัด");
+                buildSheet(ws3, "3. บิลค้างชำระ ต่างจังหวัด (ทุกภาค)", list3, Color.FromArgb(16, 149, 106));
+            }
+            else
+            {
+                var ws1 = package.Workbook.Worksheets.Add("1. 7 วัน กทม.");
+                buildSheet(ws1, "1. บิลเก็บสด 7 วัน (กทม.&ปริมณฑล)", list1, Color.FromArgb(37, 99, 235));
+
+                var ws2 = package.Workbook.Worksheets.Add("2. รวมสายเวลา กทม.");
+                buildSheet(ws2, "2. บิลเงินสดนโยบายรวมสายเวลา (กทม.&ปริมณฑล)", list2, Color.FromArgb(234, 88, 12));
+
+                var ws3 = package.Workbook.Worksheets.Add("3. ต่างจังหวัด");
+                buildSheet(ws3, "3. บิลค้างชำระ ต่างจังหวัด (ทุกภาค)", list3, Color.FromArgb(16, 149, 106));
+            }
+
+            var fileBytes = package.GetAsByteArray();
+            string fileName = $"AR_Comparison_Board_{(section ?? "All")}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
+
+        // ==========================================
+        // EXPORT PDF ENDPOINT (PAGE 2: COMPARISON)
+        // ==========================================
+        [HttpGet]
+        public async Task<IActionResult> ExportComparisonPdf(string? section, string? searchBill, string? searchCustomer, string? searchSalesRep)
+        {
+            var (_, _, comp) = await GetDashboardDataAsync();
+
+            Func<DashboardBillItem, bool> filterFunc = b =>
+            {
+                if (!string.IsNullOrEmpty(searchBill) && !b.BillNo.Contains(searchBill, StringComparison.OrdinalIgnoreCase)) return false;
+                if (!string.IsNullOrEmpty(searchCustomer) && !b.CustomerName.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase) && !b.CustomerCode.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase)) return false;
+                if (!string.IsNullOrEmpty(searchSalesRep) && !b.SalesRep.Contains(searchSalesRep, StringComparison.OrdinalIgnoreCase)) return false;
+                return true;
+            };
+
+            comp.Table1_Cash7Bkk = comp.Table1_Cash7Bkk.Where(filterFunc).OrderBy(b => b.BillDate).ToList();
+            comp.Table2_CashTimelineBkk = comp.Table2_CashTimelineBkk.Where(filterFunc).OrderBy(b => b.BillDate).ToList();
+            comp.Table3_Upcountry = comp.Table3_Upcountry.Where(filterFunc).OrderBy(b => b.BillDate).ToList();
+
+            ViewBag.Section = section ?? "all";
+            ViewBag.PrintedBy = User.Identity?.Name ?? "Admin";
+
+            return View("PrintComparisonPdf", comp);
+        }
     }
 }
+
