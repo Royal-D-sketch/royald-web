@@ -198,7 +198,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', 'Leelawadee', 
         </div>
     </div>
 
-    <!-- Card 2: เงินสด 10 วัน (ทุกพื้นที่) -->
+    <!-- Card 2: เงินสด 10 วัน (กทม.&ปริมณฑล) -->
     <div class="col-6 col-lg-3">
         <div class="dash-card bg-cash10" id="card-cash10" onclick="selectCategory('cash10')" title="คลิกเพื่อดูรายละเอียดบิล เงินสด 10 วัน">
             <div class="dash-label">
@@ -207,7 +207,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', 'Leelawadee', 
             </div>
             <div class="dash-value" id="cardAmount-cash10">@summary.Cash10Days.TotalAmount.ToString("N0")</div>
             <div class="dash-sub">
-                ทุกพื้นที่ ณ 14/09+ <i class="bi bi-arrow-down-circle ms-1"></i>
+                กทม.&ปริมณฑล ณ 14/09+ <i class="bi bi-arrow-down-circle ms-1"></i>
             </div>
         </div>
     </div>
@@ -485,7 +485,7 @@ let currentCategory = 'all';
 const categoryTitles = {
     'all': 'ภาพรวมทั้งหมด',
     'cash7': 'เก็บสด 7 วัน (กทม.&ปริมณฑล)',
-    'cash10': 'เงินสด 10 วัน (ทุกพื้นที่)',
+    'cash10': 'เงินสด 10 วัน (กทม.&ปริมณฑล)',
     'over120': 'ค้างชำระ > 120 วัน',
     'collected': 'ยอดเก็บเงินสำเร็จ'
 };

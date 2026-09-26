@@ -10,7 +10,7 @@ namespace RoyalD.Web.Models
 
         // 4 Main Categories for Dashboard Top Cards & Drilldown
         public DebtCategory Cash7Days { get; set; } = new();      // เก็บสด 7 วัน (กทม.&ปริมณฑล)
-        public DebtCategory Cash10Days { get; set; } = new();     // เงินสด 10 วัน (ทุกพื้นที่)
+        public DebtCategory Cash10Days { get; set; } = new();     // เงินสด 10 วัน (กทม.&ปริมณฑล)
         public DebtCategory Overdue120Days { get; set; } = new(); // ค้างชำระ > 120 วัน
         public DebtCategory Collected { get; set; } = new();      // ยอดเก็บเงินสำเร็จ
 

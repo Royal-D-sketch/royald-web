@@ -83,10 +83,13 @@ namespace RoyalD.Web.Controllers
                 }
                 else
                 {
-                    // Criteria for 14/09/2026 onwards vs before
+                    bool isBkkVicinity = RegionHelper.IsBkkAndVicinity(d.Province, d.District);
+
                     if (d.BillDate >= cutoffDate)
                     {
-                        bool isBkkVicinity = RegionHelper.IsBkkAndVicinity(d.Province, d.District);
+                        // บิลตั้งแต่วันที่ 14/09/2026:
+                        // 1. เครดิต 7 วัน กทม.&ปริมณฑล -> เก็บสด 7 วัน
+                        // 2. เครดิต 10 วัน กทม.&ปริมณฑล -> เงินสด 10 วัน
                         if (isBkkVicinity && d.Credit <= 7)
                         {
                             cat = "cash7";
@@ -94,21 +97,24 @@ namespace RoyalD.Web.Controllers
                             summary.Cash7Days.BillCount++;
                             summary.Cash7Days.TotalAmount += d.RemainingAmount;
                         }
-                        else
+                        else if (isBkkVicinity && (d.Credit == 10 || (d.Credit > 7 && d.Credit <= 10)))
                         {
                             cat = "cash10";
-                            catName = "เงินสด 10 วัน (ทุกพื้นที่)";
+                            catName = "เงินสด 10 วัน (กทม.&ปริมณฑล)";
                             summary.Cash10Days.BillCount++;
                             summary.Cash10Days.TotalAmount += d.RemainingAmount;
                         }
                     }
                     else
                     {
-                        // Before 14/09/2026: maintain original structure (combine cash debts in 7-day group)
-                        cat = "cash7";
-                        catName = "เก็บสด 7 วัน";
-                        summary.Cash7Days.BillCount++;
-                        summary.Cash7Days.TotalAmount += d.RemainingAmount;
+                        // บิลก่อนวันที่ 14/09/2026 ที่เป็นบิลกรุงเทพและปริมณฑลที่ค้างชำระเครดิต 7 วัน ให้เอามาอยู่ในประเภทเงินสด 10 วัน
+                        if (isBkkVicinity && d.Credit <= 7)
+                        {
+                            cat = "cash10";
+                            catName = "เงินสด 10 วัน (กทม.&ปริมณฑล)";
+                            summary.Cash10Days.BillCount++;
+                            summary.Cash10Days.TotalAmount += d.RemainingAmount;
+                        }
                     }
                 }
 
@@ -306,7 +312,7 @@ namespace RoyalD.Web.Controllers
             string groupTitle = category?.ToLower() switch
             {
                 "cash7" => "เก็บสด 7 วัน (กทม.&ปริมณฑล)",
-                "cash10" => "เงินสด 10 วัน (ทุกพื้นที่)",
+                "cash10" => "เงินสด 10 วัน (กทม.&ปริมณฑล)",
                 "over120" => "ค้างชำระ > 120 วัน",
                 "collected" => "ยอดเก็บเงินสำเร็จ",
                 _ => "รายงานภาพรวมทุกกลุ่ม"
@@ -428,7 +434,7 @@ namespace RoyalD.Web.Controllers
             ViewBag.CategoryTitle = category?.ToLower() switch
             {
                 "cash7" => "เก็บสด 7 วัน (กทม.&ปริมณฑล)",
-                "cash10" => "เงินสด 10 วัน (ทุกพื้นที่)",
+                "cash10" => "เงินสด 10 วัน (กทม.&ปริมณฑล)",
                 "over120" => "ค้างชำระ > 120 วัน",
                 "collected" => "ยอดเก็บเงินสำเร็จ",
                 _ => "รายงานภาพรวมทุกกลุ่ม"
