@@ -1,7 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore;
-using RoyalD.Web.Models;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
+using RoyalD.Web.Models;
 using RoyalD.Web.Services;
 
 namespace RoyalD.Web.Controllers
@@ -18,6 +25,7 @@ namespace RoyalD.Web.Controllers
             var data = await _svc.GetAnnualPerformanceAsync();
             return View(data);
         }
+
         public async Task<IActionResult> ExportExcel(DateTime? from, DateTime? to)
         {
             var pos = User.FindFirst("Position")?.Value ?? "";
@@ -46,17 +54,17 @@ namespace RoyalD.Web.Controllers
             }
 
             var data1 = await qPending.Select(p => new {
-                    BillNo = p.OutstandingDebt.BillNo,
-                    BillDate = p.OutstandingDebt.BillDate,
-                    CustomerCode = p.OutstandingDebt.CustomerCode,
-                    CustomerName = p.OutstandingDebt.CustomerName,
-                    SalesRep = p.OutstandingDebt.SalesRep,
-                    UpdatedAt = p.OutstandingDebt.WaitingGoodsDate ?? p.OutstandingDebt.BillDate,
-                    ProductCode = p.ProductCode,
-                    ProductName = p.ProductName,
-                    Quantity = p.Quantity,
-                    Note = p.OutstandingDebt.Note
-                }).ToListAsync();
+                BillNo = p.OutstandingDebt.BillNo,
+                BillDate = p.OutstandingDebt.BillDate,
+                CustomerCode = p.OutstandingDebt.CustomerCode,
+                CustomerName = p.OutstandingDebt.CustomerName,
+                SalesRep = p.OutstandingDebt.SalesRep,
+                UpdatedAt = p.OutstandingDebt.WaitingGoodsDate ?? p.OutstandingDebt.BillDate,
+                ProductCode = p.ProductCode,
+                ProductName = p.ProductName,
+                Quantity = p.Quantity,
+                Note = p.OutstandingDebt.Note
+            }).ToListAsync();
 
             var qDebt = db.OutstandingDebts
                 .Include(d => d.PendingProducts)
@@ -73,17 +81,17 @@ namespace RoyalD.Web.Controllers
             }
 
             var data2 = await qDebt.Select(d => new {
-                    BillNo = d.BillNo,
-                    BillDate = d.BillDate,
-                    CustomerCode = d.CustomerCode,
-                    CustomerName = d.CustomerName,
-                    SalesRep = d.SalesRep,
-                    UpdatedAt = d.WaitingGoodsDate ?? d.BillDate,
-                    ProductCode = "-",
-                    ProductName = "หลายรายการ / ไม่ได้ระบุรหัสสินค้า",
-                    Quantity = 0,
-                    Note = d.Note
-                }).ToListAsync();
+                BillNo = d.BillNo,
+                BillDate = d.BillDate,
+                CustomerCode = d.CustomerCode,
+                CustomerName = d.CustomerName,
+                SalesRep = d.SalesRep,
+                UpdatedAt = d.WaitingGoodsDate ?? d.BillDate,
+                ProductCode = "-",
+                ProductName = "หลายรายการ / ไม่ได้ระบุรหัสสินค้า",
+                Quantity = 0,
+                Note = d.Note
+            }).ToListAsync();
 
             var data = data1.Concat(data2).OrderByDescending(x => x.UpdatedAt).ToList();
 
@@ -95,7 +103,7 @@ namespace RoyalD.Web.Controllers
             return View(data);
         }
         
-                public async Task<IActionResult> PaidHistory([FromServices] AppDbContext db, string? search)
+        public async Task<IActionResult> PaidHistory([FromServices] AppDbContext db, string? search)
         {
             var dateLimit = DateTime.Now.AddDays(-120);
             var q = db.SalesBills.AsNoTracking().Where(b => b.IsFullyPaid && b.ReceiptDate >= dateLimit);
@@ -157,6 +165,242 @@ namespace RoyalD.Web.Controllers
                                 .ToListAsync();
             return View(data);
         }
+
+        // ==============================================================
+        // 1. รายงานบิลส่งคืนกลับมาบัญชี (บิลไม่พร้อมส่ง/ลูกค้ายังไม่เอาของ)
+        // ==============================================================
+        public async Task<IActionResult> ReturnedToAccount([FromServices] AppDbContext db, string? search, string? salesRep, DateTime? fromDate, DateTime? toDate)
+        {
+            var q = db.OutstandingDebts
+                .AsNoTracking()
+                .Include(d => d.Customer)
+                .Where(d => d.Status == DebtStatus.ReturnedToAccount)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var s = search.Trim();
+                q = q.Where(d => d.BillNo.Contains(s) || d.CustomerName.Contains(s) || d.CustomerCode.Contains(s));
+            }
+
+            if (!string.IsNullOrWhiteSpace(salesRep))
+            {
+                q = q.Where(d => d.SalesRep == salesRep);
+            }
+
+            if (fromDate.HasValue)
+            {
+                q = q.Where(d => (d.ReturnedToAccountDate ?? d.BillDate) >= fromDate.Value.Date);
+            }
+
+            if (toDate.HasValue)
+            {
+                q = q.Where(d => (d.ReturnedToAccountDate ?? d.BillDate) <= toDate.Value.Date.AddDays(1).AddTicks(-1));
+            }
+
+            var data = await q.OrderByDescending(d => d.ReturnedToAccountDate ?? d.BillDate).ToListAsync();
+
+            var reps = await db.OutstandingDebts
+                .Where(d => d.Status == DebtStatus.ReturnedToAccount && d.SalesRep != null && d.SalesRep != "")
+                .Select(d => d.SalesRep)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToListAsync();
+
+            ViewBag.SalesReps = reps;
+            ViewBag.Search = search;
+            ViewBag.SalesRep = salesRep;
+            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
+            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
+
+            return View(data);
+        }
+
+        // ==============================================================
+        // 2. ฟังก์ชัน "ส่งคืนไปจัดส่ง" (คืนสถานะเป็นลูกหนี้ค้างชำระปกติ)
+        // ==============================================================
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReturnToDelivery([FromServices] AppDbContext db, int debtId, DateTime? deliveryDate, string? returnNote)
+        {
+            var debt = await db.OutstandingDebts.FirstOrDefaultAsync(d => d.Id == debtId);
+            if (debt == null) return NotFound();
+
+            var dDate = deliveryDate ?? DateTime.Today;
+            debt.Status = DebtStatus.Outstanding; // คืนสถานะเป็นลูกหนี้ปกติ
+            debt.DeliveringDate = dDate;
+            debt.ReturnedToDeliveryDate = dDate;
+            
+            string noteDetail = !string.IsNullOrWhiteSpace(returnNote) ? $" (หมายเหตุ: {returnNote.Trim()})" : "";
+            debt.Note = $"ส่งคืนไปจัดส่งเมื่อ {dDate:dd/MM/yyyy}{noteDetail}";
+            debt.LastEditedDate = DateTime.Now;
+            debt.LastEditedBy = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "Admin";
+
+            await db.SaveChangesAsync();
+
+            TempData["Success"] = $"ส่งคืนบิลเลขที่ {debt.BillNo} ไปจัดส่งเรียบร้อยแล้ว (สถานะกลับเป็นลูกหนี้ค้างชำระปกติ)";
+            return RedirectToAction("ReturnedToAccount");
+        }
+
+        // ==============================================================
+        // 3. EXPORT EXCEL: บิลส่งคืนกลับมาบัญชี
+        // ==============================================================
+        public async Task<IActionResult> ExportReturnedToAccountExcel([FromServices] AppDbContext db, string? search, string? salesRep, DateTime? fromDate, DateTime? toDate)
+        {
+            var q = db.OutstandingDebts
+                .AsNoTracking()
+                .Where(d => d.Status == DebtStatus.ReturnedToAccount)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var s = search.Trim();
+                q = q.Where(d => d.BillNo.Contains(s) || d.CustomerName.Contains(s) || d.CustomerCode.Contains(s));
+            }
+            if (!string.IsNullOrWhiteSpace(salesRep))
+            {
+                q = q.Where(d => d.SalesRep == salesRep);
+            }
+            if (fromDate.HasValue)
+            {
+                q = q.Where(d => (d.ReturnedToAccountDate ?? d.BillDate) >= fromDate.Value.Date);
+            }
+            if (toDate.HasValue)
+            {
+                q = q.Where(d => (d.ReturnedToAccountDate ?? d.BillDate) <= toDate.Value.Date.AddDays(1).AddTicks(-1));
+            }
+
+            var list = await q.OrderByDescending(d => d.ReturnedToAccountDate ?? d.BillDate).ToListAsync();
+
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            using var package = new ExcelPackage();
+            var ws = package.Workbook.Worksheets.Add("ReturnedToAccount");
+
+            ws.Cells["A1:J1"].Merge = true;
+            ws.Cells["A1"].Value = "บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด";
+            ws.Cells["A1"].Style.Font.Size = 16;
+            ws.Cells["A1"].Style.Font.Bold = true;
+            ws.Cells["A1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            ws.Cells["A2:J2"].Merge = true;
+            ws.Cells["A2"].Value = $"รายงานบิลส่งคืนกลับมาบัญชี (บิลไม่พร้อมส่ง/ลูกค้ายังไม่เอาของ) — พิมพ์ ณ วันที่ {DateTime.Now:dd/MM/yyyy HH:mm} น.";
+            ws.Cells["A2"].Style.Font.Size = 12;
+            ws.Cells["A2"].Style.Font.Bold = true;
+            ws.Cells["A2"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            string[] headers = new[] { "#", "เลขที่บิล", "วันที่บิล", "รหัสลูกค้า", "ชื่อลูกค้า", "อำเภอ", "จังหวัด", "ผู้แทนขาย", "วันที่รับบิลจากจัดส่ง", "เหตุผลที่ส่งคืนบัญชี", "จำนวนเงิน (บาท)" };
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var c = ws.Cells[4, i + 1];
+                c.Value = headers[i];
+                c.Style.Font.Bold = true;
+                c.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                c.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(217, 119, 6)); // Amber / Warning
+                c.Style.Font.Color.SetColor(Color.White);
+                c.Style.HorizontalAlignment = (i == 0 || i == 1 || i == 2 || i == 3 || i == 8) ? ExcelHorizontalAlignment.Center : (i == 10 ? ExcelHorizontalAlignment.Right : ExcelHorizontalAlignment.Left);
+                c.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+            }
+
+            int rowIdx = 5;
+            for (int idx = 0; idx < list.Count; idx++)
+            {
+                var d = list[idx];
+                ws.Cells[rowIdx, 1].Value = idx + 1;
+                ws.Cells[rowIdx, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                ws.Cells[rowIdx, 2].Value = d.BillNo;
+                ws.Cells[rowIdx, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                ws.Cells[rowIdx, 3].Value = d.BillDate.ToString("dd/MM/yyyy");
+                ws.Cells[rowIdx, 3].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                ws.Cells[rowIdx, 4].Value = d.CustomerCode;
+                ws.Cells[rowIdx, 4].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                ws.Cells[rowIdx, 5].Value = d.CustomerName;
+                ws.Cells[rowIdx, 6].Value = d.District;
+                ws.Cells[rowIdx, 7].Value = d.Province;
+                ws.Cells[rowIdx, 8].Value = d.SalesRep;
+
+                ws.Cells[rowIdx, 9].Value = d.ReturnedToAccountDate?.ToString("dd/MM/yyyy") ?? "-";
+                ws.Cells[rowIdx, 9].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                ws.Cells[rowIdx, 10].Value = d.ReturnedToAccountReason ?? d.Note ?? "";
+
+                ws.Cells[rowIdx, 11].Value = d.RemainingAmount > 0 ? d.RemainingAmount : d.OriginalAmount;
+                ws.Cells[rowIdx, 11].Style.Numberformat.Format = "#,##0.00";
+                ws.Cells[rowIdx, 11].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+
+                for (int col = 1; col <= 11; col++)
+                    ws.Cells[rowIdx, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, Color.LightGray);
+
+                rowIdx++;
+            }
+
+            // Total Row
+            ws.Cells[rowIdx, 1, rowIdx, 10].Merge = true;
+            ws.Cells[rowIdx, 1].Value = $"ยอดรวมทั้งสิ้น ({list.Count:N0} รายการ):";
+            ws.Cells[rowIdx, 1].Style.Font.Bold = true;
+            ws.Cells[rowIdx, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+
+            ws.Cells[rowIdx, 11].Value = list.Sum(x => x.RemainingAmount > 0 ? x.RemainingAmount : x.OriginalAmount);
+            ws.Cells[rowIdx, 11].Style.Font.Bold = true;
+            ws.Cells[rowIdx, 11].Style.Numberformat.Format = "#,##0.00";
+            ws.Cells[rowIdx, 11].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+
+            for (int col = 1; col <= 11; col++)
+            {
+                ws.Cells[rowIdx, col].Style.Border.Top.Style = ExcelBorderStyle.Thin;
+                ws.Cells[rowIdx, col].Style.Border.Bottom.Style = ExcelBorderStyle.Double;
+                ws.Cells[rowIdx, col].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                ws.Cells[rowIdx, col].Style.Fill.BackgroundColor.SetColor(Color.FromArgb(254, 243, 199)); // Amber light
+            }
+
+            ws.Cells.AutoFitColumns();
+            ws.Column(1).Width = 6;
+            ws.Column(4).Width = 14;
+            ws.Column(5).Width = 30;
+            ws.Column(10).Width = 35;
+            ws.Column(11).Width = 18;
+
+            var bytes = package.GetAsByteArray();
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"ReturnedToAccount_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
+        }
+
+        // ==============================================================
+        // 4. EXPORT PDF: บิลส่งคืนกลับมาบัญชี
+        // ==============================================================
+        public async Task<IActionResult> ExportReturnedToAccountPdf([FromServices] AppDbContext db, string? search, string? salesRep, DateTime? fromDate, DateTime? toDate)
+        {
+            var q = db.OutstandingDebts
+                .AsNoTracking()
+                .Where(d => d.Status == DebtStatus.ReturnedToAccount)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var s = search.Trim();
+                q = q.Where(d => d.BillNo.Contains(s) || d.CustomerName.Contains(s) || d.CustomerCode.Contains(s));
+            }
+            if (!string.IsNullOrWhiteSpace(salesRep))
+            {
+                q = q.Where(d => d.SalesRep == salesRep);
+            }
+            if (fromDate.HasValue)
+            {
+                q = q.Where(d => (d.ReturnedToAccountDate ?? d.BillDate) >= fromDate.Value.Date);
+            }
+            if (toDate.HasValue)
+            {
+                q = q.Where(d => (d.ReturnedToAccountDate ?? d.BillDate) <= toDate.Value.Date.AddDays(1).AddTicks(-1));
+            }
+
+            var list = await q.OrderByDescending(d => d.ReturnedToAccountDate ?? d.BillDate).ToListAsync();
+
+            ViewBag.Search = search;
+            ViewBag.SalesRep = salesRep;
+            ViewBag.PrintedBy = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "Admin";
+
+            return View("PrintReturnedToAccountPdf", list);
+        }
     }
 }
-

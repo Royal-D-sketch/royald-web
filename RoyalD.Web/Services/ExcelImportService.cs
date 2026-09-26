@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ExcelDataReader;
 using Microsoft.EntityFrameworkCore;
@@ -20,455 +22,139 @@ namespace RoyalD.Web.Services
         {
             _db = db;
             _logger = logger;
-            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         }
 
-        private int FindHeaderRow(DataTable tbl, out Dictionary<string, int> map, params string[] requiredKeywords)
+        // ==========================================
+        // 1. DATA CLEANSING & PARSING FOR SALES BILLS
+        // ==========================================
+        public static List<BillPreviewItem> CleanAndParseSalesBills(DataTable tbl, out DateTime maxDate)
         {
-            map = new Dictionary<string, int>();
-            for (int r = 0; r < Math.Min(15, tbl.Rows.Count); r++)
-            {
-                var rowMap = new Dictionary<string, int>();
-                int matchCount = 0;
-                for (int c = 0; c < tbl.Columns.Count; c++)
-                {
-                    var val = tbl.Rows[r][c]?.ToString()?.Trim() ?? "";
-                    if (string.IsNullOrEmpty(val)) continue;
-                    rowMap[val] = c;
-                    if (requiredKeywords.Any(k => val.Contains(k))) matchCount++;
-                }
-                
-                if (matchCount >= requiredKeywords.Length - 1 && matchCount > 0)
-                {
-                    map = rowMap;
-                    return r;
-                }
-            }
-            return -1;
-        }
+            maxDate = DateTime.MinValue;
+            var list = new List<BillPreviewItem>();
+            if (tbl == null || tbl.Rows.Count < 2) return list;
 
-        private int GetCol(Dictionary<string, int> map, params string[] keywords)
-        {
-            foreach (var k in keywords)
-            {
-                var match = map.FirstOrDefault(x => x.Key.Contains(k));
-                if (match.Key != null) return match.Value;
-            }
-            return -1;
-        }
-
-        public async Task<(int inserted, int updated)> ImportSalesBillAsync(Stream stream, string sourceMonth, bool isCurrentMonth = false, string fileName = "DirectUpload")
-        {
-            var p = await PreviewSalesBillAsync(stream, sourceMonth, isCurrentMonth, fileName);
-            int inserted = 0, updated = 0;
-            var billNos = p.Items.Select(b => b.BillNo).Distinct().ToList();
-            var existingBills = await _db.SalesBills.Include(b => b.Items).Where(b => billNos.Contains(b.BillNo)).ToDictionaryAsync(b => b.BillNo);
-
-            foreach (var b in p.Items.GroupBy(x => x.BillNo).Select(g => g.First()))
-            {
-                if (existingBills.TryGetValue(b.BillNo, out var ex))
-                {
-                    ex.BillDate = b.BillDate;
-                    ex.CustomerName = b.CustomerName != null && b.CustomerName.Length > 100 ? b.CustomerName.Substring(0, 100) : (b.CustomerName ?? "");
-                    ex.District = b.District != null && b.District.Length > 100 ? b.District.Substring(0, 100) : (b.District ?? "");
-                    ex.Province = b.Province != null && b.Province.Length > 100 ? b.Province.Substring(0, 100) : (b.Province ?? "");
-                    ex.SalesRep = b.SalesRep != null && b.SalesRep.Length > 100 ? b.SalesRep.Substring(0, 100) : (b.SalesRep ?? "");
-                    ex.Phone = b.Phone != null && b.Phone.Length > 50 ? b.Phone.Substring(0, 50) : (b.Phone ?? "");
-                    ex.Credit = b.Credit;
-                    ex.TotalAmount = b.TotalAmount;
-                    
-                    ex.SourceMonth = sourceMonth != null && sourceMonth.Length > 10 ? sourceMonth.Substring(0, 10) : (sourceMonth ?? "");
-                    
-                    ex.PoNumber = b.PoNumber != null && b.PoNumber.Length > 100 ? b.PoNumber.Substring(0, 100) : (b.PoNumber ?? "");
-                    
-                    _db.SalesBillItems.RemoveRange(ex.Items);
-                    if (b.Items != null) { foreach(var i in b.Items) i.BillNo = b.BillNo; }
-                      ex.Items = b.Items ?? new List<SalesBillItem>();
-                    
-                    updated++;
-                }
-                else
-                {
-                    if (b.Items != null) { foreach(var i in b.Items) i.BillNo = b.BillNo; }
-                      _db.SalesBills.Add(new SalesBill {
-                        BillNo = b.BillNo != null && b.BillNo.Length > 50 ? b.BillNo.Substring(0, 50) : (b.BillNo ?? ""),
-                        BillDate = b.BillDate,
-                        CustomerCode = b.CustomerCode != null && b.CustomerCode.Length > 20 ? b.CustomerCode.Substring(0, 20) : (b.CustomerCode ?? ""),
-                        CustomerName = b.CustomerName != null && b.CustomerName.Length > 100 ? b.CustomerName.Substring(0, 100) : (b.CustomerName ?? ""),
-                        District = b.District != null && b.District.Length > 100 ? b.District.Substring(0, 100) : (b.District ?? ""),
-                        Province = b.Province != null && b.Province.Length > 100 ? b.Province.Substring(0, 100) : (b.Province ?? ""),
-                        Phone = b.Phone != null && b.Phone.Length > 50 ? b.Phone.Substring(0, 50) : (b.Phone ?? ""),
-                        Credit = b.Credit,
-                        SalesRep = b.SalesRep != null && b.SalesRep.Length > 100 ? b.SalesRep.Substring(0, 100) : (b.SalesRep ?? ""),
-                        TotalAmount = b.TotalAmount,
-                        SourceMonth = sourceMonth != null && sourceMonth.Length > 10 ? sourceMonth.Substring(0, 10) : (sourceMonth ?? ""),
-                        PoNumber = b.PoNumber != null && b.PoNumber.Length > 100 ? b.PoNumber.Substring(0, 100) : (b.PoNumber ?? ""),
-                        Items = b.Items ?? new List<SalesBillItem>()
-                    });
-                    inserted++;
-                }
-                if ((inserted + updated) % 200 == 0)
-                {
-                    await _db.SaveChangesAsync();
-                }
-            }
-            await _db.SaveChangesAsync();
-            return (inserted, updated);
-        }
-
-        public async Task<(int inserted, int updated, int skipped)> ConfirmImportSalesBillAsync(string previewId, bool updateDuplicates = true, bool skipDuplicates = false)
-        {
-            var p = GetPreview(previewId);
-            if (p == null) return (0, 0, 0);
-            
-            int inserted = 0, updated = 0, skipped = 0;
-            var billNos = p.Items.Select(b => b.BillNo).Distinct().ToList();
-            var existingBills = await _db.SalesBills.Include(b => b.Items).Where(b => billNos.Contains(b.BillNo)).ToDictionaryAsync(b => b.BillNo);
-
-            foreach (var b in p.Items.GroupBy(x => x.BillNo).Select(g => g.First()))
-            {
-                if (existingBills.TryGetValue(b.BillNo, out var ex))
-                {
-                    if (skipDuplicates) { skipped++; continue; }
-                    if (updateDuplicates)
-                    {
-                        ex.BillDate = b.BillDate;
-                    ex.CustomerName = b.CustomerName != null && b.CustomerName.Length > 100 ? b.CustomerName.Substring(0, 100) : (b.CustomerName ?? "");
-                        ex.District = b.District != null && b.District.Length > 100 ? b.District.Substring(0, 100) : (b.District ?? "");
-                        ex.Province = b.Province != null && b.Province.Length > 100 ? b.Province.Substring(0, 100) : (b.Province ?? "");
-                        ex.SalesRep = b.SalesRep != null && b.SalesRep.Length > 100 ? b.SalesRep.Substring(0, 100) : (b.SalesRep ?? "");
-                        ex.Phone = b.Phone != null && b.Phone.Length > 50 ? b.Phone.Substring(0, 50) : (b.Phone ?? "");
-                        ex.Credit = b.Credit;
-                        ex.TotalAmount = b.TotalAmount;
-                        
-                        ex.SourceMonth = p.FileType != null && p.FileType.Length > 10 ? p.FileType.Substring(0, 10) : (p.FileType ?? "");
-                        
-                        ex.PoNumber = b.PoNumber != null && b.PoNumber.Length > 100 ? b.PoNumber.Substring(0, 100) : (b.PoNumber ?? "");
-                        
-                        _db.SalesBillItems.RemoveRange(ex.Items);
-                        if (b.Items != null) { foreach(var i in b.Items) i.BillNo = b.BillNo; }
-                      ex.Items = b.Items ?? new List<SalesBillItem>();
-                        
-                        updated++;
-                    }
-                }
-                else
-                {
-                    if (b.Items != null) { foreach(var i in b.Items) i.BillNo = b.BillNo; }
-                      _db.SalesBills.Add(new SalesBill {
-                        BillNo = b.BillNo != null && b.BillNo.Length > 50 ? b.BillNo.Substring(0, 50) : (b.BillNo ?? ""),
-                        BillDate = b.BillDate,
-                        CustomerCode = b.CustomerCode != null && b.CustomerCode.Length > 20 ? b.CustomerCode.Substring(0, 20) : (b.CustomerCode ?? ""),
-                        CustomerName = b.CustomerName != null && b.CustomerName.Length > 100 ? b.CustomerName.Substring(0, 100) : (b.CustomerName ?? ""),
-                        District = b.District != null && b.District.Length > 100 ? b.District.Substring(0, 100) : (b.District ?? ""),
-                        Province = b.Province != null && b.Province.Length > 100 ? b.Province.Substring(0, 100) : (b.Province ?? ""),
-                        Phone = b.Phone != null && b.Phone.Length > 50 ? b.Phone.Substring(0, 50) : (b.Phone ?? ""),
-                        Credit = b.Credit,
-                        SalesRep = b.SalesRep != null && b.SalesRep.Length > 100 ? b.SalesRep.Substring(0, 100) : (b.SalesRep ?? ""),
-                        TotalAmount = b.TotalAmount,
-                        SourceMonth = p.FileType != null && p.FileType.Length > 10 ? p.FileType.Substring(0, 10) : (p.FileType ?? ""),
-                        PoNumber = b.PoNumber != null && b.PoNumber.Length > 100 ? b.PoNumber.Substring(0, 100) : (b.PoNumber ?? ""),
-                        Items = b.Items ?? new List<SalesBillItem>()
-                    });
-                    inserted++;
-                }
-                if ((inserted + updated) % 200 == 0) await _db.SaveChangesAsync();
-            }
-            await _db.SaveChangesAsync();
-            RemovePreview(previewId);
-            return (inserted, updated, skipped);
-        }
-
-        public async Task<int> ImportOutstandingDebtsAsync(Stream stream, string fileName = "")
-        {
-            int count = 0;
-            var conf = new ExcelReaderConfiguration { FallbackEncoding = System.Text.Encoding.GetEncoding(874) };
-              using var reader = fileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase) 
-                  ? ExcelReaderFactory.CreateCsvReader(stream, conf) 
-                  : ExcelReaderFactory.CreateReader(stream, conf);
-            var ds = reader.AsDataSet(new ExcelDataSetConfiguration { ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = false } });
-            var tbl = ds.Tables[0];
-            if (tbl == null) return 0;
-
-            try
-            {
-                _db.OutstandingDebts.RemoveRange(_db.OutstandingDebts.Where(d => d.Status == DebtStatus.Outstanding));
-                await _db.SaveChangesAsync();
-
-                int headerRow = FindHeaderRow(tbl, out var map, "เธฃเธซเธฑเธช", "เธเธทเนเธญ", "เธเธดเธฅ", "เธเธณเธเธงเธเน€เธเธดเธ");
-                if (headerRow < 0) headerRow = 3;
-
-                int cCustCode = GetCol(map, "เธฃเธซเธฑเธชเธฅเธนเธเธเนเธฒ", "เธฃเธซเธฑเธช");
-                int cCustName = GetCol(map, "เธเธทเนเธญ");
-                int cDistrict = GetCol(map, "เธญเธณเน€เธ เธญ");
-                int cProvince = GetCol(map, "เธเธฑเธเธซเธงเธฑเธ”");
-                int cBillNo = GetCol(map, "เธเธดเธฅ", "เน€เธฅเธเธ—เธตเน");
-                int cBillDate = GetCol(map, "เธงเธฑเธเธ—เธตเนเธเธดเธฅ", "เธงเธฑเธเธ—เธตเน");
-                int cDueDate = GetCol(map, "เธเธณเธซเธเธ”เธเธณเธฃเธฐ");
-                int cAmount = GetCol(map, "เธเธณเธเธงเธเน€เธเธดเธ", "เธขเธญเธ”เธชเธธเธ—เธเธด", "เธขเธญเธ”เธซเธเธตเน");
-                int cCredit = GetCol(map, "เน€เธเธฃเธ”เธดเธ•");
-                int cSalesRep = GetCol(map, "เธเธนเนเนเธ—เธ");
-
-                if (cCustCode < 0) cCustCode = 0;
-                if (cCustName < 0) cCustName = 1;
-                if (cBillNo < 0) cBillNo = 6;
-                if (cBillDate < 0) cBillDate = 7;
-                if (cDueDate < 0) cDueDate = 8;
-                if (cAmount < 0) cAmount = 9;
-
-                string currentCustCode = "";
-                string currentCustName = "";
-                string currentDistrict = "";
-                string currentProvince = "";
-                string currentSalesRep = "";
-
-                var existingCustomers = _db.Customers.ToDictionary(c => c.CustomerCode, c => c.Name);
-
-                for (int r = headerRow + 1; r < tbl.Rows.Count; r++)
-                {
-                    var row = tbl.Rows[r];
-                    var colCust = cCustCode >= 0 && cCustCode < tbl.Columns.Count ? row[cCustCode]?.ToString()?.Trim() ?? "" : "";
-                    var colBill = cBillNo >= 0 && cBillNo < tbl.Columns.Count ? row[cBillNo]?.ToString()?.Trim() ?? "" : "";
-                    
-                    if (string.IsNullOrWhiteSpace(colCust) && string.IsNullOrWhiteSpace(colBill)) continue;
-                    if (colCust.Contains("เธฃเธงเธก") || colCust.Contains("เธ—เธฑเนเธเธซเธกเธ”")) continue;
-
-                    if (!string.IsNullOrEmpty(colCust) && !colCust.Contains("/"))
-                    {
-                        currentCustCode = colCust;
-                        currentCustName = cCustName >= 0 && cCustName < tbl.Columns.Count ? row[cCustName]?.ToString()?.Trim() ?? "" : "";
-                        
-                        string dynDist = "";
-                        string dynProv = "";
-                        string dynRep = "";
-                        
-                        var strParts = new List<string>();
-                        for (int i = 4; i < tbl.Columns.Count; i++) {
-                            var v = row[i]?.ToString()?.Trim();
-                            if (!string.IsNullOrWhiteSpace(v) && !decimal.TryParse(v.Replace(",", ""), out _) && !DateTime.TryParse(v, out _) && !v.Contains("/")) {
-                                strParts.Add(v);
-                            }
-                        }
-                        if (strParts.Count > 0) dynRep = strParts.Last();
-                        if (strParts.Count >= 3) { dynDist = strParts[0]; dynProv = strParts[1]; }
-                        else if (strParts.Count == 2) { 
-                            if (strParts[0].Contains("เธ.") || strParts[0].Contains("เธเธฃเธธเธเน€เธ—เธ")) dynProv = strParts[0];
-                            else dynDist = strParts[0];
-                        }
-
-                        currentDistrict = cDistrict >= 0 && cDistrict < tbl.Columns.Count && !string.IsNullOrWhiteSpace(row[cDistrict]?.ToString()) ? row[cDistrict].ToString().Trim() : dynDist;
-                        currentProvince = cProvince >= 0 && cProvince < tbl.Columns.Count && !string.IsNullOrWhiteSpace(row[cProvince]?.ToString()) ? row[cProvince].ToString().Trim() : dynProv;
-                        currentSalesRep = cSalesRep >= 0 && cSalesRep < tbl.Columns.Count && !string.IsNullOrWhiteSpace(row[cSalesRep]?.ToString()) ? row[cSalesRep].ToString().Trim() : dynRep;
-
-                        if (!string.IsNullOrEmpty(currentCustCode))
-                        {
-                            if (existingCustomers.TryGetValue(currentCustCode, out var dbName))
-                            {
-                                if (!string.IsNullOrEmpty(dbName) && (dbName.Length > currentCustName.Length || dbName.StartsWith(currentCustName)))
-                                {
-                                    currentCustName = dbName;
-                                }
-                            }
-                            else
-                            {
-                                _db.Customers.Add(new Customer { CustomerCode = currentCustCode, Name = currentCustName, District = currentDistrict, Province = currentProvince });
-                                existingCustomers[currentCustCode] = currentCustName;
-                            }
-                        }
-                    }
-
-                    string billNo = colBill;
-                    if (string.IsNullOrEmpty(billNo) && colCust.Contains("/")) billNo = colCust;
-                    if (string.IsNullOrEmpty(billNo) && cBillDate >= 0 && cBillDate < tbl.Columns.Count && (row[cBillDate]?.ToString() ?? "").Contains("/")) 
-                    {
-                        if (!(row[cBillDate]?.ToString() ?? "").Contains("202") && !(row[cBillDate]?.ToString() ?? "").Contains("256"))
-                            billNo = row[cBillDate]?.ToString()?.Trim() ?? "";
-                    }
-
-                    if (!string.IsNullOrEmpty(billNo) && !billNo.Contains("เธขเธญเธ”เธขเธเธกเธฒ") && !billNo.Contains("เธขเธญเธ”เธฃเธงเธก")) {
-                        var billDate = ParseDate(cBillDate >= 0 && cBillDate < tbl.Columns.Count ? row[cBillDate] : null);
-                        var dueDate = ParseDate(cDueDate >= 0 && cDueDate < tbl.Columns.Count ? row[cDueDate] : null);
-                        var amount = ParseDecimal(cAmount >= 0 && cAmount < tbl.Columns.Count ? row[cAmount]?.ToString() : "");
-                        var credit = ParseInt(cCredit >= 0 && cCredit < tbl.Columns.Count ? row[cCredit]?.ToString() : "");
-
-                        if (amount <= 0) continue;
-
-                        if (currentDistrict.Length > 100) currentDistrict = currentDistrict.Substring(0, 100);
-                        if (currentProvince.Length > 100) currentProvince = currentProvince.Substring(0, 100);
-                        if (currentSalesRep.Length > 100) currentSalesRep = currentSalesRep.Substring(0, 100);
-                        if (currentCustName.Length > 100) currentCustName = currentCustName.Substring(0, 100);
-                        if (currentCustCode.Length > 20) currentCustCode = currentCustCode.Substring(0, 20);
-                        if (billNo.Length > 50) billNo = billNo.Substring(0, 50);
-
-                        _db.OutstandingDebts.Add(new OutstandingDebt
-                        {
-                            CustomerCode = currentCustCode, CustomerName = currentCustName,
-                            District = currentDistrict, Province = currentProvince,
-                            BillNo = billNo, BillDate = billDate, DueDate = dueDate,
-                            OriginalAmount = amount, RemainingAmount = amount,
-                            Credit = credit, SalesRep = currentSalesRep, Status = DebtStatus.Outstanding
-                        });
-                        count++;
-                        if (count % 200 == 0)
-                        {
-                            try { await _db.SaveChangesAsync(); } catch { _db.ChangeTracker.Clear(); }
-                        }
-                    }
-                }
-                await _db.SaveChangesAsync();
-            }
-            catch (Exception ex) { _logger.LogError(ex.Message); throw; }
-            return count;
-        }
-
-        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, ImportPreviewResult> _previewCache = new();
-        public static void SetPreview(string id, ImportPreviewResult preview) => _previewCache[id] = preview;
-        public static ImportPreviewResult? GetPreview(string id) => _previewCache.TryGetValue(id, out var p) ? p : null;
-        public static void RemovePreview(string id) => _previewCache.TryRemove(id, out _);
-
-        public async Task<ImportPreviewResult> PreviewSalesBillAsync(Stream stream, string sourceMonth, bool isCurrentMonth, string fileName)
-        {
-            var result = new ImportPreviewResult { FileType = sourceMonth, FileName = fileName, IsCurrentMonth = isCurrentMonth };
-            var conf = new ExcelReaderConfiguration { FallbackEncoding = System.Text.Encoding.GetEncoding(874) };
-              using var reader = fileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase) 
-                  ? ExcelReaderFactory.CreateCsvReader(stream, conf) 
-                  : ExcelReaderFactory.CreateReader(stream, conf);
-            var ds = reader.AsDataSet(new ExcelDataSetConfiguration { ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = false } });
-            var tbl = ds.Tables[0];
-            if (tbl == null || tbl.Rows.Count < 4) return result;
-
-            var existingCustomers = _db.Customers.ToDictionary(c => c.CustomerCode, c => c.Name);
-            var parsedBills = new List<BillPreviewItem>();
-            string currentBillNo = "";
-            DateTime currentBillDate = DateTime.MinValue;
-            string currentCustCode = "", currentCustName = "", currentPoNumber = "", currentDistrict = "", currentProvince = "", currentPhone = "", currentSalesRep = "";
-            int currentCredit = 0;
-            decimal currentTotal = 0;
-            var currentItems = new List<SalesBillItem>();
-
-            void CollectCurrentBill()
-            {
-                if (string.IsNullOrEmpty(currentBillNo)) return;
-                
-                // Prevent EF Core / Postgres 22001 value too long
-                if (currentDistrict.Length > 100) currentDistrict = currentDistrict.Substring(0, 100);
-                if (currentProvince.Length > 100) currentProvince = currentProvince.Substring(0, 100);
-                if (currentSalesRep.Length > 100) currentSalesRep = currentSalesRep.Substring(0, 100);
-                if (currentPoNumber.Length > 100) currentPoNumber = currentPoNumber.Substring(0, 100);
-                if (currentPhone.Length > 50) currentPhone = currentPhone.Substring(0, 50);
-                if (currentCustName.Length > 100) currentCustName = currentCustName.Substring(0, 100);
-                if (currentCustCode.Length > 20) currentCustCode = currentCustCode.Substring(0, 20);
-                if (currentBillNo.Length > 50) currentBillNo = currentBillNo.Substring(0, 50);
-
-                parsedBills.Add(new BillPreviewItem
-                {
-                    BillNo = currentBillNo, BillDate = currentBillDate, CustomerCode = currentCustCode,
-                    CustomerName = currentCustName, District = currentDistrict, Province = currentProvince,
-                    Phone = currentPhone, Credit = currentCredit, SalesRep = currentSalesRep,
-                    TotalAmount = currentTotal, ItemCount = currentItems.Count,
-                    Items = new List<SalesBillItem>(currentItems), PoNumber = currentPoNumber
-                });
-            }
+            BillPreviewItem? currentBill = null;
+            var subtotalKeywords = new[] { "รวมทั้งสิ้น", "ยอดคงเหลือ", "VAT.=", "รวม....", "ส่วนลด", "ยอดรวม", "รวมทั้งหมด", "ยอดรวมทั้งสิ้น", "ยอดสุทธิ" };
 
             for (int r = 0; r < tbl.Rows.Count; r++)
             {
                 var row = tbl.Rows[r];
-                var col0 = tbl.Columns.Count > 0 ? row[0]?.ToString()?.Trim() ?? "" : "";
-                
-                if (string.IsNullOrWhiteSpace(col0))
+                string c0 = tbl.Columns.Count > 0 ? row[0]?.ToString()?.Trim() ?? "" : "";
+                string fullRow = string.Join(" ", row.ItemArray.Select(x => x?.ToString()?.Trim() ?? "")).Trim();
+
+                if (string.IsNullOrWhiteSpace(fullRow)) continue;
+
+                // 1. Skip CD Page Header Rows
+                if (fullRow.Contains("รายละเอียด บิลขาย") || fullRow.Contains("Royal-D (Thailand)") ||
+                    fullRow.Contains("รหัส-ชื่อสินค้า") || (fullRow.Contains("บิล") && fullRow.Contains("รหัสลูกค้า")))
                 {
-                    // Check if it's a footer row to scrape total or other values
-                    for (int c = 0; c < tbl.Columns.Count; c++)
-                    {
-                        var cellVal = row[c]?.ToString()?.Trim() ?? "";
-                        if (cellVal == "เธฃเธงเธกเธ—เธฑเนเธเธชเธดเนเธ")
-                        {
-                            decimal amt = 0;
-                            if (tbl.Columns.Count > 14) amt = ParseDecimal(row[14]?.ToString());
-                            if (amt == 0 && tbl.Columns.Count > 15) amt = ParseDecimal(row[15]?.ToString());
-                            if (amt > 0) currentTotal = amt;
-                            break;
-                        }
-                    }
                     continue;
                 }
 
-                if (col0.StartsWith("S/N", StringComparison.OrdinalIgnoreCase)) continue;
-
-                // Check if Column 1 (index 0) starts with digits and slash, or starts with 'R'
-                bool startsWithR = col0.StartsWith("R", StringComparison.OrdinalIgnoreCase);
-                bool isNoVatSlash = col0.Length > 0 && char.IsDigit(col0[0]) && col0.Contains("/") && col0.Split((char)47).Length == 2 && col0.Length < 15;
-                bool isBillHeader = (startsWithR || isNoVatSlash) && tbl.Columns.Count > 1 && !string.IsNullOrWhiteSpace(row[1]?.ToString());
-
-                if (isBillHeader)
+                // 2. Detect & Discard Summary Rows (extract total if available)
+                bool isSummary = false;
+                foreach (var kw in subtotalKeywords)
                 {
-                    CollectCurrentBill();
-                    currentItems = new List<SalesBillItem>();
-
-                    // Map Header Columns
-                    // Column 1: Bill Number -> index 0
-                    currentBillNo = col0;
-                    
-                    // Column 2: Date -> index 1
-                    currentBillDate = ParseDate(tbl.Columns.Count > 1 ? row[1] : null);
-                    
-                    // Column 3: Customer ID -> index 2
-                    currentCustCode = tbl.Columns.Count > 2 ? row[2]?.ToString()?.Trim() ?? "" : "";
-                    
-                    // Column 4: PO Number -> index 3 (If empty, display blank)
-                    currentPoNumber = tbl.Columns.Count > 3 ? row[3]?.ToString()?.Trim() ?? "" : "";
-                    
-                    // Column 5: Customer Name -> index 4
-                    currentCustName = tbl.Columns.Count > 4 ? row[4]?.ToString()?.Trim() ?? "" : "";
-                    if (!string.IsNullOrEmpty(currentCustCode) && existingCustomers.TryGetValue(currentCustCode, out var dbName))
+                    if (fullRow.Contains(kw))
                     {
-                        if (!string.IsNullOrEmpty(dbName) && (dbName.Length > currentCustName.Length || dbName.StartsWith(currentCustName)))
+                        isSummary = true;
+                        if (kw.Contains("รวมทั้งสิ้น") && currentBill != null)
                         {
-                            currentCustName = dbName;
+                            for (int c = tbl.Columns.Count - 1; c >= 0; c--)
+                            {
+                                decimal amt = ParseDecimal(row[c]?.ToString());
+                                if (amt > 0)
+                                {
+                                    currentBill.TotalAmount = amt;
+                                    break;
+                                }
+                            }
                         }
+                        break;
                     }
-                    
-                    // Column 7: District/Area -> index 6
-                    currentDistrict = tbl.Columns.Count > 6 ? row[6]?.ToString()?.Trim() ?? "" : "";
-                    
-                    // Column 9: Province -> index 8
-                    currentProvince = tbl.Columns.Count > 8 ? row[8]?.ToString()?.Trim() ?? "" : "";
-                    
-                    // Column 11: Credit Terms -> could be shifted to index 9, 10 or 11
-                    int c10 = tbl.Columns.Count > 10 ? ParseInt(row[10]?.ToString()) : 0;
-                    int c9 = tbl.Columns.Count > 9 ? ParseInt(row[9]?.ToString()) : 0;
-                    int c11 = tbl.Columns.Count > 11 ? ParseInt(row[11]?.ToString()) : 0;
-                    currentCredit = c10 > 0 ? c10 : (c9 > 0 ? c9 : c11);
-                    
-                    // Column 16: Sales Representative -> index 15
-                    currentSalesRep = tbl.Columns.Count > 15 ? row[15]?.ToString()?.Trim() ?? "" : "";
+                }
+                if (isSummary) continue;
 
-                    // Phone Number: row 2 containing "เนเธ—เธฃ." (row immediately following header row)
-                    currentPhone = "";
+                // 3. Detect Bill Header Row (e.g. R153342, 630/31465, SO..., IV...)
+                bool startsWithR = c0.StartsWith("R", StringComparison.OrdinalIgnoreCase);
+                bool startsWithSO = c0.StartsWith("SO", StringComparison.OrdinalIgnoreCase);
+                bool startsWithIV = c0.StartsWith("IV", StringComparison.OrdinalIgnoreCase);
+                bool isSlashBill = c0.Length > 0 && char.IsDigit(c0[0]) && c0.Contains("/") && c0.Split('/').Length == 2 && c0.Length < 25;
+                bool isHeader = (startsWithR || startsWithSO || startsWithIV || isSlashBill) &&
+                                tbl.Columns.Count > 1 && !string.IsNullOrWhiteSpace(row[1]?.ToString());
+
+                if (isHeader)
+                {
+                    if (currentBill != null && !string.IsNullOrEmpty(currentBill.BillNo))
+                    {
+                        if (currentBill.TotalAmount == 0 && currentBill.Items.Count > 0)
+                            currentBill.TotalAmount = currentBill.Items.Sum(i => i.Amount);
+                        currentBill.ItemCount = currentBill.Items.Count;
+                        list.Add(currentBill);
+                    }
+
+                    var billDate = ParseThaiDate(tbl.Columns.Count > 1 ? row[1] : null);
+                    if (billDate != DateTime.MinValue && billDate.Year >= 2000 && billDate.Year <= 2100)
+                    {
+                        if (billDate > maxDate) maxDate = billDate;
+                    }
+
+                    // Extract Credit Terms (shifted across col 9, 10, 11)
+                    int cr10 = tbl.Columns.Count > 10 ? ParseInt(row[10]?.ToString()) : 0;
+                    int cr9 = tbl.Columns.Count > 9 ? ParseInt(row[9]?.ToString()) : 0;
+                    int cr11 = tbl.Columns.Count > 11 ? ParseInt(row[11]?.ToString()) : 0;
+                    int credit = cr10 > 0 ? cr10 : (cr9 > 0 ? cr9 : cr11);
+
+                    string rep = "";
+                    if (tbl.Columns.Count > 16 && !string.IsNullOrWhiteSpace(row[16]?.ToString()))
+                        rep = row[16].ToString()!.Trim();
+                    else if (tbl.Columns.Count > 15 && !string.IsNullOrWhiteSpace(row[15]?.ToString()))
+                        rep = row[15].ToString()!.Trim();
+
+                    currentBill = new BillPreviewItem
+                    {
+                        BillNo = c0,
+                        BillDate = billDate == DateTime.MinValue ? DateTime.Today : billDate,
+                        CustomerCode = tbl.Columns.Count > 2 ? row[2]?.ToString()?.Trim() ?? "" : "",
+                        PoNumber = tbl.Columns.Count > 3 ? row[3]?.ToString()?.Trim() ?? "" : "",
+                        CustomerName = tbl.Columns.Count > 4 ? row[4]?.ToString()?.Trim() ?? "" : "",
+                        District = tbl.Columns.Count > 6 ? row[6]?.ToString()?.Trim() ?? "" : "",
+                        Province = tbl.Columns.Count > 8 ? row[8]?.ToString()?.Trim() ?? "" : "",
+                        Credit = credit,
+                        SalesRep = rep,
+                        Items = new List<SalesBillItem>()
+                    };
+
+                    // Check next row for Phone Number
                     if (r + 1 < tbl.Rows.Count)
                     {
                         var nextRow = tbl.Rows[r + 1];
                         for (int c = 0; c < tbl.Columns.Count; c++)
                         {
-                            var val = nextRow[c]?.ToString()?.Trim() ?? "";
-                            if (val.Contains("เนเธ—เธฃ") || val.Contains("เน."))
+                            var v = nextRow[c]?.ToString()?.Trim() ?? "";
+                            if (v.Contains("โทร") || v.Contains("โ.") || v.StartsWith("Tel", StringComparison.OrdinalIgnoreCase))
                             {
-                                currentPhone = val.Replace("เนเธ—เธฃ.", "").Replace("เนเธ—เธฃ", "").Replace("เน.", "").Trim();
+                                currentBill.Phone = v.Replace("โทร.", "").Replace("โทร", "").Replace("โ.", "").Replace("Tel.", "").Replace("Tel", "").Trim();
                                 break;
                             }
                         }
                     }
-
-                    currentTotal = 0;
+                    continue;
                 }
-                else
+
+                // 4. Product Item Row
+                if (currentBill != null && !string.IsNullOrWhiteSpace(c0) &&
+                    !c0.StartsWith("S/N", StringComparison.OrdinalIgnoreCase) &&
+                    !c0.StartsWith("โทร", StringComparison.OrdinalIgnoreCase) &&
+                    !c0.StartsWith("โ.", StringComparison.OrdinalIgnoreCase) &&
+                    !c0.StartsWith("Tel", StringComparison.OrdinalIgnoreCase))
                 {
-                    // Product detail row: Column 1 (index 0) has the product code + name
-                    string rawProd = col0.Replace((char)160, ' ').Trim();
+                    string rawProd = c0.Replace((char)160, ' ').Trim();
                     string prodCode = "";
                     string prodName = rawProd;
                     var parts = rawProd.Split(new[] { ' ' }, 2, StringSplitOptions.RemoveEmptyEntries);
-                    if (parts.Length > 1)
+                    if (parts.Length > 1 && parts[0].Any(char.IsDigit))
                     {
                         prodCode = parts[0].Trim();
                         prodName = parts[1].Trim();
@@ -490,54 +176,309 @@ namespace RoyalD.Web.Services
                     if (lastIdx >= 4)
                     {
                         amt = ParseDecimal(row[lastIdx]?.ToString());
-                        string rawDiscount = row[lastIdx - 1]?.ToString()?.Trim() ?? "";
-                        if (rawDiscount.EndsWith("%"))
-                        {
-                            discount = ParseDecimal(rawDiscount.Replace("%", ""));
-                        }
-                        else
-                        {
-                            discount = ParseDecimal(rawDiscount);
-                        }
+                        string rawDisc = row[lastIdx - 1]?.ToString()?.Trim() ?? "";
+                        discount = rawDisc.EndsWith("%") ? ParseDecimal(rawDisc.Replace("%", "")) : ParseDecimal(rawDisc);
                         price = ParseDecimal(row[lastIdx - 2]?.ToString());
                         unit = row[lastIdx - 3]?.ToString()?.Trim() ?? "";
                         qty = ParseDecimal(row[lastIdx - 4]?.ToString());
                     }
-
-                    if (qty > 0 && price == 0 && amt > 0)
+                    else if (lastIdx >= 1)
                     {
-                        price = Math.Round(amt / qty, 2);
+                        for (int i = 1; i <= lastIdx; i++)
+                        {
+                            var val = row[i]?.ToString()?.Trim() ?? "";
+                            if (string.IsNullOrEmpty(val)) continue;
+                            if (qty == 0 && decimal.TryParse(val.Replace(",", ""), out decimal q) && q > 0)
+                                qty = q;
+                            else if (string.IsNullOrEmpty(unit) && !decimal.TryParse(val.Replace(",", ""), out _))
+                                unit = val;
+                            else if (price == 0 && decimal.TryParse(val.Replace(",", ""), out decimal p))
+                                price = p;
+                            else if (amt == 0 && decimal.TryParse(val.Replace(",", ""), out decimal a))
+                                amt = a;
+                        }
                     }
-                    if (qty == 0 && price > 0 && amt > 0)
-                    {
-                        qty = Math.Round(amt / price, 2);
-                    }
 
-                    if (qty == 0 && amt == 0) continue; // skip non-product lines
-                    if (amt == 0 && qty > 0 && price > 0) amt = qty * price;
+                    if (qty > 0 && price == 0 && amt > 0) price = Math.Round(amt / qty, 2);
+                    if (qty == 0 && price > 0 && amt > 0) qty = Math.Round(amt / price, 2);
+                    if (amt == 0 && qty > 0 && price > 0) amt = Math.Round(qty * price, 2);
 
-                    var item = new SalesBillItem
+                    if (qty > 0 || amt > 0)
                     {
-                        ProductCode = prodCode.Length > 30 ? prodCode.Substring(0, 30) : prodCode,
-                        ProductName = prodName.Length > 100 ? prodName.Substring(0, 100) : prodName,
-                        Qty = qty,
-                        Unit = unit.Length > 30 ? unit.Substring(0, 30) : unit,
-                        Price = price,
-                        Discount = discount,
-                        Amount = amt
-                    };
-                    item.BillNo = currentBillNo;
-                      currentItems.Add(item);
-                    if (currentTotal == 0)
-                    {
-                        currentTotal += amt; // fallback if no "เธฃเธงเธกเธ—เธฑเนเธเธชเธดเนเธ" row has set it yet
+                        currentBill.Items.Add(new SalesBillItem
+                        {
+                            BillNo = currentBill.BillNo,
+                            ProductCode = prodCode.Length > 50 ? prodCode.Substring(0, 50) : prodCode,
+                            ProductName = prodName.Length > 200 ? prodName.Substring(0, 200) : prodName,
+                            Qty = qty,
+                            Unit = unit.Length > 30 ? unit.Substring(0, 30) : unit,
+                            Price = price,
+                            Discount = discount,
+                            Amount = amt
+                        });
                     }
                 }
             }
-            CollectCurrentBill();
-            
+
+            if (currentBill != null && !string.IsNullOrEmpty(currentBill.BillNo))
+            {
+                if (currentBill.TotalAmount == 0 && currentBill.Items.Count > 0)
+                    currentBill.TotalAmount = currentBill.Items.Sum(i => i.Amount);
+                currentBill.ItemCount = currentBill.Items.Count;
+                list.Add(currentBill);
+            }
+
+            return list;
+        }
+
+        // ==========================================
+        // 2. DATA CLEANSING & PARSING FOR DEBTORS
+        // ==========================================
+        public static List<OutstandingDebt> CleanAndParseDebtors(DataTable tbl, out DateTime maxDate)
+        {
+            maxDate = DateTime.MinValue;
+            var list = new List<OutstandingDebt>();
+            if (tbl == null || tbl.Rows.Count < 2) return list;
+
+            int headerRow = -1;
+            for (int r = 0; r < Math.Min(15, tbl.Rows.Count); r++)
+            {
+                string full = string.Join(" ", tbl.Rows[r].ItemArray.Select(x => x?.ToString()?.Trim() ?? "")).Trim();
+                if (full.Contains("รหัสลูกค้า") || full.Contains("บิล") || (full.Contains("ชื่อ") && full.Contains("จำนวนเงิน")))
+                {
+                    headerRow = r;
+                    break;
+                }
+            }
+            if (headerRow < 0) headerRow = 3;
+
+            string currentCustCode = "", currentCustName = "", currentDistrict = "", currentProvince = "", currentSalesRep = "";
+
+            for (int r = headerRow + 1; r < tbl.Rows.Count; r++)
+            {
+                var row = tbl.Rows[r];
+                string fullRow = string.Join(" ", row.ItemArray.Select(x => x?.ToString()?.Trim() ?? "")).Trim();
+                if (string.IsNullOrWhiteSpace(fullRow)) continue;
+
+                // Discard page headers & subtotal summary lines
+                if (fullRow.Contains("รายงานลูกหนี้") || fullRow.Contains("Royal-D") || fullRow.Contains("รหัสลูกค้า") ||
+                    fullRow.Contains("ยอดรวม") || fullRow.Contains("รวมทั้งหมด") || fullRow.Contains("รวมทั้งสิ้น") || fullRow.Contains("ยอดรวมตาม"))
+                {
+                    continue;
+                }
+
+                string col0 = tbl.Columns.Count > 0 ? row[0]?.ToString()?.Trim() ?? "" : "";
+                string col1 = tbl.Columns.Count > 1 ? row[1]?.ToString()?.Trim() ?? "" : "";
+
+                // Propagate customer info across merged/blank cells
+                if (!string.IsNullOrEmpty(col0) && !col0.Contains("/") && !col0.StartsWith("R", StringComparison.OrdinalIgnoreCase))
+                {
+                    currentCustCode = col0;
+                    currentCustName = col1;
+
+                    string dynDist = "", dynProv = "", dynRep = "";
+                    var strParts = new List<string>();
+                    for (int i = 2; i < tbl.Columns.Count; i++)
+                    {
+                        var v = row[i]?.ToString()?.Trim();
+                        if (!string.IsNullOrWhiteSpace(v) && !decimal.TryParse(v.Replace(",", ""), out _) && !DateTime.TryParse(v, out _) && !v.Contains("/"))
+                        {
+                            strParts.Add(v);
+                        }
+                    }
+                    if (strParts.Count > 0) dynRep = strParts.Last();
+                    if (strParts.Count >= 3) { dynDist = strParts[0]; dynProv = strParts[1]; }
+                    else if (strParts.Count == 2)
+                    {
+                        if (strParts[0].Contains("จ.") || strParts[0].Contains("กรุงเทพ")) dynProv = strParts[0];
+                        else dynDist = strParts[0];
+                    }
+
+                    if (tbl.Columns.Count > 5 && !string.IsNullOrWhiteSpace(row[5]?.ToString())) currentDistrict = row[5].ToString()!.Trim();
+                    else if (!string.IsNullOrEmpty(dynDist)) currentDistrict = dynDist;
+
+                    if (tbl.Columns.Count > 6 && !string.IsNullOrWhiteSpace(row[6]?.ToString())) currentProvince = row[6].ToString()!.Trim();
+                    else if (!string.IsNullOrEmpty(dynProv)) currentProvince = dynProv;
+
+                    if (tbl.Columns.Count > 12 && !string.IsNullOrWhiteSpace(row[12]?.ToString())) currentSalesRep = row[12].ToString()!.Trim();
+                    else if (!string.IsNullOrEmpty(dynRep)) currentSalesRep = dynRep;
+                }
+
+                string billNo = "";
+                DateTime billDate = DateTime.MinValue;
+                DateTime dueDate = DateTime.MinValue;
+                decimal amount = 0;
+                int credit = 0;
+                string rep = currentSalesRep;
+
+                for (int c = 0; c < tbl.Columns.Count; c++)
+                {
+                    var v = row[c]?.ToString()?.Trim() ?? "";
+                    if (string.IsNullOrEmpty(v)) continue;
+
+                    if (string.IsNullOrEmpty(billNo) && (v.StartsWith("R", StringComparison.OrdinalIgnoreCase) || v.StartsWith("CN", StringComparison.OrdinalIgnoreCase) || (v.Contains("/") && v.Split('/').Length == 2 && v.Length < 25)))
+                    {
+                        billNo = v;
+                        continue;
+                    }
+
+                    var dt = ParseThaiDate(v);
+                    if (dt != DateTime.MinValue && dt.Year >= 2000 && dt.Year <= 2100)
+                    {
+                        if (billDate == DateTime.MinValue)
+                            billDate = dt;
+                        else if (dueDate == DateTime.MinValue)
+                            dueDate = dt;
+                        continue;
+                    }
+
+                    if (decimal.TryParse(v.Replace(",", ""), out decimal num))
+                    {
+                        if (amount == 0 && (v.Contains(".") || num > 365 || num < 0))
+                            amount = num;
+                        else if (credit == 0 && num > 0 && num <= 365 && !v.Contains("."))
+                            credit = (int)num;
+                        else if (amount == 0)
+                            amount = num;
+                    }
+                    else if (!string.IsNullOrEmpty(v) && v.Length > 1 && !v.Contains("/"))
+                    {
+                        rep = v;
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(billNo) && amount != 0)
+                {
+                    if (billDate != DateTime.MinValue && billDate.Year >= 2000 && billDate.Year <= 2100)
+                    {
+                        if (billDate > maxDate) maxDate = billDate;
+                    }
+
+                    list.Add(new OutstandingDebt
+                    {
+                        CustomerCode = currentCustCode.Length > 20 ? currentCustCode.Substring(0, 20) : currentCustCode,
+                        CustomerName = currentCustName.Length > 100 ? currentCustName.Substring(0, 100) : currentCustName,
+                        District = currentDistrict.Length > 100 ? currentDistrict.Substring(0, 100) : currentDistrict,
+                        Province = currentProvince.Length > 100 ? currentProvince.Substring(0, 100) : currentProvince,
+                        BillNo = billNo.Length > 50 ? billNo.Substring(0, 50) : billNo,
+                        BillDate = billDate == DateTime.MinValue ? DateTime.Today : billDate,
+                        DueDate = dueDate == DateTime.MinValue ? (credit > 0 ? (billDate == DateTime.MinValue ? DateTime.Today : billDate).AddDays(credit) : DateTime.Today) : dueDate,
+                        OriginalAmount = amount,
+                        RemainingAmount = amount,
+                        Credit = credit,
+                        SalesRep = string.IsNullOrEmpty(rep) ? currentSalesRep : rep,
+                        Status = DebtStatus.Outstanding
+                    });
+                }
+            }
+
+            return list;
+        }
+
+        // ==========================================
+        // 3. DATA CLEANSING & PARSING FOR RECEIPTS
+        // ==========================================
+        public static List<ReceiptPreviewRow> CleanAndParseReceipts(DataTable tbl, out DateTime maxDate)
+        {
+            maxDate = DateTime.MinValue;
+            var list = new List<ReceiptPreviewRow>();
+            if (tbl == null || tbl.Rows.Count < 2) return list;
+
+            int headerRow = -1;
+            for (int r = 0; r < Math.Min(15, tbl.Rows.Count); r++)
+            {
+                string full = string.Join(" ", tbl.Rows[r].ItemArray.Select(x => x?.ToString()?.Trim() ?? "")).Trim();
+                if (full.Contains("ใบเสร็จ") || full.Contains("วันที่รับเงิน") || (full.Contains("บิล") && full.Contains("จำนวนเงิน")))
+                {
+                    headerRow = r;
+                    break;
+                }
+            }
+            if (headerRow < 0) headerRow = 3;
+
+            string currentReceiptNo = "";
+            DateTime currentReceiptDate = DateTime.MinValue;
+            string currentReceiptDateStr = "";
+            string currentCustCode = "";
+
+            for (int r = headerRow + 1; r < tbl.Rows.Count; r++)
+            {
+                var row = tbl.Rows[r];
+                string fullRow = string.Join(" ", row.ItemArray.Select(x => x?.ToString()?.Trim() ?? "")).Trim();
+                if (string.IsNullOrWhiteSpace(fullRow)) continue;
+
+                // Discard page headers & subtotal summary lines
+                if (fullRow.Contains("สรุปการชำระเงิน") || fullRow.Contains("Royal-D") || fullRow.Contains("วันที่รับเงิน") ||
+                    fullRow.Contains("ยอดรวม") || fullRow.Contains("รวมทั้งหมด") || fullRow.Contains("รวมทั้งสิ้น"))
+                {
+                    continue;
+                }
+
+                string colDate = tbl.Columns.Count > 0 ? row[0]?.ToString()?.Trim() ?? "" : "";
+                string colReceipt = tbl.Columns.Count > 1 ? row[1]?.ToString()?.Trim() ?? "" : "";
+                string colBill = tbl.Columns.Count > 2 ? row[2]?.ToString()?.Trim() ?? "" : "";
+                string colCust = tbl.Columns.Count > 3 ? row[3]?.ToString()?.Trim() ?? "" : "";
+                string colAmt = tbl.Columns.Count > 7 ? row[7]?.ToString()?.Trim() ?? "" : "";
+
+                var dt = ParseThaiDate(colDate);
+                if (dt != DateTime.MinValue && dt.Year >= 2000 && dt.Year <= 2100)
+                {
+                    currentReceiptDate = dt;
+                    currentReceiptDateStr = colDate;
+                    if (currentReceiptDate > maxDate) maxDate = currentReceiptDate;
+                }
+
+                if (!string.IsNullOrEmpty(colReceipt)) currentReceiptNo = colReceipt;
+                if (!string.IsNullOrEmpty(colCust)) currentCustCode = colCust;
+
+                // Extract clean Bill No (strip `#` characters)
+                string billNo = colBill.Replace("#", "").Trim();
+                decimal amt = ParseDecimal(colAmt);
+
+                if (!string.IsNullOrEmpty(billNo) && !string.IsNullOrEmpty(currentReceiptNo))
+                {
+                    list.Add(new ReceiptPreviewRow
+                    {
+                        ReceiptNo = currentReceiptNo,
+                        ReceiptDate = currentReceiptDate == DateTime.MinValue ? DateTime.Today : currentReceiptDate,
+                        ReceiptDateStr = currentReceiptDateStr,
+                        BillNo = billNo,
+                        CustomerCode = currentCustCode,
+                        Amount = amt
+                    });
+                }
+            }
+
+            return list;
+        }
+
+        // ==========================================
+        // PREVIEW / CONFIRM SALES BILL FLOW
+        // ==========================================
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, ImportPreviewResult> _previewCache = new();
+        public static void SetPreview(string id, ImportPreviewResult preview) => _previewCache[id] = preview;
+        public static ImportPreviewResult? GetPreview(string id) => _previewCache.TryGetValue(id, out var p) ? p : null;
+        public static void RemovePreview(string id) => _previewCache.TryRemove(id, out _);
+
+        public async Task<ImportPreviewResult> PreviewSalesBillAsync(Stream stream, string sourceMonth, bool isCurrentMonth, string fileName)
+        {
+            var result = new ImportPreviewResult { FileType = sourceMonth, FileName = fileName, IsCurrentMonth = isCurrentMonth };
+            var conf = new ExcelReaderConfiguration { FallbackEncoding = Encoding.GetEncoding(874) };
+            using var reader = fileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
+                ? ExcelReaderFactory.CreateCsvReader(stream, conf)
+                : ExcelReaderFactory.CreateReader(stream, conf);
+
+            var ds = reader.AsDataSet(new ExcelDataSetConfiguration { ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = false } });
+            var tbl = ds.Tables[0];
+            if (tbl == null || tbl.Rows.Count < 2) return result;
+
+            var parsedBills = CleanAndParseSalesBills(tbl, out DateTime maxDate);
+            result.LatestDate = maxDate;
+            result.TotalRows = parsedBills.Count;
+            result.TotalAmount = parsedBills.Sum(b => b.TotalAmount);
+
             var billNos = parsedBills.Select(b => b.BillNo).Distinct().ToList();
-            var existingBills = await _db.SalesBills.Include(b => b.Items).Where(b => billNos.Contains(b.BillNo)).ToDictionaryAsync(b => b.BillNo);
+            var existingBills = await _db.SalesBills.Where(b => billNos.Contains(b.BillNo)).ToDictionaryAsync(b => b.BillNo);
 
             foreach (var b in parsedBills)
             {
@@ -545,86 +486,213 @@ namespace RoyalD.Web.Services
                 {
                     b.StatusType = "CHANGED";
                     b.ExistingAmount = ex.TotalAmount;
+                    result.DuplicateChangedCount++;
+                    result.DuplicateAmount += b.TotalAmount;
                 }
-                else { b.StatusType = "NEW"; }
+                else
+                {
+                    b.StatusType = "NEW";
+                    result.NewCount++;
+                    result.NewAmount += b.TotalAmount;
+                }
             }
+
             result.Items = parsedBills;
+            SetPreview(result.PreviewId, result);
             return result;
         }
 
-        // ---- Receipt Upload: Preview / Confirm flow ----
+        public async Task<(int inserted, int updated, int skipped, DateTime latestDate)> ConfirmImportSalesBillAsync(string previewId, bool updateDuplicates = true, bool skipDuplicates = false)
+        {
+            var p = GetPreview(previewId);
+            if (p == null) return (0, 0, 0, DateTime.MinValue);
 
+            int inserted = 0, updated = 0, skipped = 0;
+
+            // Ensure Customers exist to prevent foreign key errors
+            var custCodes = p.Items.Where(b => !string.IsNullOrEmpty(b.CustomerCode)).Select(b => b.CustomerCode).Distinct().ToList();
+            var existingCusts = (await _db.Customers.Where(c => custCodes.Contains(c.CustomerCode)).Select(c => c.CustomerCode).ToListAsync()).ToHashSet();
+            foreach (var b in p.Items)
+            {
+                if (!string.IsNullOrEmpty(b.CustomerCode) && !existingCusts.Contains(b.CustomerCode))
+                {
+                    _db.Customers.Add(new Customer
+                    {
+                        CustomerCode = b.CustomerCode,
+                        Name = b.CustomerName ?? "",
+                        District = b.District ?? "",
+                        Province = b.Province ?? "",
+                        Phone = b.Phone ?? ""
+                    });
+                    existingCusts.Add(b.CustomerCode);
+                }
+            }
+            await _db.SaveChangesAsync();
+
+            var billNos = p.Items.Select(b => b.BillNo).Distinct().ToList();
+            var existingBills = await _db.SalesBills.Include(b => b.Items).Where(b => billNos.Contains(b.BillNo)).ToDictionaryAsync(b => b.BillNo);
+
+            foreach (var b in p.Items.GroupBy(x => x.BillNo).Select(g => g.First()))
+            {
+                if (existingBills.TryGetValue(b.BillNo, out var ex))
+                {
+                    if (skipDuplicates) { skipped++; continue; }
+                    if (updateDuplicates)
+                    {
+                        ex.BillDate = b.BillDate;
+                        ex.CustomerCode = b.CustomerCode;
+                        ex.CustomerName = b.CustomerName;
+                        ex.District = b.District;
+                        ex.Province = b.Province;
+                        ex.SalesRep = b.SalesRep;
+                        ex.Phone = b.Phone;
+                        ex.Credit = b.Credit;
+                        ex.TotalAmount = b.TotalAmount;
+                        ex.SourceMonth = p.FileType ?? "";
+                        ex.PoNumber = b.PoNumber;
+
+                        _db.SalesBillItems.RemoveRange(ex.Items);
+                        if (b.Items != null) { foreach (var i in b.Items) i.BillNo = b.BillNo; }
+                        ex.Items = b.Items ?? new List<SalesBillItem>();
+
+                        updated++;
+                    }
+                }
+                else
+                {
+                    if (b.Items != null) { foreach (var i in b.Items) i.BillNo = b.BillNo; }
+                    _db.SalesBills.Add(new SalesBill
+                    {
+                        BillNo = b.BillNo,
+                        BillDate = b.BillDate,
+                        CustomerCode = b.CustomerCode,
+                        CustomerName = b.CustomerName,
+                        District = b.District,
+                        Province = b.Province,
+                        Phone = b.Phone,
+                        Credit = b.Credit,
+                        SalesRep = b.SalesRep,
+                        TotalAmount = b.TotalAmount,
+                        SourceMonth = p.FileType ?? "",
+                        PoNumber = b.PoNumber,
+                        Items = b.Items ?? new List<SalesBillItem>()
+                    });
+                    inserted++;
+                }
+
+                if ((inserted + updated) % 200 == 0) await _db.SaveChangesAsync();
+            }
+
+            await _db.SaveChangesAsync();
+            RemovePreview(previewId);
+            return (inserted, updated, skipped, p.LatestDate);
+        }
+
+        public async Task<(int inserted, int updated, DateTime latestDate, List<BillPreviewItem> previewItems)> ImportSalesBillAsync(Stream stream, string sourceMonth, bool isCurrentMonth = false, string fileName = "DirectUpload")
+        {
+            var p = await PreviewSalesBillAsync(stream, sourceMonth, isCurrentMonth, fileName);
+            var (ins, upd, _, maxDate) = await ConfirmImportSalesBillAsync(p.PreviewId, updateDuplicates: true, skipDuplicates: false);
+            return (ins, upd, maxDate, p.Items.Take(10).ToList());
+        }
+
+        // ==========================================
+        // IMPORT OUTSTANDING DEBTS FLOW (OVERWRITE 100%)
+        // ==========================================
+        public async Task<(int count, DateTime latestDate, List<OutstandingDebt> previewRows)> ImportOutstandingDebtsAsync(Stream stream, string fileName = "")
+        {
+            var conf = new ExcelReaderConfiguration { FallbackEncoding = Encoding.GetEncoding(874) };
+            using var reader = fileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
+                ? ExcelReaderFactory.CreateCsvReader(stream, conf)
+                : ExcelReaderFactory.CreateReader(stream, conf);
+
+            var ds = reader.AsDataSet(new ExcelDataSetConfiguration { ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = false } });
+            var tbl = ds.Tables[0];
+            if (tbl == null || tbl.Rows.Count < 2) return (0, DateTime.MinValue, new List<OutstandingDebt>());
+
+            var cleanedDebts = CleanAndParseDebtors(tbl, out DateTime maxDate);
+
+            // Ensure Customers exist to prevent foreign key errors
+            var custCodes = cleanedDebts.Where(d => !string.IsNullOrEmpty(d.CustomerCode)).Select(d => d.CustomerCode).Distinct().ToList();
+            var existingCusts = (await _db.Customers.Where(c => custCodes.Contains(c.CustomerCode)).Select(c => c.CustomerCode).ToListAsync()).ToHashSet();
+            foreach (var d in cleanedDebts)
+            {
+                if (!string.IsNullOrEmpty(d.CustomerCode) && !existingCusts.Contains(d.CustomerCode))
+                {
+                    _db.Customers.Add(new Customer
+                    {
+                        CustomerCode = d.CustomerCode,
+                        Name = d.CustomerName ?? "",
+                        District = d.District ?? "",
+                        Province = d.Province ?? ""
+                    });
+                    existingCusts.Add(d.CustomerCode);
+                }
+            }
+            await _db.SaveChangesAsync();
+
+            // Clear old outstanding debts (100% overwrite)
+            _db.OutstandingDebts.RemoveRange(_db.OutstandingDebts.Where(d => d.Status == DebtStatus.Outstanding));
+            await _db.SaveChangesAsync();
+
+            // Insert new cleaned debts
+            int count = 0;
+            foreach (var d in cleanedDebts)
+            {
+                _db.OutstandingDebts.Add(d);
+                count++;
+                if (count % 200 == 0)
+                {
+                    try { await _db.SaveChangesAsync(); }
+                    catch { _db.ChangeTracker.Clear(); }
+                }
+            }
+            await _db.SaveChangesAsync();
+
+            return (count, maxDate, cleanedDebts.Take(10).ToList());
+        }
+
+        // ==========================================
+        // PREVIEW / CONFIRM RECEIPT MATCH FLOW
+        // ==========================================
         private static readonly Dictionary<string, ReceiptPreviewResult> _receiptPreviews = new();
 
         public async Task<ReceiptPreviewResult> PreviewReceiptMatchAsync(Stream stream, string fileName = "")
         {
-            var conf = new ExcelReaderConfiguration { FallbackEncoding = System.Text.Encoding.GetEncoding(874) };
+            var conf = new ExcelReaderConfiguration { FallbackEncoding = Encoding.GetEncoding(874) };
             using var reader = fileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
                 ? ExcelReaderFactory.CreateCsvReader(stream, conf)
                 : ExcelReaderFactory.CreateReader(stream, conf);
+
             var ds = reader.AsDataSet(new ExcelDataSetConfiguration { ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = false } });
             var tbl = ds.Tables[0];
 
             var result = new ReceiptPreviewResult { FileName = fileName };
-            if (tbl == null)
+            if (tbl == null || tbl.Rows.Count < 2)
             {
                 result.PreviewId = Guid.NewGuid().ToString("N");
                 lock (_receiptPreviews) { _receiptPreviews[result.PreviewId] = result; }
                 return result;
             }
 
-            int headerRow = FindHeaderRow(tbl, out var map, "บิล", "ใบเสร็จ", "วันที่รับเงิน");
-            if (headerRow < 0) headerRow = 3;
+            var cleanedRows = CleanAndParseReceipts(tbl, out DateTime maxDate);
+            result.LatestDate = maxDate;
 
-            int billColIndex = GetCol(map, "บิล", "เลขที่บิล", "เลขที่เอกสาร");
-            int receiptColIndex = GetCol(map, "ใบเสร็จ", "เลขที่ใบเสร็จ");
-            int dateColIndex = GetCol(map, "วันที่รับเงิน", "วันที่");
-            int custColIndex = GetCol(map, "รหัส", "ลูกค้า", "รหัสลูกค้า");
-
-            if (billColIndex < 0) billColIndex = 2;
-            if (receiptColIndex < 0) receiptColIndex = 1;
-            if (dateColIndex < 0) dateColIndex = 0;
-
-            var billNosInFile = new List<string>();
-            for (int r = headerRow + 1; r < tbl.Rows.Count; r++)
-            {
-                var row = tbl.Rows[r];
-                var bn = billColIndex < tbl.Columns.Count ? row[billColIndex]?.ToString()?.Trim() : null;
-                var rn = receiptColIndex < tbl.Columns.Count ? row[receiptColIndex]?.ToString()?.Trim() : null;
-                if (!string.IsNullOrEmpty(bn) && !string.IsNullOrEmpty(rn)) billNosInFile.Add(bn);
-            }
-
+            var billNosInFile = cleanedRows.Select(r => r.BillNo).Distinct().ToList();
             var existingBillsWithReceipt = await _db.SalesBills
                 .Where(b => billNosInFile.Contains(b.BillNo) && b.ReceiptNo != null && b.ReceiptNo != "")
                 .ToDictionaryAsync(b => b.BillNo, b => b.ReceiptNo);
 
-            for (int r = headerRow + 1; r < tbl.Rows.Count; r++)
+            foreach (var pr in cleanedRows)
             {
-                var row = tbl.Rows[r];
-                var billNo = billColIndex < tbl.Columns.Count ? row[billColIndex]?.ToString()?.Trim() : null;
-                var receiptNo = receiptColIndex < tbl.Columns.Count ? row[receiptColIndex]?.ToString()?.Trim() : null;
-                var receiptDateStr = dateColIndex < tbl.Columns.Count ? row[dateColIndex]?.ToString()?.Trim() : null;
-                var custCode = custColIndex >= 0 && custColIndex < tbl.Columns.Count ? row[custColIndex]?.ToString()?.Trim() : null;
-
-                if (string.IsNullOrEmpty(billNo) || string.IsNullOrEmpty(receiptNo)) continue;
-
-                var previewRow = new ReceiptPreviewRow
+                if (existingBillsWithReceipt.TryGetValue(pr.BillNo, out var existingReceipt))
                 {
-                    BillNo = billNo,
-                    NewReceiptNo = receiptNo,
-                    ReceiptDateStr = receiptDateStr ?? "",
-                    CustomerCode = custCode ?? "",
-                };
-
-                if (existingBillsWithReceipt.TryGetValue(billNo, out var existingReceipt))
-                {
-                    previewRow.ExistingReceiptNo = existingReceipt ?? "";
-                    previewRow.IsDuplicate = true;
-                    result.Duplicates.Add(previewRow);
+                    pr.ExistingReceiptNo = existingReceipt ?? "";
+                    pr.IsDuplicate = true;
+                    result.Duplicates.Add(pr);
                 }
                 else
                 {
-                    result.NewRows.Add(previewRow);
+                    result.NewRows.Add(pr);
                 }
             }
 
@@ -643,13 +711,15 @@ namespace RoyalD.Web.Services
             lock (_receiptPreviews) { _receiptPreviews.Remove(previewId); }
         }
 
-        public async Task<(int matched, int notFound)> ConfirmReceiptMatchAsync(
+        public async Task<(int matched, int notFound, DateTime latestDate)> ConfirmReceiptMatchAsync(
             string previewId, bool updateDuplicates, List<string>? selectedDuplicateBillNos = null)
         {
             ReceiptPreviewResult? preview;
             lock (_receiptPreviews) { _receiptPreviews.TryGetValue(previewId, out preview); }
 
             var rowsToProcess = new List<ReceiptPreviewRow>();
+            DateTime latestDate = preview?.LatestDate ?? DateTime.MinValue;
+
             if (preview != null)
             {
                 rowsToProcess.AddRange(preview.NewRows);
@@ -676,9 +746,8 @@ namespace RoyalD.Web.Services
                 {
                     foreach (var b in existingBills)
                     {
-                        b.ReceiptNo = pr.NewReceiptNo;
-                        var rDate = ParseDate((object)pr.ReceiptDateStr);
-                        if (rDate != DateTime.MinValue) b.ReceiptDate = rDate;
+                        b.ReceiptNo = pr.ReceiptNo;
+                        if (pr.ReceiptDate != DateTime.MinValue) b.ReceiptDate = pr.ReceiptDate;
                         b.IsFullyPaid = true;
                     }
                     isMatch = true;
@@ -692,9 +761,8 @@ namespace RoyalD.Web.Services
                 {
                     foreach (var d in existingDebts)
                     {
-                        d.ReceiptNo = pr.NewReceiptNo;
-                        var rDate = ParseDate((object)pr.ReceiptDateStr);
-                        if (rDate != DateTime.MinValue) d.ReceiptDate = rDate;
+                        d.ReceiptNo = pr.ReceiptNo;
+                        if (pr.ReceiptDate != DateTime.MinValue) d.ReceiptDate = pr.ReceiptDate;
                         d.RemainingAmount = 0;
                         d.Status = DebtStatus.PaidTransfer;
                         d.FullyPaidDate = d.ReceiptDate ?? DateTime.Now;
@@ -709,13 +777,16 @@ namespace RoyalD.Web.Services
 
             await _db.SaveChangesAsync();
             if (preview != null) RemoveReceiptPreview(previewId);
-            return (matched, notFound);
+            return (matched, notFound, latestDate);
         }
 
-        private static DateTime ParseDate(object? obj)
+        // ==========================================
+        // DATE & NUMBER PARSING UTILITIES
+        // ==========================================
+        public static DateTime ParseThaiDate(object? obj)
         {
             string s = obj?.ToString() ?? "";
-            if (string.IsNullOrWhiteSpace(s)) return DateTime.Today;
+            if (string.IsNullOrWhiteSpace(s)) return DateTime.MinValue;
             s = s.Trim();
             if (s.Contains("/"))
             {
@@ -731,35 +802,39 @@ namespace RoyalD.Web.Services
                     }
                 }
             }
-            if (DateTime.TryParse(s, out var dt)) return dt;
-            return DateTime.Today;
+            if (DateTime.TryParse(s, out var dt))
+            {
+                if (dt.Year > 2500) dt = dt.AddYears(-543);
+                return dt;
+            }
+            return DateTime.MinValue;
         }
 
-        private static decimal ParseDecimal(string? s)
+        public static decimal ParseDecimal(string? s)
         {
             if (string.IsNullOrWhiteSpace(s)) return 0;
             s = s.Replace(",", "").Trim();
             return decimal.TryParse(s, out decimal result) ? result : 0;
         }
 
-        private static int ParseInt(string? s)
+        public static int ParseInt(string? s)
         {
             if (string.IsNullOrWhiteSpace(s)) return 0;
-            var match = System.Text.RegularExpressions.Regex.Match(s, @"\d+");
+            var match = Regex.Match(s, @"\d+");
             return match.Success ? int.Parse(match.Value) : 0;
         }
     }
-}
 
-namespace RoyalD.Web.Services
-{
     public class ReceiptPreviewRow
     {
+        public string ReceiptNo { get; set; } = "";
+        public string NewReceiptNo { get => ReceiptNo; set => ReceiptNo = value; }
         public string BillNo { get; set; } = "";
-        public string NewReceiptNo { get; set; } = "";
-        public string ExistingReceiptNo { get; set; } = "";
+        public DateTime ReceiptDate { get; set; }
         public string ReceiptDateStr { get; set; } = "";
         public string CustomerCode { get; set; } = "";
+        public decimal Amount { get; set; }
+        public string ExistingReceiptNo { get; set; } = "";
         public bool IsDuplicate { get; set; }
     }
 
@@ -767,6 +842,7 @@ namespace RoyalD.Web.Services
     {
         public string PreviewId { get; set; } = "";
         public string FileName { get; set; } = "";
+        public DateTime LatestDate { get; set; }
         public List<ReceiptPreviewRow> NewRows { get; set; } = new();
         public List<ReceiptPreviewRow> Duplicates { get; set; } = new();
     }

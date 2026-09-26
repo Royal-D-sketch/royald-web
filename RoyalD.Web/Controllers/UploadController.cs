@@ -40,10 +40,38 @@ namespace RoyalD.Web.Controllers
             return (canBills, canDebtors, canReceipts);
         }
 
-        [Authorize(Roles = "admin")]
-        [HttpGet] public async Task<IActionResult> CleanGarbage() { var g = _db.SalesBills.Where(b => (!b.BillNo.StartsWith("R") && !b.BillNo.StartsWith("SO") && !b.BillNo.StartsWith("IV") && !b.BillNo.StartsWith("63") && !b.BillNo.StartsWith("64") && !b.BillNo.StartsWith("65")) || b.BillNo.Length > 25); _db.SalesBills.RemoveRange(g); await _db.SaveChangesAsync(); return Content("Cleaned " + g.Count()); }
+        private async Task PopulateViewDataAsync()
+        {
+            var (canBills, canDebtors, canReceipts) = GetUploadPermissions();
+            ViewBag.CanUploadBills = canBills;
+            ViewBag.CanUploadDebtors = canDebtors;
+            ViewBag.CanUploadReceipts = canReceipts;
 
-        public IActionResult Index()
+            ViewBag.LatestBillDate = await _db.SalesBills.OrderByDescending(b => b.BillDate).Select(b => (DateTime?)b.BillDate).FirstOrDefaultAsync();
+            ViewBag.LatestDebtorDate = await _db.OutstandingDebts.OrderByDescending(d => d.BillDate).Select(d => (DateTime?)d.BillDate).FirstOrDefaultAsync();
+            ViewBag.LatestReceiptDate = await _db.SalesBills.Where(b => b.ReceiptDate != null).OrderByDescending(b => b.ReceiptDate).Select(b => (DateTime?)b.ReceiptDate).FirstOrDefaultAsync()
+                                      ?? await _db.OutstandingDebts.Where(d => d.ReceiptDate != null).OrderByDescending(d => d.ReceiptDate).Select(d => (DateTime?)d.ReceiptDate).FirstOrDefaultAsync();
+
+            ViewBag.TotalBillsCount = await _db.SalesBills.CountAsync();
+            ViewBag.TotalDebtorsCount = await _db.OutstandingDebts.CountAsync();
+            ViewBag.TotalReceiptsCount = await _db.SalesBills.CountAsync(b => b.ReceiptNo != null && b.ReceiptNo != "");
+
+            // Top preview rows from current database if not in TempData
+            if (ViewBag.LatestBillDate != null)
+            {
+                ViewBag.DbBillPreview = await _db.SalesBills.OrderByDescending(b => b.BillDate).Take(10).ToListAsync();
+            }
+            if (ViewBag.LatestDebtorDate != null)
+            {
+                ViewBag.DbDebtorPreview = await _db.OutstandingDebts.OrderByDescending(d => d.BillDate).Take(10).ToListAsync();
+            }
+            if (ViewBag.LatestReceiptDate != null)
+            {
+                ViewBag.DbReceiptPreview = await _db.SalesBills.Where(b => b.ReceiptNo != null && b.ReceiptNo != "").OrderByDescending(b => b.ReceiptDate).Take(10).ToListAsync();
+            }
+        }
+
+        public async Task<IActionResult> Index()
         {
             var (canBills, canDebtors, canReceipts) = GetUploadPermissions();
             if (!canBills && !canDebtors && !canReceipts)
@@ -52,53 +80,70 @@ namespace RoyalD.Web.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            ViewBag.CanUploadBills = canBills;
-            ViewBag.CanUploadDebtors = canDebtors;
-            ViewBag.CanUploadReceipts = canReceipts;
+            await PopulateViewDataAsync();
             return View();
         }
 
-        [AllowAnonymous]
-        public async Task<IActionResult> FixData()
-        {
-            int phoneUpdates = 0;
-            var billsWithPhone = _db.SalesBills.Where(b => b.Phone != null && b.Phone != "").ToList();
-            foreach (var b in billsWithPhone)
-            {
-                var cust = _db.Customers.FirstOrDefault(c => c.CustomerCode == b.CustomerCode);
-                if (cust != null && (string.IsNullOrEmpty(cust.Phone) || cust.Phone.Length < 5))
-                {
-                    cust.Phone = b.Phone;
-                    phoneUpdates++;
-                }
-            }
-
-            var b152858 = _db.SalesBills.FirstOrDefault(b => b.BillNo == "R152858");
-            if (b152858 != null)
-            {
-                b152858.Credit = 7;
-            }
-            var debts = _db.OutstandingDebts.Where(d => d.BillNo == "R152858").ToList();
-            foreach (var d in debts) { d.Credit = 7; }
-
-            await _db.SaveChangesAsync();
-            return Content($"Fixed data! Updated {phoneUpdates} customer phones. Fixed credit for R152858 to 7.");
-        }
-
-        [AllowAnonymous]
-        public async Task<IActionResult> ForceUploadSalesBills()
+        [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> ClearData(string target = "all")
         {
             try
             {
-                var path = @"C:\Users\User2\Desktop\อาร์ต\รายละเอียดการขาย วันที่ 1-28.8.69.XLS";
-                using var stream = System.IO.File.OpenRead(path);
-                var (ins, upd) = await _importer.ImportSalesBillAsync(stream, "Direct", true);
-                return Content($"Success! Inserted {ins}, Updated {upd}");
+                string msg = "";
+                if (target == "bills" || target == "all")
+                {
+                    _db.SalesBillItems.RemoveRange(_db.SalesBillItems);
+                    _db.SalesBills.RemoveRange(_db.SalesBills);
+                    msg += "บิลขาย ";
+                }
+                if (target == "debtors" || target == "all")
+                {
+                    _db.PaymentRecords.RemoveRange(_db.PaymentRecords);
+                    _db.OutstandingDebts.RemoveRange(_db.OutstandingDebts);
+                    msg += "การ์ดลูกหนี้ ";
+                }
+                if (target == "receipts" || target == "all")
+                {
+                    var bills = await _db.SalesBills.Where(b => b.ReceiptNo != null && b.ReceiptNo != "").ToListAsync();
+                    foreach (var b in bills)
+                    {
+                        b.ReceiptNo = "";
+                        b.ReceiptDate = null;
+                        b.IsFullyPaid = false;
+                    }
+                    var debts = await _db.OutstandingDebts.Where(d => d.ReceiptNo != null && d.ReceiptNo != "").ToListAsync();
+                    foreach (var d in debts)
+                    {
+                        d.ReceiptNo = "";
+                        d.ReceiptDate = null;
+                        d.Status = DebtStatus.Outstanding;
+                        d.RemainingAmount = d.OriginalAmount;
+                    }
+                    _db.PaymentRecords.RemoveRange(_db.PaymentRecords);
+                    msg += "ใบเสร็จรับเงิน ";
+                }
+
+                await _db.SaveChangesAsync();
+
+                _db.AuditLogs.Add(new AuditLog
+                {
+                    Username = User.Identity?.Name ?? "",
+                    Action = "CLEAR_DATA",
+                    Detail = $"Cleared: {msg}",
+                    IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
+                    CreatedAt = DateTime.Now
+                });
+                await _db.SaveChangesAsync();
+
+                TempData["Success"] = $"ล้างข้อมูล ({msg.Trim()}) เก่าในระบบเรียบร้อยแล้ว พร้อมรับการนำเข้าข้อมูลชุดใหม่";
             }
             catch (Exception ex)
             {
-                return Content($"Error: {ex.Message}\n{ex.StackTrace}");
+                TempData["Error"] = $"เกิดข้อผิดพลาดในการล้างข้อมูล: {ex.Message}";
             }
+
+            return RedirectToAction("Index");
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -137,22 +182,20 @@ namespace RoyalD.Web.Controllers
 
             try
             {
-                var debugDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "debug");
-Directory.CreateDirectory(debugDir);
-var debugPath = Path.Combine(debugDir, file.FileName);
-using (var fs = new FileStream(debugPath, FileMode.Create)) { await file.CopyToAsync(fs); }
-using var stream = file.OpenReadStream();
+                using var stream = file.OpenReadStream();
 
                 if (fileType == "outstanding")
                 {
-                    var count = await _importer.ImportOutstandingDebtsAsync(stream, file.FileName);
-                    TempData["Success"] = $"นำเข้าลูกหนี้คงค้างสำเร็จ {count} รายการ";
+                    // 100% Overwrite without duplicate alerts
+                    var (count, latestDate, previewRows) = await _importer.ImportOutstandingDebtsAsync(stream, file.FileName);
+                    string dateStr = latestDate != DateTime.MinValue ? latestDate.ToString("dd/MM/yyyy") : "-";
+                    TempData["Success"] = $"ระบบได้อัปเดตข้อมูลลูกหนี้ค้างชำระล่าสุด ณ วันที่: {dateStr} เรียบร้อยแล้ว (นำเข้าสำเร็จ {count} รายการ)";
 
                     _db.AuditLogs.Add(new AuditLog
                     {
                         Username = User.Identity?.Name ?? "",
                         Action = "UPLOAD_OUTSTANDING_DEBTS",
-                        Detail = $"File={file.FileName}, Count={count}",
+                        Detail = $"File={file.FileName}, Count={count}, LatestDate={dateStr}",
                         IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
                         CreatedAt = DateTime.Now
                     });
@@ -161,10 +204,20 @@ using var stream = file.OpenReadStream();
                 }
                 else
                 {
-                    // Daily Sales Bills -> Preview & Check Duplicates first!
-                    var month = fileType; // e.g. "2026-08"
+                    // Daily Sales Bills -> Preview & Check Duplicates
+                    var month = fileType;
                     var preview = await _importer.PreviewSalesBillAsync(stream, month, isCurrentMonth, file.FileName);
-                    return View("Preview", preview);
+                    if (preview.DuplicateChangedCount > 0)
+                    {
+                        return View("Preview", preview);
+                    }
+                    else
+                    {
+                        var (ins, upd, _, maxDate) = await _importer.ConfirmImportSalesBillAsync(preview.PreviewId, updateDuplicates: true);
+                        string dateStr = maxDate != DateTime.MinValue ? maxDate.ToString("dd/MM/yyyy") : "-";
+                        TempData["Success"] = $"นำเข้าบิลขายสำเร็จ {ins + upd} บิล | ข้อมูลบิลขายล่าสุดในระบบ ณ วันที่: {dateStr}";
+                        return RedirectToAction("Index");
+                    }
                 }
             }
             catch (Exception ex)
@@ -193,15 +246,15 @@ using var stream = file.OpenReadStream();
                     return RedirectToAction("Index");
                 }
 
-                var (ins, upd, skip) = await _importer.ConfirmImportSalesBillAsync(previewId, updateDuplicates, skipDuplicates);
-                TempData["Success"] = $"ยืนยันนำเข้าข้อมูลสำเร็จ: เพิ่มบิลใหม่ {ins} บิล, อัปเดตบิลซ้ำ {upd} บิล, ข้าม {skip} บิล";
+                var (ins, upd, skip, maxDate) = await _importer.ConfirmImportSalesBillAsync(previewId, updateDuplicates, skipDuplicates);
+                string dateStr = maxDate != DateTime.MinValue ? maxDate.ToString("dd/MM/yyyy") : "-";
+                TempData["Success"] = $"ยืนยันนำเข้าข้อมูลสำเร็จ: เพิ่มบิลใหม่ {ins} บิล, อัปเดตบิลซ้ำ {upd} บิล, ข้าม {skip} บิล | ข้อมูลบิลขายล่าสุดในระบบ ณ วันที่: {dateStr}";
 
-                // Log Audit
                 _db.AuditLogs.Add(new AuditLog
                 {
                     Username = User.Identity?.Name ?? "",
                     Action = "CONFIRM_IMPORT_SALESBILL",
-                    Detail = $"File={preview.FileName}, Month={preview.FileType}, Inserted={ins}, Updated={upd}, Skipped={skip}",
+                    Detail = $"File={preview.FileName}, Inserted={ins}, Updated={upd}, Skipped={skip}, LatestDate={dateStr}",
                     IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
                     CreatedAt = DateTime.Now
                 });
@@ -240,15 +293,11 @@ using var stream = file.OpenReadStream();
                 TempData["Error"] = "กรุณาเลือกไฟล์";
                 return RedirectToAction("Index");
             }
-            if (files.Count > 60)
-            {
-                TempData["Error"] = "แนะนำเลือกไม่เกิน 50 - 60 ไฟล์ต่อครั้ง เพื่อประสิทธิภาพและความรวดเร็วในการประมวลผล";
-                return RedirectToAction("Index");
-            }
 
             int totalInserted = 0;
             int totalUpdated = 0;
             int processedFiles = 0;
+            DateTime overallMaxDate = DateTime.MinValue;
 
             try
             {
@@ -257,24 +306,22 @@ using var stream = file.OpenReadStream();
                     var ext = Path.GetExtension(file.FileName).ToLower();
                     if (ext != ".xls" && ext != ".xlsx" && ext != ".csv") continue;
 
-                    var debugDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "debug");
-Directory.CreateDirectory(debugDir);
-var debugPath = Path.Combine(debugDir, file.FileName);
-using (var fs = new FileStream(debugPath, FileMode.Create)) { await file.CopyToAsync(fs); }
-using var stream = file.OpenReadStream();
-                    var (ins, upd) = await _importer.ImportSalesBillAsync(stream, "Direct", true, file.FileName);
+                    using var stream = file.OpenReadStream();
+                    var (ins, upd, maxDate, _) = await _importer.ImportSalesBillAsync(stream, "Direct", true, file.FileName);
                     totalInserted += ins;
                     totalUpdated += upd;
+                    if (maxDate > overallMaxDate) overallMaxDate = maxDate;
                     processedFiles++;
                 }
 
-                TempData["Success"] = $"นำเข้าบิลขายสำเร็จ {totalInserted + totalUpdated} บิล จาก {processedFiles} ไฟล์";
-                
+                string dateStr = overallMaxDate != DateTime.MinValue ? overallMaxDate.ToString("dd/MM/yyyy") : "-";
+                TempData["Success"] = $"นำเข้าบิลขายสำเร็จ {totalInserted + totalUpdated} บิล จาก {processedFiles} ไฟล์ | ข้อมูลบิลขายล่าสุดในระบบ ณ วันที่: {dateStr}";
+
                 _db.AuditLogs.Add(new AuditLog
                 {
                     Username = User.Identity?.Name ?? "",
                     Action = "UPLOAD_SALES_BILLS_MULTIPLE",
-                    Detail = $"Files={processedFiles}, Inserted={totalInserted}, Updated={totalUpdated}",
+                    Detail = $"Files={processedFiles}, Inserted={totalInserted}, Updated={totalUpdated}, LatestDate={dateStr}",
                     IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
                     CreatedAt = DateTime.Now
                 });
@@ -302,7 +349,7 @@ using var stream = file.OpenReadStream();
                 TempData["Error"] = "กรุณาเลือกไฟล์";
                 return RedirectToAction("Index");
             }
-            
+
             var ext = Path.GetExtension(file.FileName).ToLower();
             if (ext != ".xls" && ext != ".xlsx" && ext != ".csv")
             {
@@ -312,31 +359,26 @@ using var stream = file.OpenReadStream();
 
             try
             {
-                var debugDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "debug");
-Directory.CreateDirectory(debugDir);
-var debugPath = Path.Combine(debugDir, file.FileName);
-using (var fs = new FileStream(debugPath, FileMode.Create)) { await file.CopyToAsync(fs); }
-using var stream = file.OpenReadStream();
+                using var stream = file.OpenReadStream();
                 var preview = await _importer.PreviewReceiptMatchAsync(stream, file.FileName);
-                
-                // If no duplicates at all, just confirm immediately
+
                 if (!preview.Duplicates.Any())
                 {
-                    var (matched, notFound) = await _importer.ConfirmReceiptMatchAsync(preview.PreviewId, updateDuplicates: false);
-                    TempData["Success"] = $"จับคู่ใบเสร็จสำเร็จ {matched} รายการ (ไม่พบในระบบ: {notFound})";
+                    var (matched, notFound, maxDate) = await _importer.ConfirmReceiptMatchAsync(preview.PreviewId, updateDuplicates: false);
+                    string dateStr = maxDate != DateTime.MinValue ? maxDate.ToString("dd/MM/yyyy") : "-";
+                    TempData["Success"] = $"จับคู่ใบเสร็จสำเร็จ {matched} รายการ (ไม่พบในระบบ: {notFound}) | ข้อมูลใบเสร็จรับเงินล่าสุดในระบบ ณ วันที่: {dateStr}";
                     _db.AuditLogs.Add(new AuditLog
                     {
                         Username = User.Identity?.Name ?? "",
                         Action = "UPLOAD_RECEIPTS",
-                        Detail = $"File={file.FileName}, Matched={matched}, NotFound={notFound}",
+                        Detail = $"File={file.FileName}, Matched={matched}, NotFound={notFound}, LatestDate={dateStr}",
                         IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
                         CreatedAt = DateTime.Now
                     });
                     await _db.SaveChangesAsync();
                     return RedirectToAction("Index");
                 }
-                
-                // Has duplicates → show preview page
+
                 return View("ReceiptPreview", preview);
             }
             catch (Exception ex)
@@ -366,15 +408,16 @@ using var stream = file.OpenReadStream();
             try
             {
                 bool updateDups = selectedDuplicates != null && selectedDuplicates.Count > 0;
-                var (matched, notFound) = await _importer.ConfirmReceiptMatchAsync(previewId, updateDups, selectedDuplicates);
+                var (matched, notFound, maxDate) = await _importer.ConfirmReceiptMatchAsync(previewId, updateDups, selectedDuplicates);
                 int skippedDups = preview.Duplicates.Count - (selectedDuplicates?.Count ?? 0);
-                TempData["Success"] = $"จับคู่ใบเสร็จสำเร็จ {matched} รายการ, ข้ามซ้ำ {skippedDups} รายการ (ไม่พบในระบบ: {notFound})";
+                string dateStr = maxDate != DateTime.MinValue ? maxDate.ToString("dd/MM/yyyy") : "-";
+                TempData["Success"] = $"จับคู่ใบเสร็จสำเร็จ {matched} รายการ, ข้ามซ้ำ {skippedDups} รายการ (ไม่พบในระบบ: {notFound}) | ข้อมูลใบเสร็จรับเงินล่าสุดในระบบ ณ วันที่: {dateStr}";
 
                 _db.AuditLogs.Add(new AuditLog
                 {
                     Username = User.Identity?.Name ?? "",
                     Action = "CONFIRM_RECEIPT_IMPORT",
-                    Detail = $"File={preview.FileName}, Matched={matched}, NotFound={notFound}, Skipped={skippedDups}",
+                    Detail = $"File={preview.FileName}, Matched={matched}, NotFound={notFound}, Skipped={skippedDups}, LatestDate={dateStr}",
                     IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
                     CreatedAt = DateTime.Now
                 });
@@ -396,4 +439,4 @@ using var stream = file.OpenReadStream();
             return RedirectToAction("Index");
         }
     }
-}
+}

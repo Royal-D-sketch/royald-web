@@ -1,0 +1,155 @@
+@model List<RoyalD.Web.Models.OutstandingDebt>
+@{
+    Layout = null;
+    decimal totalAmount = Model?.Sum(x => x.RemainingAmount > 0 ? x.RemainingAmount : x.OriginalAmount) ?? 0;
+    int totalCount = Model?.Count ?? 0;
+}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>รายงานบิลส่งคืนกลับมาบัญชี — บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" />
+    <style>
+        body {
+            font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-serif;
+            background: #ffffff;
+            color: #0f172a;
+            font-size: 0.85rem;
+            padding: 20px;
+        }
+        .header-box {
+            border-bottom: 2px solid #0f766e;
+            padding-bottom: 12px;
+            margin-bottom: 14px;
+        }
+        .table-pdf th {
+            background-color: #0f766e !important;
+            color: #ffffff !important;
+            font-weight: 700;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 0.82rem;
+            padding: 8px 6px;
+        }
+        .table-pdf td {
+            vertical-align: middle;
+            padding: 6px 6px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.82rem;
+        }
+        .total-row {
+            background-color: #fef3c7 !important;
+            font-weight: 800;
+        }
+        @@media print {
+            body { padding: 0; }
+            .no-print { display: none !important; }
+            .table-pdf th { background-color: #0f766e !important; -webkit-print-color-adjust: exact; }
+            .total-row { background-color: #fef3c7 !important; -webkit-print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded border">
+        <div>
+            <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-file-earmark-pdf text-danger me-2"></i>มุมมองพิมพ์ / บันทึก PDF</h6>
+            <small class="text-muted">สามารถเลือกบันทึกเป็น PDF หรือพิมพ์ลงกระดาษได้ทันที</small>
+        </div>
+        <div class="d-flex gap-2">
+            <button onclick="window.print()" class="btn btn-primary btn-sm px-4 fw-bold" style="background:#0f766e; border-color:#0f766e;">
+                <i class="bi bi-printer me-1"></i> สั่งพิมพ์ / บันทึก PDF
+            </button>
+            <button onclick="window.close()" class="btn btn-outline-secondary btn-sm px-3">
+                <i class="bi bi-x-lg"></i> ปิดหน้านี้
+            </button>
+        </div>
+    </div>
+
+    <!-- Header Section -->
+    <div class="header-box">
+        <div class="row align-items-center">
+            <div class="col-8">
+                <h4 class="fw-bold mb-1" style="color: #0f766e;">บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด</h4>
+                <h5 class="fw-bold text-dark mb-1">รายงานบิลส่งคืนกลับมาบัญชี (บิลไม่พร้อมส่ง/ลูกค้ายังไม่เอาของ)</h5>
+                <div class="text-muted small">
+                    @if (!string.IsNullOrEmpty(ViewBag.Search))
+                    {
+                        <span class="me-3"><strong>คำค้นหา:</strong> @ViewBag.Search</span>
+                    }
+                    @if (!string.IsNullOrEmpty(ViewBag.SalesRep))
+                    {
+                        <span class="me-3"><strong>ผู้แทนขาย:</strong> @ViewBag.SalesRep</span>
+                    }
+                    <span><strong>จำนวนทั้งหมด:</strong> @totalCount.ToString("N0") บิล</span>
+                </div>
+            </div>
+            <div class="col-4 text-end text-muted small">
+                <div><strong>พิมพ์เมื่อ:</strong> @DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")</div>
+                <div><strong>ผู้พิมพ์:</strong> @ViewBag.PrintedBy</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Section -->
+    <table class="table table-bordered table-sm table-pdf w-100">
+        <thead>
+            <tr>
+                <th style="width: 40px;">#</th>
+                <th style="width: 100px;">เลขที่บิล</th>
+                <th style="width: 80px;">วันที่บิล</th>
+                <th style="width: 85px;">รหัสลูกค้า</th>
+                <th>ชื่อลูกค้า</th>
+                <th style="width: 90px;">อำเภอ/จังหวัด</th>
+                <th style="width: 100px;">ผู้แทนขาย</th>
+                <th style="width: 90px;">วันที่รับคืน</th>
+                <th>เหตุผลที่ส่งคืนบัญชี</th>
+                <th style="width: 110px;">ยอดเงิน (บาท)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                int idx = 1;
+                foreach (var item in Model)
+                {
+                    decimal amt = item.RemainingAmount > 0 ? item.RemainingAmount : item.OriginalAmount;
+                    <tr>
+                        <td class="text-center text-muted">@idx</td>
+                        <td class="fw-bold text-center">@item.BillNo</td>
+                        <td class="text-center">@item.BillDate.ToString("dd/MM/yyyy")</td>
+                        <td class="text-center"><code>@item.CustomerCode</code></td>
+                        <td>@item.CustomerName</td>
+                        <td>@(string.IsNullOrEmpty(item.Province) ? "-" : $"{item.District} {item.Province}")</td>
+                        <td class="text-center">@(string.IsNullOrEmpty(item.SalesRep) ? "-" : item.SalesRep)</td>
+                        <td class="text-center">@(item.ReturnedToAccountDate.HasValue ? item.ReturnedToAccountDate.Value.ToString("dd/MM/yyyy") : "-")</td>
+                        <td>@(item.ReturnedToAccountReason ?? item.Note ?? "-")</td>
+                        <td class="text-end fw-bold text-danger">@amt.ToString("N2")</td>
+                    </tr>
+                    idx++;
+                }
+                <tr class="total-row">
+                    <td colspan="9" class="text-end pe-2">รวมยอดเงินทั้งสิ้น (@totalCount บิล):</td>
+                    <td class="text-end text-danger fs-6">@totalAmount.ToString("N2")</td>
+                </tr>
+            }
+            else
+            {
+                <tr>
+                    <td colspan="10" class="text-center py-4 text-muted">ไม่มีข้อมูลรายการบิลส่งคืนกลับมาบัญชี</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="mt-4 pt-3 border-top text-muted small d-flex justify-content-between">
+        <div>ระบบบริหารจัดการบิลขายและการ์ดลูกหนี้ — Royal-D (Thailand) Co., Ltd.</div>
+        <div>หน้า 1 / 1</div>
+    </div>
+</body>
+</html>

@@ -4,60 +4,171 @@
     bool canUploadBills = (ViewBag.CanUploadBills as bool?) ?? true;
     bool canUploadDebtors = (ViewBag.CanUploadDebtors as bool?) ?? true;
     bool canUploadReceipts = (ViewBag.CanUploadReceipts as bool?) ?? true;
+
+    DateTime? latestBillDate = ViewBag.LatestBillDate as DateTime?;
+    DateTime? latestDebtorDate = ViewBag.LatestDebtorDate as DateTime?;
+    DateTime? latestReceiptDate = ViewBag.LatestReceiptDate as DateTime?;
+
+    var dbBillPreview = ViewBag.DbBillPreview as List<RoyalD.Web.Models.SalesBill> ?? new List<RoyalD.Web.Models.SalesBill>();
+    var dbDebtorPreview = ViewBag.DbDebtorPreview as List<RoyalD.Web.Models.OutstandingDebt> ?? new List<RoyalD.Web.Models.OutstandingDebt>();
+    var dbReceiptPreview = ViewBag.DbReceiptPreview as List<RoyalD.Web.Models.SalesBill> ?? new List<RoyalD.Web.Models.SalesBill>();
 }
 
-<div class="container py-4">
-  <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
-    <h3 class="mb-0 text-primary fw-bold"><i class="bi bi-cloud-upload"></i> ศูนย์นำเข้าข้อมูล (Data Upload Portal)</h3>
+<div class="container-fluid py-4 px-4">
+  <!-- Header Bar -->
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 border-bottom pb-3 gap-2">
+    <div>
+      <h3 class="mb-1 text-primary fw-bold">
+        <i class="bi bi-cloud-upload-fill"></i> ศูนย์นำเข้าข้อมูล (Data Upload Portal)
+      </h3>
+      <p class="text-muted mb-0 small">
+        รองรับไฟล์ Excel (.xls, .xlsx) และ CSV จากโปรแกรม CD พร้อมระบบ Data Cleansing จัดการช่องซ้อนและลบยอดรวมอัตโนมัติ
+      </p>
+    </div>
+
+    @if (User.IsInRole("admin") || User.Identity?.Name?.ToLower() == "admin" || User.Identity?.Name?.ToLower() == "art")
+    {
+      <div>
+        <button type="button" class="btn btn-outline-danger btn-sm fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#clearDataModal">
+          <i class="bi bi-trash3-fill me-1"></i> ล้างข้อมูลเก่าในระบบ (Clear Data)
+        </button>
+      </div>
+    }
   </div>
 
+  <!-- Alerts -->
   @if (TempData["Success"] != null)
   {
-      <div class="alert alert-success alert-dismissible fade show" role="alert">
-          <i class="bi bi-check-circle-fill me-2"></i> @TempData["Success"]
+      <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 border-start border-success border-4" role="alert">
+          <i class="bi bi-check-circle-fill me-2 fs-5 align-middle"></i>
+          <span class="align-middle fw-semibold">@TempData["Success"]</span>
           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>
   }
   @if (TempData["Error"] != null)
   {
-      <div class="alert alert-danger alert-dismissible fade show" role="alert">
-          <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["Error"]
+      <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 border-start border-danger border-4" role="alert">
+          <i class="bi bi-exclamation-triangle-fill me-2 fs-5 align-middle"></i>
+          <span class="align-middle fw-semibold">@TempData["Error"]</span>
           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>
   }
   @if (TempData["Info"] != null)
   {
-      <div class="alert alert-info alert-dismissible fade show" role="alert">
-          <i class="bi bi-info-circle-fill me-2"></i> @TempData["Info"]
+      <div class="alert alert-info alert-dismissible fade show shadow-sm border-0 border-start border-info border-4" role="alert">
+          <i class="bi bi-info-circle-fill me-2 fs-5 align-middle"></i>
+          <span class="align-middle fw-semibold">@TempData["Info"]</span>
           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>
   }
 
-  <div class="row g-4 mt-1">
+  <!-- Status Badges Bar -->
+  <div class="card bg-light border-0 shadow-sm mb-4">
+    <div class="card-body py-2 px-3">
+      <div class="row g-2 text-center text-md-start align-items-center">
+        <div class="col-md-4">
+          <span class="badge bg-primary bg-opacity-10 text-primary border border-primary p-2 w-100 text-start">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i> ข้อมูลบิลขายล่าสุด: 
+            <strong>@(latestBillDate != null ? latestBillDate.Value.ToString("dd/MM/yyyy") : "ยังไม่มีข้อมูล")</strong>
+          </span>
+        </div>
+        <div class="col-md-4">
+          <span class="badge bg-warning bg-opacity-10 text-dark border border-warning p-2 w-100 text-start">
+            <i class="bi bi-person-lines-fill me-1"></i> ข้อมูลการ์ดลูกหนี้ล่าสุด: 
+            <strong>@(latestDebtorDate != null ? latestDebtorDate.Value.ToString("dd/MM/yyyy") : "ยังไม่มีข้อมูล")</strong>
+          </span>
+        </div>
+        <div class="col-md-4">
+          <span class="badge bg-success bg-opacity-10 text-success border border-success p-2 w-100 text-start">
+            <i class="bi bi-receipt me-1"></i> ข้อมูลสรุปรับเงินล่าสุด: 
+            <strong>@(latestReceiptDate != null ? latestReceiptDate.Value.ToString("dd/MM/yyyy") : "ยังไม่มีข้อมูล")</strong>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
 
     @if (canUploadBills)
     {
-        <!-- กล่องที่ 1: บิลขาย -->
+        <!-- ส่วนที่ 1: บิลขาย -->
         <div class="col-12">
           <div class="card shadow-sm border-primary">
-            <div class="card-header bg-primary text-white fw-bold">
-              <i class="bi bi-file-earmark-spreadsheet me-1"></i> ส่วนที่ 1: อัปโหลดไฟล์รายละเอียดบิลขาย
-              <small class="ms-2 fw-normal opacity-75">(สามารถอัปโหลดได้พร้อมกันได้ถึง 20 – 50 ไฟล์ขึ้นไปในครั้งเดียว)</small>
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-2">
+              <div class="fw-bold">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i> ส่วนที่ 1: อัปโหลดไฟล์รายละเอียดบิลขาย
+              </div>
+              <span class="badge bg-white text-primary fw-normal">รองรับไฟล์เดี่ยว และอัปโหลดเป็นชุด 20-50 ไฟล์</span>
             </div>
             <div class="card-body">
               <form asp-action="UploadSalesBills" method="post" enctype="multipart/form-data" id="formBills">
                 @Html.AntiForgeryToken()
-                <div class="mb-3">
-                  <label class="form-label fw-bold">เลือกไฟล์บิลขาย (.xls / .xlsx / .csv)</label>
-                  <input type="file" name="files" multiple accept=".xls,.xlsx,.csv" class="form-control" id="billFiles" required>
-                  <div class="form-text">สามารถเลือกอัปโหลดพร้อมกันได้ถึง 20 – 50 ไฟล์ขึ้นไปในครั้งเดียว (ขนาดรวมไม่เกิน 100 MB) ระบบจะรวมไฟล์และนำเข้าให้อัตโนมัติ</div>
+                <div class="row align-items-end g-3">
+                  <div class="col-md-8">
+                    <label class="form-label fw-bold">เลือกไฟล์บิลขาย (.xls / .xlsx / .csv)</label>
+                    <input type="file" name="files" multiple accept=".xls,.xlsx,.csv" class="form-control" id="billFiles" required>
+                    <div class="form-text">สามารถเลือกอัปโหลดพร้อมกันได้หลายไฟล์ ระบบจะ Cleansing ข้อมูลและรวมไฟล์ให้อัตโนมัติ</div>
+                  </div>
+                  <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary fw-bold w-100 py-2" onclick="showProgress('billProgress')">
+                      <i class="bi bi-cloud-arrow-up-fill me-1"></i> อัปโหลดบิลขาย
+                    </button>
+                  </div>
                 </div>
-                <div id="billFileList" class="mb-3"></div>
-                <div class="progress mb-3 d-none" id="billProgress">
-                  <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width:100%">กำลังประมวลผล...</div>
+
+                <div id="billFileList" class="mt-3"></div>
+                <div class="progress mt-3 d-none" id="billProgress">
+                  <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width:100%">กำลังจัดระเบียบข้อมูลและประมวลผลบิลขาย...</div>
                 </div>
-                <button type="submit" class="btn btn-primary fw-bold" onclick="showProgress('billProgress')"><i class="bi bi-upload"></i> อัปโหลดบิลขาย</button>
               </form>
+
+              <!-- สถานะวันที่ใต้ปุ่ม -->
+              <div class="mt-3 pt-2 border-top d-flex flex-wrap justify-content-between align-items-center">
+                <div class="text-primary fw-semibold">
+                  <i class="bi bi-clock-history me-1"></i> 
+                  ข้อมูลบิลขายล่าสุดในระบบ ณ วันที่: 
+                  <span class="badge bg-primary fs-6">@(latestBillDate != null ? latestBillDate.Value.ToString("dd/MM/yyyy") : "-")</span>
+                </div>
+                <small class="text-muted">จำนวนบิลขายในระบบปัจจุบัน: <strong>@((ViewBag.TotalBillsCount as int? ?? 0).ToString("N0"))</strong> บิล</small>
+              </div>
+
+              <!-- Preview Data Grid (5-10 rows) -->
+              @if (dbBillPreview.Any())
+              {
+                <div class="mt-3">
+                  <h6 class="fw-bold text-secondary mb-2"><i class="bi bi-table me-1"></i> ตัวอย่างข้อมูลบิลขายล่าสุด (5-10 แถว):</h6>
+                  <div class="table-responsive border rounded">
+                    <table class="table table-sm table-striped table-hover mb-0" style="font-size:0.85rem;">
+                      <thead class="table-light">
+                        <tr>
+                          <th>เลขที่บิล</th>
+                          <th>วันที่บิล</th>
+                          <th>รหัสลูกค้า</th>
+                          <th>ชื่อลูกค้า</th>
+                          <th>จังหวัด</th>
+                          <th>ผู้แทน</th>
+                          <th class="text-end">ยอดเงิน (บาท)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @foreach (var b in dbBillPreview)
+                        {
+                          <tr>
+                            <td><span class="badge bg-primary">@b.BillNo</span></td>
+                            <td>@b.BillDate.ToString("dd/MM/yyyy")</td>
+                            <td><code>@b.CustomerCode</code></td>
+                            <td>@b.CustomerName</td>
+                            <td>@b.Province</td>
+                            <td>@b.SalesRep</td>
+                            <td class="text-end fw-bold">@b.TotalAmount.ToString("N2")</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              }
             </div>
           </div>
         </div>
@@ -65,11 +176,14 @@
 
     @if (canUploadDebtors)
     {
-        <!-- กล่องที่ 2: การ์ดลูกหนี้ -->
+        <!-- ส่วนที่ 2: การ์ดลูกหนี้ (Overwrite 100%) -->
         <div class="@(canUploadBills && canUploadReceipts ? "col-md-6" : (canUploadReceipts ? "col-md-6" : "col-12"))">
           <div class="card shadow-sm border-warning h-100">
-            <div class="card-header bg-warning text-dark fw-bold">
-              <i class="bi bi-person-lines-fill me-1"></i> ส่วนที่ 2: อัปโหลดการ์ดลูกหนี้ค้างชำระ
+            <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center py-2">
+              <div class="fw-bold">
+                <i class="bi bi-person-lines-fill me-1"></i> ส่วนที่ 2: อัปโหลดการ์ดลูกหนี้ค้างชำระ
+              </div>
+              <span class="badge bg-dark text-white fw-normal">Overwrite 100%</span>
             </div>
             <div class="card-body">
               <form asp-action="Upload" method="post" enctype="multipart/form-data">
@@ -79,13 +193,58 @@
                 <div class="mb-3">
                   <label class="form-label fw-bold">เลือกไฟล์การ์ดลูกหนี้ (.xls / .xlsx / .csv)</label>
                   <input type="file" name="file" accept=".xls,.xlsx,.csv" class="form-control" required>
-                  <div class="form-text">ระบบจะเขียนทับข้อมูลลูกหนี้ทั้งหมดที่สถานะ Outstanding</div>
+                  <div class="form-text text-danger">ระบบจะลบข้อมูลลูกหนี้เก่าทิ้งทั้งหมดทันทีแล้วนำข้อมูลใหม่เข้าไปแทนที่ร้อยเปอร์เซ็นต์ (Overwrite)</div>
                 </div>
                 <div class="progress mb-3 d-none" id="debtProgress">
-                  <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" style="width:100%">กำลังประมวลผล...</div>
+                  <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning text-dark" style="width:100%">กำลังจัดระเบียบข้อมูลและบันทึกลูกหนี้...</div>
                 </div>
-                <button type="submit" class="btn btn-warning fw-bold text-dark" onclick="showProgress('debtProgress')"><i class="bi bi-upload"></i> อัปโหลดการ์ดลูกหนี้</button>
+                <button type="submit" class="btn btn-warning fw-bold text-dark w-100 py-2" onclick="showProgress('debtProgress')">
+                  <i class="bi bi-cloud-arrow-up-fill me-1"></i> อัปโหลดการ์ดลูกหนี้ (Overwrite)
+                </button>
               </form>
+
+              <!-- สถานะวันที่ใต้ปุ่ม -->
+              <div class="mt-3 pt-2 border-top">
+                <div class="text-warning-emphasis fw-semibold">
+                  <i class="bi bi-clock-history me-1"></i> 
+                  ระบบได้อัปเดตข้อมูลลูกหนี้ค้างชำระล่าสุด ณ วันที่: 
+                  <span class="badge bg-warning text-dark fs-6">@(latestDebtorDate != null ? latestDebtorDate.Value.ToString("dd/MM/yyyy") : "-")</span>
+                </div>
+                <small class="text-muted d-block mt-1">จำนวนลูกหนี้ในระบบ: <strong>@((ViewBag.TotalDebtorsCount as int? ?? 0).ToString("N0"))</strong> รายการ</small>
+              </div>
+
+              <!-- Preview Data Grid (5-10 rows) -->
+              @if (dbDebtorPreview.Any())
+              {
+                <div class="mt-3">
+                  <h6 class="fw-bold text-secondary mb-2"><i class="bi bi-table me-1"></i> ตัวอย่างข้อมูลลูกหนี้ล่าสุด (5-10 แถว):</h6>
+                  <div class="table-responsive border rounded">
+                    <table class="table table-sm table-striped table-hover mb-0" style="font-size:0.82rem;">
+                      <thead class="table-light">
+                        <tr>
+                          <th>เลขที่บิล</th>
+                          <th>วันที่บิล</th>
+                          <th>ชื่อลูกค้า</th>
+                          <th>ผู้แทน</th>
+                          <th class="text-end">ยอดค้าง (บาท)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @foreach (var d in dbDebtorPreview)
+                        {
+                          <tr>
+                            <td><span class="badge bg-warning text-dark">@d.BillNo</span></td>
+                            <td>@d.BillDate.ToString("dd/MM/yyyy")</td>
+                            <td>@d.CustomerName</td>
+                            <td>@d.SalesRep</td>
+                            <td class="text-end fw-bold text-danger">@d.RemainingAmount.ToString("N2")</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              }
             </div>
           </div>
         </div>
@@ -93,11 +252,14 @@
 
     @if (canUploadReceipts)
     {
-        <!-- กล่องที่ 3: สรุปรับเงิน -->
+        <!-- ส่วนที่ 3: สรุปรับเงิน -->
         <div class="@(canUploadBills && canUploadDebtors ? "col-md-6" : (canUploadDebtors ? "col-md-6" : "col-12"))">
           <div class="card shadow-sm border-success h-100">
-            <div class="card-header bg-success text-white fw-bold">
-              <i class="bi bi-receipt me-1"></i> ส่วนที่ 3: อัปโหลดสรุปการรับเงินตามใบเสร็จ
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center py-2">
+              <div class="fw-bold">
+                <i class="bi bi-receipt me-1"></i> ส่วนที่ 3: อัปโหลดสรุปการรับเงินตามใบเสร็จ
+              </div>
+              <span class="badge bg-white text-success fw-normal">จับคู่บิลอัตโนมัติ</span>
             </div>
             <div class="card-body">
               <form asp-action="UploadReceipt" method="post" enctype="multipart/form-data">
@@ -105,26 +267,122 @@
                 <div class="mb-3">
                   <label class="form-label fw-bold">เลือกไฟล์สรุปรับเงิน (.xls / .xlsx / .csv)</label>
                   <input type="file" name="file" accept=".xls,.xlsx,.csv" class="form-control" required>
-                  <div class="form-text">ระบบจะจับคู่ข้อมูลเลขที่ใบเสร็จและวันที่รับเงินเข้าสู่การ์ดลูกหนี้</div>
+                  <div class="form-text">ระบบจะ Cleansing ตัดเครื่องหมาย # และจับคู่เลขที่ใบเสร็จ วันที่รับเงินเข้าสู่ระบบ</div>
                 </div>
                 <div class="progress mb-3 d-none" id="receiptProgress">
-                  <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width:100%">กำลังประมวลผล...</div>
+                  <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width:100%">กำลังจัดระเบียบข้อมูลและจับคู่ใบเสร็จ...</div>
                 </div>
-                <button type="submit" class="btn btn-success fw-bold" onclick="showProgress('receiptProgress')"><i class="bi bi-upload"></i> อัปโหลดสรุปรับเงิน</button>
+                <button type="submit" class="btn btn-success fw-bold w-100 py-2" onclick="showProgress('receiptProgress')">
+                  <i class="bi bi-cloud-arrow-up-fill me-1"></i> อัปโหลดสรุปรับเงิน
+                </button>
               </form>
+
+              <!-- สถานะวันที่ใต้ปุ่ม -->
+              <div class="mt-3 pt-2 border-top">
+                <div class="text-success fw-semibold">
+                  <i class="bi bi-clock-history me-1"></i> 
+                  ข้อมูลใบเสร็จรับเงินล่าสุดในระบบ ณ วันที่: 
+                  <span class="badge bg-success fs-6">@(latestReceiptDate != null ? latestReceiptDate.Value.ToString("dd/MM/yyyy") : "-")</span>
+                </div>
+                <small class="text-muted d-block mt-1">บิลที่จับคู่ใบเสร็จแล้ว: <strong>@((ViewBag.TotalReceiptsCount as int? ?? 0).ToString("N0"))</strong> บิล</small>
+              </div>
+
+              <!-- Preview Data Grid (5-10 rows) -->
+              @if (dbReceiptPreview.Any())
+              {
+                <div class="mt-3">
+                  <h6 class="fw-bold text-secondary mb-2"><i class="bi bi-table me-1"></i> ตัวอย่างบิลที่รับเงินล่าสุด (5-10 แถว):</h6>
+                  <div class="table-responsive border rounded">
+                    <table class="table table-sm table-striped table-hover mb-0" style="font-size:0.82rem;">
+                      <thead class="table-light">
+                        <tr>
+                          <th>เลขที่ใบเสร็จ</th>
+                          <th>วันที่รับเงิน</th>
+                          <th>เลขที่บิล</th>
+                          <th>ชื่อลูกค้า</th>
+                          <th class="text-end">ยอดเงิน</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @foreach (var r in dbReceiptPreview)
+                        {
+                          <tr>
+                            <td><span class="badge bg-success">@r.ReceiptNo</span></td>
+                            <td>@(r.ReceiptDate?.ToString("dd/MM/yyyy") ?? "-")</td>
+                            <td><code>@r.BillNo</code></td>
+                            <td>@r.CustomerName</td>
+                            <td class="text-end fw-bold text-success">@r.TotalAmount.ToString("N2")</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              }
             </div>
           </div>
         </div>
     }
 
-  </div><!-- /row -->
+  </div>
+</div>
+
+<!-- Modal: ล้างข้อมูลเก่า (Clear Data) -->
+<div class="modal fade" id="clearDataModal" tabindex="-1" aria-labelledby="clearDataModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title fw-bold" id="clearDataModalLabel"><i class="bi bi-exclamation-triangle-fill me-2"></i> ยืนยันการล้างข้อมูลเก่าในระบบ</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-danger fw-bold mb-3">คำเตือน: การล้างข้อมูลจะลบเฉพาะ Transaction Records ของบิลขาย ลูกหนี้ค้างชำระ และข้อมูลใบเสร็จรับเงินออกจากฐานข้อมูลทั้งหมด เพื่อเตรียมรับข้อมูลชุดใหม่ (บัญชีผู้ใช้งานและการตั้งค่าจะไม่ถูกลบ)</p>
+        
+        <form asp-action="ClearData" method="post" id="formClearData">
+          @Html.AntiForgeryToken()
+          <div class="mb-3">
+            <label class="form-label fw-bold">เลือกส่วนที่ต้องการล้างข้อมูล:</label>
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="radio" name="target" id="clearAll" value="all" checked>
+              <label class="form-check-label fw-bold text-danger" for="clearAll">
+                ล้างข้อมูลทั้งหมด (บิลขาย + การ์ดลูกหนี้ + ใบเสร็จ)
+              </label>
+            </div>
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="radio" name="target" id="clearBills" value="bills">
+              <label class="form-check-label" for="clearBills">
+                ล้างเฉพาะข้อมูลบิลขาย (Sales Bills)
+              </label>
+            </div>
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="radio" name="target" id="clearDebtors" value="debtors">
+              <label class="form-check-label" for="clearDebtors">
+                ล้างเฉพาะข้อมูลการ์ดลูกหนี้ (Outstanding Debts)
+              </label>
+            </div>
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="radio" name="target" id="clearReceipts" value="receipts">
+              <label class="form-check-label" for="clearReceipts">
+                รีเซ็ตเฉพาะข้อมูลการรับเงินตามใบเสร็จ (Receipts)
+              </label>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+        <button type="button" class="btn btn-danger fw-bold" onclick="document.getElementById('formClearData').submit();">
+          <i class="bi bi-trash3-fill me-1"></i> ยืนยันล้างข้อมูล
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
 function showProgress(id) {
   document.getElementById(id).classList.remove('d-none');
 }
-// แสดงรายชื่อไฟล์ที่เลือก
 document.getElementById('billFiles').addEventListener('change', function(){
   var list = document.getElementById('billFileList');
   list.innerHTML = '';
@@ -133,12 +391,11 @@ document.getElementById('billFiles').addEventListener('change', function(){
     this.value = '';
     return;
   }
-  var ul = '<ul class="list-group">';
+  var ul = '<ul class="list-group list-group-flush border rounded">';
   for(var i=0; i<this.files.length; i++){
-    ul += '<li class="list-group-item list-group-item-light py-1"><i class="bi bi-file-earmark-excel text-success"></i> '+this.files[i].name+'</li>';
+    ul += '<li class="list-group-item list-group-item-light py-1 small"><i class="bi bi-file-earmark-excel text-success me-2"></i>'+this.files[i].name+'</li>';
   }
   ul += '</ul>';
   list.innerHTML = ul;
 });
 </script>
-

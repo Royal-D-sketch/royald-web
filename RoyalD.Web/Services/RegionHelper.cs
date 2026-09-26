@@ -241,5 +241,15 @@ namespace RoyalD.Web.Services
             }
             return res.ToList();
         }
+
+        public static bool IsBkkAndVicinity(string? province, string? district)
+        {
+            string p = (province ?? "").Trim();
+            string d = (district ?? "").Trim();
+            string combined = (p + " " + d).ToLower();
+
+            var bkkKeywords = new[] { "กรุงเทพ", "กทม", "bangkok", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสาคร", "นครปฐม" };
+            return bkkKeywords.Any(k => combined.Contains(k));
+        }
     }
 }

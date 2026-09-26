@@ -1,4 +1,4 @@
-﻿using RoyalD.Web.Models;
+using RoyalD.Web.Models;
 
 namespace RoyalD.Web.Models
 {
@@ -19,6 +19,7 @@ namespace RoyalD.Web.Models
                 DebtStatus.Delivering => "บิลอยู่จัดส่ง",
                 DebtStatus.WaitingGoods => "รอสินค้า",
                 DebtStatus.Cancelled => "บิลยกเลิก",
+                DebtStatus.ReturnedToAccount => "บิลส่งคืนกลับมาบัญชี (บิลไม่พร้อมส่ง/ลูกค้ายังไม่เอาของ)",
                 DebtStatus.PaidCash => "ชำระเงินสด",
                 DebtStatus.PaidTransfer => "ชำระเงินโอน",
                 DebtStatus.PaidCheck => "ชำระเช็ค",

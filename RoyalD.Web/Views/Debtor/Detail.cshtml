@@ -609,6 +609,7 @@ else if (overdue120)
                                 <option value="Outstanding" selected="@(debt?.Status == DebtStatus.Outstanding)">ค้างชำระปกติ (Outstanding)</option>
                                 <option value="Installment" selected="@(debt?.Status == DebtStatus.Installment || (int?)debt?.Status == 100)">ผ่อนชำระ / จ่ายบางส่วน (Installment)</option>
                                 <option value="Postponed" selected="@(debt?.Status == DebtStatus.Postponed)">เลื่อนนัดชำระ (Postponed)</option>
+                                <option value="ReturnedToAccount" selected="@(debt?.Status == DebtStatus.ReturnedToAccount)" style="color:#d97706; font-weight:bold;">📦 บิลส่งคืนกลับมาบัญชี (บิลไม่พร้อมส่ง/ลูกค้ายังไม่เอาของ)</option>
                                 <option value="WaitingGoods" selected="@(debt?.Status == DebtStatus.WaitingGoods)">รอสินค้า / ของขาด (Waiting for Goods)</option>
                                 <option value="Delivering" selected="@(debt?.Status == DebtStatus.Delivering)">บิลอยู่จัดส่ง (Delivering)</option>
                                 <option value="ChangeProduct" selected="@(debt?.Status == DebtStatus.ChangeProduct)">เปลี่ยนสินค้า (Change Product)</option>
@@ -709,6 +710,43 @@ else if (overdue120)
                                 <label class="form-label small text-muted mb-1">📝 หมายเหตุเพิ่มเติม (ถ้ามี)</label>
                                 <input type="text" name="note" class="form-control form-control-sm" placeholder="เช่น รอของเข้าโรงงานวันศุกร์..." value="@debt?.Note" />
                             </div>
+                        </div>
+
+                        
+                        <!-- 7. บิลส่งคืนกลับมาบัญชี (บิลไม่พร้อมส่ง/ลูกค้ายังไม่เอาของ) -->
+                        <div id="f-returned-to-account" class="@(debt?.Status == DebtStatus.ReturnedToAccount ? "" : "d-none") mb-3 p-3 rounded border" style="background:#fffbeb; border-color:#f59e0b;">
+                            <label class="form-label fw-bold small text-warning mb-2">
+                                <i class="bi bi-box-arrow-in-left me-1"></i> รายละเอียดการส่งคืนกลับมาบัญชี
+                            </label>
+                            
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-dark mb-1">📅 วันที่รับบิลจากจัดส่ง <span class="text-danger">*</span></label>
+                                <input type="date" name="returnedToAccountDate" id="inputReturnedDate" class="form-control" value="@(debt?.ReturnedToAccountDate?.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd"))" />
+                            </div>
+
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold text-dark mb-1">⚡ เลือกเหตุผลด่วน:</label>
+                                <div class="d-flex flex-wrap gap-1 mb-2">
+                                    <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-semibold" onclick="setQuickReturnReason('บิลยังไม่พร้อมส่ง')">
+                                        บิลยังไม่พร้อมส่ง
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-semibold" onclick="setQuickReturnReason('ลูกค้ายังไม่เอาของ')">
+                                        ลูกค้ายังไม่เอาของ
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-semibold" onclick="setQuickReturnReason('ติดปัญหาเอกสาร / รอตรวจสอบ')">
+                                        ติดปัญหาเอกสาร / รอตรวจสอบ
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-semibold" onclick="setQuickReturnReason('ลูกค้านัดส่งใหม่อีกครั้ง')">
+                                        ลูกค้านัดส่งใหม่อีกครั้ง
+                                    </button>
+                                </div>
+                                
+                                <label class="form-label small fw-bold text-dark mb-1">📝 ระบุรายละเอียดเหตุผลเพิ่มเติม:</label>
+                                <textarea name="returnedToAccountReason" id="txtReturnReason" rows="2" class="form-control" placeholder="คลิกเลือกปุ่มด้านบน หรือพิมพ์ระบุรายละเอียดเหตุผลเพิ่มเติมเองได้อิสระ...">@(debt?.ReturnedToAccountReason ?? debt?.Note ?? "")</textarea>
+                            </div>
+                            <small class="text-muted d-block mt-2">
+                                <i class="bi bi-info-circle me-1"></i> เมื่อบันทึก ข้อมูลบิลนี้จะถูกนำไปแสดงในหน้า "รายงานบิลส่งคืนกลับมาบัญชี" ทันที เพื่อรอส่งคืนไปจัดส่งในรอบถัดไป
+                            </small>
                         </div>
 
                         <!-- 4. รับคืนสินค้า -->

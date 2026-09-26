@@ -1,28 +1,29 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RoyalD.Web.Models
 {
     /// <summary>
-    /// เธชเธ–เธฒเธเธฐเธฅเธนเธเธซเธเธตเน
+    /// สถานะลูกหนี้
     /// </summary>
     public enum DebtStatus
     {
-        Outstanding = 0,    // เธเนเธฒเธเธเธณเธฃเธฐ
-        PaidCash = 1,       // เธเธณเธฃเธฐเธ”เนเธงเธขเน€เธเธดเธเธชเธ”
-        PaidTransfer = 2,   // เธเธณเธฃเธฐเธ”เนเธงเธขเนเธญเธเน€เธเธดเธ
-        PaidCheck = 3,      // เธเธณเธฃเธฐเธ”เนเธงเธขเน€เธเนเธ
-        Installment = 4,    // เธเนเธญเธเธเธณเธฃเธฐ
-        Postponed = 5,      // เน€เธฅเธทเนเธญเธเธเธฑเธ”เธเธณเธฃเธฐ
-        BadDebt = 6,        // เธซเธเธตเนเธชเธนเธ
-        CheckReturned = 7,  // เน€เธเนเธเธเธทเธ
-        Consignment = 8,    // เธชเธดเธเธเนเธฒเธเธฒเธเธเธฒเธข
-        ReturnIssued = 9,   // เธฃเธฑเธเธเธทเธเธชเธดเธเธเนเธฒ (เธญเธญเธเนเธเธฅเธ”เธซเธเธตเนเนเธฅเนเธง)
-        ReturnPending = 10, // เธฃเธฑเธเธเธทเธเธชเธดเธเธเนเธฒ (เธฃเธญเธญเธญเธเนเธเธฅเธ”เธซเธเธตเน)
-        ChangeProduct = 11, // เน€เธเธฅเธตเนเธขเธเธชเธดเธเธเนเธฒ
-        Delivering = 12,    // เธเธดเธฅเธญเธขเธนเนเธเธฑเธ”เธชเนเธ
-        WaitingGoods = 13,  // เธฃเธญเธชเธดเธเธเนเธฒ
-        Cancelled = 14      // เธเธดเธฅเธขเธเน€เธฅเธดเธ
+        Outstanding = 0,    // ค้างชำระ
+        PaidCash = 1,       // ชำระด้วยเงินสด
+        PaidTransfer = 2,   // ชำระด้วยโอนเงิน
+        PaidCheck = 3,      // ชำระด้วยเช็ค
+        Installment = 4,    // ผ่อนชำระ
+        Postponed = 5,      // เลื่อนนัดชำระ
+        BadDebt = 6,        // หนี้สูญ
+        CheckReturned = 7,  // เช็คคืน
+        Consignment = 8,    // สินค้าฝากขาย
+        ReturnIssued = 9,   // รับคืนสินค้า (ออกใบลดหนี้แล้ว)
+        ReturnPending = 10, // รับคืนสินค้า (รอออกใบลดหนี้)
+        ChangeProduct = 11, // เปลี่ยนสินค้า
+        Delivering = 12,    // บิลอยู่จัดส่ง
+        WaitingGoods = 13,  // รอสินค้า
+        Cancelled = 14,     // บิลยกเลิก
+        ReturnedToAccount = 15 // บิลส่งคืนกลับมาบัญชี (บิลไม่พร้อมส่ง/ลูกค้ายังไม่เอาของ)
     }
 
     public class OutstandingDebt
@@ -64,7 +65,7 @@ namespace RoyalD.Web.Models
 
         public DateTime? PaidDate { get; set; }
 
-        /// <summary>เธงเธฑเธเธ—เธตเนเธเธณเธฃเธฐเธเธฃเธ (เนเธเนเธเธฑเธ 120 เธงเธฑเธ)</summary>
+        /// <summary>วันที่ชำระครบ (ใช้นับ 120 วัน)</summary>
         public DateTime? FullyPaidDate { get; set; }
 
         public DateTime? PostponedDate { get; set; }
@@ -82,26 +83,32 @@ namespace RoyalD.Web.Models
         public decimal? ReturnAmount { get; set; }
         public bool IsReturnCutFromBill { get; set; }
 
-        // เธเธดเธฅเธ”เนเธชเธณเธซเธฃเธฑเธเธเธดเธฅเธขเธเน€เธฅเธดเธ (เน€เธเนเธเธเธดเธฅ 40 เธงเธฑเธ)
+        // ฟิลด์สำหรับบิลส่งคืนกลับมาบัญชี (บิลไม่พร้อมส่ง/ลูกค้ายังไม่เอาของ)
+        public DateTime? ReturnedToAccountDate { get; set; }
+        [MaxLength(500)]
+        public string? ReturnedToAccountReason { get; set; }
+        public DateTime? ReturnedToDeliveryDate { get; set; }
+
+        // ฟิลด์สำหรับบิลยกเลิก (เก็บบิล 40 วัน)
         public DateTime? CancelledDate { get; set; }
         [MaxLength(200)]
         public string? CancelledBy { get; set; }
         [MaxLength(500)]
         public string? CancelReason { get; set; }
         
-        public bool IsLocked { get; set; } = false; // เธชเธณเธซเธฃเธฑเธเธเนเธญเธเธเธฑเธเนเธเนเนเธเธเธดเธฅเธ—เธตเนเธเธณเธฃเธฐเธเธฃเธเนเธฅเนเธง
+        public bool IsLocked { get; set; } = false; // สำหรับป้องกันแก้ไขบิลที่ชำระครบแล้ว
 
         [MaxLength(200)]
         public string Note { get; set; } = string.Empty;
 
-        /// <summary>เน€เธฅเธเธ—เธตเนเนเธเน€เธชเธฃเนเธ เธเธฒเธเธเธฒเธฃเธเธฑเธเธเธนเนเนเธเธฅเนเธชเธฃเธธเธเธฃเธฑเธเน€เธเธดเธ</summary>
+        /// <summary>เลขที่ใบเสร็จ จากการจับคู่ไฟล์สรุปรับเงิน</summary>
         [MaxLength(200)]
         public string ReceiptNo { get; set; } = string.Empty;
 
-        /// <summary>เธงเธฑเธเธ—เธตเนเธฃเธฑเธเธเธณเธฃเธฐเน€เธเธดเธ เธเธฒเธเนเธเธฅเนเธชเธฃเธธเธเธฃเธฑเธเน€เธเธดเธ</summary>
+        /// <summary>วันที่รับชำระเงิน จากไฟล์สรุปรับเงิน</summary>
         public DateTime? ReceiptDate { get; set; }
 
-        /// <summary>เน€เธฅเธเธ—เธตเนเนเธเธชเธฑเนเธเธเธทเนเธญ (PO Number)</summary>
+        /// <summary>เลขที่ใบสั่งซื้อ (PO Number)</summary>
         [MaxLength(200)]
         public string PoNumber { get; set; } = string.Empty;
 
@@ -117,5 +124,3 @@ namespace RoyalD.Web.Models
         public ICollection<PendingProduct> PendingProducts { get; set; } = new List<PendingProduct>();
     }
 }
-
-

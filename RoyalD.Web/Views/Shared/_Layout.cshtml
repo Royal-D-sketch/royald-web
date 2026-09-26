@@ -36,6 +36,7 @@
     bool hasInstallment = isAdmin || allowedPagesList.Contains("installment");
     bool hasBadDebt = isAdmin || allowedPagesList.Contains("baddebt");
     bool hasReturnNotes = isAdmin || allowedPagesList.Contains("returnnotes");
+    bool hasReturnedToAccount = isAdmin || allowedPagesList.Contains("returnedtoaccount") || allowedPagesList.Contains("report");
     bool hasUpload = isAdmin || allowedPagesList.Contains("upload") || allowedPagesList.Contains("uploadsalesbill") || allowedPagesList.Contains("uploaddebtor") || allowedPagesList.Contains("uploadreceipt");
 }
 <!DOCTYPE html>
@@ -315,6 +316,10 @@
                     @if (isAdmin || allowedPagesList.Contains("waitinggoodsreport")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "WaitingGoods" ? "active" : "")"
                        href="/Report/WaitingGoods">
                         <i class="bi bi-box-seam"></i> บิลรอเอกสาร/รอสินค้า
+                    </a> }
+                    @if (hasReturnedToAccount) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "ReturnedToAccount" ? "active" : "")"
+                       href="/Report/ReturnedToAccount">
+                        <i class="bi bi-arrow-return-right"></i> บิลส่งคืนกลับมาบัญชี
                     </a> }
                     @if (hasReturnNotes) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "ReturnNotes" ? "active" : "")" href="/Report/ReturnNotes"><i class="bi bi-arrow-return-left"></i> รับคืนสินค้า</a> }
                     @if (hasCancel)

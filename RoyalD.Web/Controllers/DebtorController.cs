@@ -736,6 +736,8 @@ namespace RoyalD.Web.Controllers
             DateTime? postponedDate, 
             DateTime? deliveringDate, 
             DateTime? waitingGoodsDate, 
+            DateTime? returnedToAccountDate,
+            string? returnedToAccountReason,
             List<string>? waitingProductCodes,
             List<string>? allProductCodes,
             List<string>? allProductNames,
@@ -785,7 +787,14 @@ namespace RoyalD.Web.Controllers
             }
             debt.Note = note ?? "";
 
-            if (status == DebtStatus.Postponed)
+            if (status == DebtStatus.ReturnedToAccount)
+            {
+                debt.Status = DebtStatus.ReturnedToAccount;
+                debt.ReturnedToAccountDate = returnedToAccountDate ?? DateTime.Today;
+                debt.ReturnedToAccountReason = !string.IsNullOrWhiteSpace(returnedToAccountReason) ? returnedToAccountReason.Trim() : (note ?? "");
+                debt.Note = debt.ReturnedToAccountReason;
+            }
+            else if (status == DebtStatus.Postponed)
             {
                 debt.PostponedDate = postponedDate;
             }

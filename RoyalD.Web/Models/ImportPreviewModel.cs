@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace RoyalD.Web.Models
@@ -16,6 +16,7 @@ namespace RoyalD.Web.Models
         public decimal TotalAmount { get; set; }
         public decimal NewAmount { get; set; }
         public decimal DuplicateAmount { get; set; }
+        public DateTime LatestDate { get; set; }
         public List<BillPreviewItem> Items { get; set; } = new();
     }
 

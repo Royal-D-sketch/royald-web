@@ -211,6 +211,31 @@ using (var scope = app.Services.CreateScope())
         AddColumnIfMissing("OutstandingDebts", "CancelReason", "TEXT NULL");
         AddColumnIfMissing("OutstandingDebts", "LastEditedBy", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing("OutstandingDebts", "LastEditedDate", "TEXT NULL");
+        AddColumnIfMissing("OutstandingDebts", "ReturnedToAccountDate", "TEXT NULL");
+        AddColumnIfMissing("OutstandingDebts", "ReturnedToAccountReason", "TEXT NULL DEFAULT ''");
+        AddColumnIfMissing("OutstandingDebts", "ReturnedToDeliveryDate", "TEXT NULL");
+    }
+
+        if (db.Database.IsNpgsql())
+    {
+        try
+        {
+            var conn = db.Database.GetDbConnection();
+            if (conn.State != System.Data.ConnectionState.Open) conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+                ALTER TABLE ""OutstandingDebts"" DROP CONSTRAINT IF EXISTS ""FK_OutstandingDebts_Customers_CustomerCode"";
+                ALTER TABLE ""SalesBills"" DROP CONSTRAINT IF EXISTS ""FK_SalesBills_Customers_CustomerCode"";
+                ALTER TABLE ""PaymentRecords"" DROP CONSTRAINT IF EXISTS ""FK_PaymentRecords_OutstandingDebts_OutstandingDebtId"";
+                ALTER TABLE ""PendingProducts"" DROP CONSTRAINT IF EXISTS ""FK_PendingProducts_OutstandingDebts_OutstandingDebtId"";
+            ";
+            cmd.ExecuteNonQuery();
+            Console.WriteLine("Successfully dropped FK constraints in PostgreSQL!");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Notice dropping FK: " + ex.Message);
+        }
     }
 
     if (db.Database.IsNpgsql())
@@ -235,6 +260,9 @@ using (var scope = app.Services.CreateScope())
                 ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""CancelReason"" varchar(500) NULL;
                 ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""LastEditedBy"" varchar(100) DEFAULT '';
                 ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""LastEditedDate"" timestamp with time zone NULL;
+                ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""ReturnedToAccountDate"" timestamp with time zone NULL;
+                ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""ReturnedToAccountReason"" varchar(500) NULL;
+                ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""ReturnedToDeliveryDate"" timestamp with time zone NULL;
             ";
             cmd.ExecuteNonQuery();
         }
@@ -268,45 +296,7 @@ using (var scope = app.Services.CreateScope())
         db.SaveChanges();
     }
 
-    // Auto Import initial Excel files if empty
-    var excelService = scope.ServiceProvider.GetRequiredService<ExcelImportService>();
-    var billsPath = Path.Combine(builder.Environment.ContentRootPath, "..", "2.เธเธดเธฅเธเธฒเธข เธก.เธ.-เธ.เธ.69");
-    if (!Directory.Exists(billsPath))
-    {
-        billsPath = Path.Combine(builder.Environment.ContentRootPath, "2.เธเธดเธฅเธเธฒเธข เธก.เธ.-เธ.เธ.69");
-    }
-    var debtPath = Path.Combine(builder.Environment.ContentRootPath, "..", "เธเธฒเธฃเนเธ”เธฅเธนเธเธซเธเธตเน เธ“ 1 เธช.เธ. 69.xlsx");
-    if (!File.Exists(debtPath))
-    {
-        debtPath = Path.Combine(builder.Environment.ContentRootPath, "เธเธฒเธฃเนเธ”เธฅเธนเธเธซเธเธตเน เธ“ 1 เธช.เธ. 69.xlsx");
-    }
-
-    if (Directory.Exists(billsPath) && !db.SalesBills.Any())
-    {
-        var files = Directory.GetFiles(billsPath, "*.xlsx")
-                             .Concat(Directory.GetFiles(billsPath, "*.xls"))
-                             .OrderBy(f => f)
-                             .ToList();
-        foreach (var file in files)
-        {
-            try
-            {
-                var fileName = Path.GetFileNameWithoutExtension(file);
-                using var stream = File.OpenRead(file);
-                excelService.ImportSalesBillAsync(stream, fileName).GetAwaiter().GetResult();
-            }
-            catch { }
-        }
-    }
-    if (File.Exists(debtPath) && !db.OutstandingDebts.Any())
-    {
-        try
-        {
-            using var stream = File.OpenRead(debtPath);
-            excelService.ImportOutstandingDebtsAsync(stream).GetAwaiter().GetResult();
-        }
-        catch { }
-    }
+    // Auto import removed to maintain clean slate database
 
     // Auto-fix / sync Credit from OutstandingDebt to SalesBills if SalesBills has 0 or shifted credit
     try

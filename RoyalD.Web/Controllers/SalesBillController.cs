@@ -903,6 +903,8 @@ if (!string.IsNullOrEmpty(poSearch))
             DateTime? postponedDate, 
             DateTime? deliveringDate, 
             DateTime? waitingGoodsDate, 
+            DateTime? returnedToAccountDate,
+            string? returnedToAccountReason,
             string? note, 
             decimal? returnAmount,
             bool isReturnCutFromBill,
@@ -973,7 +975,14 @@ if (!string.IsNullOrEmpty(poSearch))
             
             debt.Note = note ?? "";
             
-            if (newStatus == DebtStatus.Postponed) debt.PostponedDate = postponedDate;
+            if (newStatus == DebtStatus.ReturnedToAccount)
+            {
+                debt.Status = DebtStatus.ReturnedToAccount;
+                debt.ReturnedToAccountDate = returnedToAccountDate ?? DateTime.Today;
+                debt.ReturnedToAccountReason = !string.IsNullOrWhiteSpace(returnedToAccountReason) ? returnedToAccountReason.Trim() : (note ?? "");
+                debt.Note = debt.ReturnedToAccountReason;
+            }
+            else if (newStatus == DebtStatus.Postponed) debt.PostponedDate = postponedDate;
             else if (newStatus == DebtStatus.Delivering) debt.DeliveringDate = deliveringDate;
             else if (newStatus == DebtStatus.WaitingGoods)
             {

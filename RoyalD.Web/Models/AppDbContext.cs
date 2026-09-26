@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace RoyalD.Web.Models
 {
@@ -32,14 +32,16 @@ namespace RoyalD.Web.Models
                 .HasOne(b => b.Customer)
                 .WithMany(c => c.SalesBills)
                 .HasForeignKey(b => b.CustomerCode)
-                .IsRequired(false);
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // Customer → OutstandingDebts
             modelBuilder.Entity<OutstandingDebt>()
                 .HasOne(d => d.Customer)
                 .WithMany(c => c.OutstandingDebts)
                 .HasForeignKey(d => d.CustomerCode)
-                .IsRequired(false);
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // OutstandingDebt → PaymentRecords
             modelBuilder.Entity<PaymentRecord>()

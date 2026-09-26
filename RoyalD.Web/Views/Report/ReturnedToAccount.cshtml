@@ -1,0 +1,266 @@
+@model IEnumerable<RoyalD.Web.Models.OutstandingDebt>
+@{
+    ViewData["Title"] = "รายงานบิลส่งคืนกลับมาบัญชี (บิลไม่พร้อมส่ง/ลูกค้ายังไม่เอาของ)";
+    var salesReps = ViewBag.SalesReps as List<string> ?? new List<string>();
+    var totalBills = Model?.Count() ?? 0;
+    var totalAmount = Model?.Sum(x => x.RemainingAmount > 0 ? x.RemainingAmount : x.OriginalAmount) ?? 0;
+}
+
+<div class="container-fluid py-3 px-3">
+    <!-- Header Title & Action Buttons -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+        <div>
+            <h4 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-arrow-return-right text-warning me-2"></i>รายงานบิลส่งคืนกลับมาบัญชี
+            </h4>
+            <div class="text-muted small">บิลที่ส่งคืนกลับมาฝ่ายบัญชีเนื่องจากบิลไม่พร้อมส่ง หรือลูกค้ายังไม่รับของ</div>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="@Url.Action("ExportReturnedToAccountExcel", "Report", new { search = ViewBag.Search, salesRep = ViewBag.SalesRep, fromDate = ViewBag.FromDate, toDate = ViewBag.ToDate })"
+               class="btn btn-success btn-sm btn-export px-3 shadow-sm">
+                <i class="bi bi-file-earmark-excel me-1"></i> ส่งออก Excel
+            </a>
+            <a href="@Url.Action("ExportReturnedToAccountPdf", "Report", new { search = ViewBag.Search, salesRep = ViewBag.SalesRep, fromDate = ViewBag.FromDate, toDate = ViewBag.ToDate })"
+               target="_blank" class="btn btn-danger btn-sm btn-export px-3 shadow-sm">
+                <i class="bi bi-file-earmark-pdf me-1"></i> ส่งออก PDF / พิมพ์
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm py-2 px-3 mb-3" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Stat Cards -->
+    <div class="row g-3 mb-3">
+        <div class="col-md-6 col-lg-3">
+            <div class="card shadow-sm border-0 border-start border-warning border-4 p-3 bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-semibold">จำนวนบิลส่งคืนบัญชี</div>
+                        <div class="fs-4 fw-bold text-dark">@totalBills.ToString("N0") <span class="fs-6 fw-normal text-muted">บิล</span></div>
+                    </div>
+                    <div class="p-3 bg-warning bg-opacity-10 text-warning rounded-circle">
+                        <i class="bi bi-arrow-return-right fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card shadow-sm border-0 border-start border-danger border-4 p-3 bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-semibold">ยอดเงินรวมคงค้าง</div>
+                        <div class="fs-4 fw-bold text-danger">@totalAmount.ToString("N2") <span class="fs-6 fw-normal text-muted">บาท</span></div>
+                    </div>
+                    <div class="p-3 bg-danger bg-opacity-10 text-danger rounded-circle">
+                        <i class="bi bi-cash-stack fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body p-3 bg-light">
+            <form method="get" action="/Report/ReturnedToAccount" class="row g-2 align-items-end">
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-bold text-secondary mb-1">ค้นหาข้อความ</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="text" name="search" class="form-control" placeholder="เลขที่บิล, รหัส/ชื่อลูกค้า..." value="@ViewBag.Search" />
+                    </div>
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-bold text-secondary mb-1">ผู้แทนขาย</label>
+                    <select name="salesRep" class="form-select form-select-sm">
+                        <option value="">-- ทั้งหมด --</option>
+                        @foreach (var rep in salesReps)
+                        {
+                            <option value="@rep" selected="@(rep == ViewBag.SalesRep ? "selected" : null)">@rep</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-bold text-secondary mb-1">ตั้งแต่วันที่</label>
+                    <input type="date" name="fromDate" class="form-control form-control-sm" value="@ViewBag.FromDate" />
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-bold text-secondary mb-1">ถึงวันที่</label>
+                    <input type="date" name="toDate" class="form-control form-control-sm" value="@ViewBag.ToDate" />
+                </div>
+                <div class="col-12 col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm flex-fill" style="background:#0d9488; border-color:#0d9488;">
+                        <i class="bi bi-funnel me-1"></i> คัดกรอง
+                    </button>
+                    <a href="/Report/ReturnedToAccount" class="btn btn-outline-secondary btn-sm" title="ล้างตัวกรอง">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Data Table Card -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 text-nowrap">
+                    <thead class="table-light">
+                        <tr class="text-secondary small fw-bold">
+                            <th class="text-center" style="width: 50px;">#</th>
+                            <th>เลขที่บิล</th>
+                            <th>วันที่บิล</th>
+                            <th>รหัสลูกค้า</th>
+                            <th>ชื่อลูกค้า</th>
+                            <th>ผู้แทนขาย</th>
+                            <th>วันที่รับบิลจากจัดส่ง</th>
+                            <th>เหตุผลที่ส่งคืนบัญชี</th>
+                            <th class="text-end">ยอดคงค้าง (บาท)</th>
+                            <th class="text-center" style="width: 140px;">การดำเนินการ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            int idx = 1;
+                            foreach (var item in Model)
+                            {
+                                decimal amt = item.RemainingAmount > 0 ? item.RemainingAmount : item.OriginalAmount;
+                                <tr>
+                                    <td class="text-center text-muted">@idx</td>
+                                    <td>
+                                        <a href="/SalesBill/Detail?id=@Uri.EscapeDataString(item.BillNo)" class="text-decoration-none fw-bold text-primary">
+                                            <i class="bi bi-receipt me-1"></i>@item.BillNo
+                                        </a>
+                                    </td>
+                                    <td>@item.BillDate.ToString("dd/MM/yyyy")</td>
+                                    <td><code>@item.CustomerCode</code></td>
+                                    <td style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@item.CustomerName">
+                                        @item.CustomerName
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border">@(string.IsNullOrEmpty(item.SalesRep) ? "-" : item.SalesRep)</span>
+                                    </td>
+                                    <td>
+                                        @if (item.ReturnedToAccountDate.HasValue)
+                                        {
+                                            <span class="badge bg-warning bg-opacity-10 text-dark border border-warning">
+                                                <i class="bi bi-calendar-event me-1 text-warning"></i>@item.ReturnedToAccountDate.Value.ToString("dd/MM/yyyy")
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: normal;" title="@item.ReturnedToAccountReason">
+                                        @if (!string.IsNullOrWhiteSpace(item.ReturnedToAccountReason))
+                                        {
+                                            <span class="badge bg-secondary bg-opacity-10 text-dark border">
+                                                @item.ReturnedToAccountReason
+                                            </span>
+                                        }
+                                        else if (!string.IsNullOrWhiteSpace(item.Note))
+                                        {
+                                            <span class="text-muted small">@item.Note</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td class="text-end fw-bold text-danger">@amt.ToString("N2")</td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1 shadow-sm"
+                                                onclick="openReturnToDeliveryModal(@item.Id, '@item.BillNo', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.CustomerName))')">
+                                            <i class="bi bi-truck"></i> ส่งคืนไปจัดส่ง
+                                        </button>
+                                    </td>
+                                </tr>
+                                idx++;
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="10" class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                                    ไม่มีรายการบิลส่งคืนกลับมาบัญชีในขณะนี้
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        <tfoot class="table-light fw-bold">
+                            <tr>
+                                <td colspan="8" class="text-end">รวมทั้งสิ้น (@totalBills บิล):</td>
+                                <td class="text-end text-danger fs-6">@totalAmount.ToString("N2")</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    }
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: ส่งคืนไปจัดส่ง -->
+<div class="modal fade" id="returnToDeliveryModal" tabindex="-1" aria-labelledby="returnToDeliveryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <form method="post" action="/Report/ReturnToDelivery">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="modalDebtId" name="debtId" value="" />
+                <div class="modal-header text-white" style="background:#0d9488;">
+                    <h5 class="modal-title fw-bold" id="returnToDeliveryModalLabel">
+                        <i class="bi bi-truck me-2"></i>ส่งคืนบิลไปจัดส่ง
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-info py-2 px-3 small mb-3 border-0 bg-info bg-opacity-10 text-dark">
+                        <i class="bi bi-info-circle-fill text-info me-1"></i> เมื่อส่งคืนไปจัดส่งแล้ว ระบบจะปรับสถานะบิลกลับเป็น <strong>"ค้างชำระ (ปกติ)"</strong> เพื่อให้ติดตามรับชำระต่อไป
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted mb-1">เลขที่บิล / ลูกค้า</label>
+                        <div class="fw-bold fs-6 text-dark" id="modalBillInfo">-</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small mb-1">วันที่ส่งคืนไปจัดส่ง <span class="text-danger">*</span></label>
+                        <input type="date" name="deliveryDate" id="modalDeliveryDate" class="form-control form-control-sm" required value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small mb-1">หมายเหตุเพิ่มเติม</label>
+                        <input type="text" name="returnNote" class="form-control form-control-sm" placeholder="เช่น พร้อมส่งมอบรอบใหม่, นัดส่งรอบถัดไป" />
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-sm btn-outline-secondary px-3" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-sm btn-success px-4 fw-semibold shadow-sm">
+                        <i class="bi bi-check-circle me-1"></i> ยืนยันส่งคืนไปจัดส่ง
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function openReturnToDeliveryModal(debtId, billNo, customerName) {
+        document.getElementById('modalDebtId').value = debtId;
+        document.getElementById('modalBillInfo').innerText = billNo + ' - ' + customerName;
+        document.getElementById('modalDeliveryDate').value = new Date().toISOString().split('T')[0];
+        var myModal = new bootstrap.Modal(document.getElementById('returnToDeliveryModal'));
+        myModal.show();
+    }
+</script>
+}
