@@ -167,14 +167,39 @@ namespace RoyalD.Web.Controllers
         }
 
         // ==============================================================
+        // ==============================================================
+        // HELPER: ตรวจสอบสิทธิ์ผู้ใช้ที่มีสิทธิ์กดส่งคืนไปจัดส่ง
+        // กำหนดเฉพาะ: ['nid', 'admin', 'หัวหน้า', 'ผู้บริหาร']
+        // ==============================================================
+        public static bool IsAuthorizedUserForReturn(System.Security.Claims.ClaimsPrincipal user)
+        {
+            if (user?.Identity?.IsAuthenticated != true) return false;
+            var allowed = new[] { "nid", "admin", "หัวหน้า", "ผู้บริหาร" };
+            var uName = (user.Identity.Name ?? "").Trim().ToLower();
+            var fName = (user.FindFirst("FullName")?.Value ?? "").Trim().ToLower();
+            var role = (user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "").Trim().ToLower();
+
+            return allowed.Any(a =>
+                uName.Equals(a, StringComparison.OrdinalIgnoreCase) ||
+                uName.Contains(a) ||
+                fName.Equals(a, StringComparison.OrdinalIgnoreCase) ||
+                fName.Contains(a) ||
+                role.Equals(a, StringComparison.OrdinalIgnoreCase)
+            );
+        }
+
+        // ==============================================================
         // 1. รายงานบิลส่งคืนกลับมาบัญชี (บิลไม่พร้อมส่ง/ลูกค้ายังไม่เอาของ)
         // ==============================================================
         public async Task<IActionResult> ReturnedToAccount([FromServices] AppDbContext db, string? search, string? salesRep, DateTime? fromDate, DateTime? toDate)
         {
+            // ดึงบิลที่มีประวัติส่งคืนกลับมาบัญชี และยังไม่จบดีล (คงค้างไว้จนกว่าจะจ่ายครบ 0.00 บาท)
             var q = db.OutstandingDebts
                 .AsNoTracking()
                 .Include(d => d.Customer)
-                .Where(d => d.Status == DebtStatus.ReturnedToAccount)
+                .Where(d => d.Status != DebtStatus.Cancelled &&
+                            (d.Status == DebtStatus.ReturnedToAccount || d.ReturnedToDeliveryDate != null || d.ReturnedToAccountDate != null) &&
+                            !(d.RemainingAmount <= 0 && (d.FullyPaidDate != null || d.Status == DebtStatus.PaidCash || d.Status == DebtStatus.PaidTransfer || d.Status == DebtStatus.PaidCheck || d.ReceiptDate != null)))
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
@@ -201,7 +226,7 @@ namespace RoyalD.Web.Controllers
             var data = await q.OrderByDescending(d => d.ReturnedToAccountDate ?? d.BillDate).ToListAsync();
 
             var reps = await db.OutstandingDebts
-                .Where(d => d.Status == DebtStatus.ReturnedToAccount && d.SalesRep != null && d.SalesRep != "")
+                .Where(d => (d.Status == DebtStatus.ReturnedToAccount || d.ReturnedToDeliveryDate != null || d.ReturnedToAccountDate != null) && d.SalesRep != null && d.SalesRep != "")
                 .Select(d => d.SalesRep)
                 .Distinct()
                 .OrderBy(x => x)
@@ -212,21 +237,29 @@ namespace RoyalD.Web.Controllers
             ViewBag.SalesRep = salesRep;
             ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
             ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
+            ViewBag.IsAuthorized = IsAuthorizedUserForReturn(User);
 
             return View(data);
         }
 
         // ==============================================================
-        // 2. ฟังก์ชัน "ส่งคืนไปจัดส่ง" (คืนสถานะเป็นลูกหนี้ค้างชำระปกติ)
+        // 2. ฟังก์ชัน "ส่งคืนไปจัดส่ง" (คืนสถานะเป็นลูกหนี้ค้างชำระปกติ & ซิงค์ยอดกลับ AR Card)
         // ==============================================================
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> ReturnToDelivery([FromServices] AppDbContext db, int debtId, DateTime? deliveryDate, string? returnNote)
         {
+            // ตรวจสอบสิทธิ์ผู้ใช้งานเฉพาะ: ['nid', 'admin', 'หัวหน้า', 'ผู้บริหาร']
+            if (!IsAuthorizedUserForReturn(User))
+            {
+                TempData["Error"] = "ข้อผิดพลาด: บัญชีผู้ใช้ของคุณไม่มีสิทธิ์ในการดำเนินการส่งคืนบิลไปจัดส่ง กรุณาติดต่อหัวหน้าแผนกบัญชี";
+                return RedirectToAction("ReturnedToAccount");
+            }
+
             var debt = await db.OutstandingDebts.FirstOrDefaultAsync(d => d.Id == debtId);
             if (debt == null) return NotFound();
 
             var dDate = deliveryDate ?? DateTime.Today;
-            debt.Status = DebtStatus.Outstanding; // คืนสถานะเป็นลูกหนี้ปกติ
+            debt.Status = DebtStatus.Outstanding; // คืนสถานะเป็นลูกหนี้ปกติ เพื่อซิงค์กลับไปยังหน้าการ์ดลูกหนี้ (AR Card)
             debt.DeliveringDate = dDate;
             debt.ReturnedToDeliveryDate = dDate;
             
@@ -235,20 +268,23 @@ namespace RoyalD.Web.Controllers
             debt.LastEditedDate = DateTime.Now;
             debt.LastEditedBy = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "Admin";
 
+
             await db.SaveChangesAsync();
 
-            TempData["Success"] = $"ส่งคืนบิลเลขที่ {debt.BillNo} ไปจัดส่งเรียบร้อยแล้ว (สถานะกลับเป็นลูกหนี้ค้างชำระปกติ)";
+            TempData["Success"] = $"ส่งคืนบิลเลขที่ {debt.BillNo} ไปจัดส่งเรียบร้อยแล้ว (สถานะกลับเป็นลูกหนี้ค้างชำระปกติและคงประวัติในตาราง)";
             return RedirectToAction("ReturnedToAccount");
         }
 
         // ==============================================================
-        // 3. EXPORT EXCEL: บิลส่งคืนกลับมาบัญชี
+        // 3. EXPORT EXCEL: บิลส่งคืนกลับมาบัญชี (พร้อมคอลัมน์ วันที่ส่งคืนบิลไปจัดส่ง)
         // ==============================================================
         public async Task<IActionResult> ExportReturnedToAccountExcel([FromServices] AppDbContext db, string? search, string? salesRep, DateTime? fromDate, DateTime? toDate)
         {
             var q = db.OutstandingDebts
                 .AsNoTracking()
-                .Where(d => d.Status == DebtStatus.ReturnedToAccount)
+                .Where(d => d.Status != DebtStatus.Cancelled &&
+                            (d.Status == DebtStatus.ReturnedToAccount || d.ReturnedToDeliveryDate != null || d.ReturnedToAccountDate != null) &&
+                            !(d.RemainingAmount <= 0 && (d.FullyPaidDate != null || d.Status == DebtStatus.PaidCash || d.Status == DebtStatus.PaidTransfer || d.Status == DebtStatus.PaidCheck || d.ReceiptDate != null)))
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
@@ -275,19 +311,19 @@ namespace RoyalD.Web.Controllers
             using var package = new ExcelPackage();
             var ws = package.Workbook.Worksheets.Add("ReturnedToAccount");
 
-            ws.Cells["A1:J1"].Merge = true;
+            ws.Cells["A1:L1"].Merge = true;
             ws.Cells["A1"].Value = "บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด";
             ws.Cells["A1"].Style.Font.Size = 16;
             ws.Cells["A1"].Style.Font.Bold = true;
             ws.Cells["A1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-            ws.Cells["A2:J2"].Merge = true;
+            ws.Cells["A2:L2"].Merge = true;
             ws.Cells["A2"].Value = $"รายงานบิลส่งคืนกลับมาบัญชี (บิลไม่พร้อมส่ง/ลูกค้ายังไม่เอาของ) — พิมพ์ ณ วันที่ {DateTime.Now:dd/MM/yyyy HH:mm} น.";
             ws.Cells["A2"].Style.Font.Size = 12;
             ws.Cells["A2"].Style.Font.Bold = true;
             ws.Cells["A2"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-            string[] headers = new[] { "#", "เลขที่บิล", "วันที่บิล", "รหัสลูกค้า", "ชื่อลูกค้า", "อำเภอ", "จังหวัด", "ผู้แทนขาย", "วันที่รับบิลจากจัดส่ง", "เหตุผลที่ส่งคืนบัญชี", "จำนวนเงิน (บาท)" };
+            string[] headers = new[] { "#", "เลขที่บิล", "วันที่บิล", "รหัสลูกค้า", "ชื่อลูกค้า", "อำเภอ", "จังหวัด", "ผู้แทนขาย", "วันที่รับบิลจากจัดส่ง", "เหตุผลที่ส่งคืนบัญชี", "วันที่ส่งคืนบิลไปจัดส่ง", "สถานะบิล", "จำนวนเงินคงค้าง (บาท)" };
             for (int i = 0; i < headers.Length; i++)
             {
                 var c = ws.Cells[4, i + 1];
@@ -296,7 +332,7 @@ namespace RoyalD.Web.Controllers
                 c.Style.Fill.PatternType = ExcelFillStyle.Solid;
                 c.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(217, 119, 6)); // Amber / Warning
                 c.Style.Font.Color.SetColor(Color.White);
-                c.Style.HorizontalAlignment = (i == 0 || i == 1 || i == 2 || i == 3 || i == 8) ? ExcelHorizontalAlignment.Center : (i == 10 ? ExcelHorizontalAlignment.Right : ExcelHorizontalAlignment.Left);
+                c.Style.HorizontalAlignment = (i == 0 || i == 1 || i == 2 || i == 3 || i == 8 || i == 10 || i == 11) ? ExcelHorizontalAlignment.Center : (i == 12 ? ExcelHorizontalAlignment.Right : ExcelHorizontalAlignment.Left);
                 c.Style.Border.BorderAround(ExcelBorderStyle.Thin);
             }
 
@@ -326,54 +362,62 @@ namespace RoyalD.Web.Controllers
 
                 ws.Cells[rowIdx, 10].Value = d.ReturnedToAccountReason ?? d.Note ?? "";
 
-                ws.Cells[rowIdx, 11].Value = d.RemainingAmount > 0 ? d.RemainingAmount : d.OriginalAmount;
-                ws.Cells[rowIdx, 11].Style.Numberformat.Format = "#,##0.00";
-                ws.Cells[rowIdx, 11].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+                ws.Cells[rowIdx, 11].Value = d.ReturnedToDeliveryDate?.ToString("dd/MM/yyyy") ?? "-";
+                ws.Cells[rowIdx, 11].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-                for (int col = 1; col <= 11; col++)
+                ws.Cells[rowIdx, 12].Value = d.ReturnedToDeliveryDate != null ? "บิลอยู่จัดส่ง" : "ส่งคืนกลับมาบัญชี";
+                ws.Cells[rowIdx, 12].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                ws.Cells[rowIdx, 13].Value = d.RemainingAmount > 0 ? d.RemainingAmount : d.OriginalAmount;
+                ws.Cells[rowIdx, 13].Style.Numberformat.Format = "#,##0.00";
+                ws.Cells[rowIdx, 13].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+
+                for (int col = 1; col <= 13; col++)
                     ws.Cells[rowIdx, col].Style.Border.BorderAround(ExcelBorderStyle.Thin, Color.LightGray);
 
                 rowIdx++;
             }
 
             // Total Row
-            ws.Cells[rowIdx, 1, rowIdx, 10].Merge = true;
+            ws.Cells[rowIdx, 1, rowIdx, 12].Merge = true;
             ws.Cells[rowIdx, 1].Value = $"ยอดรวมทั้งสิ้น ({list.Count:N0} รายการ):";
             ws.Cells[rowIdx, 1].Style.Font.Bold = true;
             ws.Cells[rowIdx, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
 
-            ws.Cells[rowIdx, 11].Value = list.Sum(x => x.RemainingAmount > 0 ? x.RemainingAmount : x.OriginalAmount);
-            ws.Cells[rowIdx, 11].Style.Font.Bold = true;
-            ws.Cells[rowIdx, 11].Style.Numberformat.Format = "#,##0.00";
-            ws.Cells[rowIdx, 11].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+            ws.Cells[rowIdx, 13].Value = list.Sum(x => x.RemainingAmount > 0 ? x.RemainingAmount : x.OriginalAmount);
+            ws.Cells[rowIdx, 13].Style.Font.Bold = true;
+            ws.Cells[rowIdx, 13].Style.Numberformat.Format = "#,##0.00";
+            ws.Cells[rowIdx, 13].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
 
-            for (int col = 1; col <= 11; col++)
+            for (int col = 1; col <= 13; col++)
             {
                 ws.Cells[rowIdx, col].Style.Border.Top.Style = ExcelBorderStyle.Thin;
                 ws.Cells[rowIdx, col].Style.Border.Bottom.Style = ExcelBorderStyle.Double;
                 ws.Cells[rowIdx, col].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                ws.Cells[rowIdx, col].Style.Fill.BackgroundColor.SetColor(Color.FromArgb(254, 243, 199)); // Amber light
+                ws.Cells[rowIdx, col].Style.Fill.BackgroundColor.SetColor(Color.FromArgb(254, 243, 199)); // Amber 100
             }
 
             ws.Cells.AutoFitColumns();
-            ws.Column(1).Width = 6;
-            ws.Column(4).Width = 14;
+            ws.Column(1).Width = 5;
             ws.Column(5).Width = 30;
-            ws.Column(10).Width = 35;
-            ws.Column(11).Width = 18;
+            ws.Column(10).Width = 25;
+            ws.Column(13).Width = 18;
 
-            var bytes = package.GetAsByteArray();
-            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"ReturnedToAccount_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
+            var fileBytes = package.GetAsByteArray();
+            string fileName = $"Returned_To_Account_Report_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
         // ==============================================================
-        // 4. EXPORT PDF: บิลส่งคืนกลับมาบัญชี
+        // 4. EXPORT PDF: บิลส่งคืนกลับมาบัญชี (พร้อมคอลัมน์ วันที่ส่งคืนบิลไปจัดส่ง)
         // ==============================================================
         public async Task<IActionResult> ExportReturnedToAccountPdf([FromServices] AppDbContext db, string? search, string? salesRep, DateTime? fromDate, DateTime? toDate)
         {
             var q = db.OutstandingDebts
                 .AsNoTracking()
-                .Where(d => d.Status == DebtStatus.ReturnedToAccount)
+                .Where(d => d.Status != DebtStatus.Cancelled &&
+                            (d.Status == DebtStatus.ReturnedToAccount || d.ReturnedToDeliveryDate != null || d.ReturnedToAccountDate != null) &&
+                            !(d.RemainingAmount <= 0 && (d.FullyPaidDate != null || d.Status == DebtStatus.PaidCash || d.Status == DebtStatus.PaidTransfer || d.Status == DebtStatus.PaidCheck || d.ReceiptDate != null)))
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
@@ -402,5 +446,6 @@ namespace RoyalD.Web.Controllers
 
             return View("PrintReturnedToAccountPdf", list);
         }
+
     }
 }

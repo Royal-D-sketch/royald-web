@@ -4,6 +4,7 @@
     var salesReps = ViewBag.SalesReps as List<string> ?? new List<string>();
     var totalBills = Model?.Count() ?? 0;
     var totalAmount = Model?.Sum(x => x.RemainingAmount > 0 ? x.RemainingAmount : x.OriginalAmount) ?? 0;
+    bool isAuthorized = ViewBag.IsAuthorized != null && (bool)ViewBag.IsAuthorized;
 }
 
 <div class="container-fluid py-3 px-3">
@@ -31,6 +32,13 @@
     {
         <div class="alert alert-success alert-dismissible fade show shadow-sm py-2 px-3 mb-3" role="alert">
             <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm py-2 px-3 mb-3" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
@@ -106,7 +114,7 @@
         </div>
     </div>
 
-    <!-- Data Table Card -->
+    <!-- Data Table Card (11 Columns Standard) -->
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -121,8 +129,9 @@
                             <th>ผู้แทนขาย</th>
                             <th>วันที่รับบิลจากจัดส่ง</th>
                             <th>เหตุผลที่ส่งคืนบัญชี</th>
+                            <th class="text-center" style="color:#0f766e;">วันที่ส่งคืนบิลไปจัดส่ง</th>
                             <th class="text-end">ยอดคงค้าง (บาท)</th>
-                            <th class="text-center" style="width: 140px;">การดำเนินการ</th>
+                            <th class="text-center" style="width: 150px;">การดำเนินการ</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -132,6 +141,7 @@
                             foreach (var item in Model)
                             {
                                 decimal amt = item.RemainingAmount > 0 ? item.RemainingAmount : item.OriginalAmount;
+                                bool isReturnedToDelivery = item.ReturnedToDeliveryDate.HasValue;
                                 <tr>
                                     <td class="text-center text-muted">@idx</td>
                                     <td>
@@ -159,7 +169,7 @@
                                             <span class="text-muted">-</span>
                                         }
                                     </td>
-                                    <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: normal;" title="@item.ReturnedToAccountReason">
+                                    <td style="max-width: 230px; overflow: hidden; text-overflow: ellipsis; white-space: normal;" title="@item.ReturnedToAccountReason">
                                         @if (!string.IsNullOrWhiteSpace(item.ReturnedToAccountReason))
                                         {
                                             <span class="badge bg-secondary bg-opacity-10 text-dark border">
@@ -175,12 +185,34 @@
                                             <span class="text-muted">-</span>
                                         }
                                     </td>
+                                    <!-- คอลัมน์ใหม่: วันที่ส่งคืนบิลไปจัดส่ง -->
+                                    <td class="text-center">
+                                        @if (item.ReturnedToDeliveryDate.HasValue)
+                                        {
+                                            <span class="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1">
+                                                <i class="bi bi-calendar-check me-1"></i>@item.ReturnedToDeliveryDate.Value.ToString("dd/MM/yyyy")
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
                                     <td class="text-end fw-bold text-danger">@amt.ToString("N2")</td>
                                     <td class="text-center">
-                                        <button type="button" class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1 shadow-sm"
-                                                onclick="openReturnToDeliveryModal(@item.Id, '@item.BillNo', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.CustomerName))')">
-                                            <i class="bi bi-truck"></i> ส่งคืนไปจัดส่ง
-                                        </button>
+                                        @if (isReturnedToDelivery)
+                                        {
+                                            <span class="badge py-2 px-3 fw-bold text-white shadow-sm" style="background:#475569; font-size:0.80rem;">
+                                                <i class="bi bi-truck me-1"></i>[ บิลอยู่จัดส่ง ]
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1 shadow-sm px-2 py-1 fw-bold"
+                                                    onclick="handleReturnToDeliveryClick(@item.Id, '@item.BillNo', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.CustomerName))')">
+                                                <i class="bi bi-truck"></i> ส่งคืนไปจัดส่ง
+                                            </button>
+                                        }
                                     </td>
                                 </tr>
                                 idx++;
@@ -189,7 +221,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="10" class="text-center py-5 text-muted">
+                                <td colspan="11" class="text-center py-5 text-muted">
                                     <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
                                     ไม่มีรายการบิลส่งคืนกลับมาบัญชีในขณะนี้
                                 </td>
@@ -200,7 +232,7 @@
                     {
                         <tfoot class="table-light fw-bold">
                             <tr>
-                                <td colspan="8" class="text-end">รวมทั้งสิ้น (@totalBills บิล):</td>
+                                <td colspan="9" class="text-end">รวมทั้งสิ้น (@totalBills บิล):</td>
                                 <td class="text-end text-danger fs-6">@totalAmount.ToString("N2")</td>
                                 <td></td>
                             </tr>
@@ -227,7 +259,7 @@
                 </div>
                 <div class="modal-body p-4">
                     <div class="alert alert-info py-2 px-3 small mb-3 border-0 bg-info bg-opacity-10 text-dark">
-                        <i class="bi bi-info-circle-fill text-info me-1"></i> เมื่อส่งคืนไปจัดส่งแล้ว ระบบจะปรับสถานะบิลกลับเป็น <strong>"ค้างชำระ (ปกติ)"</strong> เพื่อให้ติดตามรับชำระต่อไป
+                        <i class="bi bi-info-circle-fill text-info me-1"></i> เมื่อส่งคืนไปจัดส่งแล้ว ระบบจะปรับสถานะบิลกลับเป็น <strong>"ค้างชำระ (ปกติ)"</strong> และซิงค์ยอดไปยังหน้าการ์ดลูกหนี้ (AR Card) โดยรายการจะยังคงอยู่ในหน้ารายงานนี้เพื่อเก็บประวัติ
                     </div>
                     <div class="mb-3">
                         <label class="form-label small text-muted mb-1">เลขที่บิล / ลูกค้า</label>
@@ -253,8 +285,43 @@
     </div>
 </div>
 
+<!-- Modal: แจ้งเตือนไม่มีสิทธิ์ดำเนินการ -->
+<div class="modal fade" id="unauthorizedAlertModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-shield-x me-2"></i>การแจ้งเตือนความปลอดภัย</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="mb-3 text-danger fs-1">
+                    <i class="bi bi-exclamation-octagon-fill"></i>
+                </div>
+                <h6 class="fw-bold text-danger mb-2">ข้อผิดพลาด: สิทธิ์การเข้าถึงไม่เพียงพอ</h6>
+                <p class="text-secondary mb-0">
+                    ข้อผิดพลาด: บัญชีผู้ใช้ของคุณไม่มีสิทธิ์ในการดำเนินการส่งคืนบิลไปจัดส่ง กรุณาติดต่อหัวหน้าแผนกบัญชี
+                </p>
+            </div>
+            <div class="modal-footer bg-light justify-content-center">
+                <button type="button" class="btn btn-sm btn-secondary px-4 fw-bold" data-bs-dismiss="modal">รับทราบ / ปิด</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
 <script>
+    const isUserAuthorized = @(isAuthorized ? "true" : "false");
+
+    function handleReturnToDeliveryClick(debtId, billNo, customerName) {
+        if (!isUserAuthorized) {
+            var alertModal = new bootstrap.Modal(document.getElementById('unauthorizedAlertModal'));
+            alertModal.show();
+            return;
+        }
+        openReturnToDeliveryModal(debtId, billNo, customerName);
+    }
+
     function openReturnToDeliveryModal(debtId, billNo, customerName) {
         document.getElementById('modalDebtId').value = debtId;
         document.getElementById('modalBillInfo').innerText = billNo + ' - ' + customerName;

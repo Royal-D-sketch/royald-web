@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" />
     <style>
         body {
@@ -96,20 +96,21 @@
         </div>
     </div>
 
-    <!-- Table Section -->
+    <!-- Table Section (Including วันที่ส่งคืนบิลไปจัดส่ง) -->
     <table class="table table-bordered table-sm table-pdf w-100">
         <thead>
             <tr>
-                <th style="width: 40px;">#</th>
-                <th style="width: 100px;">เลขที่บิล</th>
+                <th style="width: 35px;">#</th>
+                <th style="width: 95px;">เลขที่บิล</th>
                 <th style="width: 80px;">วันที่บิล</th>
-                <th style="width: 85px;">รหัสลูกค้า</th>
+                <th style="width: 80px;">รหัสลูกค้า</th>
                 <th>ชื่อลูกค้า</th>
-                <th style="width: 90px;">อำเภอ/จังหวัด</th>
-                <th style="width: 100px;">ผู้แทนขาย</th>
-                <th style="width: 90px;">วันที่รับคืน</th>
+                <th style="width: 85px;">อำเภอ/จังหวัด</th>
+                <th style="width: 90px;">ผู้แทนขาย</th>
+                <th style="width: 85px;">วันที่รับคืน</th>
                 <th>เหตุผลที่ส่งคืนบัญชี</th>
-                <th style="width: 110px;">ยอดเงิน (บาท)</th>
+                <th style="width: 90px;">วันที่ส่งคืนจัดส่ง</th>
+                <th style="width: 105px;">ยอดเงิน (บาท)</th>
             </tr>
         </thead>
         <tbody>
@@ -129,27 +130,28 @@
                         <td class="text-center">@(string.IsNullOrEmpty(item.SalesRep) ? "-" : item.SalesRep)</td>
                         <td class="text-center">@(item.ReturnedToAccountDate.HasValue ? item.ReturnedToAccountDate.Value.ToString("dd/MM/yyyy") : "-")</td>
                         <td>@(item.ReturnedToAccountReason ?? item.Note ?? "-")</td>
+                        <td class="text-center">@(item.ReturnedToDeliveryDate.HasValue ? item.ReturnedToDeliveryDate.Value.ToString("dd/MM/yyyy") : "-")</td>
                         <td class="text-end fw-bold text-danger">@amt.ToString("N2")</td>
                     </tr>
                     idx++;
                 }
                 <tr class="total-row">
-                    <td colspan="9" class="text-end pe-2">รวมยอดเงินทั้งสิ้น (@totalCount บิล):</td>
+                    <td colspan="10" class="text-end pe-2">รวมยอดเงินทั้งสิ้น (@totalCount บิล):</td>
                     <td class="text-end text-danger fs-6">@totalAmount.ToString("N2")</td>
                 </tr>
             }
             else
             {
                 <tr>
-                    <td colspan="10" class="text-center py-4 text-muted">ไม่มีข้อมูลรายการบิลส่งคืนกลับมาบัญชี</td>
+                    <td colspan="11" class="text-center py-4 text-muted">ไม่มีข้อมูลรายการบิลส่งคืนกลับมาบัญชี</td>
                 </tr>
             }
         </tbody>
     </table>
 
     <div class="mt-4 pt-3 border-top text-muted small d-flex justify-content-between">
-        <div>ระบบบริหารจัดการบิลขายและการ์ดลูกหนี้ — Royal-D (Thailand) Co., Ltd.</div>
-        <div>หน้า 1 / 1</div>
+        <span>* เอกสารนี้สร้างโดยระบบอัตโนมัติของฝ่ายบัญชี</span>
+        <span>หน้า 1 / 1</span>
     </div>
 </body>
 </html>
