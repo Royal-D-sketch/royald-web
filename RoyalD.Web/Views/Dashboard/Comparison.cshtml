@@ -46,13 +46,13 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
 }
 
 /* =======================================================
-   3 BIG SUMMARY CARDS DESIGN (EXECUTIVE VERTICAL METRICS)
+   3 BIG SUMMARY CARDS DESIGN (EXECUTIVE VERTICAL 4-LINES)
    ======================================================= */
 .big-summary-card {
     background: #ffffff;
     border-radius: 20px;
     box-shadow: 0 4px 22px rgba(0,0,0,0.06);
-    border: 2px solid transparent;
+    border: 1px solid #e2e8f0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -64,19 +64,21 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
     box-shadow: 0 10px 28px rgba(0,0,0,0.11);
 }
 
-/* Card Header Colors */
+/* 1. Header Card 1: ฟ้าพาสเทลนุ่มนวล (Soft Ice Blue) */
 .card-header-iceblue {
     background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
     color: #ffffff;
     padding: 18px 20px;
     position: relative;
 }
+/* 2. Header Card 2: ชาไทยพาสเทล / ครีมอุ่น (Pastel Terracotta) */
 .card-header-warmsand {
     background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
     color: #ffffff;
     padding: 18px 20px;
     position: relative;
 }
+/* 3. Header Card 3: ฟ้าครามผ่อนคลาย (Deep Teal) */
 .card-header-deepteal {
     background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
     color: #ffffff;
@@ -84,13 +86,13 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
     position: relative;
 }
 
-/* Card Body & Metric Rows */
+/* Card Body & 4 Metric Rows */
 .big-card-body {
-    padding: 18px 20px;
+    padding: 16px 18px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    background: #fafbfc;
+    gap: 10px;
+    background: #f8fafc;
     flex-grow: 1;
 }
 
@@ -98,7 +100,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
     background: #ffffff;
     border-radius: 12px;
     padding: 12px 16px;
-    border: 1px solid #e2e8f0;
+    border: 1.5px solid #e2e8f0;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
     display: flex;
@@ -108,20 +110,20 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
 }
 .metric-row-box:hover {
     border-color: #0f766e;
-    transform: translateX(3px);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-    background: #f8fafc;
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    background: #ffffff;
 }
 .metric-row-box.active-filter {
     border-color: #0f766e !important;
     background: #f0fdfa !important;
-    box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.4) !important;
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.35) !important;
 }
 
 .metric-title {
-    font-size: 0.86rem;
+    font-size: 0.88rem;
     font-weight: 700;
-    color: #475569;
+    color: #334155;
     margin-bottom: 2px;
     display: flex;
     align-items: center;
@@ -129,18 +131,18 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
 }
 .metric-sub {
     font-size: 0.76rem;
-    color: #94a3b8;
+    color: #64748b;
     font-weight: 500;
 }
 .metric-val-num {
-    font-size: 1.28rem;
+    font-size: 1.30rem;
     font-weight: 900;
     text-align: right;
     line-height: 1.2;
     letter-spacing: -0.3px;
 }
 
-/* Collection Rate Badge (Top-Right) */
+/* Collection Rate Badge (Top-Right of Each Big Card) */
 .col-rate-badge {
     background: #ffffff;
     padding: 5px 12px;
@@ -162,6 +164,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
     color: #ffffff;
     padding: 10px 10px;
     white-space: nowrap;
+    text-align: center;
 }
 .detail-table td {
     font-size: 0.85rem;
@@ -170,7 +173,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
     white-space: nowrap;
 }
 .detail-table tbody tr:hover {
-    background-color: #f8fafc;
+    background-color: #f1f5f9;
 }
 </style>
 
@@ -212,12 +215,12 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
 </div>
 
 <!-- ============================================================== -->
-<!-- 1. ส่วนบน: 3 BIG SUMMARY CARDS LAYOUT (โชว์ตัวเลขแนวดิ่ง 4 บรรทัด) -->
+<!-- 1. ส่วนบน: 3 BIG SUMMARY CARDS (โชว์ตัวเลขแนวดิ่ง 4 บรรทัด) -->
 <!-- ============================================================== -->
 <div class="row g-4 mb-4">
-    <!-- ============================================== -->
-    <!-- BIG CARD 1: บิลเก็บสด 7 วัน (กรุงเทพฯ & ปริมณฑล) -->
-    <!-- ============================================== -->
+    <!-- ============================================================== -->
+    <!-- กล่องที่ 1 (ซ้ายสุด): บิลเก็บสด 7 วัน (กทม.&ปริมณฑล) - ฟ้าพาสเทล -->
+    <!-- ============================================================== -->
     <div class="col-12 col-lg-4">
         <div class="big-summary-card" id="card-group-1">
             <!-- Header with Collection Rate Top-Right -->
@@ -233,16 +236,16 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
 
             <!-- 4 Vertical Metric Lines -->
             <div class="big-card-body">
-                <!-- Line 1: ยอดค้างชำระทั้งหมด -->
+                <!-- บรรทัดที่ 1: ยอดจำนวนเงินค้างชำระทั้งหมด -->
                 <div class="metric-row-box" id="btn-g1-outstanding" onclick="setFilter('1', 'outstanding')" title="คลิกดูบิลค้างชำระทั้งหมดกลุ่มนี้">
                     <div>
-                        <div class="metric-title"><i class="bi bi-exclamation-circle" style="color:#0284c7;"></i> ยอดหนี้ค้างชำระทั้งหมด</div>
+                        <div class="metric-title"><i class="bi bi-exclamation-circle-fill" style="color:#0284c7;"></i> ยอดหนี้ค้างชำระทั้งหมด</div>
                         <div class="metric-sub" id="g1-outstanding-sub">จำนวน 0 บิล (ค้างชำระ)</div>
                     </div>
-                    <div class="metric-val-num text-dark" style="color:#0284c7 !important;" id="g1-outstanding-amt">0</div>
+                    <div class="metric-val-num" style="color:#0284c7;" id="g1-outstanding-amt">0</div>
                 </div>
 
-                <!-- Line 2: เกินกำหนดไม่เกิน 120 วัน -->
+                <!-- บรรทัดที่ 2: ยอดเกินกำหนดชำระไม่เกิน 120 วัน -->
                 <div class="metric-row-box" id="btn-g1-under120" onclick="setFilter('1', 'under120')" title="คลิกดูบิลเกินกำหนดไม่เกิน 120 วัน">
                     <div>
                         <div class="metric-title"><i class="bi bi-clock-history" style="color:#d97706;"></i> เกินกำหนดไม่เกิน 120 วัน</div>
@@ -251,30 +254,30 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                     <div class="metric-val-num" style="color:#b45309;" id="g1-under120-amt">0</div>
                 </div>
 
-                <!-- Line 3: เกินกำหนดเกิน 120 วัน (วิกฤต) -->
+                <!-- บรรทัดที่ 3: ยอดเกินกำหนดชำระเกิน 120 วัน (วิกฤต) -->
                 <div class="metric-row-box" id="btn-g1-over120" onclick="setFilter('1', 'over120')" title="คลิกดูบิลเกินกำหนดเกิน 120 วัน (หนี้วิกฤต)">
                     <div>
                         <div class="metric-title"><i class="bi bi-shield-fill-exclamation" style="color:#be123c;"></i> เกินกำหนดเกิน 120 วัน</div>
                         <div class="metric-sub text-danger" id="g1-over120-sub">จำนวน 0 บิล (วิกฤต)</div>
                     </div>
-                    <div class="metric-val-num" style="color:#be123c;" id="g1-over120-amt">0</div>
+                    <div class="metric-val-num" style="color:#be123c; font-weight:900;" id="g1-over120-amt">0</div>
                 </div>
 
-                <!-- Line 4: ยอดเก็บเงินสำเร็จแล้ว -->
+                <!-- บรรทัดที่ 4: ยอดเก็บเงินสดได้แล้วสำเร็จ -->
                 <div class="metric-row-box" id="btn-g1-collected" onclick="setFilter('1', 'collected')" title="คลิกดูบิลที่เก็บเงินสดสำเร็จแล้ว">
                     <div>
                         <div class="metric-title"><i class="bi bi-check-circle-fill" style="color:#059669;"></i> ยอดเก็บเงินสดได้แล้วสำเร็จ</div>
                         <div class="metric-sub" style="color:#059669;" id="g1-collected-sub">จำนวน 0 บิล (ชำระแล้ว)</div>
                     </div>
-                    <div class="metric-val-num" style="color:#059669;" id="g1-collected-amt">0</div>
+                    <div class="metric-val-num" style="color:#059669; font-weight:900;" id="g1-collected-amt">0</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ============================================== -->
-    <!-- BIG CARD 2: บิลเงินสดรวมสายเวลา (กรุงเทพฯ & ปริมณฑล) -->
-    <!-- ============================================== -->
+    <!-- ============================================================== -->
+    <!-- กล่องที่ 2 (ตรงกลาง): บิลเงินสดนโยบายรวมสายเวลา (กทม.&ปริมณฑล) - ชาไทยพาสเทล -->
+    <!-- ============================================================== -->
     <div class="col-12 col-lg-4">
         <div class="big-summary-card" id="card-group-2">
             <!-- Header with Collection Rate Top-Right -->
@@ -290,16 +293,16 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
 
             <!-- 4 Vertical Metric Lines -->
             <div class="big-card-body">
-                <!-- Line 1: ยอดค้างชำระทั้งหมด -->
+                <!-- บรรทัดที่ 1: ยอดจำนวนเงินค้างชำระทั้งหมด -->
                 <div class="metric-row-box" id="btn-g2-outstanding" onclick="setFilter('2', 'outstanding')" title="คลิกดูบิลค้างชำระทั้งหมดกลุ่มนี้">
                     <div>
-                        <div class="metric-title"><i class="bi bi-exclamation-circle" style="color:#d97706;"></i> ยอดหนี้ค้างชำระทั้งหมด</div>
+                        <div class="metric-title"><i class="bi bi-exclamation-circle-fill" style="color:#d97706;"></i> ยอดหนี้ค้างชำระทั้งหมด</div>
                         <div class="metric-sub" id="g2-outstanding-sub">จำนวน 0 บิล (ค้างชำระ)</div>
                     </div>
-                    <div class="metric-val-num text-dark" style="color:#d97706 !important;" id="g2-outstanding-amt">0</div>
+                    <div class="metric-val-num" style="color:#d97706;" id="g2-outstanding-amt">0</div>
                 </div>
 
-                <!-- Line 2: เกินกำหนดไม่เกิน 120 วัน -->
+                <!-- บรรทัดที่ 2: ยอดเกินกำหนดชำระไม่เกิน 120 วัน -->
                 <div class="metric-row-box" id="btn-g2-under120" onclick="setFilter('2', 'under120')" title="คลิกดูบิลเกินกำหนดไม่เกิน 120 วัน">
                     <div>
                         <div class="metric-title"><i class="bi bi-clock-history" style="color:#d97706;"></i> เกินกำหนดไม่เกิน 120 วัน</div>
@@ -308,30 +311,30 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                     <div class="metric-val-num" style="color:#b45309;" id="g2-under120-amt">0</div>
                 </div>
 
-                <!-- Line 3: เกินกำหนดเกิน 120 วัน (วิกฤต) -->
+                <!-- บรรทัดที่ 3: ยอดเกินกำหนดชำระเกิน 120 วัน (วิกฤต) -->
                 <div class="metric-row-box" id="btn-g2-over120" onclick="setFilter('2', 'over120')" title="คลิกดูบิลเกินกำหนดเกิน 120 วัน (หนี้วิกฤต)">
                     <div>
                         <div class="metric-title"><i class="bi bi-shield-fill-exclamation" style="color:#be123c;"></i> เกินกำหนดเกิน 120 วัน</div>
                         <div class="metric-sub text-danger" id="g2-over120-sub">จำนวน 0 บิล (วิกฤต)</div>
                     </div>
-                    <div class="metric-val-num" style="color:#be123c;" id="g2-over120-amt">0</div>
+                    <div class="metric-val-num" style="color:#be123c; font-weight:900;" id="g2-over120-amt">0</div>
                 </div>
 
-                <!-- Line 4: ยอดเก็บเงินสำเร็จแล้ว -->
+                <!-- บรรทัดที่ 4: ยอดเก็บเงินสดได้แล้วสำเร็จ -->
                 <div class="metric-row-box" id="btn-g2-collected" onclick="setFilter('2', 'collected')" title="คลิกดูบิลที่เก็บเงินสดสำเร็จแล้ว">
                     <div>
                         <div class="metric-title"><i class="bi bi-check-circle-fill" style="color:#059669;"></i> ยอดเก็บเงินสดได้แล้วสำเร็จ</div>
                         <div class="metric-sub" style="color:#059669;" id="g2-collected-sub">จำนวน 0 บิล (ชำระแล้ว)</div>
                     </div>
-                    <div class="metric-val-num" style="color:#059669;" id="g2-collected-amt">0</div>
+                    <div class="metric-val-num" style="color:#059669; font-weight:900;" id="g2-collected-amt">0</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ============================================== -->
-    <!-- BIG CARD 3: บิลค้างชำระ ต่างจังหวัด (ทุกภาค) -->
-    <!-- ============================================== -->
+    <!-- ============================================================== -->
+    <!-- กล่องที่ 3 (ขวาสุด): บิลค้างชำระ ต่างจังหวัด (ทุกภาค) - ฟ้าครามผ่อนคลาย -->
+    <!-- ============================================================== -->
     <div class="col-12 col-lg-4">
         <div class="big-summary-card" id="card-group-3">
             <!-- Header with Collection Rate Top-Right -->
@@ -347,16 +350,16 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
 
             <!-- 4 Vertical Metric Lines -->
             <div class="big-card-body">
-                <!-- Line 1: ยอดค้างชำระทั้งหมด -->
+                <!-- บรรทัดที่ 1: ยอดจำนวนเงินค้างชำระทั้งหมด -->
                 <div class="metric-row-box" id="btn-g3-outstanding" onclick="setFilter('3', 'outstanding')" title="คลิกดูบิลค้างชำระทั้งหมดกลุ่มนี้">
                     <div>
-                        <div class="metric-title"><i class="bi bi-exclamation-circle" style="color:#0f766e;"></i> ยอดหนี้ค้างชำระทั้งหมด</div>
+                        <div class="metric-title"><i class="bi bi-exclamation-circle-fill" style="color:#0f766e;"></i> ยอดหนี้ค้างชำระทั้งหมด</div>
                         <div class="metric-sub" id="g3-outstanding-sub">จำนวน 0 บิล (ค้างชำระ)</div>
                     </div>
-                    <div class="metric-val-num text-dark" style="color:#0f766e !important;" id="g3-outstanding-amt">0</div>
+                    <div class="metric-val-num" style="color:#0f766e;" id="g3-outstanding-amt">0</div>
                 </div>
 
-                <!-- Line 2: เกินกำหนดไม่เกิน 120 วัน -->
+                <!-- บรรทัดที่ 2: ยอดเกินกำหนดชำระไม่เกิน 120 วัน -->
                 <div class="metric-row-box" id="btn-g3-under120" onclick="setFilter('3', 'under120')" title="คลิกดูบิลเกินกำหนดไม่เกิน 120 วัน">
                     <div>
                         <div class="metric-title"><i class="bi bi-clock-history" style="color:#d97706;"></i> เกินกำหนดไม่เกิน 120 วัน</div>
@@ -365,22 +368,22 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                     <div class="metric-val-num" style="color:#b45309;" id="g3-under120-amt">0</div>
                 </div>
 
-                <!-- Line 3: เกินกำหนดเกิน 120 วัน (วิกฤต) -->
+                <!-- บรรทัดที่ 3: ยอดเกินกำหนดชำระเกิน 120 วัน (วิกฤต) -->
                 <div class="metric-row-box" id="btn-g3-over120" onclick="setFilter('3', 'over120')" title="คลิกดูบิลเกินกำหนดเกิน 120 วัน (หนี้วิกฤต)">
                     <div>
                         <div class="metric-title"><i class="bi bi-shield-fill-exclamation" style="color:#be123c;"></i> เกินกำหนดเกิน 120 วัน</div>
                         <div class="metric-sub text-danger" id="g3-over120-sub">จำนวน 0 บิล (วิกฤต)</div>
                     </div>
-                    <div class="metric-val-num" style="color:#be123c;" id="g3-over120-amt">0</div>
+                    <div class="metric-val-num" style="color:#be123c; font-weight:900;" id="g3-over120-amt">0</div>
                 </div>
 
-                <!-- Line 4: ยอดเก็บเงินสำเร็จแล้ว -->
+                <!-- บรรทัดที่ 4: ยอดเก็บเงินสดได้แล้วสำเร็จ -->
                 <div class="metric-row-box" id="btn-g3-collected" onclick="setFilter('3', 'collected')" title="คลิกดูบิลที่เก็บเงินสดสำเร็จแล้ว">
                     <div>
                         <div class="metric-title"><i class="bi bi-check-circle-fill" style="color:#059669;"></i> ยอดเก็บเงินสดได้แล้วสำเร็จ</div>
                         <div class="metric-sub" style="color:#059669;" id="g3-collected-sub">จำนวน 0 บิล (ชำระแล้ว)</div>
                     </div>
-                    <div class="metric-val-num" style="color:#059669;" id="g3-collected-amt">0</div>
+                    <div class="metric-val-num" style="color:#059669; font-weight:900;" id="g3-collected-amt">0</div>
                 </div>
             </div>
         </div>
