@@ -19,7 +19,7 @@
 }
 
 <style>
-/* ===== EXECUTIVE DASHBOARD STYLES ===== */
+/* ===== EXECUTIVE DASHBOARD STYLES (EXECUTIVE BUSINESS PALETTE) ===== */
 body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-serif !important; }
 
 /* Sub-Nav Bar (2 Main Pages Switcher) */
@@ -49,7 +49,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
     gap: 8px;
 }
 .ar-nav-btn:hover {
-    background: #f1f5f9;
+    background: #f0fdfa;
     color: #0f766e;
     transform: translateY(-1px);
 }
@@ -59,7 +59,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
     box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
 }
 
-/* 4 Main Top Cards */
+/* 4 Main Top Cards (Eye-Friendly Executive Palette) */
 .exec-card {
     border-radius: 16px;
     padding: 20px 22px;
@@ -78,7 +78,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
 }
 .exec-card.active-card {
     border-color: #facc15 !important;
-    box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.45), 0 8px 25px rgba(0,0,0,0.2) !important;
+    box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.5), 0 8px 25px rgba(0,0,0,0.2) !important;
 }
 .exec-card::before {
     content: '';
@@ -102,12 +102,13 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
     margin-top: 6px;
 }
 
-.theme-blue { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
-.theme-orange { background: linear-gradient(135deg, #ea580c, #c2410c); }
-.theme-red { background: linear-gradient(135deg, #dc2626, #b91c1c); }
-.theme-green { background: linear-gradient(135deg, #16a34a, #15803d); }
+/* Palette Themes */
+.theme-iceblue { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); }      /* Soft Ice Blue */
+.theme-warmsand { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); }     /* Warm Sand / Terracotta */
+.theme-crimson { background: linear-gradient(135deg, #be123c 0%, #9f1239 100%); }      /* Crimson Red (สุภาพ) */
+.theme-mint { background: linear-gradient(135deg, #059669 0%, #047857 100%); }         /* Mint Green / Sage */
 
-/* Section Cards */
+/* Section Panels */
 .chart-panel {
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.06);
@@ -220,23 +221,23 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
         <button onclick="window.print()" class="btn btn-outline-secondary btn-sm fw-bold">
             <i class="bi bi-printer"></i> พิมพ์หน้าจอ
         </button>
-        <a href="/Dashboard/Comparison" class="btn btn-warning btn-sm fw-bold text-dark">
+        <a href="/Dashboard/Comparison" class="btn btn-sm fw-bold text-white" style="background:#0f766e; border-color:#0f766e;">
             <i class="bi bi-layout-three-columns me-1"></i> ดูกระดานเปรียบเทียบ 3 ส่วน
         </a>
-        <a href="/SalesBill" class="btn btn-primary btn-sm fw-bold" style="background:#0f766e; border-color:#0f766e;">
+        <a href="/SalesBill" class="btn btn-outline-primary btn-sm fw-bold">
             <i class="bi bi-receipt"></i> บิลขายทั้งหมด
         </a>
     </div>
 </div>
 
-<!-- ===== 1. ส่วนบนสุด: กล่องแดชบอร์ดสรุปภาพรวม 4 การ์ดหลัก ===== -->
+<!-- ===== 1. ส่วนบนสุด: กล่องแดชบอร์ดสรุปภาพรวม 4 การ์ดหลัก (EXECUTIVE BUSINESS PALETTE) ===== -->
 <div class="row g-3 mb-4">
-    <!-- Card 1: 7 วัน กทม. ธีมสีน้ำเงิน -->
+    <!-- Card 1: 7 วัน กทม. ธีมสีฟ้าพาสเทลนุ่มนวล (Soft Ice Blue) -->
     <div class="col-6 col-lg-3">
-        <div class="exec-card theme-blue" id="card-cash7" onclick="selectCategory('cash7')" title="คลิกเพื่อดูรายละเอียดบิล เก็บสด 7 วัน">
+        <div class="exec-card theme-iceblue" id="card-cash7" onclick="selectCategory('cash7')" title="คลิกเพื่อดูรายละเอียดบิล เก็บสด 7 วัน">
             <div class="exec-card-label">
                 <span><i class="bi bi-buildings-fill me-1"></i> 7 วัน กทม.&ปริมณฑล</span>
-                <span class="badge bg-white text-primary fw-bold" id="badgeCount-cash7">@summary.Cash7Days.BillCount.ToString("N0") บิล</span>
+                <span class="badge bg-white fw-bold" style="color:#0284c7;" id="badgeCount-cash7">@summary.Cash7Days.BillCount.ToString("N0") บิล</span>
             </div>
             <div class="exec-card-value" id="cardAmount-cash7">@summary.Cash7Days.TotalAmount.ToString("N0")</div>
             <div class="exec-card-sub">
@@ -248,12 +249,12 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
         </div>
     </div>
 
-    <!-- Card 2: นโยบายรวมสายเวลาเงินสด กทม. ธีมสีส้ม -->
+    <!-- Card 2: นโยบายรวมสายเวลาเงินสด กทม. ธีมสีชาไทยพาสเทล / ครีมอุ่น (Warm Sand) -->
     <div class="col-6 col-lg-3">
-        <div class="exec-card theme-orange" id="card-cash10" onclick="selectCategory('cash10')" title="คลิกเพื่อดูรายละเอียดบิล เงินสดรวมสายเวลา">
+        <div class="exec-card theme-warmsand" id="card-cash10" onclick="selectCategory('cash10')" title="คลิกเพื่อดูรายละเอียดบิล เงินสดรวมสายเวลา">
             <div class="exec-card-label">
                 <span><i class="bi bi-hourglass-split me-1"></i> รวมสายเวลาเงินสด กทม.</span>
-                <span class="badge bg-white text-dark fw-bold" id="badgeCount-cash10">@summary.Cash10Days.BillCount.ToString("N0") บิล</span>
+                <span class="badge bg-white fw-bold" style="color:#b45309;" id="badgeCount-cash10">@summary.Cash10Days.BillCount.ToString("N0") บิล</span>
             </div>
             <div class="exec-card-value" id="cardAmount-cash10">@summary.Cash10Days.TotalAmount.ToString("N0")</div>
             <div class="exec-card-sub">
@@ -265,12 +266,12 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
         </div>
     </div>
 
-    <!-- Card 3: ค้างวิกฤต > 120 วัน ธีมสีแดง -->
+    <!-- Card 3: ค้างวิกฤต > 120 วัน ธีมสีแดงทับทิมสุภาพ (Crimson Red) -->
     <div class="col-6 col-lg-3">
-        <div class="exec-card theme-red" id="card-over120" onclick="selectCategory('over120')" title="คลิกเพื่อดูรายละเอียดบิล ค้างชำระเกิน 120 วัน">
+        <div class="exec-card theme-crimson" id="card-over120" onclick="selectCategory('over120')" title="คลิกเพื่อดูรายละเอียดบิล ค้างชำระเกิน 120 วัน">
             <div class="exec-card-label">
                 <span><span class="blink-icon">⚠️</span> ค้างวิกฤต > 120 วัน</span>
-                <span class="badge bg-white text-danger fw-bold" id="badgeCount-over120">@summary.Overdue120Days.BillCount.ToString("N0") บิล</span>
+                <span class="badge bg-white fw-bold" style="color:#be123c;" id="badgeCount-over120">@summary.Overdue120Days.BillCount.ToString("N0") บิล</span>
             </div>
             <div class="exec-card-value" id="cardAmount-over120">@summary.Overdue120Days.TotalAmount.ToString("N0")</div>
             <div class="exec-card-sub">
@@ -282,12 +283,12 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
         </div>
     </div>
 
-    <!-- Card 4: ยอดเก็บสำเร็จประจำเดือน ธีมสีเขียว -->
+    <!-- Card 4: ยอดเก็บสำเร็จประจำเดือน ธีมสีเขียวมินต์พาสเทล / ใบไม้ (Mint Green) -->
     <div class="col-6 col-lg-3">
-        <div class="exec-card theme-green" id="card-collected" onclick="selectCategory('collected')" title="คลิกเพื่อดูรายละเอียดบิล ยอดเก็บเงินสำเร็จ">
+        <div class="exec-card theme-mint" id="card-collected" onclick="selectCategory('collected')" title="คลิกเพื่อดูรายละเอียดบิล ยอดเก็บเงินสำเร็จ">
             <div class="exec-card-label">
                 <span><i class="bi bi-check-circle-fill me-1"></i> ยอดเก็บสำเร็จ</span>
-                <span class="badge bg-white text-success fw-bold" id="badgeCount-collected">@summary.Collected.BillCount.ToString("N0") บิล</span>
+                <span class="badge bg-white fw-bold" style="color:#047857;" id="badgeCount-collected">@summary.Collected.BillCount.ToString("N0") บิล</span>
             </div>
             <div class="exec-card-value" id="cardAmount-collected">@summary.Collected.TotalAmount.ToString("N0")</div>
             <div class="exec-card-sub">
@@ -306,7 +307,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
     <div class="col-12 col-lg-6">
         <div class="chart-panel">
             <div class="panel-title">
-                <i class="bi bi-pie-chart-fill" style="color:#0284c7;"></i>
+                <i class="bi bi-pie-chart-fill" style="color:#0f766e;"></i>
                 กราฟวงกลมสรุปสัดส่วนหนี้ค้างชำระรวม (AR Allocation Pie Chart)
             </div>
             <div class="d-flex justify-content-center align-items-center" style="position:relative; min-height: 270px;">
@@ -326,54 +327,54 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                 สรุปมูลค่าหนี้และสัดส่วนตามเกณฑ์พื้นที่และเวลา (Strategic AR Breakdown)
             </div>
 
-            <!-- Group 1: 7 วัน กทม. -->
-            <div class="p-3 mb-2 rounded-3 border" style="background:#eff6ff; border-color:#bfdbfe !important;">
+            <!-- Group 1: 7 วัน กทม. (Soft Ice Blue) -->
+            <div class="p-3 mb-2 rounded-3 border" style="background:#f0f9ff; border-color:#bae6fd !important;">
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="fw-bold" style="color:#1d4ed8;">
-                        <i class="bi bi-square-fill me-1" style="color:#2563eb;"></i> 1. บิลเก็บสด 7 วัน (กทม. & ปริมณฑล)
+                    <span class="fw-bold" style="color:#0369a1;">
+                        <i class="bi bi-square-fill me-1" style="color:#0284c7;"></i> 1. บิลเก็บสด 7 วัน (กทม. & ปริมณฑล)
                     </span>
-                    <span class="badge bg-primary px-2 py-1" id="pctText-cash7">@pctCash7.ToString("0.0")%</span>
+                    <span class="badge px-2 py-1" style="background:#0284c7; color:#fff;" id="pctText-cash7">@pctCash7.ToString("0.0")%</span>
                 </div>
                 <div class="d-flex justify-content-between text-muted small">
                     <span>ยอดหนี้คงค้าง: <strong class="text-dark fs-6" id="breakdownAmount-cash7">@pieCash7.ToString("N0")</strong> บาท</span>
                     <span>จำนวน: <strong class="text-dark" id="breakdownCount-cash7">@summary.Cash7Days.BillCount.ToString("N0")</strong> บิล</span>
                 </div>
                 <div class="progress mt-2" style="height: 6px;">
-                    <div class="progress-bar bg-primary" id="progBar-cash7" role="progressbar" style="width: @pctCash7%;"></div>
+                    <div class="progress-bar" id="progBar-cash7" role="progressbar" style="width: @pctCash7%; background:#0284c7;"></div>
                 </div>
             </div>
 
-            <!-- Group 2: รวมสายเวลา กทม. -->
-            <div class="p-3 mb-2 rounded-3 border" style="background:#fff7ed; border-color:#fed7aa !important;">
+            <!-- Group 2: รวมสายเวลา กทม. (Warm Sand / Terracotta) -->
+            <div class="p-3 mb-2 rounded-3 border" style="background:#fffbeb; border-color:#fde68a !important;">
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="fw-bold" style="color:#c2410c;">
-                        <i class="bi bi-square-fill me-1" style="color:#ea580c;"></i> 2. บิลเงินสดรวมสายเวลาต่อเนื่อง (กทม. & ปริมณฑล)
+                    <span class="fw-bold" style="color:#b45309;">
+                        <i class="bi bi-square-fill me-1" style="color:#d97706;"></i> 2. บิลเงินสดรวมสายเวลาต่อเนื่อง (กทม. & ปริมณฑล)
                     </span>
-                    <span class="badge bg-warning text-dark px-2 py-1" id="pctText-cash10">@pctCashTimeline.ToString("0.0")%</span>
+                    <span class="badge px-2 py-1" style="background:#d97706; color:#fff;" id="pctText-cash10">@pctCashTimeline.ToString("0.0")%</span>
                 </div>
                 <div class="d-flex justify-content-between text-muted small">
                     <span>ยอดหนี้คงค้าง: <strong class="text-dark fs-6" id="breakdownAmount-cash10">@pieCashTimeline.ToString("N0")</strong> บาท</span>
                     <span>จำนวน: <strong class="text-dark" id="breakdownCount-cash10">@summary.Cash10Days.BillCount.ToString("N0")</strong> บิล</span>
                 </div>
                 <div class="progress mt-2" style="height: 6px;">
-                    <div class="progress-bar bg-warning" id="progBar-cash10" role="progressbar" style="width: @pctCashTimeline%;"></div>
+                    <div class="progress-bar" id="progBar-cash10" role="progressbar" style="width: @pctCashTimeline%; background:#d97706;"></div>
                 </div>
             </div>
 
-            <!-- Group 3: ต่างจังหวัดทั้งหมด -->
-            <div class="p-3 mb-2 rounded-3 border" style="background:#f0fdf4; border-color:#bbf7d0 !important;">
+            <!-- Group 3: ต่างจังหวัดทั้งหมด (Deep Teal / Ocean Blue) -->
+            <div class="p-3 mb-2 rounded-3 border" style="background:#f0fdfa; border-color:#99f6e4 !important;">
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="fw-bold" style="color:#15803d;">
-                        <i class="bi bi-square-fill me-1" style="color:#16a34a;"></i> 3. บิลค้างชำระฝั่งต่างจังหวัดทั้งหมด
+                    <span class="fw-bold" style="color:#0f766e;">
+                        <i class="bi bi-square-fill me-1" style="color:#0f766e;"></i> 3. บิลค้างชำระฝั่งต่างจังหวัดทั้งหมด
                     </span>
-                    <span class="badge bg-success px-2 py-1" id="pctText-upcountry">@pctUpcountry.ToString("0.0")%</span>
+                    <span class="badge px-2 py-1" style="background:#0f766e; color:#fff;" id="pctText-upcountry">@pctUpcountry.ToString("0.0")%</span>
                 </div>
                 <div class="d-flex justify-content-between text-muted small">
                     <span>ยอดหนี้คงค้าง: <strong class="text-dark fs-6" id="breakdownAmount-upcountry">@pieUpcountry.ToString("N0")</strong> บาท</span>
                     <span>จำนวน: <strong class="text-dark" id="breakdownCount-upcountry">@summary.UpcountryDebts.BillCount.ToString("N0")</strong> บิล</span>
                 </div>
                 <div class="progress mt-2" style="height: 6px;">
-                    <div class="progress-bar bg-success" id="progBar-upcountry" role="progressbar" style="width: @pctUpcountry%;"></div>
+                    <div class="progress-bar" id="progBar-upcountry" role="progressbar" style="width: @pctUpcountry%; background:#0f766e;"></div>
                 </div>
             </div>
 
@@ -403,10 +404,10 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
 
         <!-- Export Buttons -->
         <div class="d-flex gap-2">
-            <button type="button" class="btn btn-success btn-sm fw-bold px-3" onclick="triggerExportExcel()" title="ส่งออกไฟล์ Excel สำหรับข้อมูลที่กรองอยู่">
+            <button type="button" class="btn btn-success btn-sm fw-bold px-3 shadow-sm" onclick="triggerExportExcel()" title="ส่งออกไฟล์ Excel สำหรับข้อมูลที่กรองอยู่">
                 <i class="bi bi-file-earmark-excel-fill me-1"></i> Export Excel
             </button>
-            <button type="button" class="btn btn-danger btn-sm fw-bold px-3" onclick="triggerExportPdf()" title="ส่งออกไฟล์ PDF สำหรับข้อมูลที่กรองอยู่">
+            <button type="button" class="btn btn-danger btn-sm fw-bold px-3 shadow-sm" onclick="triggerExportPdf()" title="ส่งออกไฟล์ PDF สำหรับข้อมูลที่กรองอยู่">
                 <i class="bi bi-file-earmark-pdf-fill me-1"></i> Export PDF
             </button>
         </div>
@@ -417,19 +418,19 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
         <button type="button" class="btn btn-outline-secondary category-btn active" id="pill-all" onclick="selectCategory('all')">
             ทั้งหมด (@drilldownBills.Count.ToString("N0"))
         </button>
-        <button type="button" class="btn btn-outline-primary category-btn" id="pill-cash7" onclick="selectCategory('cash7')">
+        <button type="button" class="btn category-btn" style="color:#0284c7; border-color:#0284c7;" id="pill-cash7" onclick="selectCategory('cash7')">
             🏢 เก็บสด 7 วัน กทม. (@summary.Cash7Days.BillCount.ToString("N0"))
         </button>
-        <button type="button" class="btn btn-outline-warning category-btn text-dark" id="pill-cash10" onclick="selectCategory('cash10')">
+        <button type="button" class="btn category-btn" style="color:#b45309; border-color:#d97706;" id="pill-cash10" onclick="selectCategory('cash10')">
             ⏳ รวมสายเวลาเงินสด กทม. (@summary.Cash10Days.BillCount.ToString("N0"))
         </button>
-        <button type="button" class="btn btn-outline-success category-btn" id="pill-upcountry" onclick="selectCategory('upcountry')">
+        <button type="button" class="btn category-btn" style="color:#0f766e; border-color:#0f766e;" id="pill-upcountry" onclick="selectCategory('upcountry')">
             🚚 ต่างจังหวัดทั้งหมด (@summary.UpcountryDebts.BillCount.ToString("N0"))
         </button>
-        <button type="button" class="btn btn-outline-danger category-btn" id="pill-over120" onclick="selectCategory('over120')">
+        <button type="button" class="btn category-btn" style="color:#be123c; border-color:#be123c;" id="pill-over120" onclick="selectCategory('over120')">
             ⚠️ ค้างชำระ > 120 วัน (@summary.Overdue120Days.BillCount.ToString("N0"))
         </button>
-        <button type="button" class="btn btn-outline-success category-btn" id="pill-collected" onclick="selectCategory('collected')">
+        <button type="button" class="btn category-btn" style="color:#047857; border-color:#059669;" id="pill-collected" onclick="selectCategory('collected')">
             ✅ ยอดเก็บสำเร็จ (@summary.Collected.BillCount.ToString("N0"))
         </button>
     </div>
@@ -513,15 +514,15 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                         <td class="text-center">
                             @if (b.IsPaid)
                             {
-                                <span class="badge bg-success">ชำระแล้ว</span>
+                                <span class="badge" style="background:#059669; color:#fff;">ชำระแล้ว</span>
                             }
                             else if (b.AgingDays > 120)
                             {
-                                <span class="badge bg-danger">เกิน @b.AgingDays วัน</span>
+                                <span class="badge" style="background:#be123c; color:#fff;">เกิน @b.AgingDays วัน</span>
                             }
                             else if (b.AgingDays > 0)
                             {
-                                <span class="badge bg-warning text-dark">@b.AgingDays วัน</span>
+                                <span class="badge" style="background:#d97706; color:#fff;">@b.AgingDays วัน</span>
                             }
                             else
                             {
@@ -581,9 +582,9 @@ function initPieChart() {
             datasets: [{
                 data: [@pieCash7, @pieCashTimeline, @pieUpcountry],
                 backgroundColor: [
-                    '#2563eb', // สีน้ำเงิน
-                    '#ea580c', // สีส้ม
-                    '#16a34a'  // สีเขียว
+                    '#0284c7', // 1. ฟ้าพาสเทลนุ่มนวล (Soft Ice Blue)
+                    '#d97706', // 2. ชาไทยพาสเทล / ครีมอุ่น (Warm Sand)
+                    '#0f766e'  // 3. ฟ้าครามสบายตา / ฟ้าน้ำทะเลเข้ม (Deep Teal)
                 ],
                 borderColor: '#ffffff',
                 borderWidth: 2
@@ -615,7 +616,7 @@ function initPieChart() {
     });
 }
 
-function selectCategory(cat) {
+function selectCategory(cat, autoScroll = true) {
     currentCategory = cat;
 
     // Update active state on top cards
@@ -633,6 +634,11 @@ function selectCategory(cat) {
 
     // Apply filters
     applyFilters();
+
+    // Smooth scroll down to table
+    if (autoScroll) {
+        document.getElementById('drilldownSection')?.scrollIntoView({ behavior: 'smooth' });
+    }
 }
 
 function applyFilters() {

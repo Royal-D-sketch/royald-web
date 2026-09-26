@@ -636,28 +636,28 @@ namespace RoyalD.Web.Controllers
             if (section == "1")
             {
                 var ws1 = package.Workbook.Worksheets.Add("7 วัน กทม.");
-                buildSheet(ws1, "1. บิลเก็บสด 7 วัน (กทม.&ปริมณฑล)", list1, Color.FromArgb(37, 99, 235));
+                buildSheet(ws1, "1. บิลเก็บสด 7 วัน (กทม.&ปริมณฑล)", list1, Color.FromArgb(2, 132, 199));
             }
             else if (section == "2")
             {
                 var ws2 = package.Workbook.Worksheets.Add("รวมสายเวลา กทม.");
-                buildSheet(ws2, "2. บิลเงินสดนโยบายรวมสายเวลา (กทม.&ปริมณฑล)", list2, Color.FromArgb(234, 88, 12));
+                buildSheet(ws2, "2. บิลเงินสดนโยบายรวมสายเวลา (กทม.&ปริมณฑล)", list2, Color.FromArgb(217, 119, 6));
             }
             else if (section == "3")
             {
                 var ws3 = package.Workbook.Worksheets.Add("ต่างจังหวัด");
-                buildSheet(ws3, "3. บิลค้างชำระ ต่างจังหวัด (ทุกภาค)", list3, Color.FromArgb(16, 149, 106));
+                buildSheet(ws3, "3. บิลค้างชำระ ต่างจังหวัด (ทุกภาค)", list3, Color.FromArgb(15, 118, 110));
             }
             else
             {
                 var ws1 = package.Workbook.Worksheets.Add("1. 7 วัน กทม.");
-                buildSheet(ws1, "1. บิลเก็บสด 7 วัน (กทม.&ปริมณฑล)", list1, Color.FromArgb(37, 99, 235));
+                buildSheet(ws1, "1. บิลเก็บสด 7 วัน (กทม.&ปริมณฑล)", list1, Color.FromArgb(2, 132, 199));
 
                 var ws2 = package.Workbook.Worksheets.Add("2. รวมสายเวลา กทม.");
-                buildSheet(ws2, "2. บิลเงินสดนโยบายรวมสายเวลา (กทม.&ปริมณฑล)", list2, Color.FromArgb(234, 88, 12));
+                buildSheet(ws2, "2. บิลเงินสดนโยบายรวมสายเวลา (กทม.&ปริมณฑล)", list2, Color.FromArgb(217, 119, 6));
 
                 var ws3 = package.Workbook.Worksheets.Add("3. ต่างจังหวัด");
-                buildSheet(ws3, "3. บิลค้างชำระ ต่างจังหวัด (ทุกภาค)", list3, Color.FromArgb(16, 149, 106));
+                buildSheet(ws3, "3. บิลค้างชำระ ต่างจังหวัด (ทุกภาค)", list3, Color.FromArgb(15, 118, 110));
             }
 
             var fileBytes = package.GetAsByteArray();

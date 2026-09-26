@@ -34,7 +34,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
     gap: 8px;
 }
 .ar-nav-btn:hover {
-    background: #f1f5f9;
+    background: #f0fdfa;
     color: #0f766e;
     transform: translateY(-1px);
 }
@@ -54,6 +54,12 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
     height: 100%;
     position: relative;
     overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.summary-bar-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
 }
 .summary-bar-card.highlight {
     background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
@@ -75,7 +81,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
     line-height: 1.2;
 }
 
-/* 3 Columns Comparison Cards */
+/* 3 Columns Comparison Cards (Eye-Friendly Executive Palette) */
 .col-card {
     background: #ffffff;
     border-radius: 16px;
@@ -93,9 +99,14 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
     flex-direction: column;
     gap: 6px;
 }
-.col-card-header.blue { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
-.col-card-header.orange { background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); }
-.col-card-header.green { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); }
+/* Column 1: ฟ้าพาสเทลนุ่มนวล (Soft Ice Blue) */
+.col-card-header.iceblue { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); }
+
+/* Column 2: ชาไทยพาสเทล / ครีมอุ่น (Warm Sand / Terracotta) */
+.col-card-header.warmsand { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); }
+
+/* Column 3: ฟ้าครามสบายตา / ฟ้าน้ำทะเลเข้ม (Deep Teal / Ocean Blue) */
+.col-card-header.deepteal { background: linear-gradient(135deg, #0f766e 0%, #115e59 100%); }
 
 .col-header-title {
     font-size: 1rem;
@@ -116,12 +127,15 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
 .comp-table th {
     font-size: 0.78rem;
     font-weight: 700;
-    background-color: #1e293b;
     color: #ffffff;
     padding: 8px 6px;
     white-space: nowrap;
     text-align: center;
 }
+.th-iceblue th { background-color: #0284c7 !important; }
+.th-warmsand th { background-color: #d97706 !important; }
+.th-deepteal th { background-color: #0f766e !important; }
+
 .comp-table td {
     font-size: 0.80rem;
     vertical-align: middle;
@@ -132,7 +146,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
     background-color: #f8fafc;
 }
 .table-scroll-container {
-    max-height: 520px;
+    max-height: 540px;
     overflow-y: auto;
     overflow-x: auto;
 }
@@ -156,7 +170,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
         </h4>
         <small class="text-muted">
             <i class="bi bi-calendar3"></i>
-            เปรียบเทียบโครงสร้าง 10 คอลัมน์คู่ขนานระหว่าง 7 วัน กทม. / รวมสายเวลา กทม. / ต่างจังหวัด
+            เปรียบเทียบโครงสร้าง 10 คอลัมน์คู่ขนานระหว่าง 7 วัน กทม. / รวมสายเวลา กทม. / ต่างจังหวัด (พาเลทสีสบายตา Executive Palette)
         </small>
     </div>
     <div class="d-flex gap-2 flex-wrap">
@@ -174,52 +188,52 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
 
 <!-- ===== 1. กล่องแดชบอร์ดสรุป 4 ตัวชี้วัดหลัก ===== -->
 <div class="row g-3 mb-4">
-    <!-- Metric 1: Collection Rate -->
+    <!-- Metric 1: Collection Rate (Mint Green) -->
     <div class="col-6 col-md-3">
-        <div class="summary-bar-card highlight">
-            <div class="summary-bar-label text-success">
+        <div class="summary-bar-card highlight" onclick="window.location.href='/Dashboard'" title="กลับไปดูหน้าสรุปภาพรวม">
+            <div class="summary-bar-label" style="color:#047857;">
                 <i class="bi bi-graph-up-arrow"></i> % Collection Rate
             </div>
-            <div class="summary-bar-value text-success" id="boardCollectionRate">
+            <div class="summary-bar-value" style="color:#047857;" id="boardCollectionRate">
                 @summary.CollectionRate.ToString("0.00")%
             </div>
-            <small class="text-success fw-bold" style="font-size:0.75rem;">[ ยอดเก็บได้ ÷ ยอดขายรวม ] x 100</small>
+            <small class="fw-bold" style="color:#059669; font-size:0.75rem;">[ ยอดเก็บได้ ÷ ยอดขายรวม ] x 100</small>
         </div>
     </div>
 
-    <!-- Metric 2: ยอดขายรวม -->
+    <!-- Metric 2: ยอดขายรวม (Soft Ice Blue) -->
     <div class="col-6 col-md-3">
-        <div class="summary-bar-card">
-            <div class="summary-bar-label">
-                <i class="bi bi-receipt text-primary"></i> ยอดขายรวมทั้งหมด
+        <div class="summary-bar-card" onclick="document.getElementById('compSearchBill')?.focus()" title="ค้นหาบิลขายทั้งหมด">
+            <div class="summary-bar-label" style="color:#0369a1;">
+                <i class="bi bi-receipt"></i> ยอดขายรวมทั้งหมด
             </div>
-            <div class="summary-bar-value" id="boardTotalSales">
+            <div class="summary-bar-value" style="color:#0284c7;" id="boardTotalSales">
                 @summary.TotalSalesAmount.ToString("N0")
             </div>
             <small class="text-muted" style="font-size:0.75rem;">มูลค่าบิลขายทั้งหมดในระบบ</small>
         </div>
     </div>
 
-    <!-- Metric 3: ยอดเก็บสำเร็จ -->
+    <!-- Metric 3: ยอดเก็บสำเร็จ (Mint Green) -->
     <div class="col-6 col-md-3">
-        <div class="summary-bar-card">
-            <div class="summary-bar-label">
-                <i class="bi bi-check-circle-fill text-success"></i> ยอดเก็บเงินสำเร็จ
+        <div class="summary-bar-card" onclick="window.location.href='/Dashboard'" title="ดูรายละเอียดบิลเก็บสำเร็จ">
+            <div class="summary-bar-label" style="color:#047857;">
+                <i class="bi bi-check-circle-fill"></i> ยอดเก็บเงินสำเร็จ
             </div>
-            <div class="summary-bar-value text-success" id="boardTotalCollected">
+            <div class="summary-bar-value" style="color:#059669;" id="boardTotalCollected">
                 @summary.TotalCollectedAmount.ToString("N0")
             </div>
             <small class="text-muted" style="font-size:0.75rem;">@summary.Collected.BillCount.ToString("N0") บิลที่ชำระเงินแล้ว</small>
         </div>
     </div>
 
-    <!-- Metric 4: ยอดหนี้คงค้างรวม -->
+    <!-- Metric 4: ยอดหนี้คงค้างรวม (Crimson Red) -->
     <div class="col-6 col-md-3">
-        <div class="summary-bar-card">
-            <div class="summary-bar-label">
-                <i class="bi bi-exclamation-circle-fill text-danger"></i> ยอดหนี้คงค้างรวม (AR)
+        <div class="summary-bar-card" onclick="document.getElementById('table3')?.scrollIntoView({behavior:'smooth'})" title="ยอดรวมหนี้ทั้ง 3 ตาราง">
+            <div class="summary-bar-label" style="color:#be123c;">
+                <i class="bi bi-exclamation-circle-fill"></i> ยอดหนี้คงค้างรวม (AR)
             </div>
-            <div class="summary-bar-value text-danger" id="boardTotalOutstanding">
+            <div class="summary-bar-value" style="color:#be123c;" id="boardTotalOutstanding">
                 @summary.TotalOutstandingAmount.ToString("N0")
             </div>
             <small class="text-muted" style="font-size:0.75rem;">ยอดรวมหนี้ทั้ง 3 ตารางด้านล่าง</small>
@@ -257,15 +271,15 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
 <!-- ===== 3. ตาราง 3 ส่วนเรียงต่อกันในแนวนอน (3 COLUMNS COMPARISON LAYOUT) ===== -->
 <div class="row g-3">
     <!-- ============================================== -->
-    <!-- COLUMN 1: ตารางที่ 1 (บิลเก็บสด 7 วัน กทม.&ปริมณฑล) -->
+    <!-- COLUMN 1: ตารางที่ 1 (บิลเก็บสด 7 วัน กทม.&ปริมณฑล) - ธีมสีฟ้าพาสเทลนุ่มนวล -->
     <!-- ============================================== -->
-    <div class="col-12 col-xl-4">
+    <div class="col-12 col-xl-4" id="section-col-1">
         <div class="col-card">
-            <div class="col-card-header blue">
+            <div class="col-card-header iceblue">
                 <div class="col-header-title">
                     <span><i class="bi bi-buildings-fill me-1"></i> ตารางที่ 1: 7 วัน กทม.</span>
                     <div class="d-flex gap-1">
-                        <button type="button" class="btn btn-light btn-sm py-0 px-2 fw-bold text-primary" onclick="exportSectionExcel('1')" title="Export Excel ตารางที่ 1">
+                        <button type="button" class="btn btn-light btn-sm py-0 px-2 fw-bold" style="color:#0284c7;" onclick="exportSectionExcel('1')" title="Export Excel ตารางที่ 1">
                             <i class="bi bi-file-earmark-excel-fill"></i>
                         </button>
                         <button type="button" class="btn btn-danger btn-sm py-0 px-2 fw-bold" onclick="exportSectionPdf('1')" title="Export PDF ตารางที่ 1">
@@ -281,7 +295,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
 
             <!-- Table 1 (10 Columns) -->
             <div class="table-scroll-container">
-                <table class="table table-sm table-bordered table-hover align-middle comp-table mb-0" id="table1">
+                <table class="table table-sm table-bordered table-hover align-middle comp-table th-iceblue mb-0" id="table1">
                     <thead class="sticky-top">
                         <tr>
                             <th>#</th>
@@ -312,7 +326,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                                 data-salesrep="@b.SalesRep"
                                 data-amount="@b.Amount">
                                 <td class="text-center text-muted r-idx">@(i + 1)</td>
-                                <td class="text-center fw-bold"><span class="badge bg-light text-primary border">@b.BillNo</span></td>
+                                <td class="text-center fw-bold"><span class="badge bg-light border" style="color:#0284c7;">@b.BillNo</span></td>
                                 <td class="text-center">@b.BillDate.ToString("dd/MM/yy")</td>
                                 <td class="text-center"><code>@b.CustomerCode</code></td>
                                 <td class="fw-bold text-dark text-truncate" style="max-width:130px;" title="@b.CustomerName">@b.CustomerName</td>
@@ -320,15 +334,15 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                                 <td>@b.Province</td>
                                 <td class="text-center">@(b.Credit > 0 ? b.Credit.ToString() : "สด")</td>
                                 <td class="text-center">@(b.AgingDays > 0 ? $"{b.AgingDays}ว." : "-")</td>
-                                <td class="text-end fw-bold text-primary">@b.Amount.ToString("N2")</td>
+                                <td class="text-end fw-bold" style="color:#0284c7;">@b.Amount.ToString("N2")</td>
                                 <td class="text-muted text-truncate" style="max-width:90px;" title="@b.SalesRep">@b.SalesRep</td>
                             </tr>
                         }
                     </tbody>
-                    <tfoot class="table-light sticky-bottom" style="font-weight: 800; border-top: 2px solid #2563eb;">
+                    <tfoot class="table-light sticky-bottom" style="font-weight: 800; border-top: 2px solid #0284c7;">
                         <tr>
                             <td colspan="9" class="text-end py-1">รวม (<span id="visibleCount1">@Model.Table1_Cash7Bkk.Count.ToString("N0")</span> รายการ):</td>
-                            <td class="text-end text-primary py-1 fs-7" id="visibleSum1">@Model.Table1_TotalAmount.ToString("N2")</td>
+                            <td class="text-end py-1 fs-7" style="color:#0284c7;" id="visibleSum1">@Model.Table1_TotalAmount.ToString("N2")</td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -338,15 +352,15 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
     </div>
 
     <!-- ============================================== -->
-    <!-- COLUMN 2: ตารางที่ 2 (บิลเงินสดนโยบายรวมสายเวลา กทม.&ปริมณฑล) -->
+    <!-- COLUMN 2: ตารางที่ 2 (บิลเงินสดนโยบายรวมสายเวลา กทม.&ปริมณฑล) - ธีมสีชาไทยพาสเทล / ครีมอุ่น -->
     <!-- ============================================== -->
-    <div class="col-12 col-xl-4">
+    <div class="col-12 col-xl-4" id="section-col-2">
         <div class="col-card">
-            <div class="col-card-header orange">
+            <div class="col-card-header warmsand">
                 <div class="col-header-title">
                     <span><i class="bi bi-hourglass-split me-1"></i> ตารางที่ 2: รวมสายเวลา กทม.</span>
                     <div class="d-flex gap-1">
-                        <button type="button" class="btn btn-light btn-sm py-0 px-2 fw-bold text-warning" onclick="exportSectionExcel('2')" title="Export Excel ตารางที่ 2">
+                        <button type="button" class="btn btn-light btn-sm py-0 px-2 fw-bold" style="color:#d97706;" onclick="exportSectionExcel('2')" title="Export Excel ตารางที่ 2">
                             <i class="bi bi-file-earmark-excel-fill"></i>
                         </button>
                         <button type="button" class="btn btn-danger btn-sm py-0 px-2 fw-bold" onclick="exportSectionPdf('2')" title="Export PDF ตารางที่ 2">
@@ -362,7 +376,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
 
             <!-- Table 2 (10 Columns) -->
             <div class="table-scroll-container">
-                <table class="table table-sm table-bordered table-hover align-middle comp-table mb-0" id="table2">
+                <table class="table table-sm table-bordered table-hover align-middle comp-table th-warmsand mb-0" id="table2">
                     <thead class="sticky-top">
                         <tr>
                             <th>#</th>
@@ -393,7 +407,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                                 data-salesrep="@b.SalesRep"
                                 data-amount="@b.Amount">
                                 <td class="text-center text-muted r-idx">@(i + 1)</td>
-                                <td class="text-center fw-bold"><span class="badge bg-light text-dark border">@b.BillNo</span></td>
+                                <td class="text-center fw-bold"><span class="badge bg-light border" style="color:#d97706;">@b.BillNo</span></td>
                                 <td class="text-center">@b.BillDate.ToString("dd/MM/yy")</td>
                                 <td class="text-center"><code>@b.CustomerCode</code></td>
                                 <td class="fw-bold text-dark text-truncate" style="max-width:130px;" title="@b.CustomerName">@b.CustomerName</td>
@@ -401,15 +415,15 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                                 <td>@b.Province</td>
                                 <td class="text-center">@(b.Credit > 0 ? b.Credit.ToString() : "สด")</td>
                                 <td class="text-center">@(b.AgingDays > 0 ? $"{b.AgingDays}ว." : "-")</td>
-                                <td class="text-end fw-bold text-dark" style="color:#c2410c;">@b.Amount.ToString("N2")</td>
+                                <td class="text-end fw-bold" style="color:#b45309;">@b.Amount.ToString("N2")</td>
                                 <td class="text-muted text-truncate" style="max-width:90px;" title="@b.SalesRep">@b.SalesRep</td>
                             </tr>
                         }
                     </tbody>
-                    <tfoot class="table-light sticky-bottom" style="font-weight: 800; border-top: 2px solid #ea580c;">
+                    <tfoot class="table-light sticky-bottom" style="font-weight: 800; border-top: 2px solid #d97706;">
                         <tr>
                             <td colspan="9" class="text-end py-1">รวม (<span id="visibleCount2">@Model.Table2_CashTimelineBkk.Count.ToString("N0")</span> รายการ):</td>
-                            <td class="text-end py-1 fs-7" style="color:#c2410c;" id="visibleSum2">@Model.Table2_TotalAmount.ToString("N2")</td>
+                            <td class="text-end py-1 fs-7" style="color:#b45309;" id="visibleSum2">@Model.Table2_TotalAmount.ToString("N2")</td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -419,15 +433,15 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
     </div>
 
     <!-- ============================================== -->
-    <!-- COLUMN 3: ตารางที่ 3 (บิลค้างชำระ ต่างจังหวัด ทุกภาค) -->
+    <!-- COLUMN 3: ตารางที่ 3 (บิลค้างชำระ ต่างจังหวัด ทุกภาค) - ธีมสีฟ้าครามสบายตา / ฟ้าน้ำทะเลเข้ม -->
     <!-- ============================================== -->
-    <div class="col-12 col-xl-4">
+    <div class="col-12 col-xl-4" id="section-col-3">
         <div class="col-card">
-            <div class="col-card-header green">
+            <div class="col-card-header deepteal">
                 <div class="col-header-title">
                     <span><i class="bi bi-geo-alt-fill me-1"></i> ตารางที่ 3: ต่างจังหวัด ทุกภาค</span>
                     <div class="d-flex gap-1">
-                        <button type="button" class="btn btn-light btn-sm py-0 px-2 fw-bold text-success" onclick="exportSectionExcel('3')" title="Export Excel ตารางที่ 3">
+                        <button type="button" class="btn btn-light btn-sm py-0 px-2 fw-bold" style="color:#0f766e;" onclick="exportSectionExcel('3')" title="Export Excel ตารางที่ 3">
                             <i class="bi bi-file-earmark-excel-fill"></i>
                         </button>
                         <button type="button" class="btn btn-danger btn-sm py-0 px-2 fw-bold" onclick="exportSectionPdf('3')" title="Export PDF ตารางที่ 3">
@@ -443,7 +457,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
 
             <!-- Table 3 (10 Columns) -->
             <div class="table-scroll-container">
-                <table class="table table-sm table-bordered table-hover align-middle comp-table mb-0" id="table3">
+                <table class="table table-sm table-bordered table-hover align-middle comp-table th-deepteal mb-0" id="table3">
                     <thead class="sticky-top">
                         <tr>
                             <th>#</th>
@@ -474,7 +488,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                                 data-salesrep="@b.SalesRep"
                                 data-amount="@b.Amount">
                                 <td class="text-center text-muted r-idx">@(i + 1)</td>
-                                <td class="text-center fw-bold"><span class="badge bg-light text-success border">@b.BillNo</span></td>
+                                <td class="text-center fw-bold"><span class="badge bg-light border" style="color:#0f766e;">@b.BillNo</span></td>
                                 <td class="text-center">@b.BillDate.ToString("dd/MM/yy")</td>
                                 <td class="text-center"><code>@b.CustomerCode</code></td>
                                 <td class="fw-bold text-dark text-truncate" style="max-width:130px;" title="@b.CustomerName">@b.CustomerName</td>
@@ -482,15 +496,15 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                                 <td>@b.Province</td>
                                 <td class="text-center">@(b.Credit > 0 ? b.Credit.ToString() : "สด")</td>
                                 <td class="text-center">@(b.AgingDays > 0 ? $"{b.AgingDays}ว." : "-")</td>
-                                <td class="text-end fw-bold text-success">@b.Amount.ToString("N2")</td>
+                                <td class="text-end fw-bold" style="color:#0f766e;">@b.Amount.ToString("N2")</td>
                                 <td class="text-muted text-truncate" style="max-width:90px;" title="@b.SalesRep">@b.SalesRep</td>
                             </tr>
                         }
                     </tbody>
-                    <tfoot class="table-light sticky-bottom" style="font-weight: 800; border-top: 2px solid #16a34a;">
+                    <tfoot class="table-light sticky-bottom" style="font-weight: 800; border-top: 2px solid #0f766e;">
                         <tr>
                             <td colspan="9" class="text-end py-1">รวม (<span id="visibleCount3">@Model.Table3_Upcountry.Count.ToString("N0")</span> รายการ):</td>
-                            <td class="text-end text-success py-1 fs-7" id="visibleSum3">@Model.Table3_TotalAmount.ToString("N2")</td>
+                            <td class="text-end py-1 fs-7" style="color:#0f766e;" id="visibleSum3">@Model.Table3_TotalAmount.ToString("N2")</td>
                             <td></td>
                         </tr>
                     </tfoot>
