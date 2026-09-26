@@ -98,81 +98,36 @@ namespace RoyalD.Web.Controllers
                     summary.Collected.TotalAmount += paidAmt;
                     seenPaidBillNos.Add(d.BillNo);
                 }
-                else
+                                else
                 {
                     summary.TotalOutstandingAmount += d.RemainingAmount;
 
-                    if (!isBkkArea)
+                    if (groupCode == "1")
                     {
-                        summary.UpcountryDebts.BillCount++;
-                        summary.UpcountryDebts.TotalAmount += d.RemainingAmount;
-
-                        if (aging > 120)
-                        {
-                            summary.Overdue120Days.BillCount++;
-                            summary.Overdue120Days.TotalAmount += d.RemainingAmount;
-                            cat = "over120";
-                            catName = "ค้างชำระ > 120 วัน";
-                        }
-                        else
-                        {
-                            cat = "upcountry";
-                            catName = "ต่างจังหวัดทั้งหมด";
-                        }
+                        cat = "cash7";
+                        catName = "เก็บสด 7 วัน (กทม.&ปริมณฑล)";
+                        summary.Cash7Days.BillCount++;
+                        summary.Cash7Days.TotalAmount += d.RemainingAmount;
+                    }
+                    else if (groupCode == "2")
+                    {
+                        cat = "cash10";
+                        catName = "เงินสดรวมสายเวลา (กทม.&ปริมณฑล)";
+                        summary.Cash10Days.BillCount++;
+                        summary.Cash10Days.TotalAmount += d.RemainingAmount;
                     }
                     else
                     {
-                        if (aging > 120)
-                        {
-                            summary.Overdue120Days.BillCount++;
-                            summary.Overdue120Days.TotalAmount += d.RemainingAmount;
-                            cat = "over120";
-                            catName = "ค้างชำระ > 120 วัน";
-                        }
-                        else
-                        {
-                            if (d.BillDate >= cutoffDate)
-                            {
-                                if (d.Credit <= 7)
-                                {
-                                    cat = "cash7";
-                                    catName = "เก็บสด 7 วัน (กทม.&ปริมณฑล)";
-                                    summary.Cash7Days.BillCount++;
-                                    summary.Cash7Days.TotalAmount += d.RemainingAmount;
-                                }
-                                else if (d.Credit == 10 || (d.Credit > 7 && d.Credit <= 10))
-                                {
-                                    cat = "cash10";
-                                    catName = "เงินสดรวมสายเวลา (กทม.&ปริมณฑล)";
-                                    summary.Cash10Days.BillCount++;
-                                    summary.Cash10Days.TotalAmount += d.RemainingAmount;
-                                }
-                                else
-                                {
-                                    cat = "cash10";
-                                    catName = "เงินสดรวมสายเวลา (กทม.&ปริมณฑล)";
-                                    summary.Cash10Days.BillCount++;
-                                    summary.Cash10Days.TotalAmount += d.RemainingAmount;
-                                }
-                            }
-                            else
-                            {
-                                if (d.Credit <= 7)
-                                {
-                                    cat = "cash10";
-                                    catName = "เงินสดรวมสายเวลา (กทม.&ปริมณฑล)";
-                                    summary.Cash10Days.BillCount++;
-                                    summary.Cash10Days.TotalAmount += d.RemainingAmount;
-                                }
-                                else
-                                {
-                                    cat = "cash10";
-                                    catName = "เงินสดรวมสายเวลา (กทม.&ปริมณฑล)";
-                                    summary.Cash10Days.BillCount++;
-                                    summary.Cash10Days.TotalAmount += d.RemainingAmount;
-                                }
-                            }
-                        }
+                        cat = "upcountry";
+                        catName = "ต่างจังหวัดทั้งหมด";
+                        summary.UpcountryDebts.BillCount++;
+                        summary.UpcountryDebts.TotalAmount += d.RemainingAmount;
+                    }
+
+                    if (aging > 120)
+                    {
+                        summary.Overdue120Days.BillCount++;
+                        summary.Overdue120Days.TotalAmount += d.RemainingAmount;
                     }
                 }
 

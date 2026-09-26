@@ -308,7 +308,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
         <div class="chart-panel">
             <div class="panel-title">
                 <i class="bi bi-pie-chart-fill" style="color:#0f766e;"></i>
-                กราฟวงกลมสรุปสัดส่วนหนี้ค้างชำระรวม (AR Allocation Pie Chart)
+                กราฟโดนัทสรุปสัดส่วนหนี้ค้างชำระรวม (AR Allocation Donut Chart)
             </div>
             <div class="d-flex justify-content-center align-items-center" style="position:relative; min-height: 270px;">
                 <canvas id="arAllocationPieChart" style="max-height: 260px; max-width: 100%;"></canvas>
@@ -490,6 +490,8 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                     var b = drilldownBills[i];
                     <tr class="bill-row"
                         data-category="@b.Category"
+                        data-groupcode="@b.GroupCode"
+                        data-aging="@b.AgingDays"
                         data-billno="@b.BillNo"
                         data-custcode="@b.CustomerCode"
                         data-custname="@b.CustomerName"
@@ -551,20 +553,24 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
 
 @section Scripts {
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <script>
+// Register DataLabels plugin
+Chart.register(ChartDataLabels);
+
 // State Management
 let currentCategory = 'all';
 
 const categoryTitles = {
     'all': 'ภาพรวมทั้งหมด',
     'cash7': 'เก็บสด 7 วัน (กทม.&ปริมณฑล)',
-    'cash10': 'เงินสดรวมสายเวลา (กทม.&ปริมณฑล)',
+    'cash10': 'รวมสายเวลาเงินสด (กทม.&ปริมณฑล)',
     'upcountry': 'บิลค้างชำระต่างจังหวัดทั้งหมด',
     'over120': 'ค้างชำระ > 120 วัน',
     'collected': 'ยอดเก็บสำเร็จ'
 };
 
-// Global Pie Chart instance
+// Global Donut Chart instance
 let arPieChart = null;
 
 function initPieChart() {
@@ -572,7 +578,7 @@ function initPieChart() {
     if (!ctx) return;
 
     arPieChart = new Chart(ctx, {
-        type: 'pie',
+        type: 'doughnut',
         data: {
             labels: [
                 '1. เก็บสด 7 วัน (กทม.&ปริมณฑล)',
@@ -587,18 +593,74 @@ function initPieChart() {
                     '#7c3aed'  // 3. สีม่วงพาสเทลสุภาพ / ม่วงลาเวนเดอร์ (Pastel Purple)
                 ],
                 borderColor: '#ffffff',
-                borderWidth: 2
+                borderWidth: 2,
+                hoverOffset: 6
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            cutout: '52%',
+            layout: {
+                padding: {
+                    top: 10,
+                    bottom: 10,
+                    left: 10,
+                    right: 10
+                }
+            },
             plugins: {
+                datalabels: {
+                    color: '#ffffff',
+                    font: {
+                        weight: 'bold',
+                        size: 11,
+                        family: "'Sarabun', sans-serif"
+                    },
+                    formatter: function(value, context) {
+                        if (!value || value <= 0) return '';
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const pct = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                        let amtStr = '';
+                        if (value >= 1000000) {
+                            amtStr = (value / 1000000).toFixed(2) + 'M ฿';
+                        } else if (value >= 1000) {
+                            amtStr = (value / 1000).toFixed(0) + 'K ฿';
+                        } else {
+                            amtStr = value.toLocaleString('en-US') + ' ฿';
+                        }
+                        return `${pct}%
+(${amtStr})`;
+                    },
+                    textAlign: 'center',
+                    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+                    textShadowBlur: 4
+                },
                 legend: {
                     position: 'bottom',
                     labels: {
-                        font: { size: 12, weight: '700' },
-                        padding: 12
+                        font: { size: 11, weight: '700' },
+                        padding: 12,
+                        generateLabels: function(chart) {
+                            const data = chart.data;
+                            if (data.labels.length && data.datasets.length) {
+                                const dataset = data.datasets[0];
+                                const total = dataset.data.reduce((a, b) => a + b, 0);
+                                return data.labels.map((label, i) => {
+                                    const val = dataset.data[i] || 0;
+                                    const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
+                                    return {
+                                        text: `${label} (${val.toLocaleString('en-US')} บาท | ${pct}%)`,
+                                        fillStyle: dataset.backgroundColor[i],
+                                        strokeStyle: dataset.borderColor || '#fff',
+                                        lineWidth: 1,
+                                        hidden: isNaN(dataset.data[i]) || chart.getDatasetMeta(0).data[i]?.hidden,
+                                        index: i
+                                    };
+                                });
+                            }
+                            return [];
+                        }
                     }
                 },
                 tooltip: {
@@ -607,7 +669,7 @@ function initPieChart() {
                             const val = context.raw || 0;
                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
                             const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
-                            return `${context.label}: ${val.toLocaleString('en-US')} บาท (${pct}%)`;
+                            return ` ${context.label}: ${val.toLocaleString('en-US')} บาท (${pct}%)`;
                         }
                     }
                 }
@@ -662,6 +724,7 @@ function applyFilters() {
     let index = 1;
     rows.forEach(row => {
         const cat = row.getAttribute('data-category') || '';
+        const groupCode = row.getAttribute('data-groupcode') || '';
         const billNo = (row.getAttribute('data-billno') || '').toLowerCase();
         const custCode = (row.getAttribute('data-custcode') || '').toLowerCase();
         const custName = (row.getAttribute('data-custname') || '').toLowerCase();
@@ -669,6 +732,7 @@ function applyFilters() {
         const amt = parseFloat(row.getAttribute('data-amount') || '0');
         const isPaid = row.getAttribute('data-ispaid') === 'true';
         const isBkk = row.getAttribute('data-isbkk') === 'true';
+        const aging = parseInt(row.getAttribute('data-aging') || '0', 10);
 
         // Check 4 search inputs
         const matchSearch = (!sBill || billNo.includes(sBill)) &&
@@ -682,22 +746,32 @@ function applyFilters() {
                 sumCollected += amt;
                 countCollected++;
             } else {
-                if (!isBkk) {
+                if (groupCode === '1') {
+                    sumCash7 += amt;
+                    countCash7++;
+                } else if (groupCode === '2') {
+                    sumCash10 += amt;
+                    countCash10++;
+                } else if (groupCode === '3') {
                     sumUpcountry += amt;
                     countUpcountry++;
                 }
-                if (cat === 'cash7') { sumCash7 += amt; countCash7++; }
-                else if (cat === 'cash10') { sumCash10 += amt; countCash10++; }
                 
-                if (cat === 'over120') { sumOver120 += amt; countOver120++; }
+                if (aging > 120) {
+                    sumOver120 += amt;
+                    countOver120++;
+                }
             }
         }
 
         // Category filter matching for table
         let matchCat = false;
         if (currentCategory === 'all') matchCat = true;
-        else if (currentCategory === 'upcountry') matchCat = (!isBkk && !isPaid);
-        else matchCat = (cat === currentCategory);
+        else if (currentCategory === 'cash7') matchCat = (!isPaid && groupCode === '1');
+        else if (currentCategory === 'cash10') matchCat = (!isPaid && groupCode === '2');
+        else if (currentCategory === 'upcountry') matchCat = (!isPaid && groupCode === '3');
+        else if (currentCategory === 'over120') matchCat = (!isPaid && aging > 120);
+        else if (currentCategory === 'collected') matchCat = isPaid;
 
         if (matchSearch && matchCat) {
             row.style.display = '';
@@ -755,7 +829,7 @@ function applyFilters() {
     document.getElementById('breakdownCount-upcountry').innerText = countUpcountry.toLocaleString('en-US');
     document.getElementById('progBar-upcountry').style.width = pUpc + '%';
 
-    // Update Pie Chart in Real-time
+    // Update Donut Chart in Real-time
     if (arPieChart) {
         arPieChart.data.datasets[0].data = [sumCash7, sumCash10, sumUpcountry];
         arPieChart.update();
