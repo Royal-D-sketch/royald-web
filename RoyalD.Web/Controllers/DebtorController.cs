@@ -756,7 +756,7 @@ namespace RoyalD.Web.Controllers
             }
 
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
-            bool canChangeStatus = currentUser != null && (currentUser.Role == "admin" || currentUser.CanChangeDebtStatus);
+            bool canChangeStatus = currentUser != null && (currentUser.Role == "admin" || currentUser.CanChangeDebtStatus || currentUser.CanManageReturnedBills);
             if (!canChangeStatus)
             {
                 TempData["Error"] = "เน€เธยเน€เธเธเน€เธโ€เน€เธยเน€เธเธเน€เธยเน€เธเธเน€เธเธ•เน€เธเธเน€เธเธ”เน€เธโ€”เน€เธยเน€เธเธ”เน€เธยเน€เธยเน€เธยเน€เธยเน€เธเธ’เน€เธเธเน€เธโฌเน€เธยเน€เธเธ…เน€เธเธ•เน€เธยเน€เธเธเน€เธยเน€เธเธเน€เธโ€“เน€เธเธ’เน€เธยเน€เธเธเน€เธเธเน€เธยเน€เธเธ•เน€เธย";

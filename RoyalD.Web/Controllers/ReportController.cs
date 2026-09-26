@@ -176,6 +176,12 @@ namespace RoyalD.Web.Controllers
         {
             if (user?.Identity?.IsAuthenticated != true) return false;
 
+            // 0. ตรวจสอบสิทธิ์โดยตรงจาก Claim / สิทธิ์ผู้ใช้งาน CanManageReturnedBills
+            if (user.FindFirst("CanManageReturnedBills")?.Value?.Equals("true", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                return true;
+            }
+
             // 1. ตรวจสอบสิทธิ์ระดับ Role / Identity Role (admin)
             if (user.IsInRole("admin")) return true;
             var role = (user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? user.FindFirst("Role")?.Value ?? "").Trim().ToLower();

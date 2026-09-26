@@ -165,6 +165,17 @@
                                     <span class="badge bg-danger"><i class="bi bi-lock-fill"></i> ซ่อน</span>
                                 }
                             </td>
+                                                        <!-- สิทธิ์บิลส่งคืน -->
+                            <td class="text-center">
+                                @if (u.Role == "admin" || u.CanManageReturnedBills)
+                                {
+                                    <span class="badge bg-success"><i class="bi bi-check-circle"></i> ได้</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary"><i class="bi bi-x-circle"></i> ปิด</span>
+                                }
+                            </td>
                             <!-- โหลดไฟล์ -->
                             <td class="text-center">
                                 @if (u.Role == "admin" || u.CanDownload)

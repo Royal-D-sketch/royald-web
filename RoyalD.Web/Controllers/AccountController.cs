@@ -253,6 +253,7 @@ namespace RoyalD.Web.Controllers
                 new Claim("SalesRepCode", user.SalesRepCode ?? ""),
                 new Claim("CanViewPaymentDetails", user.CanViewPaymentDetails ? "true" : "false"),
                 new Claim("CanChangeDebtStatus", (isMasterAdmin || user.CanChangeDebtStatus) ? "true" : "false"),
+                new Claim("CanManageReturnedBills", (isMasterAdmin || user.CanManageReturnedBills) ? "true" : "false"),
                 new Claim("CanDeleteSalesBill", (isMasterAdmin || user.CanDeleteSalesBill) ? "true" : "false"),
                 new Claim("CanDeleteDebtor", (isMasterAdmin || user.CanDeleteDebtor) ? "true" : "false"),
                 new Claim("SessionTimeout", (user.SessionTimeoutMinutes.HasValue && user.SessionTimeoutMinutes > 0 ? user.SessionTimeoutMinutes.Value : (isSalesRep ? 10 : 0)).ToString()),
@@ -469,7 +470,7 @@ namespace RoyalD.Web.Controllers
         public async Task<IActionResult> CreateUser(string username, string fullName, string password,
             string role, string position, string? salesRepCode, int? sessionTimeoutMinutes, 
             string? allowedRegion, string? allowedProvinces, string? allowedDistricts, 
-            string[]? pages, bool canViewPaymentDetails, bool canChangeDebtStatus, bool canDeleteSalesBill, bool canDeleteDebtor, 
+            string[]? pages, bool canViewPaymentDetails, bool canChangeDebtStatus, bool canManageReturnedBills, bool canDeleteSalesBill, bool canDeleteDebtor, 
             bool canDownload, bool canScreenCapture)
         {
             if (!await CanManageUsersAsync())
@@ -511,6 +512,7 @@ namespace RoyalD.Web.Controllers
                 AllowedPages = allowedPagesStr,
                 CanViewPaymentDetails = canViewPaymentDetails,
                 CanChangeDebtStatus = canChangeDebtStatus,
+                CanManageReturnedBills = canManageReturnedBills,
                 CanDeleteSalesBill = canDeleteSalesBill,
                 CanDeleteDebtor = canDeleteDebtor,
                 CanDownload = canDownload,
@@ -550,7 +552,7 @@ namespace RoyalD.Web.Controllers
         public async Task<IActionResult> EditUser(int id, string fullName, string role, string position,
             string? salesRepCode, int? sessionTimeoutMinutes, bool isActive, string? newPassword,
             string? allowedRegion, string? allowedProvinces, string? allowedDistricts, 
-            string[]? pages, bool canViewPaymentDetails, bool canChangeDebtStatus, bool canDeleteSalesBill, bool canDeleteDebtor, 
+            string[]? pages, bool canViewPaymentDetails, bool canChangeDebtStatus, bool canManageReturnedBills, bool canDeleteSalesBill, bool canDeleteDebtor, 
             bool canDownload, bool canScreenCapture)
         {
             if (!await CanManageUsersAsync())
@@ -572,6 +574,7 @@ namespace RoyalD.Web.Controllers
             user.AllowedPages = pages != null && pages.Length > 0 ? string.Join(",", pages) : "";
             user.CanViewPaymentDetails = canViewPaymentDetails;
             user.CanChangeDebtStatus = canChangeDebtStatus;
+            user.CanManageReturnedBills = canManageReturnedBills;
             user.CanDeleteSalesBill = canDeleteSalesBill;
             user.CanDeleteDebtor = canDeleteDebtor;
             user.CanDownload = canDownload;

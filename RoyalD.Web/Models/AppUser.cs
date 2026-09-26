@@ -39,6 +39,7 @@ namespace RoyalD.Web.Models
 
         public bool CanViewPaymentDetails { get; set; } = true; // สิทธิ์ดูรายละเอียดการรับชำระเงิน
         public bool CanChangeDebtStatus { get; set; } = false; // สิทธิ์เปลี่ยนสถานะหนี้
+        public bool CanManageReturnedBills { get; set; } = false; // สิทธิ์เปลี่ยนสถานะบิลส่งกลับคืนบัญชี และบิลส่งคืนให้จัดส่ง
         public bool CanDeleteSalesBill { get; set; } = false; // สิทธิ์ลบบิลขาย
         public bool CanDeleteDebtor { get; set; } = false; // สิทธิ์ลบการ์ดลูกหนี้
         public bool CanDownload { get; set; } = false; // สิทธิ์ดาวน์โหลดไฟล์ (Excel, PDF, Export)
