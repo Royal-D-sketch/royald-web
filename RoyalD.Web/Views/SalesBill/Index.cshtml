@@ -130,6 +130,7 @@
                 <option value="installment" selected="@(ViewBag.Status == "installment")">💳 ผ่อนชำระ</option>
                 <option value="postponed" selected="@(ViewBag.Status == "postponed")">📅 เลื่อนนัดชำระ</option>
                 <option value="waiting_goods" selected="@(ViewBag.Status == "waiting_goods")">📦 รอสินค้า / ของขาด</option>
+                <option value="returned_to_account" selected="@(ViewBag.Status == "returned_to_account" || ViewBag.Status == "returnedtoaccount")">📦 บิลส่งคืนบัญชี</option>
                 <option value="delivering" selected="@(ViewBag.Status == "delivering")">🚚 บิลอยู่จัดส่ง</option>
                 <option value="return_pending" selected="@(ViewBag.Status == "return_pending")">🔄 รอออกใบลดหนี้</option>
                 <option value="return_issued" selected="@(ViewBag.Status == "return_issued")">📝 ออกใบลดหนี้แล้ว</option>

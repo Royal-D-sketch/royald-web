@@ -595,19 +595,19 @@
                             </div>
 
                             <div class="mb-2">
-                                <label class="form-label small fw-bold text-dark mb-1">⚡ เลือกเหตุผลด่วน:</label>
-                                <div class="d-flex flex-wrap gap-1 mb-2">
-                                    <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-semibold" onclick="setQuickReturnReason('บิลยังไม่พร้อมส่ง')">
-                                        บิลยังไม่พร้อมส่ง
+                                <label class="form-label small fw-bold text-dark mb-1">⚡ เลือกเหตุผลด่วน (คลิกเลือก):</label>
+                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                    <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-semibold quick-reason-btn" onclick="setQuickReturnReason(this, 'บิลยังไม่พร้อมส่ง')">
+                                        <i class="bi bi-clock me-1"></i> บิลยังไม่พร้อมส่ง
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-semibold" onclick="setQuickReturnReason('ลูกค้ายังไม่เอาของ')">
-                                        ลูกค้ายังไม่เอาของ
+                                    <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-semibold quick-reason-btn" onclick="setQuickReturnReason(this, 'ลูกค้ายังไม่เอาของ')">
+                                        <i class="bi bi-person-x me-1"></i> ลูกค้ายังไม่เอาของ
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-semibold" onclick="setQuickReturnReason('ติดปัญหาเอกสาร / รอตรวจสอบ')">
-                                        ติดปัญหาเอกสาร / รอตรวจสอบ
+                                    <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-semibold quick-reason-btn" onclick="setQuickReturnReason(this, 'ติดปัญหาเอกสาร / รอตรวจสอบ')">
+                                        <i class="bi bi-file-earmark-break me-1"></i> ติดปัญหาเอกสาร / รอตรวจสอบ
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-semibold" onclick="setQuickReturnReason('ลูกค้านัดส่งใหม่อีกครั้ง')">
-                                        ลูกค้านัดส่งใหม่อีกครั้ง
+                                    <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-semibold quick-reason-btn" onclick="setQuickReturnReason(this, 'ลูกค้านัดส่งใหม่อีกครั้ง')">
+                                        <i class="bi bi-arrow-repeat me-1"></i> ลูกค้านัดส่งใหม่อีกครั้ง
                                     </button>
                                 </div>
                                 
@@ -867,12 +867,26 @@ function selectAllWaitingProducts(select) {
     var checkboxes = document.querySelectorAll('.waiting-prod-chk');
     checkboxes.forEach(function(chk, idx) { 
         chk.checked = select; 
-        // 1-based index in Razor vs 0-based in JS: Razor idx is 1-based.
-        // Actually, in the loop we can just find the closest qty input or use the idx from id.
         var idParts = chk.id.split('_');
         var chkIdx = idParts[idParts.length - 1];
         toggleWaitingQtyInput(chkIdx);
     });
+}
+
+function setQuickReturnReason(btn, text) {
+    var txt = document.getElementById('txtReturnReason');
+    if (!txt) return;
+    txt.value = text;
+    txt.focus();
+    
+    document.querySelectorAll('.quick-reason-btn').forEach(function(b) {
+        b.classList.remove('btn-warning', 'text-white', 'shadow-sm');
+        b.classList.add('btn-outline-warning', 'text-dark');
+    });
+    if (btn) {
+        btn.classList.remove('btn-outline-warning', 'text-dark');
+        btn.classList.add('btn-warning', 'text-white', 'shadow-sm');
+    }
 }
 </script>
 }

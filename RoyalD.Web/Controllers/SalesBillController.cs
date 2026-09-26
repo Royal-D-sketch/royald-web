@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -264,9 +264,16 @@ namespace RoyalD.Web.Controllers
                     var waitBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.WaitingGoods).Select(d => d.BillNo);
                     q = q.Where(b => waitBillNos.Contains(b.BillNo));
                 }
+                else if (status == "returned_to_account" || status == "returnedtoaccount")
+                {
+                    var rtaBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.ReturnedToAccount).Select(d => d.BillNo);
+                    q = q.Where(b => rtaBillNos.Contains(b.BillNo));
+                }
                 else if (status == "delivering")
                 {
-                    var delivBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Delivering).Select(d => d.BillNo);
+                    var delivBillNos = _db.OutstandingDebts
+                        .Where(d => d.Status == DebtStatus.Delivering || (d.DeliveringDate != null && d.Status == DebtStatus.Outstanding && d.RemainingAmount > 0))
+                        .Select(d => d.BillNo);
                     q = q.Where(b => delivBillNos.Contains(b.BillNo));
                 }
                 else if (status == "bad_debt")
@@ -624,9 +631,16 @@ if (!string.IsNullOrEmpty(poSearch))
                     var waitBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.WaitingGoods).Select(d => d.BillNo);
                     q = q.Where(b => waitBillNos.Contains(b.BillNo));
                 }
+                else if (status == "returned_to_account" || status == "returnedtoaccount")
+                {
+                    var rtaBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.ReturnedToAccount).Select(d => d.BillNo);
+                    q = q.Where(b => rtaBillNos.Contains(b.BillNo));
+                }
                 else if (status == "delivering")
                 {
-                    var delivBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Delivering).Select(d => d.BillNo);
+                    var delivBillNos = _db.OutstandingDebts
+                        .Where(d => d.Status == DebtStatus.Delivering || (d.DeliveringDate != null && d.Status == DebtStatus.Outstanding && d.RemainingAmount > 0))
+                        .Select(d => d.BillNo);
                     q = q.Where(b => delivBillNos.Contains(b.BillNo));
                 }
                 else if (status == "bad_debt")
@@ -747,6 +761,72 @@ if (!string.IsNullOrEmpty(poSearch))
             if (startDate.HasValue) q = q.Where(b => b.BillDate >= startDate.Value.Date);
             if (endDate.HasValue) q = q.Where(b => b.BillDate <= endDate.Value.Date.AddDays(1).AddTicks(-1));
             if (!string.IsNullOrEmpty(poSearch)) q = q.Where(b => b.PoNumber.Contains(poSearch));
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                if (status == "paid")
+                {
+                    var installBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100).Select(d => d.BillNo);
+                    q = q.Where(b => b.IsFullyPaid && !installBillNos.Contains(b.BillNo));
+                }
+                else if (status == "unpaid")
+                {
+                    var installBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100).Select(d => d.BillNo);
+                    q = q.Where(b => !b.IsFullyPaid || installBillNos.Contains(b.BillNo));
+                }
+                else if (status == "overdue120")
+                {
+                    var today = DateTime.Today;
+                    q = q.Where(b => !b.IsFullyPaid && b.BillDate.AddDays(b.Credit + 120) < today);
+                }
+                else if (status == "installment")
+                {
+                    var installBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100).Select(d => d.BillNo);
+                    q = q.Where(b => installBillNos.Contains(b.BillNo));
+                }
+                else if (status == "postponed")
+                {
+                    var postBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Postponed).Select(d => d.BillNo);
+                    q = q.Where(b => postBillNos.Contains(b.BillNo));
+                }
+                else if (status == "waiting_goods")
+                {
+                    var waitBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.WaitingGoods).Select(d => d.BillNo);
+                    q = q.Where(b => waitBillNos.Contains(b.BillNo));
+                }
+                else if (status == "returned_to_account" || status == "returnedtoaccount")
+                {
+                    var rtaBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.ReturnedToAccount).Select(d => d.BillNo);
+                    q = q.Where(b => rtaBillNos.Contains(b.BillNo));
+                }
+                else if (status == "delivering")
+                {
+                    var delivBillNos = _db.OutstandingDebts
+                        .Where(d => d.Status == DebtStatus.Delivering || (d.DeliveringDate != null && d.Status == DebtStatus.Outstanding && d.RemainingAmount > 0))
+                        .Select(d => d.BillNo);
+                    q = q.Where(b => delivBillNos.Contains(b.BillNo));
+                }
+                else if (status == "bad_debt")
+                {
+                    var badBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.BadDebt).Select(d => d.BillNo);
+                    q = q.Where(b => badBillNos.Contains(b.BillNo));
+                }
+                else if (status == "return_pending")
+                {
+                    var retPBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.ReturnPending).Select(d => d.BillNo);
+                    q = q.Where(b => retPBillNos.Contains(b.BillNo));
+                }
+                else if (status == "return_issued")
+                {
+                    var retIBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.ReturnIssued).Select(d => d.BillNo);
+                    q = q.Where(b => retIBillNos.Contains(b.BillNo));
+                }
+                else if (status == "cancelled")
+                {
+                    var canBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Cancelled).Select(d => d.BillNo);
+                    q = q.Where(b => canBillNos.Contains(b.BillNo));
+                }
+            }
 
             var bills = await q.OrderByDescending(b => b.BillDate).ToListAsync();
             var billNos = bills.Select(b => b.BillNo).ToList();
