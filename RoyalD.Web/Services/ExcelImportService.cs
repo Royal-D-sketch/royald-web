@@ -270,8 +270,8 @@ namespace RoyalD.Web.Services
                 string col0 = tbl.Columns.Count > 0 ? row[0]?.ToString()?.Trim() ?? "" : "";
                 string col1 = tbl.Columns.Count > 1 ? row[1]?.ToString()?.Trim() ?? "" : "";
 
-                // Propagate customer info across merged/blank cells
-                if (!string.IsNullOrEmpty(col0) && !col0.Contains("/") && !col0.StartsWith("R", StringComparison.OrdinalIgnoreCase))
+                // Propagate customer info across merged/blank cells (when col0 is customer code, not a bill)
+                if (!string.IsNullOrEmpty(col0) && !col0.Contains("/") && !col0.StartsWith("R", StringComparison.OrdinalIgnoreCase) && !col0.StartsWith("CN", StringComparison.OrdinalIgnoreCase))
                 {
                     currentCustCode = col0;
                     currentCustName = col1;
@@ -304,46 +304,83 @@ namespace RoyalD.Web.Services
                     else if (!string.IsNullOrEmpty(dynRep)) currentSalesRep = dynRep;
                 }
 
+                // Locate bill number and its column index
                 string billNo = "";
+                int billColIdx = -1;
+
+                if (tbl.Columns.Count > 7 && !string.IsNullOrWhiteSpace(row[7]?.ToString()))
+                {
+                    string v7 = row[7].ToString()!.Trim();
+                    if (v7.Contains("/") || v7.StartsWith("R", StringComparison.OrdinalIgnoreCase) || v7.StartsWith("CN", StringComparison.OrdinalIgnoreCase) || v7.StartsWith("SO", StringComparison.OrdinalIgnoreCase) || v7.StartsWith("IV", StringComparison.OrdinalIgnoreCase) || v7.StartsWith("DN", StringComparison.OrdinalIgnoreCase))
+                    {
+                        billNo = v7;
+                        billColIdx = 7;
+                    }
+                }
+
+                if (string.IsNullOrEmpty(billNo))
+                {
+                    for (int c = 0; c < tbl.Columns.Count; c++)
+                    {
+                        var v = row[c]?.ToString()?.Trim() ?? "";
+                        if (string.IsNullOrEmpty(v)) continue;
+                        if (v.StartsWith("R", StringComparison.OrdinalIgnoreCase) || v.StartsWith("CN", StringComparison.OrdinalIgnoreCase) || v.StartsWith("SO", StringComparison.OrdinalIgnoreCase) || v.StartsWith("IV", StringComparison.OrdinalIgnoreCase) || v.StartsWith("DN", StringComparison.OrdinalIgnoreCase) || (v.Contains("/") && v.Split('/').Length == 2 && v.Length < 25))
+                        {
+                            billNo = v;
+                            billColIdx = c;
+                            break;
+                        }
+                    }
+                }
+
+                if (string.IsNullOrEmpty(billNo) || billColIdx < 0) continue;
+
+                // Parse bill details strictly AFTER billColIdx to never mistake customer code for amount
                 DateTime billDate = DateTime.MinValue;
                 DateTime dueDate = DateTime.MinValue;
                 decimal amount = 0;
                 int credit = 0;
                 string rep = currentSalesRep;
 
-                for (int c = 0; c < tbl.Columns.Count; c++)
+                if (billColIdx == 7 && tbl.Columns.Count >= 12)
                 {
-                    var v = row[c]?.ToString()?.Trim() ?? "";
-                    if (string.IsNullOrEmpty(v)) continue;
+                    billDate = ParseThaiDate(row[8]);
+                    dueDate = ParseThaiDate(row[9]);
+                    amount = ParseDecimal(row[10]?.ToString());
+                    credit = ParseInt(row[11]?.ToString());
+                    if (tbl.Columns.Count > 12 && !string.IsNullOrWhiteSpace(row[12]?.ToString()))
+                        rep = row[12].ToString()!.Trim();
+                }
+                else
+                {
+                    for (int c = billColIdx + 1; c < tbl.Columns.Count; c++)
+                    {
+                        var v = row[c]?.ToString()?.Trim() ?? "";
+                        if (string.IsNullOrEmpty(v)) continue;
 
-                    if (string.IsNullOrEmpty(billNo) && (v.StartsWith("R", StringComparison.OrdinalIgnoreCase) || v.StartsWith("CN", StringComparison.OrdinalIgnoreCase) || (v.Contains("/") && v.Split('/').Length == 2 && v.Length < 25)))
-                    {
-                        billNo = v;
-                        continue;
-                    }
+                        var dt = ParseThaiDate(v);
+                        if (dt != DateTime.MinValue && dt.Year >= 2000 && dt.Year <= 2100)
+                        {
+                            if (billDate == DateTime.MinValue)
+                                billDate = dt;
+                            else if (dueDate == DateTime.MinValue)
+                                dueDate = dt;
+                            continue;
+                        }
 
-                    var dt = ParseThaiDate(v);
-                    if (dt != DateTime.MinValue && dt.Year >= 2000 && dt.Year <= 2100)
-                    {
-                        if (billDate == DateTime.MinValue)
-                            billDate = dt;
-                        else if (dueDate == DateTime.MinValue)
-                            dueDate = dt;
-                        continue;
-                    }
-
-                    if (decimal.TryParse(v.Replace(",", ""), out decimal num))
-                    {
-                        if (amount == 0 && (v.Contains(".") || num > 365 || num < 0))
-                            amount = num;
-                        else if (credit == 0 && num > 0 && num <= 365 && !v.Contains("."))
-                            credit = (int)num;
-                        else if (amount == 0)
-                            amount = num;
-                    }
-                    else if (!string.IsNullOrEmpty(v) && v.Length > 1 && !v.Contains("/"))
-                    {
-                        rep = v;
+                        if (decimal.TryParse(v.Replace(",", ""), out decimal num))
+                        {
+                            if (amount == 0 && (v.Contains(".") || num > 365 || num < 0))
+                                amount = num;
+                            else if (credit == 0 && num > 0 && num <= 365 && !v.Contains("."))
+                                credit = (int)num;
+                            else if (amount == 0)
+                                amount = num;
+                        }
+                        else if (!string.IsNullOrEmpty(v) && v.Length > 1 && !v.Contains("/"))
+                        {
+                            rep = v;
+                        }
                     }
                 }
 
