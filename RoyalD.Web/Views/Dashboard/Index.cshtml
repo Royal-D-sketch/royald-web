@@ -502,6 +502,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                         data-credit="@b.Credit"
                         data-ispaid="@(b.IsPaid ? "true" : "false")"
                         data-isbkk="@(b.IsBkk ? "true" : "false")"
+                        data-ismt="@(b.IsModernTrade ? "true" : "false")"
                         data-billdate="@b.BillDate.ToString("dd/MM/yyyy")"
                         data-amount="@b.Amount">
                         <td class="text-center text-muted row-index">@(i + 1)</td>
@@ -756,6 +757,7 @@ function applyFilters() {
         const isPaid = row.getAttribute('data-ispaid') === 'true';
         const isBkk = row.getAttribute('data-isbkk') === 'true';
         const aging = parseInt(row.getAttribute('data-aging') || '0', 10);
+        const isModernTrade = row.getAttribute('data-ismt') === 'true'; // Modern Trade flag
 
         // Check 4 search inputs
         const matchSearch = (!sBill || billNo.includes(sBill)) &&
@@ -779,8 +781,8 @@ function applyFilters() {
                     sumUpcountry += amt;
                     countUpcountry++;
                 }
-                
-                if (aging > 120) {
+                // ✅ กรอง Modern Trade ออกจากยอดค้างวิกฤต > 120 วัน
+                if (aging > 120 && !isModernTrade) {
                     sumOver120 += amt;
                     countOver120++;
                 }
@@ -793,7 +795,8 @@ function applyFilters() {
         else if (currentCategory === 'cash7') matchCat = (!isPaid && groupCode === '1');
         else if (currentCategory === 'cash10') matchCat = (!isPaid && groupCode === '2');
         else if (currentCategory === 'upcountry') matchCat = (!isPaid && groupCode === '3');
-        else if (currentCategory === 'over120') matchCat = (!isPaid && aging > 120);
+        // ✅ ตารางรายละเอียด over120: กรอง Modern Trade ออกด้วย
+        else if (currentCategory === 'over120') matchCat = (!isPaid && aging > 120 && !isModernTrade);
         else if (currentCategory === 'collected') matchCat = isPaid;
 
         if (matchSearch && matchCat) {

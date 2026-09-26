@@ -42,6 +42,7 @@ namespace RoyalD.Web.Models
         public string StatusName { get; set; } = string.Empty;
         public bool IsPaid { get; set; }
         public bool IsBkk { get; set; }
+        public bool IsModernTrade { get; set; } // ร้านค้า Modern Trade (กรองออกจาก Over120)
     }
 
     public class RegionSummary

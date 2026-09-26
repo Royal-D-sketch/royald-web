@@ -20,6 +20,43 @@ namespace RoyalD.Web.Controllers
 
         public DashboardController(AppDbContext db) => _db = db;
 
+        // ==========================================
+        // MODERN TRADE EXCLUSION LIST (by Customer Code)
+        // กรองร้านค้า Modern Trade ออกจากหนี้วิกฤต > 120 วัน
+        // อ้างอิงจากรหัสลูกค้าจริงในฐานข้อมูล (ไม่ใช้ชื่อร้าน)
+        // ==========================================
+        private static readonly HashSet<string> ModernTradeCodes = new(StringComparer.OrdinalIgnoreCase)
+        {
+            // BigC
+            "102003",
+            // Watson / Central Watson
+            "101298",
+            // UCare
+            "102540",
+            // Lawson108 / สห ลอว์สัน
+            "102410",
+            // Boots รีเทล
+            "102677",
+            // Villa Market
+            "103456", "740207",
+            // Foodland (ทุกสาขา)
+            "102660", "102661", "102662", "102664", "102665",
+            "102666", "102667", "102668", "102669", "102670",
+            "102671", "102672", "102673", "102674", "102740",
+            "103058", "103073", "200263", "200265",
+            "300320", "730168", "1020359", "1020363",
+            // Winning Seven (7-Eleven network)
+            "103166",
+            // Seven Pharma chains
+            "110472", "110473",
+        };
+
+        /// <summary>คืนค่า true ถ้ารหัสลูกค้าเป็น Modern Trade ที่ต้องกรองออกจาก Over120</summary>
+        private static bool IsModernTrade(string? customerCode)
+            => !string.IsNullOrEmpty(customerCode) && ModernTradeCodes.Contains(customerCode.Trim());
+
+
+
         private async Task<(DashboardSummary summary, List<DashboardBillItem> drilldownBills, ComparisonBoardViewModel comparisonBoard)> GetDashboardDataAsync()
         {
             var today = DateTime.Today;
@@ -122,7 +159,7 @@ namespace RoyalD.Web.Controllers
                         summary.UpcountryDebts.TotalAmount += d.RemainingAmount;
                     }
 
-                    if (aging > 120)
+                    if (aging > 120 && !IsModernTrade(d.CustomerCode))
                     {
                         summary.Overdue120Days.BillCount++;
                         summary.Overdue120Days.TotalAmount += d.RemainingAmount;
@@ -175,7 +212,8 @@ namespace RoyalD.Web.Controllers
                     AgingDays = aging,
                     StatusName = isPaid ? "เก็บเงินสำเร็จ" : (aging > 120 ? "เกิน 120 วัน" : (aging > 0 ? $"เกินกำหนด {aging} วัน" : "ยังไม่ถึงกำหนด")),
                     IsPaid = isPaid,
-                    IsBkk = isBkkArea
+                    IsBkk = isBkkArea,
+                    IsModernTrade = IsModernTrade(d.CustomerCode)
                 };
 
                 drilldownBills.Add(billItem);
@@ -353,6 +391,10 @@ namespace RoyalD.Web.Controllers
             if (!string.IsNullOrEmpty(searchSalesRep))
                 query = query.Where(b => b.SalesRep.Contains(searchSalesRep, StringComparison.OrdinalIgnoreCase));
 
+            // When exporting over120, apply over120 filter + exclude Modern Trade
+            if (category?.ToLower() == "over120")
+                query = query.Where(b => !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade);
+
             var filteredList = (category?.ToLower() == "over120")
                 ? query.OrderByDescending(b => b.AgingDays).ThenBy(b => b.BillDate).ToList()
                 : query.OrderBy(b => b.BillDate).ToList();
@@ -476,6 +518,10 @@ namespace RoyalD.Web.Controllers
 
             if (!string.IsNullOrEmpty(searchSalesRep))
                 query = query.Where(b => b.SalesRep.Contains(searchSalesRep, StringComparison.OrdinalIgnoreCase));
+
+            // When exporting over120, apply over120 filter + exclude Modern Trade
+            if (category?.ToLower() == "over120")
+                query = query.Where(b => !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade);
 
             var filteredList = (category?.ToLower() == "over120")
                 ? query.OrderByDescending(b => b.AgingDays).ThenBy(b => b.BillDate).ToList()
