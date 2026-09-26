@@ -467,6 +467,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                 {
                     var b = allBills[i];
                     <tr class="comp-bill-row"
+                        data-init-idx="@i"
                         data-group="@b.GroupCode"
                         data-billno="@b.BillNo"
                         data-custcode="@b.CustomerCode"
@@ -601,11 +602,34 @@ function applyAllFilters() {
     let g3_overAmt = 0, g3_overCnt = 0;
     let g3_colAmt = 0, g3_colCnt = 0;
 
+    const compTableBody = document.getElementById('compTableBody');
+    if (compTableBody && rows.length > 0) {
+        const rowArray = Array.from(rows);
+        if (currentSubFilter === 'over120') {
+            // เรียงลำดับตามหนี้ค้างนานสุดก่อน (AgingDays มากสุด -> น้อยสุด)
+            rowArray.sort((a, b) => {
+                const agingA = parseInt(a.getAttribute('data-aging') || '0', 10);
+                const agingB = parseInt(b.getAttribute('data-aging') || '0', 10);
+                if (agingB !== agingA) return agingB - agingA;
+                return parseFloat(b.getAttribute('data-amount') || '0') - parseFloat(a.getAttribute('data-amount') || '0');
+            });
+            rowArray.forEach(r => compTableBody.appendChild(r));
+        } else {
+            rowArray.sort((a, b) => {
+                const idxA = parseInt(a.getAttribute('data-init-idx') || '0', 10);
+                const idxB = parseInt(b.getAttribute('data-init-idx') || '0', 10);
+                return idxA - idxB;
+            });
+            rowArray.forEach(r => compTableBody.appendChild(r));
+        }
+    }
+
     let visibleCount = 0;
     let visibleSum = 0;
     let idx = 1;
 
-    rows.forEach(row => {
+    const sortedCompRows = document.querySelectorAll('.comp-bill-row');
+    sortedCompRows.forEach(row => {
         const grp = row.getAttribute('data-group') || '3';
         const billNo = (row.getAttribute('data-billno') || '').toLowerCase();
         const custCode = (row.getAttribute('data-custcode') || '').toLowerCase();

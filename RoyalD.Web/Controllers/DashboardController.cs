@@ -353,7 +353,9 @@ namespace RoyalD.Web.Controllers
             if (!string.IsNullOrEmpty(searchSalesRep))
                 query = query.Where(b => b.SalesRep.Contains(searchSalesRep, StringComparison.OrdinalIgnoreCase));
 
-            var filteredList = query.OrderBy(b => b.BillDate).ToList();
+            var filteredList = (category?.ToLower() == "over120")
+                ? query.OrderByDescending(b => b.AgingDays).ThenBy(b => b.BillDate).ToList()
+                : query.OrderBy(b => b.BillDate).ToList();
 
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             using var package = new ExcelPackage();
@@ -475,7 +477,9 @@ namespace RoyalD.Web.Controllers
             if (!string.IsNullOrEmpty(searchSalesRep))
                 query = query.Where(b => b.SalesRep.Contains(searchSalesRep, StringComparison.OrdinalIgnoreCase));
 
-            var filteredList = query.OrderBy(b => b.BillDate).ToList();
+            var filteredList = (category?.ToLower() == "over120")
+                ? query.OrderByDescending(b => b.AgingDays).ThenBy(b => b.BillDate).ToList()
+                : query.OrderBy(b => b.BillDate).ToList();
 
             ViewBag.Category = category;
             ViewBag.CategoryTitle = category?.ToLower() switch

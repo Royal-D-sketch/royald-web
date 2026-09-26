@@ -489,6 +489,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                 {
                     var b = drilldownBills[i];
                     <tr class="bill-row"
+                        data-init-idx="@i"
                         data-category="@b.Category"
                         data-groupcode="@b.GroupCode"
                         data-aging="@b.AgingDays"
@@ -720,8 +721,31 @@ function applyFilters() {
     let sumCollected = 0, countCollected = 0;
     let sumTotalSales = 0;
 
+    const tableBody = document.getElementById('tableBody');
+    if (tableBody && rows.length > 0) {
+        const rowArray = Array.from(rows);
+        if (currentCategory === 'over120') {
+            // เรียงลำดับตามหนี้ค้างนานสุดก่อน (AgingDays มากสุด -> น้อยสุด)
+            rowArray.sort((a, b) => {
+                const agingA = parseInt(a.getAttribute('data-aging') || '0', 10);
+                const agingB = parseInt(b.getAttribute('data-aging') || '0', 10);
+                if (agingB !== agingA) return agingB - agingA;
+                return parseFloat(b.getAttribute('data-amount') || '0') - parseFloat(a.getAttribute('data-amount') || '0');
+            });
+            rowArray.forEach(r => tableBody.appendChild(r));
+        } else {
+            rowArray.sort((a, b) => {
+                const idxA = parseInt(a.getAttribute('data-init-idx') || '0', 10);
+                const idxB = parseInt(b.getAttribute('data-init-idx') || '0', 10);
+                return idxA - idxB;
+            });
+            rowArray.forEach(r => tableBody.appendChild(r));
+        }
+    }
+
     let index = 1;
-    rows.forEach(row => {
+    const sortedRows = document.querySelectorAll('.bill-row');
+    sortedRows.forEach(row => {
         const cat = row.getAttribute('data-category') || '';
         const groupCode = row.getAttribute('data-groupcode') || '';
         const billNo = (row.getAttribute('data-billno') || '').toLowerCase();
