@@ -35,6 +35,7 @@ namespace RoyalD.Web.Models
         public decimal Amount { get; set; }
         public string Category { get; set; } = string.Empty; // cash7, cash10, upcountry, over120, collected
         public string CategoryName { get; set; } = string.Empty;
+        public string GroupCode { get; set; } = string.Empty; // "1", "2", "3"
         public int Credit { get; set; }
         public DateTime DueDate { get; set; }
         public int AgingDays { get; set; }
@@ -63,6 +64,7 @@ namespace RoyalD.Web.Models
     public class ComparisonBoardViewModel
     {
         public DashboardSummary Summary { get; set; } = new();
+        public List<DashboardBillItem> AllBills { get; set; } = new();
         public List<DashboardBillItem> Table1_Cash7Bkk { get; set; } = new();
         public List<DashboardBillItem> Table2_CashTimelineBkk { get; set; } = new();
         public List<DashboardBillItem> Table3_Upcountry { get; set; } = new();

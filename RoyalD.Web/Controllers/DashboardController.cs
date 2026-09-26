@@ -65,6 +65,27 @@ namespace RoyalD.Web.Controllers
 
                 string cat = "";
                 string catName = "";
+                string groupCode = "3"; // default upcountry
+
+                if (isBkkArea)
+                {
+                    if (d.BillDate >= cutoffDate && d.Credit <= 7)
+                    {
+                        groupCode = "1";
+                    }
+                    else if ((d.BillDate < cutoffDate && d.Credit <= 7) || (d.BillDate >= cutoffDate && (d.Credit == 10 || (d.Credit > 7 && d.Credit <= 10))))
+                    {
+                        groupCode = "2";
+                    }
+                    else
+                    {
+                        groupCode = "2";
+                    }
+                }
+                else
+                {
+                    groupCode = "3";
+                }
 
                 if (isPaid)
                 {
@@ -83,7 +104,6 @@ namespace RoyalD.Web.Controllers
 
                     if (!isBkkArea)
                     {
-                        // บิลค้างชำระต่างจังหวัดทั้งหมด
                         summary.UpcountryDebts.BillCount++;
                         summary.UpcountryDebts.TotalAmount += d.RemainingAmount;
 
@@ -102,7 +122,6 @@ namespace RoyalD.Web.Controllers
                     }
                     else
                     {
-                        // กทม. และปริมณฑล
                         if (aging > 120)
                         {
                             summary.Overdue120Days.BillCount++;
@@ -130,13 +149,14 @@ namespace RoyalD.Web.Controllers
                                 }
                                 else
                                 {
-                                    cat = "other";
-                                    catName = "อื่นๆ";
+                                    cat = "cash10";
+                                    catName = "เงินสดรวมสายเวลา (กทม.&ปริมณฑล)";
+                                    summary.Cash10Days.BillCount++;
+                                    summary.Cash10Days.TotalAmount += d.RemainingAmount;
                                 }
                             }
                             else
                             {
-                                // บิลก่อนวันที่ 14/09/2026 ที่เป็นบิลกรุงเทพและปริมณฑลที่ค้างชำระเครดิต 7 วัน
                                 if (d.Credit <= 7)
                                 {
                                     cat = "cash10";
@@ -146,8 +166,10 @@ namespace RoyalD.Web.Controllers
                                 }
                                 else
                                 {
-                                    cat = "other";
-                                    catName = "อื่นๆ";
+                                    cat = "cash10";
+                                    catName = "เงินสดรวมสายเวลา (กทม.&ปริมณฑล)";
+                                    summary.Cash10Days.BillCount++;
+                                    summary.Cash10Days.TotalAmount += d.RemainingAmount;
                                 }
                             }
                         }
@@ -194,6 +216,7 @@ namespace RoyalD.Web.Controllers
                     Amount = isPaid ? ((d.OriginalAmount - d.RemainingAmount > 0) ? d.OriginalAmount - d.RemainingAmount : d.OriginalAmount) : d.RemainingAmount,
                     Category = cat,
                     CategoryName = catName,
+                    GroupCode = groupCode,
                     Credit = d.Credit,
                     DueDate = dueByCredit,
                     AgingDays = aging,
@@ -204,21 +227,11 @@ namespace RoyalD.Web.Controllers
 
                 drilldownBills.Add(billItem);
 
-                // Populate 3 comparison tables (for outstanding debts)
                 if (!isPaid)
                 {
-                    if (isBkkArea && d.BillDate >= cutoffDate && d.Credit <= 7)
-                    {
-                        comparisonBoard.Table1_Cash7Bkk.Add(billItem);
-                    }
-                    else if (isBkkArea && ((d.BillDate < cutoffDate && d.Credit <= 7) || (d.BillDate >= cutoffDate && (d.Credit == 10 || (d.Credit > 7 && d.Credit <= 10)))))
-                    {
-                        comparisonBoard.Table2_CashTimelineBkk.Add(billItem);
-                    }
-                    else if (!isBkkArea)
-                    {
-                        comparisonBoard.Table3_Upcountry.Add(billItem);
-                    }
+                    if (groupCode == "1") comparisonBoard.Table1_Cash7Bkk.Add(billItem);
+                    else if (groupCode == "2") comparisonBoard.Table2_CashTimelineBkk.Add(billItem);
+                    else if (groupCode == "3") comparisonBoard.Table3_Upcountry.Add(billItem);
                 }
             }
 
@@ -227,13 +240,21 @@ namespace RoyalD.Web.Controllers
             {
                 if (!seenPaidBillNos.Contains(sb.BillNo))
                 {
+                    bool isBkkArea = RegionHelper.IsBkkAndVicinity(sb.Province, sb.District);
+                    string groupCode = "3";
+                    if (isBkkArea)
+                    {
+                        if (sb.BillDate >= cutoffDate && sb.Credit <= 7) groupCode = "1";
+                        else groupCode = "2";
+                    }
+
                     summary.Collected.BillCount++;
                     summary.Collected.TotalAmount += sb.TotalAmount;
                     summary.TotalSalesAmount += sb.TotalAmount;
                     summary.TotalAmount += sb.TotalAmount;
                     seenPaidBillNos.Add(sb.BillNo);
 
-                    drilldownBills.Add(new DashboardBillItem
+                    var item = new DashboardBillItem
                     {
                         BillNo = sb.BillNo,
                         BillDate = sb.BillDate,
@@ -245,19 +266,22 @@ namespace RoyalD.Web.Controllers
                         Amount = sb.TotalAmount,
                         Category = "collected",
                         CategoryName = "ยอดเก็บเงินสำเร็จ",
+                        GroupCode = groupCode,
                         Credit = sb.Credit,
                         DueDate = sb.BillDate.AddDays(sb.Credit),
                         AgingDays = 0,
                         StatusName = "เก็บเงินสำเร็จ",
                         IsPaid = true,
-                        IsBkk = RegionHelper.IsBkkAndVicinity(sb.Province, sb.District)
-                    });
+                        IsBkk = isBkkArea
+                    };
+                    drilldownBills.Add(item);
                 }
             }
 
             summary.TotalCollectedAmount = summary.Collected.TotalAmount;
             summary.AllDrilldownBills = drilldownBills;
             comparisonBoard.Summary = summary;
+            comparisonBoard.AllBills = drilldownBills;
 
             return (summary, drilldownBills, comparisonBoard);
         }
@@ -281,11 +305,9 @@ namespace RoyalD.Web.Controllers
             ViewBag.Summary = summary;
             ViewBag.DrilldownBills = drilldownBills;
 
-            // Overall totals
             ViewBag.TotalOutstanding = summary.TotalOutstandingAmount;
             ViewBag.TotalDebtors = summary.TotalDebtors;
 
-            // Chart Status Counts
             ViewBag.OverdueCount = summary.Overdue120Days.BillCount;
             ViewBag.InstallmentCount = await _db.OutstandingDebts.CountAsync(d => d.Status == DebtStatus.Installment);
             ViewBag.PostponedCount = await _db.OutstandingDebts.CountAsync(d => d.Status == DebtStatus.Postponed);
@@ -293,21 +315,18 @@ namespace RoyalD.Web.Controllers
 
             int currentYear = today.Year;
 
-            // Monthly Sales
             var monthlySales = await _db.SalesBills
                 .Where(b => b.BillDate.Year == currentYear)
                 .GroupBy(b => b.BillDate.Month)
                 .Select(g => new { M = g.Key, V = g.Sum(x => x.TotalAmount) })
                 .ToDictionaryAsync(x => x.M, x => x.V);
 
-            // Monthly Collections
             var monthlyPaid = await _db.PaymentRecords
                 .Where(p => p.PaidDate.Year == currentYear)
                 .GroupBy(p => p.PaidDate.Month)
                 .Select(g => new { M = g.Key, V = g.Sum(x => x.PaidAmount) })
                 .ToDictionaryAsync(x => x.M, x => x.V);
 
-            // Monthly Overdue
             var monthlyOverdue = await _db.OutstandingDebts
                 .Where(d => d.BillDate.Year == currentYear && d.RemainingAmount > 0)
                 .GroupBy(d => d.BillDate.Month)
@@ -332,14 +351,12 @@ namespace RoyalD.Web.Controllers
             ViewBag.PaidValues = paidValues;
             ViewBag.OverdueValues = overdueValues;
 
-            // Recent debts (top 10 closest due)
             var recentDebts = await _db.OutstandingDebts
                 .Where(d => d.Status == DebtStatus.Outstanding)
                 .OrderBy(d => d.DueDate)
                 .Take(10)
                 .ToListAsync();
 
-            // Latest Data Dates
             ViewBag.LatestBillDate = await _db.SalesBills.OrderByDescending(b => b.BillDate).Select(b => (DateTime?)b.BillDate).FirstOrDefaultAsync();
             ViewBag.LatestDebtorDate = await _db.OutstandingDebts.OrderByDescending(d => d.BillDate).Select(d => (DateTime?)d.BillDate).FirstOrDefaultAsync();
             ViewBag.LatestReceiptDate = await _db.SalesBills.Where(b => b.ReceiptDate != null).OrderByDescending(b => b.ReceiptDate).Select(b => (DateTime?)b.ReceiptDate).FirstOrDefaultAsync()
@@ -398,7 +415,6 @@ namespace RoyalD.Web.Controllers
                 _ => "รายงานภาพรวมทุกกลุ่ม"
             };
 
-            // Title
             ws.Cells["A1:I1"].Merge = true;
             ws.Cells["A1"].Value = "บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด";
             ws.Cells["A1"].Style.Font.Size = 16;
@@ -411,7 +427,6 @@ namespace RoyalD.Web.Controllers
             ws.Cells["A2"].Style.Font.Bold = true;
             ws.Cells["A2"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-            // Headers
             string[] headers = new[] { "#", "เลขที่บิล", "วันที่บิล", "ผู้แทนขาย", "รหัสลูกค้า", "ชื่อลูกค้า", "อำเภอ", "จังหวัด", "จำนวนเงิน (บาท)" };
             for (int i = 0; i < headers.Length; i++)
             {
@@ -457,7 +472,6 @@ namespace RoyalD.Web.Controllers
                 r++;
             }
 
-            // Summary Total Row
             ws.Cells[r, 1, r, 8].Merge = true;
             ws.Cells[r, 1].Value = $"ยอดรวมทั้งสิ้น ({filteredList.Count:N0} รายการ):";
             ws.Cells[r, 1].Style.Font.Bold = true;
@@ -477,18 +491,17 @@ namespace RoyalD.Web.Controllers
             }
 
             ws.Cells.AutoFitColumns();
-            ws.Column(1).Width = 6;
-            ws.Column(5).Width = 14;
-            ws.Column(6).Width = 32;
+            ws.Column(1).Width = 5;
+            ws.Column(6).Width = 30;
             ws.Column(9).Width = 18;
 
             var fileBytes = package.GetAsByteArray();
-            string fileName = $"Dashboard_{category ?? "All"}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            string fileName = $"AR_Drilldown_{(category ?? "All")}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
             return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
         // ==========================================
-        // EXPORT PDF ENDPOINT (PAGE 1)
+        // EXPORT PDF ENDPOINTS (PAGE 1)
         // ==========================================
         [HttpGet]
         public async Task<IActionResult> ExportPdf(string? category, string? searchBill, string? searchCustomer, string? searchSalesRep)
@@ -532,7 +545,7 @@ namespace RoyalD.Web.Controllers
         // EXPORT EXCEL ENDPOINT (PAGE 2: COMPARISON)
         // ==========================================
         [HttpGet]
-        public async Task<IActionResult> ExportComparisonExcel(string? section, string? searchBill, string? searchCustomer, string? searchSalesRep)
+        public async Task<IActionResult> ExportComparisonExcel(string? section, string? filterType, string? searchBill, string? searchCustomer, string? searchSalesRep)
         {
             var (_, _, comp) = await GetDashboardDataAsync();
 
@@ -541,12 +554,21 @@ namespace RoyalD.Web.Controllers
                 if (!string.IsNullOrEmpty(searchBill) && !b.BillNo.Contains(searchBill, StringComparison.OrdinalIgnoreCase)) return false;
                 if (!string.IsNullOrEmpty(searchCustomer) && !b.CustomerName.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase) && !b.CustomerCode.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase)) return false;
                 if (!string.IsNullOrEmpty(searchSalesRep) && !b.SalesRep.Contains(searchSalesRep, StringComparison.OrdinalIgnoreCase)) return false;
+
+                if (!string.IsNullOrEmpty(filterType) && filterType.ToLower() != "all")
+                {
+                    if (filterType == "outstanding" && b.IsPaid) return false;
+                    if (filterType == "under120" && (b.IsPaid || b.AgingDays > 120)) return false;
+                    if (filterType == "over120" && (b.IsPaid || b.AgingDays <= 120)) return false;
+                    if (filterType == "collected" && !b.IsPaid) return false;
+                }
+
                 return true;
             };
 
-            var list1 = comp.Table1_Cash7Bkk.Where(filterFunc).OrderBy(b => b.BillDate).ToList();
-            var list2 = comp.Table2_CashTimelineBkk.Where(filterFunc).OrderBy(b => b.BillDate).ToList();
-            var list3 = comp.Table3_Upcountry.Where(filterFunc).OrderBy(b => b.BillDate).ToList();
+            var list1 = comp.AllBills.Where(b => b.GroupCode == "1").Where(filterFunc).OrderBy(b => b.BillDate).ToList();
+            var list2 = comp.AllBills.Where(b => b.GroupCode == "2").Where(filterFunc).OrderBy(b => b.BillDate).ToList();
+            var list3 = comp.AllBills.Where(b => b.GroupCode == "3").Where(filterFunc).OrderBy(b => b.BillDate).ToList();
 
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             using var package = new ExcelPackage();
@@ -595,7 +617,7 @@ namespace RoyalD.Web.Controllers
                     ws.Cells[row, 7].Value = item.Province;
                     ws.Cells[row, 8].Value = item.Credit;
                     ws.Cells[row, 8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                    ws.Cells[row, 9].Value = item.AgingDays > 0 ? $"{item.AgingDays} วัน" : "ยังไม่ถึงกำหนด";
+                    ws.Cells[row, 9].Value = item.IsPaid ? "ชำระแล้ว" : (item.AgingDays > 0 ? $"{item.AgingDays} วัน" : "ยังไม่ถึงกำหนด");
                     ws.Cells[row, 9].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                     ws.Cells[row, 10].Value = item.Amount;
                     ws.Cells[row, 10].Style.Numberformat.Format = "#,##0.00";
@@ -669,7 +691,7 @@ namespace RoyalD.Web.Controllers
         // EXPORT PDF ENDPOINT (PAGE 2: COMPARISON)
         // ==========================================
         [HttpGet]
-        public async Task<IActionResult> ExportComparisonPdf(string? section, string? searchBill, string? searchCustomer, string? searchSalesRep)
+        public async Task<IActionResult> ExportComparisonPdf(string? section, string? filterType, string? searchBill, string? searchCustomer, string? searchSalesRep)
         {
             var (_, _, comp) = await GetDashboardDataAsync();
 
@@ -678,18 +700,27 @@ namespace RoyalD.Web.Controllers
                 if (!string.IsNullOrEmpty(searchBill) && !b.BillNo.Contains(searchBill, StringComparison.OrdinalIgnoreCase)) return false;
                 if (!string.IsNullOrEmpty(searchCustomer) && !b.CustomerName.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase) && !b.CustomerCode.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase)) return false;
                 if (!string.IsNullOrEmpty(searchSalesRep) && !b.SalesRep.Contains(searchSalesRep, StringComparison.OrdinalIgnoreCase)) return false;
+
+                if (!string.IsNullOrEmpty(filterType) && filterType.ToLower() != "all")
+                {
+                    if (filterType == "outstanding" && b.IsPaid) return false;
+                    if (filterType == "under120" && (b.IsPaid || b.AgingDays > 120)) return false;
+                    if (filterType == "over120" && (b.IsPaid || b.AgingDays <= 120)) return false;
+                    if (filterType == "collected" && !b.IsPaid) return false;
+                }
+
                 return true;
             };
 
-            comp.Table1_Cash7Bkk = comp.Table1_Cash7Bkk.Where(filterFunc).OrderBy(b => b.BillDate).ToList();
-            comp.Table2_CashTimelineBkk = comp.Table2_CashTimelineBkk.Where(filterFunc).OrderBy(b => b.BillDate).ToList();
-            comp.Table3_Upcountry = comp.Table3_Upcountry.Where(filterFunc).OrderBy(b => b.BillDate).ToList();
+            comp.Table1_Cash7Bkk = comp.AllBills.Where(b => b.GroupCode == "1").Where(filterFunc).OrderBy(b => b.BillDate).ToList();
+            comp.Table2_CashTimelineBkk = comp.AllBills.Where(b => b.GroupCode == "2").Where(filterFunc).OrderBy(b => b.BillDate).ToList();
+            comp.Table3_Upcountry = comp.AllBills.Where(b => b.GroupCode == "3").Where(filterFunc).OrderBy(b => b.BillDate).ToList();
 
             ViewBag.Section = section ?? "all";
+            ViewBag.FilterType = filterType ?? "all";
             ViewBag.PrintedBy = User.Identity?.Name ?? "Admin";
 
             return View("PrintComparisonPdf", comp);
         }
     }
 }
-
