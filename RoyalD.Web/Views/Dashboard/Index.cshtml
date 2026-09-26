@@ -361,20 +361,20 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                 </div>
             </div>
 
-            <!-- Group 3: ต่างจังหวัดทั้งหมด (Deep Teal / Ocean Blue) -->
-            <div class="p-3 mb-2 rounded-3 border" style="background:#f0fdfa; border-color:#99f6e4 !important;">
+            <!-- Group 3: ต่างจังหวัดทั้งหมด (Pastel Purple / Lavender Slate) -->
+            <div class="p-3 mb-2 rounded-3 border" style="background:#f5f3ff; border-color:#ddd6fe !important;">
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="fw-bold" style="color:#0f766e;">
-                        <i class="bi bi-square-fill me-1" style="color:#0f766e;"></i> 3. บิลค้างชำระฝั่งต่างจังหวัดทั้งหมด
+                    <span class="fw-bold" style="color:#6d28d9;">
+                        <i class="bi bi-square-fill me-1" style="color:#7c3aed;"></i> 3. บิลค้างชำระฝั่งต่างจังหวัดทั้งหมด
                     </span>
-                    <span class="badge px-2 py-1" style="background:#0f766e; color:#fff;" id="pctText-upcountry">@pctUpcountry.ToString("0.0")%</span>
+                    <span class="badge px-2 py-1" style="background:#7c3aed; color:#fff;" id="pctText-upcountry">@pctUpcountry.ToString("0.0")%</span>
                 </div>
                 <div class="d-flex justify-content-between text-muted small">
                     <span>ยอดหนี้คงค้าง: <strong class="text-dark fs-6" id="breakdownAmount-upcountry">@pieUpcountry.ToString("N0")</strong> บาท</span>
                     <span>จำนวน: <strong class="text-dark" id="breakdownCount-upcountry">@summary.UpcountryDebts.BillCount.ToString("N0")</strong> บิล</span>
                 </div>
                 <div class="progress mt-2" style="height: 6px;">
-                    <div class="progress-bar" id="progBar-upcountry" role="progressbar" style="width: @pctUpcountry%; background:#0f766e;"></div>
+                    <div class="progress-bar" id="progBar-upcountry" role="progressbar" style="width: @pctUpcountry%; background:#7c3aed;"></div>
                 </div>
             </div>
 
@@ -424,7 +424,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
         <button type="button" class="btn category-btn" style="color:#b45309; border-color:#d97706;" id="pill-cash10" onclick="selectCategory('cash10')">
             ⏳ รวมสายเวลาเงินสด กทม. (@summary.Cash10Days.BillCount.ToString("N0"))
         </button>
-        <button type="button" class="btn category-btn" style="color:#0f766e; border-color:#0f766e;" id="pill-upcountry" onclick="selectCategory('upcountry')">
+        <button type="button" class="btn category-btn" style="color:#7c3aed; border-color:#7c3aed;" id="pill-upcountry" onclick="selectCategory('upcountry')">
             🚚 ต่างจังหวัดทั้งหมด (@summary.UpcountryDebts.BillCount.ToString("N0"))
         </button>
         <button type="button" class="btn category-btn" style="color:#be123c; border-color:#be123c;" id="pill-over120" onclick="selectCategory('over120')">
@@ -584,7 +584,7 @@ function initPieChart() {
                 backgroundColor: [
                     '#0284c7', // 1. ฟ้าพาสเทลนุ่มนวล (Soft Ice Blue)
                     '#d97706', // 2. ชาไทยพาสเทล / ครีมอุ่น (Warm Sand)
-                    '#0f766e'  // 3. ฟ้าครามสบายตา / ฟ้าน้ำทะเลเข้ม (Deep Teal)
+                    '#7c3aed'  // 3. สีม่วงพาสเทลสุภาพ / ม่วงลาเวนเดอร์ (Pastel Purple)
                 ],
                 borderColor: '#ffffff',
                 borderWidth: 2

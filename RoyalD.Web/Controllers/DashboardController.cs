@@ -668,7 +668,7 @@ namespace RoyalD.Web.Controllers
             else if (section == "3")
             {
                 var ws3 = package.Workbook.Worksheets.Add("ต่างจังหวัด");
-                buildSheet(ws3, "3. บิลค้างชำระ ต่างจังหวัด (ทุกภาค)", list3, Color.FromArgb(15, 118, 110));
+                buildSheet(ws3, "3. บิลค้างชำระ ต่างจังหวัด (ทุกภาค)", list3, Color.FromArgb(124, 58, 237));
             }
             else
             {
@@ -679,7 +679,7 @@ namespace RoyalD.Web.Controllers
                 buildSheet(ws2, "2. บิลเงินสดนโยบายรวมสายเวลา (กทม.&ปริมณฑล)", list2, Color.FromArgb(217, 119, 6));
 
                 var ws3 = package.Workbook.Worksheets.Add("3. ต่างจังหวัด");
-                buildSheet(ws3, "3. บิลค้างชำระ ต่างจังหวัด (ทุกภาค)", list3, Color.FromArgb(15, 118, 110));
+                buildSheet(ws3, "3. บิลค้างชำระ ต่างจังหวัด (ทุกภาค)", list3, Color.FromArgb(124, 58, 237));
             }
 
             var fileBytes = package.GetAsByteArray();

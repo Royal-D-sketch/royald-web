@@ -79,8 +79,8 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
     position: relative;
 }
 /* 3. Header Card 3: ฟ้าครามผ่อนคลาย (Deep Teal) */
-.card-header-deepteal {
-    background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
+.card-header-purple {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
     color: #ffffff;
     padding: 18px 20px;
     position: relative;
@@ -333,19 +333,19 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
     </div>
 
     <!-- ============================================================== -->
-    <!-- กล่องที่ 3 (ขวาสุด): บิลค้างชำระ ต่างจังหวัด (ทุกภาค) - ฟ้าครามผ่อนคลาย -->
+    <!-- กล่องที่ 3 (ขวาสุด): บิลค้างชำระ ต่างจังหวัด (ทุกภาค) - ม่วงพาสเทลสุภาพ -->
     <!-- ============================================================== -->
     <div class="col-12 col-lg-4">
         <div class="big-summary-card" id="card-group-3">
             <!-- Header with Collection Rate Top-Right -->
-            <div class="card-header-deepteal">
+            <div class="card-header-purple">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <span class="fs-6 fw-bold"><i class="bi bi-geo-alt-fill me-1"></i> 3. บิลค้างชำระ ต่างจังหวัด (ทุกภาค)</span>
-                    <span class="col-rate-badge" style="color:#0f766e;" title="% Collection Rate = [ (ยอดเก็บเงินได้ ÷ ยอดขายรวม) x 100 ]">
+                    <span class="col-rate-badge" style="color:#7c3aed;" title="% Collection Rate = [ (ยอดเก็บเงินได้ ÷ ยอดขายรวม) x 100 ]">
                         % Collection: <strong id="rate-g3">0.00%</strong>
                     </span>
                 </div>
-                <small class="opacity-90" style="font-size:0.78rem;">ลูกหนี้ต่างจังหวัดทั่วประเทศทุกภาค (ธีมสีฟ้าครามสบายตา Deep Teal)</small>
+                <small class="opacity-90" style="font-size:0.78rem;">ลูกหนี้ต่างจังหวัดทั่วประเทศทุกภาค (ธีมสีม่วงพาสเทลสุภาพ / ลาเวนเดอร์)</small>
             </div>
 
             <!-- 4 Vertical Metric Lines -->
@@ -353,10 +353,10 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                 <!-- บรรทัดที่ 1: ยอดจำนวนเงินค้างชำระทั้งหมด -->
                 <div class="metric-row-box" id="btn-g3-outstanding" onclick="setFilter('3', 'outstanding')" title="คลิกดูบิลค้างชำระทั้งหมดกลุ่มนี้">
                     <div>
-                        <div class="metric-title"><i class="bi bi-exclamation-circle-fill" style="color:#0f766e;"></i> ยอดหนี้ค้างชำระทั้งหมด</div>
+                        <div class="metric-title"><i class="bi bi-exclamation-circle-fill" style="color:#7c3aed;"></i> ยอดหนี้ค้างชำระทั้งหมด</div>
                         <div class="metric-sub" id="g3-outstanding-sub">จำนวน 0 บิล (ค้างชำระ)</div>
                     </div>
-                    <div class="metric-val-num" style="color:#0f766e;" id="g3-outstanding-amt">0</div>
+                    <div class="metric-val-num" style="color:#7c3aed;" id="g3-outstanding-amt">0</div>
                 </div>
 
                 <!-- บรรทัดที่ 2: ยอดเกินกำหนดชำระไม่เกิน 120 วัน -->

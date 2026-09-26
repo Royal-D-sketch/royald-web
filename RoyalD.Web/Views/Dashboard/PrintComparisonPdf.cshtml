@@ -39,7 +39,7 @@
         }
         .table-pdf.th-iceblue th { background-color: #0284c7 !important; }
         .table-pdf.th-warmsand th { background-color: #d97706 !important; }
-        .table-pdf.th-deepteal th { background-color: #0f766e !important; }
+        .table-pdf.th-purple th { background-color: #7c3aed !important; }
         .table-pdf td {
             vertical-align: middle;
             padding: 5px 4px;
@@ -163,10 +163,10 @@
     {
         <div class="mb-4">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <h6 class="fw-bold mb-0" style="color:#0f766e;"><i class="bi bi-geo-alt-fill me-1"></i> 3. บิลค้างชำระ ต่างจังหวัด (ทุกภาค) - ธีมสีฟ้าครามสบายตา / ฟ้าน้ำทะเลเข้ม</h6>
-                <span class="badge" style="background:#0f766e; color:#fff;">จำนวน @Model.Table3_Upcountry.Count.ToString("N0") รายการ | ยอดรวม @Model.Table3_TotalAmount.ToString("N2") บาท</span>
+                <h6 class="fw-bold mb-0" style="color:#7c3aed;"><i class="bi bi-geo-alt-fill me-1"></i> 3. บิลค้างชำระ ต่างจังหวัด (ทุกภาค) - ธีมสีม่วงพาสเทลสุภาพ / ลาเวนเดอร์</h6>
+                <span class="badge" style="background:#7c3aed; color:#fff;">จำนวน @Model.Table3_Upcountry.Count.ToString("N0") รายการ | ยอดรวม @Model.Table3_TotalAmount.ToString("N2") บาท</span>
             </div>
-            <table class="table table-bordered table-sm table-pdf th-deepteal">
+            <table class="table table-bordered table-sm table-pdf th-purple">
                 <thead>
                     <tr><th>#</th><th>เลขที่บิล</th><th>วันที่บิล</th><th>รหัส</th><th>ชื่อลูกค้า</th><th>อำเภอ</th><th>จังหวัด</th><th>เครดิต</th><th>อายุหนี้</th><th>จำนวนเงิน (บาท)</th><th>ผู้แทนขาย</th></tr>
                 </thead>
@@ -183,7 +183,7 @@
                             <td>@b.Province</td>
                             <td class="text-center">@(b.Credit > 0 ? b.Credit.ToString() : "สด")</td>
                             <td class="text-center">@(b.IsPaid ? "ชำระแล้ว" : (b.AgingDays > 0 ? $"{b.AgingDays} วัน" : "-"))</td>
-                            <td class="text-end fw-bold" style="color:#0f766e;">@b.Amount.ToString("N2")</td>
+                            <td class="text-end fw-bold" style="color:#7c3aed;">@b.Amount.ToString("N2")</td>
                             <td>@b.SalesRep</td>
                         </tr>
                     }
@@ -191,7 +191,7 @@
                 <tfoot>
                     <tr class="total-row">
                         <td colspan="9" class="text-end">ยอดรวมทั้งสิ้น (@Model.Table3_Upcountry.Count.ToString("N0") รายการ):</td>
-                        <td class="text-end fw-bold" style="color:#0f766e;">@Model.Table3_TotalAmount.ToString("N2")</td>
+                        <td class="text-end fw-bold" style="color:#7c3aed;">@Model.Table3_TotalAmount.ToString("N2")</td>
                         <td></td>
                     </tr>
                 </tfoot>
