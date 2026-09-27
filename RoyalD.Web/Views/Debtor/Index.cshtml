@@ -487,8 +487,14 @@
 
                             <!-- 2. ชื่อลูกค้า / รหัสลูกค้า -->
                             <td>
+                                @{
+                                    var billName   = d.CustomerName ?? "";
+                                    var masterName = d.Customer?.Name ?? "";
+                                    var displayName = billName.Length >= masterName.Length ? billName : masterName;
+                                    if (string.IsNullOrEmpty(displayName)) displayName = "-";
+                                }
                                 <div class="customer-name fw-bold text-dark" style="white-space: normal !important; word-break: break-word !important; line-height: 1.35; font-size: 0.92rem; min-width: 260px;">
-                                    @(string.IsNullOrEmpty(d.CustomerName) ? (d.Customer?.Name ?? "-") : d.CustomerName)
+                                    @displayName
                                 </div>
                                 <small class="text-muted d-block font-monospace mt-1" style="font-size: 0.74rem;">
                                     รหัส: @(d.Customer?.CustomerCode ?? d.CustomerCode)
