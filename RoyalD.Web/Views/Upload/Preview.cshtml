@@ -1,4 +1,4 @@
-﻿@model RoyalD.Web.Models.ImportPreviewResult
+@model RoyalD.Web.Models.ImportPreviewResult
 @{
     ViewData["Title"] = "ตรวจสอบและยืนยันการนำเข้าบิลขาย";
 }
@@ -63,12 +63,12 @@
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card shadow-sm border-0 bg-primary bg-opacity-10 border-start border-primary border-4 h-100">
+        <div class="card shadow-sm border-0 border-start border-4 h-100" style="background-color: #f0fdfa; border-left-color: #0d9488 !important;">
             <div class="card-body py-3">
-                <div class="text-primary fw-bold small text-uppercase">
+                <div class="fw-bold small text-uppercase" style="color: #0f766e;">
                     <i class="bi bi-cash-stack me-1"></i> ยอดเงินรวมทั้งไฟล์
                 </div>
-                <div class="fs-3 fw-black text-primary">
+                <div class="fs-3 fw-black" style="color: #0f766e;">
                     @Model.TotalAmount.ToString("N2") <small class="fs-6 fw-normal text-muted">บาท</small>
                 </div>
                 <div class="small text-muted">รวม @Model.TotalRows รายการ</div>

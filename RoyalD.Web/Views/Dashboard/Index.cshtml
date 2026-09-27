@@ -213,14 +213,14 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
             &nbsp;|&nbsp; อัปเดตข้อมูลแบบเรียลไทม์
         </small>
         <div class="d-flex flex-wrap gap-2 mt-2">
-            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary px-3 py-2 fs-7">
-                <i class="bi bi-file-earmark-spreadsheet me-1"></i> บิลขายล่าสุด: <strong>@(ViewBag.LatestBillDate != null ? ((DateTime)ViewBag.LatestBillDate).ToString("dd/MM/yyyy") : "-")</strong>
+            <span class="badge px-3 py-2 fs-7 shadow-sm" style="background-color: #f0fdfa; color: #0f766e; border: 1.5px solid #0d9488;">
+                <i class="bi bi-file-earmark-spreadsheet me-1" style="color: #0d9488;"></i> บิลขายล่าสุด: <strong style="color: #115e59;">@(ViewBag.LatestBillDate != null ? ((DateTime)ViewBag.LatestBillDate).ToString("dd/MM/yyyy") : "-")</strong>
             </span>
-            <span class="badge bg-warning bg-opacity-10 text-dark border border-warning px-3 py-2 fs-7">
-                <i class="bi bi-person-lines-fill me-1"></i> การ์ดลูกหนี้ล่าสุด: <strong>@(ViewBag.LatestDebtorDate != null ? ((DateTime)ViewBag.LatestDebtorDate).ToString("dd/MM/yyyy") : "-")</strong>
+            <span class="badge px-3 py-2 fs-7 shadow-sm" style="background-color: #fefce8; color: #854d0e; border: 1.5px solid #eab308;">
+                <i class="bi bi-person-lines-fill me-1" style="color: #ca8a04;"></i> การ์ดลูกหนี้ล่าสุด: <strong style="color: #713f12;">@(ViewBag.LatestDebtorDate != null ? ((DateTime)ViewBag.LatestDebtorDate).ToString("dd/MM/yyyy") : "-")</strong>
             </span>
-            <span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2 fs-7">
-                <i class="bi bi-receipt me-1"></i> สรุปรับเงินล่าสุด: <strong>@(ViewBag.LatestReceiptDate != null ? ((DateTime)ViewBag.LatestReceiptDate).ToString("dd/MM/yyyy") : "-")</strong>
+            <span class="badge px-3 py-2 fs-7 shadow-sm" style="background-color: #f0fdf4; color: #166534; border: 1.5px solid #22c55e;">
+                <i class="bi bi-receipt me-1" style="color: #16a34a;"></i> สรุปรับเงินล่าสุด: <strong style="color: #14532d;">@(ViewBag.LatestReceiptDate != null ? ((DateTime)ViewBag.LatestReceiptDate).ToString("dd/MM/yyyy") : "-")</strong>
             </span>
         </div>
     </div>
