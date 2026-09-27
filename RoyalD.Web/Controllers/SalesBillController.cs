@@ -129,7 +129,7 @@ namespace RoyalD.Web.Controllers
                 salesRep = currentUser.SalesRepCode;
             }
 
-            var q = _db.SalesBills.AsNoTracking().Include(b => b.Items).AsQueryable();
+            var q = _db.SalesBills.AsNoTracking().Include(b => b.Items).Include(b => b.Customer).AsQueryable();
 
             // Combined Region + Province Permission logic
             if (!string.IsNullOrEmpty(userAllowedRegion) || !string.IsNullOrEmpty(userAllowedProvinces))

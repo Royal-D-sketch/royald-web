@@ -284,7 +284,12 @@
                         <td>@b.BillDate.ToString("dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture)</td>
                         <td>@(!string.IsNullOrEmpty(b.PoNumber) ? b.PoNumber : "-")</td>
                         <td><code>@b.CustomerCode</code></td>
-                        <td class="fw-semibold text-dark col-customer-name" style="min-width: 260px; white-space: normal !important; word-break: break-word !important;">@b.CustomerName</td>
+                        <td class="fw-semibold text-dark col-customer-name" style="min-width: 260px; white-space: normal !important; word-break: break-word !important;">@{
+                            var sbBillName   = b.CustomerName ?? "";
+                            var sbMasterName = b.Customer?.Name ?? "";
+                            var sbDisplayName = sbBillName.Length >= sbMasterName.Length ? sbBillName : sbMasterName;
+                            if (string.IsNullOrEmpty(sbDisplayName)) sbDisplayName = "-";
+                        }@sbDisplayName</td>
                         <td>@(!string.IsNullOrEmpty(b.District) ? b.District : "-")</td>
                         <td>@(!string.IsNullOrEmpty(b.Province) ? b.Province : "-")</td>
                         <td class="text-center">
