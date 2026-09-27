@@ -634,6 +634,20 @@ namespace RoyalD.Web.Services
             }
 
             await _db.SaveChangesAsync();
+
+            // Auto-correct: update CustomerName from Customers.Name where Customers has a longer name
+            // This fixes all truncated names from CD export across all views
+            if (custCodes.Count > 0)
+            {
+                await _db.Database.ExecuteSqlRawAsync(@"
+                    UPDATE ""SalesBills"" sb
+                    SET ""CustomerName"" = c.""Name""
+                    FROM ""Customers"" c
+                    WHERE sb.""CustomerCode"" = c.""CustomerCode""
+                      AND c.""Name"" IS NOT NULL AND c.""Name"" != ''
+                      AND LENGTH(c.""Name"") > COALESCE(LENGTH(sb.""CustomerName""), 0)");
+            }
+
             RemovePreview(previewId);
             return (inserted, updated, skipped, p.LatestDate);
         }
@@ -709,6 +723,18 @@ namespace RoyalD.Web.Services
                 }
             }
             await _db.SaveChangesAsync();
+
+            // Auto-correct: update CustomerName from Customers.Name where Customers has a longer name
+            if (custCodes.Count > 0)
+            {
+                await _db.Database.ExecuteSqlRawAsync(@"
+                    UPDATE ""OutstandingDebts"" od
+                    SET ""CustomerName"" = c.""Name""
+                    FROM ""Customers"" c
+                    WHERE od.""CustomerCode"" = c.""CustomerCode""
+                      AND c.""Name"" IS NOT NULL AND c.""Name"" != ''
+                      AND LENGTH(c.""Name"") > COALESCE(LENGTH(od.""CustomerName""), 0)");
+            }
 
             return (count, maxDate, cleanedDebts.Take(10).ToList());
         }
