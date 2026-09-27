@@ -488,7 +488,7 @@
                             <!-- 2. ชื่อลูกค้า / รหัสลูกค้า -->
                             <td>
                                 <div class="customer-name fw-bold text-dark" style="white-space: normal !important; word-break: break-word !important; line-height: 1.35; font-size: 0.92rem; min-width: 260px;">
-                                    @(d.Customer?.Name ?? d.CustomerName)
+                                    @(string.IsNullOrEmpty(d.CustomerName) ? (d.Customer?.Name ?? "-") : d.CustomerName)
                                 </div>
                                 <small class="text-muted d-block font-monospace mt-1" style="font-size: 0.74rem;">
                                     รหัส: @(d.Customer?.CustomerCode ?? d.CustomerCode)

@@ -549,10 +549,16 @@ namespace RoyalD.Web.Services
 
             // Ensure Customers exist to prevent foreign key errors
             var custCodes = p.Items.Where(b => !string.IsNullOrEmpty(b.CustomerCode)).Select(b => b.CustomerCode).Distinct().ToList();
-            var existingCusts = (await _db.Customers.Where(c => custCodes.Contains(c.CustomerCode)).Select(c => c.CustomerCode).ToListAsync()).ToHashSet();
+            var existingCustEntities = await _db.Customers.Where(c => custCodes.Contains(c.CustomerCode)).ToListAsync();
+            var existingCustsSet = existingCustEntities.Select(c => c.CustomerCode).ToHashSet();
+            // Build best name map (longest name per customer code from current import)
+            var bestNameMap = p.Items
+                .Where(b => !string.IsNullOrEmpty(b.CustomerCode) && !string.IsNullOrEmpty(b.CustomerName))
+                .GroupBy(b => b.CustomerCode)
+                .ToDictionary(g => g.Key!, g => g.OrderByDescending(b => b.CustomerName!.Length).First().CustomerName!);
             foreach (var b in p.Items)
             {
-                if (!string.IsNullOrEmpty(b.CustomerCode) && !existingCusts.Contains(b.CustomerCode))
+                if (!string.IsNullOrEmpty(b.CustomerCode) && !existingCustsSet.Contains(b.CustomerCode))
                 {
                     _db.Customers.Add(new Customer
                     {
@@ -562,8 +568,14 @@ namespace RoyalD.Web.Services
                         Province = b.Province ?? "",
                         Phone = b.Phone ?? ""
                     });
-                    existingCusts.Add(b.CustomerCode);
+                    existingCustsSet.Add(b.CustomerCode);
                 }
+            }
+            // Update existing customers if import has a longer name
+            foreach (var cust in existingCustEntities)
+            {
+                if (bestNameMap.TryGetValue(cust.CustomerCode, out var newName) && newName.Length > (cust.Name?.Length ?? 0))
+                    cust.Name = newName;
             }
             await _db.SaveChangesAsync();
 
@@ -651,10 +663,16 @@ namespace RoyalD.Web.Services
 
             // Ensure Customers exist to prevent foreign key errors
             var custCodes = cleanedDebts.Where(d => !string.IsNullOrEmpty(d.CustomerCode)).Select(d => d.CustomerCode).Distinct().ToList();
-            var existingCusts = (await _db.Customers.Where(c => custCodes.Contains(c.CustomerCode)).Select(c => c.CustomerCode).ToListAsync()).ToHashSet();
+            var existingCustEntitiesOD = await _db.Customers.Where(c => custCodes.Contains(c.CustomerCode)).ToListAsync();
+            var existingCustsOD = existingCustEntitiesOD.Select(c => c.CustomerCode).ToHashSet();
+            // Build best name map (longest name per customer code from current import)
+            var bestNameMapOD = cleanedDebts
+                .Where(d => !string.IsNullOrEmpty(d.CustomerCode) && !string.IsNullOrEmpty(d.CustomerName))
+                .GroupBy(d => d.CustomerCode)
+                .ToDictionary(g => g.Key!, g => g.OrderByDescending(d => d.CustomerName!.Length).First().CustomerName!);
             foreach (var d in cleanedDebts)
             {
-                if (!string.IsNullOrEmpty(d.CustomerCode) && !existingCusts.Contains(d.CustomerCode))
+                if (!string.IsNullOrEmpty(d.CustomerCode) && !existingCustsOD.Contains(d.CustomerCode))
                 {
                     _db.Customers.Add(new Customer
                     {
@@ -663,8 +681,14 @@ namespace RoyalD.Web.Services
                         District = d.District ?? "",
                         Province = d.Province ?? ""
                     });
-                    existingCusts.Add(d.CustomerCode);
+                    existingCustsOD.Add(d.CustomerCode);
                 }
+            }
+            // Update existing customers if import has a longer name
+            foreach (var cust in existingCustEntitiesOD)
+            {
+                if (bestNameMapOD.TryGetValue(cust.CustomerCode, out var newNameOD) && newNameOD.Length > (cust.Name?.Length ?? 0))
+                    cust.Name = newNameOD;
             }
             await _db.SaveChangesAsync();
 
