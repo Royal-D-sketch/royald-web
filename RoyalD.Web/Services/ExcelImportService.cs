@@ -112,13 +112,14 @@ namespace RoyalD.Web.Services
                     else if (tbl.Columns.Count > 15 && !string.IsNullOrWhiteSpace(row[15]?.ToString()))
                         rep = row[15].ToString()!.Trim();
 
+                    var rawCustName = tbl.Columns.Count > 4 ? row[4]?.ToString()?.Trim() ?? "" : "";
                     currentBill = new BillPreviewItem
                     {
                         BillNo = c0,
                         BillDate = billDate == DateTime.MinValue ? DateTime.Today : billDate,
                         CustomerCode = tbl.Columns.Count > 2 ? row[2]?.ToString()?.Trim() ?? "" : "",
                         PoNumber = tbl.Columns.Count > 3 ? row[3]?.ToString()?.Trim() ?? "" : "",
-                        CustomerName = tbl.Columns.Count > 4 ? row[4]?.ToString()?.Trim() ?? "" : "",
+                        CustomerName = rawCustName.Length > 200 ? rawCustName.Substring(0, 200) : rawCustName,
                         District = tbl.Columns.Count > 6 ? row[6]?.ToString()?.Trim() ?? "" : "",
                         Province = tbl.Columns.Count > 8 ? row[8]?.ToString()?.Trim() ?? "" : "",
                         Credit = credit,
@@ -394,10 +395,10 @@ namespace RoyalD.Web.Services
                     list.Add(new OutstandingDebt
                     {
                         CustomerCode = currentCustCode.Length > 20 ? currentCustCode.Substring(0, 20) : currentCustCode,
-                        CustomerName = currentCustName.Length > 100 ? currentCustName.Substring(0, 100) : currentCustName,
-                        District = currentDistrict.Length > 100 ? currentDistrict.Substring(0, 100) : currentDistrict,
-                        Province = currentProvince.Length > 100 ? currentProvince.Substring(0, 100) : currentProvince,
-                        BillNo = billNo.Length > 50 ? billNo.Substring(0, 50) : billNo,
+                        CustomerName = currentCustName.Length > 200 ? currentCustName.Substring(0, 200) : currentCustName,
+                        District = currentDistrict.Length > 200 ? currentDistrict.Substring(0, 200) : currentDistrict,
+                        Province = currentProvince.Length > 200 ? currentProvince.Substring(0, 200) : currentProvince,
+                        BillNo = billNo.Length > 200 ? billNo.Substring(0, 200) : billNo,
                         BillDate = billDate == DateTime.MinValue ? DateTime.Today : billDate,
                         DueDate = dueDate == DateTime.MinValue ? (credit > 0 ? (billDate == DateTime.MinValue ? DateTime.Today : billDate).AddDays(credit) : DateTime.Today) : dueDate,
                         OriginalAmount = amount,
