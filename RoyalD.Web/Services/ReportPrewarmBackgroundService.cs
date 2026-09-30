@@ -88,6 +88,7 @@ namespace RoyalD.Web.Services
             try
             {
                 var annualData = await reportSvc.GetAnnualPerformanceAsync();
+                cache.Set("annual_performance_cache", annualData, cacheDuration);
                 cache.Set("annual_performance_report_cache", annualData, cacheDuration);
                 cache.Set("annual_performance_report_svc", annualData, cacheDuration);
             }
@@ -110,9 +111,9 @@ namespace RoyalD.Web.Services
             // 4. Customer Product (Default admin view)
             try
             {
-                var custProd = await reportSvc.GetCustomerProductReportAsync(null, null, null, null, null, null, "admin");
-                cache.Set("cust_prod________admin", custProd, cacheDuration);
-                cache.Set("cust_prod_______", custProd, cacheDuration);
+                var custProd = await reportSvc.GetCustomerProductReportAsync(null, null, null, null, null, null, null);
+                cache.Set("cust_prod______", custProd, cacheDuration);
+                cache.Set("cust_prod______admin", custProd, cacheDuration);
             }
             catch (Exception ex)
             {
@@ -122,9 +123,9 @@ namespace RoyalD.Web.Services
             // 5. Customer Purchase Summary (Default admin view)
             try
             {
-                var custPurch = await reportSvc.GetCustomerPurchaseSummaryAsync(null, null, null, null, "admin", null, null, null);
+                var custPurch = await reportSvc.GetCustomerPurchaseSummaryAsync(null, null, null, null, null, null, null, null);
                 cache.Set("cust_purch_______", custPurch, cacheDuration);
-                cache.Set("cust_purch______admin_", custPurch, cacheDuration);
+                cache.Set("cust_purch___admin____", custPurch, cacheDuration);
             }
             catch (Exception ex)
             {
