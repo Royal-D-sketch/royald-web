@@ -960,50 +960,42 @@ namespace RoyalD.Web.Services
                 }
             }
 
-            var items = await query.ToListAsync();
-
-            // Apply search query (in-memory filter)
             if (!string.IsNullOrWhiteSpace(q))
             {
-                var qLower = q.Trim().ToLower();
-                items = items.Where(i =>
-                    (i.SalesBill.CustomerCode != null && i.SalesBill.CustomerCode.ToLower().Contains(qLower)) ||
-                    (i.SalesBill.CustomerName != null && i.SalesBill.CustomerName.ToLower().Contains(qLower)) ||
-                    (i.ProductCode != null && i.ProductCode.ToLower().Contains(qLower)) ||
-                    (i.ProductName != null && i.ProductName.ToLower().Contains(qLower))
-                ).ToList();
+                var qClean = "%" + q.Trim() + "%";
+                query = query.Where(i =>
+                    (i.SalesBill.CustomerCode != null && EF.Functions.ILike(i.SalesBill.CustomerCode, qClean)) ||
+                    (i.SalesBill.CustomerName != null && EF.Functions.ILike(i.SalesBill.CustomerName, qClean)) ||
+                    (i.ProductCode != null && EF.Functions.ILike(i.ProductCode, qClean)) ||
+                    (i.ProductName != null && EF.Functions.ILike(i.ProductName, qClean))
+                );
             }
 
-            var allCustomers = (await _db.Customers
-                .Where(c => !string.IsNullOrEmpty(c.CustomerCode))
-                .Select(c => new { c.CustomerCode, c.Name })
-                .ToListAsync())
-                .GroupBy(c => c.CustomerCode!)
-                .ToDictionary(g => g.Key, g => g.First().Name ?? "");
-
-            var billCustomers = await _db.SalesBills
-                .Where(b => !string.IsNullOrEmpty(b.CustomerCode) && !string.IsNullOrEmpty(b.CustomerName))
-                .Select(b => new { b.CustomerCode, b.CustomerName })
-                .Distinct()
-                .ToListAsync();
-            foreach(var bc in billCustomers)
-            {
-                if (!string.IsNullOrEmpty(bc.CustomerCode) && !allCustomers.ContainsKey(bc.CustomerCode))
-                {
-                    allCustomers[bc.CustomerCode] = bc.CustomerName ?? "";
-                }
-            }
+            var items = await query.AsNoTracking().Select(i => new {
+                CustCode = i.SalesBill.CustomerCode,
+                Cust = i.SalesBill.CustomerName,
+                Rep = i.SalesBill.SalesRep,
+                Credit = i.SalesBill.Credit,
+                Year = i.SalesBill.BillDate.Year,
+                Month = i.SalesBill.BillDate.Month,
+                ProductCode = i.ProductCode,
+                ProductName = i.ProductName,
+                Unit = i.Unit,
+                Price = i.Price,
+                Qty = i.Qty,
+                Amount = i.Amount
+            }).ToListAsync();
 
             var grouped = items.GroupBy(i => new { 
-                    CustCode = i.SalesBill.CustomerCode,
-                    Cust = i.SalesBill.CustomerName, 
-                    Rep = i.SalesBill.SalesRep, 
+                    CustCode = i.CustCode,
+                    Cust = i.Cust, 
+                    Rep = i.Rep, 
                     Code = i.ProductCode, 
                     Name = i.ProductName, 
                     Price = i.Price
                 })
                 .Select(g => {
-                    var uniqueMonths = g.Select(x => new { x.SalesBill.BillDate.Year, x.SalesBill.BillDate.Month })
+                    var uniqueMonths = g.Select(x => new { x.Year, x.Month })
                                         .Distinct()
                                         .OrderBy(m => m.Year).ThenBy(m => m.Month)
                                         .Select(m => $"{m.Month:D2}/{m.Year}")
@@ -1012,23 +1004,17 @@ namespace RoyalD.Web.Services
                     if (uniqueMonths.Count == 1) monthDisplay = uniqueMonths[0];
                     else if (uniqueMonths.Count > 1) monthDisplay = uniqueMonths.First() + "-" + uniqueMonths.Last();
                     
-                    string cName = g.Key.Cust ?? "";
-                    if (string.IsNullOrWhiteSpace(cName) && allCustomers.TryGetValue(g.Key.CustCode ?? "", out var dbName))
-                    {
-                        cName = dbName;
-                    }
-                    
                     return new CustomerProductItem
                     {
                         Month = monthDisplay,
                         CustomerCode = g.Key.CustCode ?? "",
-                        CustomerName = cName,
+                        CustomerName = g.Key.Cust ?? "",
                         SalesRep = g.Key.Rep ?? "",
                         ProductCode = g.Key.Code ?? "",
                         ProductName = g.Key.Name ?? "",
                         Unit = ProductCatalogService.GetUnit(g.Key.Code, g.Key.Name, g.FirstOrDefault()?.Unit),
                         Price = g.Key.Price,
-                        Credit = g.First().SalesBill.Credit,
+                        Credit = g.First().Credit,
                         Qty = g.Sum(x => x.Qty),
                         TotalAmount = g.Sum(x => x.Amount)
                     };
@@ -1178,17 +1164,23 @@ namespace RoyalD.Web.Services
                 itemQuery = itemQuery.Where(i => EF.Functions.ILike(i.ProductCode ?? "", "%" + pcode + "%"));
             }
 
-            var allItems = await itemQuery.ToListAsync();
+            var allItems = await itemQuery.AsNoTracking().Select(i => new {
+                CustomerId = i.SalesBill.CustomerCode ?? "",
+                CustomerName = i.SalesBill.CustomerName ?? "",
+                ProductCode = i.ProductCode ?? "",
+                ProductName = i.ProductName ?? "",
+                Unit = i.Unit,
+                Price = i.Price,
+                Qty = i.Qty
+            }).ToListAsync();
             
-            // All customers for autocomplete (from non-filtered base query)
-            vm.AllCustomers = await _db.SalesBills
-                .Where(b => b.CustomerCode != null && b.CustomerName != null)
-                .Select(b => new { b.CustomerCode, b.CustomerName })
-                .Distinct()
-                .OrderBy(x => x.CustomerName)
-                .Select(x => new { x.CustomerCode, x.CustomerName })
+            // All customers for autocomplete (from Customers table)
+            vm.AllCustomers = await _db.Customers.AsNoTracking()
+                .Where(c => !string.IsNullOrEmpty(c.CustomerCode) && !string.IsNullOrEmpty(c.Name))
+                .OrderBy(c => c.Name)
+                .Select(c => new { c.CustomerCode, c.Name })
                 .ToListAsync()
-                .ContinueWith(t => t.Result.Select(x => (x.CustomerCode ?? "", x.CustomerName ?? "")).Distinct().ToList());
+                .ContinueWith(t => t.Result.Select(x => (x.CustomerCode ?? "", x.Name ?? "")).ToList());
 
             // Set search fields in VM
             vm.SearchCustomerCode = searchCustomerCode ?? "";
@@ -1198,10 +1190,10 @@ namespace RoyalD.Web.Services
             // Group by Customer + Product + UnitPrice (price split logic - separate rows per price)
             vm.Rows = allItems
                 .GroupBy(x => new {
-                    CustomerId = x.SalesBill.CustomerCode ?? "",
-                    CustomerName = x.SalesBill.CustomerName ?? "",
-                    ProductCode = x.ProductCode ?? "",
-                    ProductName = x.ProductName ?? "",
+                    CustomerId = x.CustomerId,
+                    CustomerName = x.CustomerName,
+                    ProductCode = x.ProductCode,
+                    ProductName = x.ProductName,
                     Unit = ProductCatalogService.GetUnit(x.ProductCode, x.ProductName, x.Unit),
                     UnitPrice = x.Price
                 })
