@@ -116,6 +116,13 @@
 }
 <script id="customers-data" type="application/json">@Html.Raw(customersJson)</script>
 
+@if (Model.Rows.Count > 500)
+{
+    <div class="alert alert-info py-2 px-3 mb-2 small d-flex justify-content-between align-items-center no-print">
+        <span><i class="bi bi-info-circle-fill me-1"></i> แสดง 500 รายการแรก เพื่อความรวดเร็วในการเปิดหน้า (หากต้องการดูทั้งหมด <strong>@Model.Rows.Count.ToString("N0")</strong> รายการ สามารถกด <strong>Export Excel</strong> หรือระบุคำค้นหา)</span>
+    </div>
+}
+
 <div class="prod-table-wrap">
     <table class="table prod-table mb-0" id="purchase-table">
         <thead>
@@ -138,10 +145,9 @@
             else
             {
                 string lastCustomerId = "";
-                decimal totalGrandAmount = 0;
-                foreach (var row in Model.Rows)
+                decimal totalGrandAmount = Model.Rows.Sum(r => r.Amount);
+                foreach (var row in Model.Rows.Take(500))
                 {
-                    totalGrandAmount += row.Amount;
                     bool isNewCustomer = (row.CustomerId != lastCustomerId);
                     <tr>
                         <td class="@(isNewCustomer ? "fw-bold text-primary" : "text-muted")" style="@(isNewCustomer ? "" : "border-top:none;")">

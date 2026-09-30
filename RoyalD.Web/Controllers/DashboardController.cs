@@ -488,7 +488,7 @@ namespace RoyalD.Web.Controllers
 
             var data = await _cache.GetOrCreateAsync("dashboard_page_data_cache", async entry =>
             {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
                 return await LoadDashboardPageDataAsync();
             }) ?? new DashboardPageData();
 

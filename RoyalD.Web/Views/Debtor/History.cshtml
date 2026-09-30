@@ -1,4 +1,4 @@
-﻿@model List<RoyalD.Web.Models.OutstandingDebt>
+@model List<RoyalD.Web.Models.OutstandingDebt>
 @using RoyalD.Web.Models
 @{
     ViewData["Title"] = "ประวัติชำระครบแล้ว";
@@ -81,6 +81,13 @@
 
 
 
+    @if (Model != null && Model.Count > 300)
+    {
+        <div class="alert alert-info py-2 px-3 mb-2 small no-print">
+            <i class="bi bi-info-circle-fill me-1"></i> แสดง 300 รายการล่าสุด เพื่อความรวดเร็วในการเปิดหน้า (จากทั้งหมด <strong>@ViewBag.TotalCount</strong> รายการ) หากต้องการดูเฉพาะเจาะจง สามารถใช้ช่องค้นหาด้านบน
+        </div>
+    }
+
     <!-- Data Table -->
     <div class="table-responsive bg-white rounded-3 shadow-sm border mb-3">
         <table id="historyTable" class="table table-hover align-middle mb-0" style="font-size: 0.95rem;">
@@ -98,7 +105,7 @@
             <tbody class="border-top-0">
                 @if (Model != null && Model.Any())
                 {
-                    foreach (var d in Model)
+                    foreach (var d in Model.Take(300))
                     {
                         var displayDate = d.ReceiptDate ?? d.FullyPaidDate ?? d.PaidDate;
                         <tr>
