@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using RoyalD.Web.Services;
 
 namespace RoyalD.Web.Controllers
@@ -8,8 +9,13 @@ namespace RoyalD.Web.Controllers
     public class SalesReportController : Controller
     {
         private readonly ReportService _svc;
+        private readonly IMemoryCache _cache;
 
-        public SalesReportController(ReportService svc) => _svc = svc;
+        public SalesReportController(ReportService svc, IMemoryCache cache)
+        {
+            _svc = svc;
+            _cache = cache;
+        }
 
         // Screen 1: Pivot Matrix Summary & Interactive Rep Tabs (Default)
         private bool CheckPerm(string p) 
@@ -29,19 +35,31 @@ namespace RoyalD.Web.Controllers
             return false; 
         } 
 
-        public async Task<IActionResult> Index() { if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
-            var data = await _svc.GetAnnualPerformanceAsync();
+        private Task<AnnualPerformanceViewModel> GetCachedAnnualPerformanceAsync()
+        {
+            return _cache.GetOrCreateAsync("annual_performance_cache", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+                return await _svc.GetAnnualPerformanceAsync();
+            })!;
+        }
+
+        public async Task<IActionResult> Index() { 
+            if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
+            var data = await GetCachedAnnualPerformanceAsync();
             return View("Summary", data);
         }
 
-        public async Task<IActionResult> Summary() { if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
-            var data = await _svc.GetAnnualPerformanceAsync();
+        public async Task<IActionResult> Summary() { 
+            if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
+            var data = await GetCachedAnnualPerformanceAsync();
             return View(data);
         }
 
         // Screen 2: Annual Performance Charts
-        public async Task<IActionResult> Charts() { if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
-            var data = await _svc.GetAnnualPerformanceAsync();
+        public async Task<IActionResult> Charts() { 
+            if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
+            var data = await GetCachedAnnualPerformanceAsync();
             return View(data);
         }
 

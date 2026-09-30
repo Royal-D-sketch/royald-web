@@ -486,6 +486,15 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
         </div>
     </div>
 
+    <div class="alert alert-light border py-2 px-3 small d-flex flex-wrap justify-content-between align-items-center mb-2" style="background:#f8fafc; border-color:#e2e8f0; border-radius:10px;">
+        <div class="text-secondary fw-semibold">
+            <i class="bi bi-lightning-charge-fill text-warning me-1"></i> แสดงตัวอย่างบิลลูกหนี้ล่าสุด <strong>@(Math.Min(drilldownBills.Count, 300))</strong> รายการ เพื่อให้หน้าเว็บเปิดติดทันที
+        </div>
+        <a href="/Debtor" class="btn btn-sm btn-outline-teal fw-bold text-teal" style="font-size:0.82rem; border-color:#0d9488; color:#0d9488;">
+            <i class="bi bi-arrow-right-circle me-1"></i> เปิดดูและค้นหาบิลทั้งหมด (การ์ดลูกหนี้)
+        </a>
+    </div>
+
     <!-- Table Responsive (10 Columns) -->
     <div class="table-responsive" style="max-height: 580px; overflow-y: auto;">
         <table class="table table-sm table-bordered table-hover align-middle detail-table mb-0" id="billsTable">
@@ -511,9 +520,13 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                         <td colspan="11" class="text-center text-muted py-4">ไม่พบรายการข้อมูล</td>
                     </tr>
                 }
-                @for (int i = 0; i < drilldownBills.Count; i++)
+                @{
+                    var maxDisplayRows = 300;
+                    var renderBills = drilldownBills.Take(maxDisplayRows).ToList();
+                }
+                @for (int i = 0; i < renderBills.Count; i++)
                 {
-                    var b = drilldownBills[i];
+                    var b = renderBills[i];
                     <tr class="bill-row"
                         data-init-idx="@i"
                         data-category="@b.Category"

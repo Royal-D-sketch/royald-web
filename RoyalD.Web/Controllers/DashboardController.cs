@@ -345,28 +345,32 @@ namespace RoyalD.Web.Controllers
                     summary.TotalAmount += sb.TotalAmount;
                     seenPaidBillNos.Add(sb.BillNo);
 
-                    var item = new DashboardBillItem
+                    // Add only top 100 collected items to preview table to prevent 50MB HTML size explosion
+                    if (drilldownBills.Count(x => x.Category == "collected") < 100)
                     {
-                        BillNo = sb.BillNo,
-                        BillDate = sb.BillDate,
-                        SalesRep = sb.SalesRep ?? "",
-                        CustomerCode = sb.CustomerCode ?? "",
-                        CustomerName = sb.CustomerName ?? "",
-                        District = sb.District ?? "",
-                        Province = sb.Province ?? "",
-                        Amount = sb.TotalAmount,
-                        Category = "collected",
-                        CategoryName = "ยอดเก็บเงินสำเร็จ",
-                        GroupCode = groupCode,
-                        Credit = sb.Credit,
-                        DueDate = sb.BillDate.AddDays(sb.Credit),
-                        AgingDays = 0,
-                        StatusName = "เก็บเงินสำเร็จ",
-                        IsPaid = true,
-                        IsBkk = isBkkArea,
-                        IsModernTrade = IsModernTrade(sb.CustomerCode, sb.CustomerName)
-                    };
-                    drilldownBills.Add(item);
+                        var item = new DashboardBillItem
+                        {
+                            BillNo = sb.BillNo,
+                            BillDate = sb.BillDate,
+                            SalesRep = sb.SalesRep ?? "",
+                            CustomerCode = sb.CustomerCode ?? "",
+                            CustomerName = sb.CustomerName ?? "",
+                            District = sb.District ?? "",
+                            Province = sb.Province ?? "",
+                            Amount = sb.TotalAmount,
+                            Category = "collected",
+                            CategoryName = "ยอดเก็บเงินสำเร็จ",
+                            GroupCode = groupCode,
+                            Credit = sb.Credit,
+                            DueDate = sb.BillDate.AddDays(sb.Credit),
+                            AgingDays = 0,
+                            StatusName = "เก็บเงินสำเร็จ",
+                            IsPaid = true,
+                            IsBkk = isBkkArea,
+                            IsModernTrade = IsModernTrade(sb.CustomerCode, sb.CustomerName)
+                        };
+                        drilldownBills.Add(item);
+                    }
                 }
             }
 
