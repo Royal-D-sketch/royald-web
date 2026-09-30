@@ -43,7 +43,7 @@ namespace RoyalD.Web.Controllers
                 $"SalesReport_{DateTime.Now:yyyyMMdd}.xlsx");
         }
 
-        public async Task<IActionResult> WaitingGoods([FromServices] AppDbContext db, [FromServices] Microsoft.Extensions.Caching.Memory.IMemoryCache cache, string? search, string? salesRep)
+        public async Task<IActionResult> WaitingGoods([FromServices] AppDbContext db, [FromServices] Microsoft.Extensions.Caching.Memory.IMemoryCache cache, string? search, string? salesRep, int page = 1, int pageSize = 50)
         {
             var qPending = db.PendingProducts
                 .Include(p => p.OutstandingDebt)
@@ -109,7 +109,19 @@ namespace RoyalD.Web.Controllers
             ViewBag.Search = search;
             ViewBag.SalesRep = salesRep;
 
-            return View(data);
+            int totalRecords = data.Count;
+            int effectivePageSize = pageSize > 0 ? pageSize : 50;
+            int totalPages = (int)Math.Ceiling((double)totalRecords / effectivePageSize);
+            page = Math.Max(1, Math.Min(page, totalPages > 0 ? totalPages : 1));
+
+            var pagedData = data.Skip((page - 1) * effectivePageSize).Take(effectivePageSize).ToList();
+
+            ViewBag.Page = page;
+            ViewBag.PageSize = effectivePageSize;
+            ViewBag.TotalRecords = totalRecords;
+            ViewBag.TotalPages = totalPages;
+
+            return View(pagedData);
         }
         
         public async Task<IActionResult> PaidHistory([FromServices] AppDbContext db, string? search)

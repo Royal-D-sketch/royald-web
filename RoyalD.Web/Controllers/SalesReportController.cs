@@ -89,7 +89,7 @@ namespace RoyalD.Web.Controllers
         }
 
         // Screen 4: Customer Product Details
-        public async Task<IActionResult> CustomerProduct(string? rep = null, string? month = null, DateTime? date = null, string? q = null) 
+        public async Task<IActionResult> CustomerProduct(string? rep = null, string? month = null, DateTime? date = null, string? q = null, int page = 1, int pageSize = 100) 
         { 
             if (!CheckPerm("customerproduct")) return RedirectToAction("Index", "SalesBill");
 
@@ -112,7 +112,27 @@ namespace RoyalD.Web.Controllers
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
                 return await _svc.GetCustomerProductReportAsync(rep, month, date, q, userRepCode, userFullName, username);
-            });
+            }) ?? new CustomerProductViewModel();
+
+            int totalRecords = vm.Items?.Count ?? 0;
+            int effectivePageSize = pageSize > 0 ? pageSize : 100;
+            int totalPages = (int)Math.Ceiling((double)totalRecords / effectivePageSize);
+            page = Math.Max(1, Math.Min(page, totalPages > 0 ? totalPages : 1));
+
+            var pagedItems = vm.Items != null
+                ? vm.Items.Skip((page - 1) * effectivePageSize).Take(effectivePageSize).ToList()
+                : new List<CustomerProductItem>();
+
+            ViewBag.Page = page;
+            ViewBag.PageSize = effectivePageSize;
+            ViewBag.TotalRecords = totalRecords;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.PagedItems = pagedItems;
+            ViewBag.SelectedRep = rep;
+            ViewBag.SelectedMonth = month;
+            ViewBag.SelectedDate = date?.ToString("yyyy-MM-dd");
+            ViewBag.SearchQ = q;
+
             return View(vm);
         }
 
@@ -129,7 +149,9 @@ namespace RoyalD.Web.Controllers
             string? month = null,
             string? searchCustomerCode = null,
             string? searchCustomerName = null,
-            string? searchProductCode = null) 
+            string? searchProductCode = null,
+            int page = 1,
+            int pageSize = 100) 
         { 
             if (!CheckPerm("customerpurchasesummary")) return RedirectToAction("Index", "SalesBill");
 
@@ -152,7 +174,28 @@ namespace RoyalD.Web.Controllers
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
                 return await _svc.GetCustomerPurchaseSummaryAsync(salesRep, month, userRepCode, userFullName, username, searchCustomerCode, searchCustomerName, searchProductCode);
-            });
+            }) ?? new CustomerPurchaseSummaryViewModel();
+
+            int totalRecords = vm.Rows?.Count ?? 0;
+            int effectivePageSize = pageSize > 0 ? pageSize : 100;
+            int totalPages = (int)Math.Ceiling((double)totalRecords / effectivePageSize);
+            page = Math.Max(1, Math.Min(page, totalPages > 0 ? totalPages : 1));
+
+            var pagedRows = vm.Rows != null
+                ? vm.Rows.Skip((page - 1) * effectivePageSize).Take(effectivePageSize).ToList()
+                : new List<CustomerPurchaseSummaryRow>();
+
+            ViewBag.Page = page;
+            ViewBag.PageSize = effectivePageSize;
+            ViewBag.TotalRecords = totalRecords;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.PagedRows = pagedRows;
+            ViewBag.SelectedSalesRep = salesRep;
+            ViewBag.SelectedMonth = month;
+            ViewBag.SearchCustomerCode = searchCustomerCode;
+            ViewBag.SearchCustomerName = searchCustomerName;
+            ViewBag.SearchProductCode = searchProductCode;
+
             return View(vm);
         }
 

@@ -551,7 +551,7 @@ namespace RoyalD.Web.Controllers
             return RedirectToAction("Index");
         }
 
-        public async Task<IActionResult> History(string? search, string? salesRep, DateTime? fromDate = null, DateTime? toDate = null, string? dateType = null)
+        public async Task<IActionResult> History(string? search, string? salesRep, DateTime? fromDate = null, DateTime? toDate = null, string? dateType = null, int page = 1, int pageSize = 50)
         {
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             bool isRestricted = currentUser != null && currentUser.Role != "admin";
@@ -634,10 +634,22 @@ namespace RoyalD.Web.Controllers
             }) ?? new List<string>();
             ViewBag.IsRestricted = isRestricted;
 
-            return View(debts);
+            int totalRecords = debts.Count;
+            int effectivePageSize = pageSize > 0 ? pageSize : 50;
+            int totalPages = (int)Math.Ceiling((double)totalRecords / effectivePageSize);
+            page = Math.Max(1, Math.Min(page, totalPages > 0 ? totalPages : 1));
+
+            var pagedDebts = debts.Skip((page - 1) * effectivePageSize).Take(effectivePageSize).ToList();
+
+            ViewBag.Page = page;
+            ViewBag.PageSize = effectivePageSize;
+            ViewBag.TotalRecords = totalRecords;
+            ViewBag.TotalPages = totalPages;
+
+            return View(pagedDebts);
         }
 
-        public async Task<IActionResult> Cancelled(string? search, string? salesRep)
+        public async Task<IActionResult> Cancelled(string? search, string? salesRep, int page = 1, int pageSize = 50)
         {
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             bool isRestricted = currentUser != null && currentUser.Role != "admin";
@@ -662,7 +674,19 @@ namespace RoyalD.Web.Controllers
             }) ?? new List<string>();
             ViewBag.IsRestricted = isRestricted;
 
-            return View(debts);
+            int totalRecords = debts.Count;
+            int effectivePageSize = pageSize > 0 ? pageSize : 50;
+            int totalPages = (int)Math.Ceiling((double)totalRecords / effectivePageSize);
+            page = Math.Max(1, Math.Min(page, totalPages > 0 ? totalPages : 1));
+
+            var pagedDebts = debts.Skip((page - 1) * effectivePageSize).Take(effectivePageSize).ToList();
+
+            ViewBag.Page = page;
+            ViewBag.PageSize = effectivePageSize;
+            ViewBag.TotalRecords = totalRecords;
+            ViewBag.TotalPages = totalPages;
+
+            return View(pagedDebts);
         }
 
         private bool IsSalesRepUser()
