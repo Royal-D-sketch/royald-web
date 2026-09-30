@@ -570,24 +570,40 @@ namespace RoyalD.Web.Controllers
             ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd"); ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd"); ViewBag.DateType = dateType;
             
             // Backfill missing or invalid Customer Code/Name for the same ReceiptNo
-            var receiptGroups = debts.Where(d => !string.IsNullOrEmpty(d.ReceiptNo)).GroupBy(d => d.ReceiptNo);
+            var receiptGroups = debts.Where(d => !string.IsNullOrEmpty(d.ReceiptNo)).GroupBy(d => d.ReceiptNo).ToList();
+            var neededBillNos = new List<string>();
+            foreach (var g in receiptGroups)
+            {
+                var validName = g.FirstOrDefault(d => !string.IsNullOrEmpty(d.CustomerName) && !d.CustomerName.Contains("/") && !d.CustomerName.StartsWith("RD", StringComparison.OrdinalIgnoreCase))?.CustomerName;
+                if (string.IsNullOrEmpty(validName))
+                {
+                    var firstBill = g.FirstOrDefault()?.BillNo;
+                    if (!string.IsNullOrEmpty(firstBill))
+                        neededBillNos.Add(firstBill);
+                }
+            }
+
+            var billLookup = neededBillNos.Any()
+                ? (await _db.SalesBills.AsNoTracking()
+                    .Where(b => neededBillNos.Contains(b.BillNo))
+                    .Select(b => new { b.BillNo, b.CustomerCode, b.CustomerName })
+                    .ToListAsync())
+                    .ToDictionary(b => b.BillNo, b => (CustomerCode: b.CustomerCode, CustomerName: b.CustomerName))
+                : new Dictionary<string, (string CustomerCode, string CustomerName)>();
+
             foreach (var g in receiptGroups)
             {
                 var validCode = g.FirstOrDefault(d => !string.IsNullOrEmpty(d.CustomerCode) && !d.CustomerCode.Contains("/"))?.CustomerCode;
                 var validName = g.FirstOrDefault(d => !string.IsNullOrEmpty(d.CustomerName) && !d.CustomerName.Contains("/") && !d.CustomerName.StartsWith("RD", StringComparison.OrdinalIgnoreCase))?.CustomerName;
                 
-                // If still missing, fallback to SalesBills
+                // If still missing, fallback to batch-loaded SalesBills
                 if (string.IsNullOrEmpty(validName))
                 {
                     var firstBill = g.FirstOrDefault()?.BillNo;
-                    if (!string.IsNullOrEmpty(firstBill))
+                    if (!string.IsNullOrEmpty(firstBill) && billLookup.TryGetValue(firstBill, out var realBill))
                     {
-                        var realBill = await _db.SalesBills.FirstOrDefaultAsync(b => b.BillNo == firstBill);
-                        if (realBill != null)
-                        {
-                            validCode = realBill.CustomerCode;
-                            validName = realBill.CustomerName;
-                        }
+                        validCode = realBill.CustomerCode;
+                        validName = realBill.CustomerName;
                     }
                 }
 

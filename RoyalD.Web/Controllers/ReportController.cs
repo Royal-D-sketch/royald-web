@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
+using Microsoft.Extensions.Caching.Memory;
 using RoyalD.Web.Models;
 using RoyalD.Web.Services;
 
@@ -20,9 +21,13 @@ namespace RoyalD.Web.Controllers
 
         public ReportController(ReportService svc) => _svc = svc;
 
-        public async Task<IActionResult> Sales()
+        public async Task<IActionResult> Sales([FromServices] Microsoft.Extensions.Caching.Memory.IMemoryCache cache)
         {
-            var data = await _svc.GetAnnualPerformanceAsync();
+            var data = await cache.GetOrCreateAsync("annual_performance_report_svc", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+                return await _svc.GetAnnualPerformanceAsync();
+            });
             return View(data);
         }
 
@@ -38,7 +43,7 @@ namespace RoyalD.Web.Controllers
                 $"SalesReport_{DateTime.Now:yyyyMMdd}.xlsx");
         }
 
-        public async Task<IActionResult> WaitingGoods([FromServices] AppDbContext db, string? search, string? salesRep)
+        public async Task<IActionResult> WaitingGoods([FromServices] AppDbContext db, [FromServices] Microsoft.Extensions.Caching.Memory.IMemoryCache cache, string? search, string? salesRep)
         {
             var qPending = db.PendingProducts
                 .Include(p => p.OutstandingDebt)
@@ -95,8 +100,12 @@ namespace RoyalD.Web.Controllers
 
             var data = data1.Concat(data2).OrderByDescending(x => x.UpdatedAt).ToList();
 
-            var reps = await db.OutstandingDebts.Where(d => d.SalesRep != null && d.SalesRep != "").Select(d => d.SalesRep).Distinct().ToListAsync();
-            ViewBag.SalesReps = reps.OrderBy(x => x).ToList();
+            var reps = await cache.GetOrCreateAsync("all_debtor_reps", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                return await db.OutstandingDebts.AsNoTracking().Where(d => d.SalesRep != null && d.SalesRep != "").Select(d => d.SalesRep).Distinct().OrderBy(x => x).ToListAsync();
+            }) ?? new List<string>();
+            ViewBag.SalesReps = reps;
             ViewBag.Search = search;
             ViewBag.SalesRep = salesRep;
 
@@ -130,7 +139,7 @@ namespace RoyalD.Web.Controllers
             return View(data);
         }
 
-        public async Task<IActionResult> ReturnNotes([FromServices] AppDbContext db, string? search, string? salesRep)
+        public async Task<IActionResult> ReturnNotes([FromServices] AppDbContext db, [FromServices] Microsoft.Extensions.Caching.Memory.IMemoryCache cache, string? search, string? salesRep)
         {
             var q = db.OutstandingDebts.AsNoTracking()
                 .Include(d => d.Attachments)
@@ -148,8 +157,12 @@ namespace RoyalD.Web.Controllers
 
             var data = await q.OrderByDescending(d => d.BillDate).ToListAsync();
             
-            var reps = await db.OutstandingDebts.Where(d => d.SalesRep != null && d.SalesRep != "").Select(d => d.SalesRep).Distinct().ToListAsync();
-            ViewBag.SalesReps = reps.OrderBy(x => x).ToList();
+            var reps = await cache.GetOrCreateAsync("all_debtor_reps", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                return await db.OutstandingDebts.AsNoTracking().Where(d => d.SalesRep != null && d.SalesRep != "").Select(d => d.SalesRep).Distinct().OrderBy(x => x).ToListAsync();
+            }) ?? new List<string>();
+            ViewBag.SalesReps = reps;
             ViewBag.Search = search;
             ViewBag.SalesRep = salesRep;
 
@@ -219,12 +232,11 @@ namespace RoyalD.Web.Controllers
         // ==============================================================
         // 1. รายงานบิลส่งคืนกลับมาบัญชี (บิลไม่พร้อมส่ง/ลูกค้ายังไม่เอาของ)
         // ==============================================================
-        public async Task<IActionResult> ReturnedToAccount([FromServices] AppDbContext db, string? search, string? salesRep, DateTime? fromDate, DateTime? toDate)
+        public async Task<IActionResult> ReturnedToAccount([FromServices] AppDbContext db, [FromServices] Microsoft.Extensions.Caching.Memory.IMemoryCache cache, string? search, string? salesRep, DateTime? fromDate, DateTime? toDate)
         {
             // ดึงบิลที่มีประวัติส่งคืนกลับมาบัญชี และยังไม่จบดีล (คงค้างไว้จนกว่าจะจ่ายครบ 0.00 บาท)
             var q = db.OutstandingDebts
                 .AsNoTracking()
-                .Include(d => d.Customer)
                 .Where(d => d.Status != DebtStatus.Cancelled &&
                             (d.Status == DebtStatus.ReturnedToAccount || d.ReturnedToDeliveryDate != null || d.ReturnedToAccountDate != null) &&
                             !(d.RemainingAmount <= 0 && (d.FullyPaidDate != null || d.Status == DebtStatus.PaidCash || d.Status == DebtStatus.PaidTransfer || d.Status == DebtStatus.PaidCheck || d.ReceiptDate != null)))
@@ -253,12 +265,16 @@ namespace RoyalD.Web.Controllers
 
             var data = await q.OrderByDescending(d => d.ReturnedToAccountDate ?? d.BillDate).ToListAsync();
 
-            var reps = await db.OutstandingDebts
-                .Where(d => (d.Status == DebtStatus.ReturnedToAccount || d.ReturnedToDeliveryDate != null || d.ReturnedToAccountDate != null) && d.SalesRep != null && d.SalesRep != "")
-                .Select(d => d.SalesRep)
-                .Distinct()
-                .OrderBy(x => x)
-                .ToListAsync();
+            var reps = await cache.GetOrCreateAsync("all_returned_account_reps", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+                return await db.OutstandingDebts.AsNoTracking()
+                    .Where(d => (d.Status == DebtStatus.ReturnedToAccount || d.ReturnedToDeliveryDate != null || d.ReturnedToAccountDate != null) && d.SalesRep != null && d.SalesRep != "")
+                    .Select(d => d.SalesRep)
+                    .Distinct()
+                    .OrderBy(x => x)
+                    .ToListAsync();
+            }) ?? new List<string>();
 
             ViewBag.SalesReps = reps;
             ViewBag.Search = search;

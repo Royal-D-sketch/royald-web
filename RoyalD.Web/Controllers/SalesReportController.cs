@@ -64,13 +64,27 @@ namespace RoyalD.Web.Controllers
         }
 
         // Screen 3: Product Movement Details
-        public async Task<IActionResult> ProductDetails(string? salesRep = null, string? month = null) { if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
-            var data = await _svc.GetProductDetailsReportAsync(salesRep, month);
+        public async Task<IActionResult> ProductDetails(string? salesRep = null, string? month = null) 
+        { 
+            if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
+            var cacheKey = $"prod_details_{salesRep}_{month}";
+            var data = await _cache.GetOrCreateAsync(cacheKey, async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(3);
+                return await _svc.GetProductDetailsReportAsync(salesRep, month);
+            });
             return View(data);
         }
 
-        public async Task<IActionResult> ProductDetailsAmount(string? salesRep = null, string? month = null) { if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
-            var data = await _svc.GetProductDetailsReportAsync(salesRep, month);
+        public async Task<IActionResult> ProductDetailsAmount(string? salesRep = null, string? month = null) 
+        { 
+            if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
+            var cacheKey = $"prod_details_{salesRep}_{month}";
+            var data = await _cache.GetOrCreateAsync(cacheKey, async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(3);
+                return await _svc.GetProductDetailsReportAsync(salesRep, month);
+            });
             return View(data);
         }
 
@@ -93,13 +107,20 @@ namespace RoyalD.Web.Controllers
                 username = User.Identity?.Name;
             }
 
-            var vm = await _svc.GetCustomerProductReportAsync(rep, month, date, q, userRepCode, userFullName, username);
+            var cacheKey = $"cust_prod_{rep}_{month}_{date?.ToString("yyyyMMdd")}_{q}_{userRepCode}_{username}";
+            var vm = await _cache.GetOrCreateAsync(cacheKey, async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(3);
+                return await _svc.GetCustomerProductReportAsync(rep, month, date, q, userRepCode, userFullName, username);
+            });
             return View(vm);
         }
 
         // Screen 5: Compare Sales Reps
-        public async Task<IActionResult> Compare() { if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
-            var data = await _svc.GetAnnualPerformanceAsync();
+        public async Task<IActionResult> Compare() 
+        { 
+            if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
+            var data = await GetCachedAnnualPerformanceAsync();
             return View(data);
         }
 
@@ -126,7 +147,12 @@ namespace RoyalD.Web.Controllers
                 username = User.Identity?.Name;
             }
 
-            var vm = await _svc.GetCustomerPurchaseSummaryAsync(salesRep, month, userRepCode, userFullName, username, searchCustomerCode, searchCustomerName, searchProductCode);
+            var cacheKey = $"cust_purch_{salesRep}_{month}_{userRepCode}_{username}_{searchCustomerCode}_{searchCustomerName}_{searchProductCode}";
+            var vm = await _cache.GetOrCreateAsync(cacheKey, async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(3);
+                return await _svc.GetCustomerPurchaseSummaryAsync(salesRep, month, userRepCode, userFullName, username, searchCustomerCode, searchCustomerName, searchProductCode);
+            });
             return View(vm);
         }
 
