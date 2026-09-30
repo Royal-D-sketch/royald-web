@@ -200,6 +200,7 @@ namespace RoyalD.Web.Controllers
                         CreatedAt = DateTime.Now
                     });
                     await _db.SaveChangesAsync();
+                    ReportPrewarmBackgroundService.SignalRefresh();
                     return RedirectToAction("Index");
                 }
                 else
@@ -216,6 +217,7 @@ namespace RoyalD.Web.Controllers
                         var (ins, upd, _, maxDate) = await _importer.ConfirmImportSalesBillAsync(preview.PreviewId, updateDuplicates: true);
                         string dateStr = maxDate != DateTime.MinValue ? maxDate.ToString("dd/MM/yyyy") : "-";
                         TempData["Success"] = $"นำเข้าบิลขายสำเร็จ {ins + upd} บิล | ข้อมูลบิลขายล่าสุดในระบบ ณ วันที่: {dateStr}";
+                        ReportPrewarmBackgroundService.SignalRefresh();
                         return RedirectToAction("Index");
                     }
                 }
@@ -259,6 +261,7 @@ namespace RoyalD.Web.Controllers
                     CreatedAt = DateTime.Now
                 });
                 await _db.SaveChangesAsync();
+                ReportPrewarmBackgroundService.SignalRefresh();
             }
             catch (Exception ex)
             {

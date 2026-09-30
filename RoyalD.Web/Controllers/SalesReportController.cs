@@ -39,7 +39,7 @@ namespace RoyalD.Web.Controllers
         {
             return _cache.GetOrCreateAsync("annual_performance_cache", async entry =>
             {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
                 return await _svc.GetAnnualPerformanceAsync();
             })!;
         }
@@ -70,7 +70,7 @@ namespace RoyalD.Web.Controllers
             var cacheKey = $"prod_details_{salesRep}_{month}";
             var data = await _cache.GetOrCreateAsync(cacheKey, async entry =>
             {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(3);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
                 return await _svc.GetProductDetailsReportAsync(salesRep, month);
             });
             return View(data);
@@ -82,7 +82,7 @@ namespace RoyalD.Web.Controllers
             var cacheKey = $"prod_details_{salesRep}_{month}";
             var data = await _cache.GetOrCreateAsync(cacheKey, async entry =>
             {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(3);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
                 return await _svc.GetProductDetailsReportAsync(salesRep, month);
             });
             return View(data);
@@ -110,7 +110,7 @@ namespace RoyalD.Web.Controllers
             var cacheKey = $"cust_prod_{rep}_{month}_{date?.ToString("yyyyMMdd")}_{q}_{userRepCode}_{username}";
             var vm = await _cache.GetOrCreateAsync(cacheKey, async entry =>
             {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(3);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
                 return await _svc.GetCustomerProductReportAsync(rep, month, date, q, userRepCode, userFullName, username);
             });
             return View(vm);
@@ -150,7 +150,7 @@ namespace RoyalD.Web.Controllers
             var cacheKey = $"cust_purch_{salesRep}_{month}_{userRepCode}_{username}_{searchCustomerCode}_{searchCustomerName}_{searchProductCode}";
             var vm = await _cache.GetOrCreateAsync(cacheKey, async entry =>
             {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(3);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
                 return await _svc.GetCustomerPurchaseSummaryAsync(salesRep, month, userRepCode, userFullName, username, searchCustomerCode, searchCustomerName, searchProductCode);
             });
             return View(vm);

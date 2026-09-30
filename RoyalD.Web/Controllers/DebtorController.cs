@@ -629,7 +629,7 @@ namespace RoyalD.Web.Controllers
             ViewBag.TotalAmount = debts.Sum(d => d.OriginalAmount);
             ViewBag.SalesReps = await _cache.GetOrCreateAsync("all_debtor_reps", async entry =>
             {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
                 return await _db.OutstandingDebts.AsNoTracking().Select(d => d.SalesRep).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s).ToListAsync();
             }) ?? new List<string>();
             ViewBag.IsRestricted = isRestricted;
@@ -657,7 +657,7 @@ namespace RoyalD.Web.Controllers
             ViewBag.TotalAmount = debts.Sum(d => d.OriginalAmount);
             ViewBag.SalesReps = await _cache.GetOrCreateAsync("all_debtor_reps", async entry =>
             {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
                 return await _db.OutstandingDebts.AsNoTracking().Select(d => d.SalesRep).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s).ToListAsync();
             }) ?? new List<string>();
             ViewBag.IsRestricted = isRestricted;

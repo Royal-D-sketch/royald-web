@@ -25,7 +25,7 @@ namespace RoyalD.Web.Controllers
         {
             var data = await cache.GetOrCreateAsync("annual_performance_report_svc", async entry =>
             {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
                 return await _svc.GetAnnualPerformanceAsync();
             });
             return View(data);
@@ -102,7 +102,7 @@ namespace RoyalD.Web.Controllers
 
             var reps = await cache.GetOrCreateAsync("all_debtor_reps", async entry =>
             {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
                 return await db.OutstandingDebts.AsNoTracking().Where(d => d.SalesRep != null && d.SalesRep != "").Select(d => d.SalesRep).Distinct().OrderBy(x => x).ToListAsync();
             }) ?? new List<string>();
             ViewBag.SalesReps = reps;
@@ -159,7 +159,7 @@ namespace RoyalD.Web.Controllers
             
             var reps = await cache.GetOrCreateAsync("all_debtor_reps", async entry =>
             {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
                 return await db.OutstandingDebts.AsNoTracking().Where(d => d.SalesRep != null && d.SalesRep != "").Select(d => d.SalesRep).Distinct().OrderBy(x => x).ToListAsync();
             }) ?? new List<string>();
             ViewBag.SalesReps = reps;
@@ -267,7 +267,7 @@ namespace RoyalD.Web.Controllers
 
             var reps = await cache.GetOrCreateAsync("all_returned_account_reps", async entry =>
             {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
                 return await db.OutstandingDebts.AsNoTracking()
                     .Where(d => (d.Status == DebtStatus.ReturnedToAccount || d.ReturnedToDeliveryDate != null || d.ReturnedToAccountDate != null) && d.SalesRep != null && d.SalesRep != "")
                     .Select(d => d.SalesRep)

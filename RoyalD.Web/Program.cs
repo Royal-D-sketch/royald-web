@@ -88,7 +88,9 @@ else
 builder.Services.AddScoped<ExcelImportService>();
 builder.Services.AddScoped<DebtorService>();
 builder.Services.AddScoped<ReportService>();
+builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<RoyalD.Web.Services.PermissionService>();
+builder.Services.AddHostedService<ReportPrewarmBackgroundService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient<RoyalD.Web.Services.SupabaseStorageService>();
 
