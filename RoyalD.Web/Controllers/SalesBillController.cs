@@ -116,7 +116,7 @@ namespace RoyalD.Web.Controllers
             DateTime? startDate,
             DateTime? endDate,
             int page = 1, 
-            int pageSize = 30)
+            int pageSize = 50)
         {
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             bool isRestricted = currentUser != null && currentUser.Role != "admin";
@@ -129,7 +129,7 @@ namespace RoyalD.Web.Controllers
                 salesRep = currentUser.SalesRepCode;
             }
 
-            var q = _db.SalesBills.AsNoTracking().Include(b => b.Items).Include(b => b.Customer).AsQueryable();
+            var q = _db.SalesBills.AsNoTracking().AsQueryable();
 
             // Combined Region + Province Permission logic
             if (!string.IsNullOrEmpty(userAllowedRegion) || !string.IsNullOrEmpty(userAllowedProvinces))
@@ -224,9 +224,18 @@ namespace RoyalD.Web.Controllers
             if (!string.IsNullOrEmpty(month))
                 q = q.Where(b => b.SourceMonth == month);
             
-            // EXCLUDE Cancelled bills by default, unless explicitly requested
-            var canBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Cancelled).Select(d => d.BillNo);
-            if (status != "cancelled")
+            // EXCLUDE Cancelled bills by default, unless explicitly requested (cached for high performance)
+            var canBillNos = await _cache.GetOrCreateAsync("cancelled_debt_bill_nos", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                return await _db.OutstandingDebts.AsNoTracking()
+                    .Where(d => d.Status == DebtStatus.Cancelled)
+                    .Select(d => d.BillNo)
+                    .Distinct()
+                    .ToListAsync();
+            }) ?? new List<string>();
+
+            if (status != "cancelled" && canBillNos.Count > 0)
             {
                 q = q.Where(b => !canBillNos.Contains(b.BillNo));
             }
@@ -235,64 +244,130 @@ namespace RoyalD.Web.Controllers
             {
                 if (status == "paid") 
                 {
-                    var installBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100).Select(d => d.BillNo);
-                    q = q.Where(b => b.IsFullyPaid && !installBillNos.Contains(b.BillNo));
+                    var installBillNos = await _cache.GetOrCreateAsync("installment_debt_bill_nos", async entry =>
+                    {
+                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                        return await _db.OutstandingDebts.AsNoTracking()
+                            .Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100)
+                            .Select(d => d.BillNo)
+                            .Distinct()
+                            .ToListAsync();
+                    }) ?? new List<string>();
+
+                    q = q.Where(b => b.IsFullyPaid);
+                    if (installBillNos.Count > 0)
+                    {
+                        q = q.Where(b => !installBillNos.Contains(b.BillNo));
+                    }
                 }
                 else if (status == "unpaid") 
                 {
-                    var installBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100).Select(d => d.BillNo);
-                    q = q.Where(b => !b.IsFullyPaid || installBillNos.Contains(b.BillNo));
+                    var installBillNos = await _cache.GetOrCreateAsync("installment_debt_bill_nos", async entry =>
+                    {
+                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                        return await _db.OutstandingDebts.AsNoTracking()
+                            .Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100)
+                            .Select(d => d.BillNo)
+                            .Distinct()
+                            .ToListAsync();
+                    }) ?? new List<string>();
+
+                    if (installBillNos.Count > 0)
+                    {
+                        q = q.Where(b => !b.IsFullyPaid || installBillNos.Contains(b.BillNo));
+                    }
+                    else
+                    {
+                        q = q.Where(b => !b.IsFullyPaid);
+                    }
                 }
                 else if (status == "overdue_under_120")
-                  {
-                      var today = DateTime.Today;
-                      q = q.Where(b => !b.IsFullyPaid && b.BillDate.AddDays(b.Credit) < today && b.BillDate.AddDays(b.Credit + 120) >= today);
-                  }
-                  else if (status == "overdue120")
-                  {
-                      var today = DateTime.Today;
-                      q = q.Where(b => !b.IsFullyPaid && b.BillDate.AddDays(b.Credit + 120) < today);
-                  }
+                {
+                    var today = DateTime.Today;
+                    q = q.Where(b => !b.IsFullyPaid && b.BillDate.AddDays(b.Credit) < today && b.BillDate.AddDays(b.Credit + 120) >= today);
+                }
+                else if (status == "overdue120")
+                {
+                    var today = DateTime.Today;
+                    q = q.Where(b => !b.IsFullyPaid && b.BillDate.AddDays(b.Credit + 120) < today);
+                }
                 else if (status == "installment")
                 {
-                    var installBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100).Select(d => d.BillNo);
+                    var installBillNos = await _cache.GetOrCreateAsync("installment_debt_bill_nos", async entry =>
+                    {
+                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                        return await _db.OutstandingDebts.AsNoTracking()
+                            .Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100)
+                            .Select(d => d.BillNo)
+                            .Distinct()
+                            .ToListAsync();
+                    }) ?? new List<string>();
+
                     q = q.Where(b => installBillNos.Contains(b.BillNo));
                 }
                 else if (status == "postponed")
                 {
-                    var postBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Postponed).Select(d => d.BillNo);
+                    var postBillNos = await _cache.GetOrCreateAsync("postponed_debt_bill_nos", async entry =>
+                    {
+                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                        return await _db.OutstandingDebts.AsNoTracking().Where(d => d.Status == DebtStatus.Postponed).Select(d => d.BillNo).Distinct().ToListAsync();
+                    }) ?? new List<string>();
                     q = q.Where(b => postBillNos.Contains(b.BillNo));
                 }
                 else if (status == "waiting_goods")
                 {
-                    var waitBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.WaitingGoods).Select(d => d.BillNo);
+                    var waitBillNos = await _cache.GetOrCreateAsync("waiting_goods_debt_bill_nos", async entry =>
+                    {
+                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                        return await _db.OutstandingDebts.AsNoTracking().Where(d => d.Status == DebtStatus.WaitingGoods).Select(d => d.BillNo).Distinct().ToListAsync();
+                    }) ?? new List<string>();
                     q = q.Where(b => waitBillNos.Contains(b.BillNo));
                 }
                 else if (status == "returned_to_account" || status == "returnedtoaccount")
                 {
-                    var rtaBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.ReturnedToAccount).Select(d => d.BillNo);
+                    var rtaBillNos = await _cache.GetOrCreateAsync("rta_debt_bill_nos", async entry =>
+                    {
+                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                        return await _db.OutstandingDebts.AsNoTracking().Where(d => d.Status == DebtStatus.ReturnedToAccount).Select(d => d.BillNo).Distinct().ToListAsync();
+                    }) ?? new List<string>();
                     q = q.Where(b => rtaBillNos.Contains(b.BillNo));
                 }
                 else if (status == "delivering")
                 {
-                    var delivBillNos = _db.OutstandingDebts
-                        .Where(d => d.Status == DebtStatus.Delivering || (d.DeliveringDate != null && d.Status == DebtStatus.Outstanding && d.RemainingAmount > 0))
-                        .Select(d => d.BillNo);
+                    var delivBillNos = await _cache.GetOrCreateAsync("delivering_debt_bill_nos", async entry =>
+                    {
+                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                        return await _db.OutstandingDebts.AsNoTracking()
+                            .Where(d => d.Status == DebtStatus.Delivering || (d.DeliveringDate != null && d.Status == DebtStatus.Outstanding && d.RemainingAmount > 0))
+                            .Select(d => d.BillNo).Distinct().ToListAsync();
+                    }) ?? new List<string>();
                     q = q.Where(b => delivBillNos.Contains(b.BillNo));
                 }
                 else if (status == "bad_debt")
                 {
-                    var badBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.BadDebt).Select(d => d.BillNo);
+                    var badBillNos = await _cache.GetOrCreateAsync("bad_debt_bill_nos", async entry =>
+                    {
+                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                        return await _db.OutstandingDebts.AsNoTracking().Where(d => d.Status == DebtStatus.BadDebt).Select(d => d.BillNo).Distinct().ToListAsync();
+                    }) ?? new List<string>();
                     q = q.Where(b => badBillNos.Contains(b.BillNo));
                 }
                 else if (status == "return_pending")
                 {
-                    var retPBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.ReturnPending).Select(d => d.BillNo);
+                    var retPBillNos = await _cache.GetOrCreateAsync("ret_pending_debt_bill_nos", async entry =>
+                    {
+                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                        return await _db.OutstandingDebts.AsNoTracking().Where(d => d.Status == DebtStatus.ReturnPending).Select(d => d.BillNo).Distinct().ToListAsync();
+                    }) ?? new List<string>();
                     q = q.Where(b => retPBillNos.Contains(b.BillNo));
                 }
                 else if (status == "return_issued")
                 {
-                    var retIBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.ReturnIssued).Select(d => d.BillNo);
+                    var retIBillNos = await _cache.GetOrCreateAsync("ret_issued_debt_bill_nos", async entry =>
+                    {
+                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                        return await _db.OutstandingDebts.AsNoTracking().Where(d => d.Status == DebtStatus.ReturnIssued).Select(d => d.BillNo).Distinct().ToListAsync();
+                    }) ?? new List<string>();
                     q = q.Where(b => retIBillNos.Contains(b.BillNo));
                 }
                 else if (status == "cancelled")
@@ -308,12 +383,13 @@ namespace RoyalD.Web.Controllers
 
             ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
             ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
-if (!string.IsNullOrEmpty(poSearch))
+            if (!string.IsNullOrEmpty(poSearch))
                 q = q.Where(b => b.PoNumber.Contains(poSearch));
 
             var total = await q.CountAsync();
             var totalAmount = await q.SumAsync(b => b.TotalAmount);
             var bills = await q
+                .Include(b => b.Customer)
                 .OrderByDescending(b => b.BillDate)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -381,6 +457,7 @@ if (!string.IsNullOrEmpty(poSearch))
             }) ?? new List<string>();
 
             ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
             ViewBag.TotalPages = (int)Math.Ceiling(total / (double)pageSize);
             ViewBag.TotalCount = total;
             ViewBag.TotalAmount = totalAmount;

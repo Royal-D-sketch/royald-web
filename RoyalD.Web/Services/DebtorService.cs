@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using RoyalD.Web.Models;
@@ -9,8 +10,13 @@ namespace RoyalD.Web.Services
     public class DebtorService
     {
         private readonly AppDbContext _db;
+        private readonly IMemoryCache _cache;
 
-        public DebtorService(AppDbContext db) => _db = db;
+        public DebtorService(AppDbContext db, IMemoryCache cache)
+        {
+            _db = db;
+            _cache = cache;
+        }
 
         public Task<List<OutstandingDebt>> GetOutstandingAsync(
             string? search = null, 
@@ -30,7 +36,11 @@ namespace RoyalD.Web.Services
         {
             if (string.IsNullOrEmpty(salesRep)) return q;
             var repInputs = salesRep.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList();
-            var allDbReps = await _db.OutstandingDebts.AsNoTracking().Select(d => d.SalesRep).Where(s => !string.IsNullOrEmpty(s)).Distinct().ToListAsync();
+            var allDbReps = await _cache.GetOrCreateAsync("all_debtor_reps_raw", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                return await _db.OutstandingDebts.AsNoTracking().Select(d => d.SalesRep).Where(s => !string.IsNullOrEmpty(s)).Distinct().ToListAsync();
+            }) ?? new List<string>();
             var matchedReps = allDbReps.Where(dbRep => 
                 repInputs.Any(u => 
                     dbRep.IndexOf(u, StringComparison.OrdinalIgnoreCase) >= 0 ||
