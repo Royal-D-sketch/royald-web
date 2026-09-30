@@ -71,7 +71,7 @@ namespace RoyalD.Web.Services
             var cache = scope.ServiceProvider.GetRequiredService<IMemoryCache>();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            var cacheDuration = TimeSpan.FromMinutes(45);
+            var cacheDuration = TimeSpan.FromMinutes(90);
 
             // 1. Dashboard Page Data
             try

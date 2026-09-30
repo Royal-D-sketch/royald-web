@@ -525,11 +525,19 @@ namespace RoyalD.Web.Controllers
             string? searchCustomer = null,
             string? searchSalesRep = null)
         {
-            var data = await _cache.GetOrCreateAsync("dashboard_page_data_cache", async entry =>
+            // ---- FAST PATH: ถ้า cache มีข้อมูลอยู่แล้ว ตอบกลับทันทีโดยไม่ต้องรอ DB ----
+            if (!_cache.TryGetValue("dashboard_page_data_cache", out DashboardPageData? cachedData) || cachedData == null)
             {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(60);
-                return await LoadDashboardPageDataAsync();
-            }) ?? new DashboardPageData();
+                // Cache หมดอายุหรือ server restart → โหลดข้อมูลและ set cache
+                // ใช้ GetOrCreateAsync เพื่อป้องกัน stampede (หลาย request ไม่ดึง DB ซ้ำกัน)
+                cachedData = await _cache.GetOrCreateAsync("dashboard_page_data_cache", async entry =>
+                {
+                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(60);
+                    return await LoadDashboardPageDataAsync();
+                }) ?? new DashboardPageData();
+            }
+
+            var data = cachedData;
 
             var query = data.DrilldownBills.AsEnumerable();
 

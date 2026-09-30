@@ -775,6 +775,23 @@ async function fetchBills() {
         if (!response.ok) throw new Error('Network error: ' + response.status);
         const data = await response.json();
 
+        // ถ้าเซิร์ฟเวอร์ยังเตรียมข้อมูลอยู่ → แสดงสถานะและ retry อัตโนมัติใน 2 วินาที
+        if (data.warming) {
+            const tbody = document.getElementById('tableBody');
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="11" class="text-center py-5 text-muted">
+                    <div class="spinner-border spinner-border-sm text-teal me-2" role="status"></div>
+                    <span class="fw-semibold">กำลังเตรียมข้อมูล...</span>
+                    <div class="text-muted small mt-1">ระบบกำลัง Warmup ข้อมูลใน Background จะโหลดอัตโนมัติ</div>
+                </td></tr>`;
+            }
+            isLoading = false;
+            if (spinner) spinner.classList.add('d-none');
+            // Retry ใน 2 วินาที
+            setTimeout(() => fetchBills(), 2000);
+            return;
+        }
+
         renderTable(data);
         renderPaginationControls(data);
     } catch (err) {
