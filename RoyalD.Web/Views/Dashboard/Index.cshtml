@@ -446,20 +446,20 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
     <div class="row g-2 search-input-group mb-3 p-3 bg-light rounded-3 border">
         <div class="col-12 col-md-3">
             <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-receipt"></i> 1. เลขที่บิล</label>
-            <input type="text" id="inputSearchBill" class="form-control" placeholder="พิมพ์เลขที่บิล..." oninput="applyFilters()" />
+            <input type="text" id="inputSearchBill" class="form-control" placeholder="พิมพ์เลขที่บิล..." oninput="handleSearch()" />
         </div>
         <div class="col-12 col-md-3">
             <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-qr-code"></i> 2. รหัสลูกค้า</label>
-            <input type="text" id="inputSearchCustomerCode" class="form-control" placeholder="พิมพ์รหัสลูกค้า..." oninput="applyFilters()" />
+            <input type="text" id="inputSearchCustomerCode" class="form-control" placeholder="พิมพ์รหัสลูกค้า..." oninput="handleSearch()" />
         </div>
         <div class="col-12 col-md-3">
             <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-shop"></i> 3. ชื่อลูกค้า</label>
-            <input type="text" id="inputSearchCustomerName" class="form-control" placeholder="พิมพ์ชื่อร้านค้า / ลูกค้า..." oninput="applyFilters()" />
+            <input type="text" id="inputSearchCustomerName" class="form-control" placeholder="พิมพ์ชื่อร้านค้า / ลูกค้า..." oninput="handleSearch()" />
         </div>
         <div class="col-12 col-md-2">
             <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-person-fill"></i> 4. ผู้แทนขาย</label>
             <div class="input-group">
-                <input type="text" id="inputSearchSalesRep" class="form-control" list="salesRepList" placeholder="เลือก/พิมพ์ชื่อผู้แทน..." oninput="applyFilters()" />
+                <input type="text" id="inputSearchSalesRep" class="form-control" list="salesRepList" placeholder="เลือก/พิมพ์ชื่อผู้แทน..." oninput="handleSearch()" />
                 <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false" title="เลือกรายชื่อผู้แทนขาย">
                     <span class="visually-hidden">Toggle Dropdown</span>
                 </button>
@@ -486,21 +486,52 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
         </div>
     </div>
 
-    <div class="alert alert-light border py-2 px-3 small d-flex flex-wrap justify-content-between align-items-center mb-2" style="background:#f8fafc; border-color:#e2e8f0; border-radius:10px;">
-        <div class="text-secondary fw-semibold">
-            <i class="bi bi-lightning-charge-fill text-warning me-1"></i> แสดงตัวอย่างบิลลูกหนี้ล่าสุด <strong>@(Math.Min(drilldownBills.Count, 300))</strong> รายการ เพื่อให้หน้าเว็บเปิดติดทันที
+    <div class="alert alert-light border py-2 px-3 small d-flex flex-wrap justify-content-between align-items-center mb-3" style="background:#f0fdfa; border-color:#ccfbf1; border-radius:10px;">
+        <div class="text-teal fw-semibold" style="color:#0f766e;">
+            <i class="bi bi-lightning-charge-fill text-warning me-1"></i> ระบบแบ่งหน้าละ <strong id="currentBadgePageSize">50</strong> รายการ โหลดเร็วติดทันที และคลิกดูรายละเอียดของการ์ดแต่ละอันได้ครบถ้วน 100%
         </div>
-        <a href="/Debtor" class="btn btn-sm btn-outline-teal fw-bold text-teal" style="font-size:0.82rem; border-color:#0d9488; color:#0d9488;">
-            <i class="bi bi-arrow-right-circle me-1"></i> เปิดดูและค้นหาบิลทั้งหมด (การ์ดลูกหนี้)
-        </a>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-white text-secondary border px-2 py-1"><i class="bi bi-speedometer2 me-1 text-success"></i>โหลดเร็ว &lt; 0.1 วิ</span>
+            <a href="/Debtor" class="btn btn-sm btn-outline-teal fw-bold" style="font-size:0.82rem; border-color:#0d9488; color:#0d9488;">
+                <i class="bi bi-arrow-right-circle me-1"></i> การ์ดลูกหนี้
+            </a>
+        </div>
     </div>
 
-    <!-- Table Responsive (10 Columns) -->
-    <div class="table-responsive" style="max-height: 580px; overflow-y: auto;">
+    <!-- Pagination & Rows per page Toolbar (Top) -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 px-1 gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-muted small">
+                แสดง <strong id="pageStart" class="text-dark">0</strong> - <strong id="pageEnd" class="text-dark">0</strong> จากทั้งหมด <strong id="pageTotal" class="text-primary">@drilldownBills.Count.ToString("N0")</strong> รายการ (หน้า <strong id="pageCurrent" class="text-dark">1</strong>/<span id="pageMax">1</span>)
+            </span>
+            <div id="loadingSpinner" class="spinner-border spinner-border-sm text-teal d-none" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center gap-1">
+                <label for="selectPageSize" class="text-muted small fw-semibold text-nowrap mb-0">แสดงหน้าละ:</label>
+                <select id="selectPageSize" class="form-select form-select-sm" style="width: auto;" onchange="changePageSize(this.value)">
+                    <option value="30">30 รายการ</option>
+                    <option value="50" selected>50 รายการ (แนะนำ)</option>
+                    <option value="100">100 รายการ</option>
+                    <option value="200">200 รายการ</option>
+                </select>
+            </div>
+            <nav aria-label="Page navigation top">
+                <ul class="pagination pagination-sm mb-0" id="paginationTop">
+                    <!-- Dynamic JS pagination -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Table Responsive (11 Columns) -->
+    <div class="table-responsive shadow-sm border rounded-3" style="max-height: 580px; overflow-y: auto;">
         <table class="table table-sm table-bordered table-hover align-middle detail-table mb-0" id="billsTable">
             <thead class="sticky-top">
                 <tr>
-                    <th style="width: 40px;" class="text-center">#</th>
+                    <th style="width: 45px;" class="text-center">#</th>
                     <th style="width: 110px;" class="text-center">เลขที่บิล</th>
                     <th style="width: 95px;" class="text-center">วันที่บิล</th>
                     <th style="width: 95px;" class="text-center">รหัสลูกค้า</th>
@@ -508,87 +539,43 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                     <th style="width: 100px;">อำเภอ</th>
                     <th style="width: 100px;">จังหวัด</th>
                     <th style="width: 60px;" class="text-center">เครดิต</th>
-                    <th style="width: 95px;" class="text-center">อายุหนี้</th>
+                    <th style="width: 100px;" class="text-center">อายุหนี้ / สถานะ</th>
                     <th style="width: 120px;" class="text-end">จำนวนเงิน (บาท)</th>
                     <th style="width: 100px;">ผู้แทนขาย</th>
                 </tr>
             </thead>
             <tbody id="tableBody">
-                @if (!drilldownBills.Any())
-                {
-                    <tr id="emptyRow">
-                        <td colspan="11" class="text-center text-muted py-4">ไม่พบรายการข้อมูล</td>
-                    </tr>
-                }
-                @{
-                    var maxDisplayRows = 300;
-                    var renderBills = drilldownBills.Take(maxDisplayRows).ToList();
-                }
-                @for (int i = 0; i < renderBills.Count; i++)
-                {
-                    var b = renderBills[i];
-                    <tr class="bill-row"
-                        data-init-idx="@i"
-                        data-category="@b.Category"
-                        data-groupcode="@b.GroupCode"
-                        data-aging="@b.AgingDays"
-                        data-billno="@b.BillNo"
-                        data-custcode="@b.CustomerCode"
-                        data-custname="@b.CustomerName"
-                        data-salesrep="@b.SalesRep"
-                        data-district="@b.District"
-                        data-province="@b.Province"
-                        data-credit="@b.Credit"
-                        data-ispaid="@(b.IsPaid ? "true" : "false")"
-                        data-isbkk="@(b.IsBkk ? "true" : "false")"
-                        data-ismt="@(b.IsModernTrade ? "true" : "false")"
-                        data-billdate="@b.BillDate.ToString("dd/MM/yyyy")"
-                        data-amount="@b.Amount">
-                        <td class="text-center text-muted row-index">@(i + 1)</td>
-                        <td class="text-center fw-bold">
-                            <span class="badge bg-light text-dark border">@b.BillNo</span>
-                        </td>
-                        <td class="text-center text-muted">@b.BillDate.ToString("dd/MM/yyyy")</td>
-                        <td class="text-center"><code class="text-dark fw-bold">@b.CustomerCode</code></td>
-                        <td class="fw-bold text-dark col-customer-name" style="min-width: 260px; white-space: normal !important; word-break: break-word !important;">@b.CustomerName</td>
-                        <td>@b.District</td>
-                        <td>@b.Province</td>
-                        <td class="text-center">@(b.Credit > 0 ? b.Credit.ToString() : "สด")</td>
-                        <td class="text-center">
-                            @if (b.IsPaid)
-                            {
-                                <span class="badge" style="background:#059669; color:#fff;">ชำระแล้ว</span>
-                            }
-                            else if (b.AgingDays > 120)
-                            {
-                                <span class="badge" style="background:#be123c; color:#fff;">เกิน @b.AgingDays วัน</span>
-                            }
-                            else if (b.AgingDays > 0)
-                            {
-                                <span class="badge" style="background:#d97706; color:#fff;">@b.AgingDays วัน</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-light text-muted border">ยังไม่ถึงกำหนด</span>
-                            }
-                        </td>
-                        <td class="text-end fw-black text-dark" style="font-size:0.95rem;">@b.Amount.ToString("N2")</td>
-                        <td class="fw-semibold text-muted">@b.SalesRep</td>
-                    </tr>
-                }
+                <tr id="loadingRow">
+                    <td colspan="11" class="text-center py-5 text-muted">
+                        <div class="spinner-border spinner-border-sm text-teal me-2" role="status"></div>
+                        กำลังโหลดข้อมูลบิล...
+                    </td>
+                </tr>
             </tbody>
             <tfoot class="table-light sticky-bottom" style="font-weight: 800; border-top: 2px solid #0f766e;">
                 <tr>
                     <td colspan="9" class="text-end py-2">
-                        ยอดรวมทั้งสิ้น (<span id="visibleRowCount" class="text-primary">@drilldownBills.Count.ToString("N0")</span> รายการ):
+                        ยอดรวมทั้งสิ้น (<span id="visibleRowCount" class="text-primary">0</span> รายการ):
                     </td>
                     <td class="text-end py-2 fs-6 fw-black" style="color:#0f766e;" id="visibleTotalAmount">
-                        @drilldownBills.Sum(x => x.Amount).ToString("N2")
+                        0.00
                     </td>
                     <td></td>
                 </tr>
             </tfoot>
         </table>
+    </div>
+
+    <!-- Pagination Toolbar (Bottom) -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 px-1 gap-2">
+        <span class="text-muted small">
+            แสดง <strong id="pageStartBottom" class="text-dark">0</strong> - <strong id="pageEndBottom" class="text-dark">0</strong> จากทั้งหมด <strong id="pageTotalBottom" class="text-primary">@drilldownBills.Count.ToString("N0")</strong> รายการ
+        </span>
+        <nav aria-label="Page navigation bottom">
+            <ul class="pagination pagination-sm mb-0" id="paginationBottom">
+                <!-- Dynamic JS pagination -->
+            </ul>
+        </nav>
     </div>
 </div>
 
@@ -720,6 +707,7 @@ function initPieChart() {
 
 function selectCategory(cat, autoScroll = true) {
     currentCategory = cat;
+    currentPage = 1;
 
     // Update active state on top cards
     document.querySelectorAll('.exec-card').forEach(c => c.classList.remove('active-card'));
@@ -732,10 +720,13 @@ function selectCategory(cat, autoScroll = true) {
     if (activePill) activePill.classList.add('active');
 
     // Update title text
-    document.getElementById('currentCategoryTitle').innerText = 'รายงานรายละเอียดรายบิล: ' + (categoryTitles[cat] || 'ภาพรวมทั้งหมด');
+    const titleEl = document.getElementById('currentCategoryTitle');
+    if (titleEl) {
+        titleEl.innerText = 'รายงานรายละเอียดรายบิล: ' + (categoryTitles[cat] || 'ภาพรวมทั้งหมด');
+    }
 
-    // Apply filters
-    applyFilters();
+    // Fetch paginated bills (50 per page)
+    fetchBills();
 
     // Smooth scroll down to table
     if (autoScroll) {
@@ -743,198 +734,226 @@ function selectCategory(cat, autoScroll = true) {
     }
 }
 
-function applyFilters() {
-    const sBill = (document.getElementById('inputSearchBill').value || '').trim().toLowerCase();
-    const sCustCode = (document.getElementById('inputSearchCustomerCode').value || '').trim().toLowerCase();
-    const sCustName = (document.getElementById('inputSearchCustomerName').value || '').trim().toLowerCase();
-    const sRep = (document.getElementById('inputSearchSalesRep').value || '').trim().toLowerCase();
+function handleSearch() {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+        currentPage = 1;
+        fetchBills();
+    }, 250);
+}
 
-    const rows = document.querySelectorAll('.bill-row');
-    let visibleCount = 0;
-    let visibleSum = 0;
+function changePageSize(newSize) {
+    currentPageSize = parseInt(newSize, 10) || 50;
+    currentPage = 1;
+    const badgeEl = document.getElementById('currentBadgePageSize');
+    if (badgeEl) badgeEl.innerText = currentPageSize;
+    fetchBills();
+}
 
-    // Counters for recalculating top cards & pie chart dynamically
-    let sumCash7 = 0, countCash7 = 0;
-    let sumCash10 = 0, countCash10 = 0;
-    let sumUpcountry = 0, countUpcountry = 0;
-    let sumOver120 = 0, countOver120 = 0;
-    let sumCollected = 0, countCollected = 0;
-    let sumTotalSales = 0;
+function goToPage(page) {
+    if (page < 1 || isLoading) return;
+    currentPage = page;
+    fetchBills();
+    document.getElementById('billsTable')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
-    const tableBody = document.getElementById('tableBody');
-    if (tableBody && rows.length > 0) {
-        const rowArray = Array.from(rows);
-        if (currentCategory === 'over120') {
-            // เรียงลำดับตามหนี้ค้างนานสุดก่อน (AgingDays มากสุด -> น้อยสุด)
-            rowArray.sort((a, b) => {
-                const agingA = parseInt(a.getAttribute('data-aging') || '0', 10);
-                const agingB = parseInt(b.getAttribute('data-aging') || '0', 10);
-                if (agingB !== agingA) return agingB - agingA;
-                return parseFloat(b.getAttribute('data-amount') || '0') - parseFloat(a.getAttribute('data-amount') || '0');
-            });
-            rowArray.forEach(r => tableBody.appendChild(r));
+async function fetchBills() {
+    if (isLoading) return;
+    isLoading = true;
+
+    const spinner = document.getElementById('loadingSpinner');
+    if (spinner) spinner.classList.remove('d-none');
+
+    const sBill = encodeURIComponent((document.getElementById('inputSearchBill')?.value || '').trim());
+    const sCust = encodeURIComponent((document.getElementById('inputSearchCustomerName')?.value || document.getElementById('inputSearchCustomerCode')?.value || '').trim());
+    const sRep = encodeURIComponent((document.getElementById('inputSearchSalesRep')?.value || '').trim());
+
+    const url = `/Dashboard/GetDrilldownBills?category=${encodeURIComponent(currentCategory)}&page=${currentPage}&pageSize=${currentPageSize}&searchBill=${sBill}&searchCustomer=${sCust}&searchSalesRep=${sRep}`;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Network error: ' + response.status);
+        const data = await response.json();
+
+        renderTable(data);
+        renderPaginationControls(data);
+    } catch (err) {
+        console.error('Error fetching drilldown bills:', err);
+        const tbody = document.getElementById('tableBody');
+        if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="11" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle me-1"></i> เกิดข้อผิดพลาดในการโหลดข้อมูล กรุณาลองใหม่อีกครั้ง</td></tr>`;
+        }
+    } finally {
+        isLoading = false;
+        if (spinner) spinner.classList.add('d-none');
+    }
+}
+
+function renderTable(data) {
+    const tbody = document.getElementById('tableBody');
+    if (!tbody) return;
+
+    if (!data.items || data.items.length === 0) {
+        tbody.innerHTML = `<tr id="emptyRow"><td colspan="11" class="text-center text-muted py-5"><i class="bi bi-inbox fs-3 d-block mb-1 text-muted"></i>ไม่พบรายการข้อมูลที่ตรงกับเงื่อนไข</td></tr>`;
+        updateSummaryFooters(0, 0, 0, '0.00', 1, 1);
+        return;
+    }
+
+    const rowsHtml = data.items.map(item => {
+        let badgeHtml = '';
+        if (item.isPaid) {
+            badgeHtml = `<span class="badge" style="background:#059669; color:#fff;">ชำระแล้ว</span>`;
+        } else if (item.agingDays > 120) {
+            badgeHtml = `<span class="badge" style="background:#be123c; color:#fff;">เกิน ${item.agingDays} วัน</span>`;
+        } else if (item.agingDays > 0) {
+            badgeHtml = `<span class="badge" style="background:#d97706; color:#fff;">${item.agingDays} วัน</span>`;
         } else {
-            rowArray.sort((a, b) => {
-                const idxA = parseInt(a.getAttribute('data-init-idx') || '0', 10);
-                const idxB = parseInt(b.getAttribute('data-init-idx') || '0', 10);
-                return idxA - idxB;
-            });
-            rowArray.forEach(r => tableBody.appendChild(r));
+            badgeHtml = `<span class="badge bg-light text-muted border">ยังไม่ถึงกำหนด</span>`;
+        }
+
+        return `
+            <tr>
+                <td class="text-center text-muted">${item.index}</td>
+                <td class="text-center fw-bold">
+                    <span class="badge bg-light text-dark border">${item.billNo}</span>
+                </td>
+                <td class="text-center text-muted">${item.billDate}</td>
+                <td class="text-center"><code class="text-dark fw-bold">${item.customerCode || '-'}</code></td>
+                <td class="fw-bold text-dark col-customer-name" style="min-width: 260px; white-space: normal !important; word-break: break-word !important;">${item.customerName || '-'}</td>
+                <td>${item.district || '-'}</td>
+                <td>${item.province || '-'}</td>
+                <td class="text-center">${item.credit}</td>
+                <td class="text-center">${badgeHtml}</td>
+                <td class="text-end fw-black text-dark" style="font-size:0.95rem;">${item.amountFormatted}</td>
+                <td class="fw-semibold text-muted">${item.salesRep || '-'}</td>
+            </tr>
+        `;
+    }).join('');
+
+    tbody.innerHTML = rowsHtml;
+
+    const startIdx = (data.currentPage - 1) * data.pageSize + 1;
+    const endIdx = Math.min(startIdx + data.items.length - 1, data.totalItems);
+    updateSummaryFooters(startIdx, endIdx, data.totalItems, data.totalAmountFormatted, data.currentPage, data.totalPages);
+}
+
+function updateSummaryFooters(start, end, total, totalAmtFormatted, currPage, totalPages) {
+    const safeTotal = total || 0;
+    const safeStart = safeTotal > 0 ? start : 0;
+    const safeEnd = safeTotal > 0 ? end : 0;
+
+    const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.innerText = txt; };
+
+    setTxt('pageStart', safeStart.toLocaleString('en-US'));
+    setTxt('pageEnd', safeEnd.toLocaleString('en-US'));
+    setTxt('pageTotal', safeTotal.toLocaleString('en-US'));
+    setTxt('pageCurrent', currPage || 1);
+    setTxt('pageMax', totalPages || 1);
+
+    setTxt('pageStartBottom', safeStart.toLocaleString('en-US'));
+    setTxt('pageEndBottom', safeEnd.toLocaleString('en-US'));
+    setTxt('pageTotalBottom', safeTotal.toLocaleString('en-US'));
+
+    setTxt('visibleRowCount', safeTotal.toLocaleString('en-US'));
+    setTxt('visibleTotalAmount', totalAmtFormatted || '0.00');
+}
+
+function renderPaginationControls(data) {
+    const { currentPage, totalPages } = data;
+    const pagTop = document.getElementById('paginationTop');
+    const pagBottom = document.getElementById('paginationBottom');
+
+    if (!pagTop && !pagBottom) return;
+
+    if (totalPages <= 1) {
+        if (pagTop) pagTop.innerHTML = '';
+        if (pagBottom) pagBottom.innerHTML = '';
+        return;
+    }
+
+    let buttons = '';
+
+    // First & Prev buttons
+    const prevDisabled = currentPage <= 1 ? 'disabled' : '';
+    buttons += `<li class="page-item ${prevDisabled}"><a class="page-link" href="javascript:void(0)" onclick="goToPage(1)" title="หน้าแรก">&laquo;</a></li>`;
+    buttons += `<li class="page-item ${prevDisabled}"><a class="page-link" href="javascript:void(0)" onclick="goToPage(${currentPage - 1})" title="ก่อนหน้า">&lsaquo;</a></li>`;
+
+    // Window of 5 pages
+    const maxButtons = 5;
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+    if (endPage - startPage < maxButtons - 1) {
+        startPage = Math.max(1, endPage - maxButtons + 1);
+    }
+
+    if (startPage > 1) {
+        buttons += `<li class="page-item"><a class="page-link" href="javascript:void(0)" onclick="goToPage(1)">1</a></li>`;
+        if (startPage > 2) {
+            buttons += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
         }
     }
 
-    let index = 1;
-    const sortedRows = document.querySelectorAll('.bill-row');
-    sortedRows.forEach(row => {
-        const cat = row.getAttribute('data-category') || '';
-        const groupCode = row.getAttribute('data-groupcode') || '';
-        const billNo = (row.getAttribute('data-billno') || '').toLowerCase();
-        const custCode = (row.getAttribute('data-custcode') || '').toLowerCase();
-        const custName = (row.getAttribute('data-custname') || '').toLowerCase();
-        const salesRep = (row.getAttribute('data-salesrep') || '').toLowerCase();
-        const amt = parseFloat(row.getAttribute('data-amount') || '0');
-        const isPaid = row.getAttribute('data-ispaid') === 'true';
-        const isBkk = row.getAttribute('data-isbkk') === 'true';
-        const aging = parseInt(row.getAttribute('data-aging') || '0', 10);
-        const isModernTrade = row.getAttribute('data-ismt') === 'true'; // Modern Trade flag
-
-        // Check 4 search inputs
-        const matchSearch = (!sBill || billNo.includes(sBill)) &&
-                            (!sCustCode || custCode.includes(sCustCode)) &&
-                            (!sCustName || custName.includes(sCustName)) &&
-                            (!sRep || salesRep.includes(sRep));
-
-        if (matchSearch) {
-            sumTotalSales += amt;
-            if (isPaid) {
-                sumCollected += amt;
-                countCollected++;
-            } else {
-                if (groupCode === '1') {
-                    sumCash7 += amt;
-                    countCash7++;
-                } else if (groupCode === '2') {
-                    sumCash10 += amt;
-                    countCash10++;
-                } else if (groupCode === '3') {
-                    sumUpcountry += amt;
-                    countUpcountry++;
-                }
-                // ✅ กรอง Modern Trade ออกจากยอดค้างวิกฤต > 120 วัน
-                if (aging > 120 && !isModernTrade) {
-                    sumOver120 += amt;
-                    countOver120++;
-                }
-            }
-        }
-
-        // Category filter matching for table
-        let matchCat = false;
-        if (currentCategory === 'all') matchCat = true;
-        else if (currentCategory === 'cash7') matchCat = (!isPaid && groupCode === '1');
-        else if (currentCategory === 'cash10') matchCat = (!isPaid && groupCode === '2');
-        else if (currentCategory === 'upcountry') matchCat = (!isPaid && groupCode === '3');
-        // ✅ ตารางรายละเอียด over120: กรอง Modern Trade ออกด้วย
-        else if (currentCategory === 'over120') matchCat = (!isPaid && aging > 120 && !isModernTrade);
-        else if (currentCategory === 'collected') matchCat = isPaid;
-
-        if (matchSearch && matchCat) {
-            row.style.display = '';
-            row.querySelector('.row-index').innerText = index++;
-            visibleCount++;
-            visibleSum += amt;
+    for (let p = startPage; p <= endPage; p++) {
+        if (p === currentPage) {
+            buttons += `<li class="page-item active" aria-current="page"><span class="page-link" style="background:#0f766e; border-color:#0f766e;">${p}</span></li>`;
         } else {
-            row.style.display = 'none';
+            buttons += `<li class="page-item"><a class="page-link" href="javascript:void(0)" onclick="goToPage(${p})">${p}</a></li>`;
         }
-    });
-
-    // Update table footer summary
-    document.getElementById('visibleRowCount').innerText = visibleCount.toLocaleString('en-US');
-    document.getElementById('visibleTotalAmount').innerText = visibleSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-    // Update top summary cards dynamically
-    document.getElementById('cardAmount-cash7').innerText = sumCash7.toLocaleString('en-US', { maximumFractionDigits: 0 });
-    document.getElementById('badgeCount-cash7').innerText = countCash7.toLocaleString('en-US') + ' บิล';
-
-    document.getElementById('cardAmount-cash10').innerText = sumCash10.toLocaleString('en-US', { maximumFractionDigits: 0 });
-    document.getElementById('badgeCount-cash10').innerText = countCash10.toLocaleString('en-US') + ' บิล';
-
-    document.getElementById('cardAmount-over120').innerText = sumOver120.toLocaleString('en-US', { maximumFractionDigits: 0 });
-    document.getElementById('badgeCount-over120').innerText = countOver120.toLocaleString('en-US') + ' บิล';
-
-    document.getElementById('cardAmount-collected').innerText = sumCollected.toLocaleString('en-US', { maximumFractionDigits: 0 });
-    document.getElementById('badgeCount-collected').innerText = countCollected.toLocaleString('en-US') + ' บิล';
-
-    // Calculate Collection Rate
-    const colRate = sumTotalSales > 0 ? ((sumCollected / sumTotalSales) * 100).toFixed(2) : '0.00';
-    document.getElementById('tagCollectionRate').innerText = colRate + '%';
-    document.getElementById('totalCollectionRateDisplay').innerText = colRate + '%';
-
-    // Calculate AR Pie Chart Percentages & Update UI Breakdown
-    const pieTotal = sumCash7 + sumCash10 + sumUpcountry;
-    const p7 = pieTotal > 0 ? ((sumCash7 / pieTotal) * 100).toFixed(1) : '0.0';
-    const p10 = pieTotal > 0 ? ((sumCash10 / pieTotal) * 100).toFixed(1) : '0.0';
-    const pUpc = pieTotal > 0 ? ((sumUpcountry / pieTotal) * 100).toFixed(1) : '0.0';
-
-    document.getElementById('tagPct-cash7').innerText = p7 + '%';
-    document.getElementById('tagPct-cash10').innerText = p10 + '%';
-
-    document.getElementById('pctText-cash7').innerText = p7 + '%';
-    document.getElementById('breakdownAmount-cash7').innerText = sumCash7.toLocaleString('en-US', { maximumFractionDigits: 0 });
-    document.getElementById('breakdownCount-cash7').innerText = countCash7.toLocaleString('en-US');
-    document.getElementById('progBar-cash7').style.width = p7 + '%';
-
-    document.getElementById('pctText-cash10').innerText = p10 + '%';
-    document.getElementById('breakdownAmount-cash10').innerText = sumCash10.toLocaleString('en-US', { maximumFractionDigits: 0 });
-    document.getElementById('breakdownCount-cash10').innerText = countCash10.toLocaleString('en-US');
-    document.getElementById('progBar-cash10').style.width = p10 + '%';
-
-    document.getElementById('pctText-upcountry').innerText = pUpc + '%';
-    document.getElementById('breakdownAmount-upcountry').innerText = sumUpcountry.toLocaleString('en-US', { maximumFractionDigits: 0 });
-    document.getElementById('breakdownCount-upcountry').innerText = countUpcountry.toLocaleString('en-US');
-    document.getElementById('progBar-upcountry').style.width = pUpc + '%';
-
-    // Update Pie Chart in Real-time
-    if (arPieChart) {
-        arPieChart.data.datasets[0].data = [sumCash7, sumCash10, sumUpcountry];
-        arPieChart.update();
     }
+
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            buttons += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        }
+        buttons += `<li class="page-item"><a class="page-link" href="javascript:void(0)" onclick="goToPage(${totalPages})">${totalPages}</a></li>`;
+    }
+
+    // Next & Last buttons
+    const nextDisabled = currentPage >= totalPages ? 'disabled' : '';
+    buttons += `<li class="page-item ${nextDisabled}"><a class="page-link" href="javascript:void(0)" onclick="goToPage(${currentPage + 1})" title="ถัดไป">&rsaquo;</a></li>`;
+    buttons += `<li class="page-item ${nextDisabled}"><a class="page-link" href="javascript:void(0)" onclick="goToPage(${totalPages})" title="หน้าสุดท้าย">&raquo;</a></li>`;
+
+    if (pagTop) pagTop.innerHTML = buttons;
+    if (pagBottom) pagBottom.innerHTML = buttons;
 }
 
 function setSalesRep(name) {
     const input = document.getElementById('inputSearchSalesRep');
     if (input) {
         input.value = name;
-        applyFilters();
+        currentPage = 1;
+        fetchBills();
     }
 }
 
 function clearFilters() {
-    document.getElementById('inputSearchBill').value = '';
-    document.getElementById('inputSearchCustomerCode').value = '';
-    document.getElementById('inputSearchCustomerName').value = '';
-    document.getElementById('inputSearchSalesRep').value = '';
-    applyFilters();
+    if (document.getElementById('inputSearchBill')) document.getElementById('inputSearchBill').value = '';
+    if (document.getElementById('inputSearchCustomerCode')) document.getElementById('inputSearchCustomerCode').value = '';
+    if (document.getElementById('inputSearchCustomerName')) document.getElementById('inputSearchCustomerName').value = '';
+    if (document.getElementById('inputSearchSalesRep')) document.getElementById('inputSearchSalesRep').value = '';
+    currentPage = 1;
+    fetchBills();
 }
 
 function triggerExportExcel() {
-    const sBill = encodeURIComponent((document.getElementById('inputSearchBill').value || '').trim());
-    const sCust = encodeURIComponent((document.getElementById('inputSearchCustomerName').value || document.getElementById('inputSearchCustomerCode').value || '').trim());
-    const sRep = encodeURIComponent((document.getElementById('inputSearchSalesRep').value || '').trim());
+    const sBill = encodeURIComponent((document.getElementById('inputSearchBill')?.value || '').trim());
+    const sCust = encodeURIComponent((document.getElementById('inputSearchCustomerName')?.value || document.getElementById('inputSearchCustomerCode')?.value || '').trim());
+    const sRep = encodeURIComponent((document.getElementById('inputSearchSalesRep')?.value || '').trim());
     const url = `/Dashboard/ExportExcel?category=${currentCategory}&searchBill=${sBill}&searchCustomer=${sCust}&searchSalesRep=${sRep}`;
     window.location.href = url;
 }
 
 function triggerExportPdf() {
-    const sBill = encodeURIComponent((document.getElementById('inputSearchBill').value || '').trim());
-    const sCust = encodeURIComponent((document.getElementById('inputSearchCustomerName').value || document.getElementById('inputSearchCustomerCode').value || '').trim());
-    const sRep = encodeURIComponent((document.getElementById('inputSearchSalesRep').value || '').trim());
+    const sBill = encodeURIComponent((document.getElementById('inputSearchBill')?.value || '').trim());
+    const sCust = encodeURIComponent((document.getElementById('inputSearchCustomerName')?.value || document.getElementById('inputSearchCustomerCode')?.value || '').trim());
+    const sRep = encodeURIComponent((document.getElementById('inputSearchSalesRep')?.value || '').trim());
     const url = `/Dashboard/ExportPdf?category=${currentCategory}&searchBill=${sBill}&searchCustomer=${sCust}&searchSalesRep=${sRep}`;
     window.open(url, '_blank');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     initPieChart();
+    fetchBills();
 });
 </script>
 }

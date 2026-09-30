@@ -345,32 +345,28 @@ namespace RoyalD.Web.Controllers
                     summary.TotalAmount += sb.TotalAmount;
                     seenPaidBillNos.Add(sb.BillNo);
 
-                    // Add only top 100 collected items to preview table to prevent 50MB HTML size explosion
-                    if (drilldownBills.Count(x => x.Category == "collected") < 100)
+                    var item = new DashboardBillItem
                     {
-                        var item = new DashboardBillItem
-                        {
-                            BillNo = sb.BillNo,
-                            BillDate = sb.BillDate,
-                            SalesRep = sb.SalesRep ?? "",
-                            CustomerCode = sb.CustomerCode ?? "",
-                            CustomerName = sb.CustomerName ?? "",
-                            District = sb.District ?? "",
-                            Province = sb.Province ?? "",
-                            Amount = sb.TotalAmount,
-                            Category = "collected",
-                            CategoryName = "ยอดเก็บเงินสำเร็จ",
-                            GroupCode = groupCode,
-                            Credit = sb.Credit,
-                            DueDate = sb.BillDate.AddDays(sb.Credit),
-                            AgingDays = 0,
-                            StatusName = "เก็บเงินสำเร็จ",
-                            IsPaid = true,
-                            IsBkk = isBkkArea,
-                            IsModernTrade = IsModernTrade(sb.CustomerCode, sb.CustomerName)
-                        };
-                        drilldownBills.Add(item);
-                    }
+                        BillNo = sb.BillNo,
+                        BillDate = sb.BillDate,
+                        SalesRep = sb.SalesRep ?? "",
+                        CustomerCode = sb.CustomerCode ?? "",
+                        CustomerName = sb.CustomerName ?? "",
+                        District = sb.District ?? "",
+                        Province = sb.Province ?? "",
+                        Amount = sb.TotalAmount,
+                        Category = "collected",
+                        CategoryName = "ยอดเก็บเงินสำเร็จ",
+                        GroupCode = groupCode,
+                        Credit = sb.Credit,
+                        DueDate = sb.BillDate.AddDays(sb.Credit),
+                        AgingDays = 0,
+                        StatusName = "เก็บเงินสำเร็จ",
+                        IsPaid = true,
+                        IsBkk = isBkkArea,
+                        IsModernTrade = IsModernTrade(sb.CustomerCode, sb.CustomerName)
+                    };
+                    drilldownBills.Add(item);
                 }
             }
 
@@ -517,6 +513,123 @@ namespace RoyalD.Web.Controllers
         }
 
         // ==========================================
+        // API: DRILLDOWN BILLS PAGINATION (PAGE 1)
+        // แบ่งหน้าละ 50 รายการ โหลดเร็วติดทันที
+        // ==========================================
+        [HttpGet]
+        public async Task<IActionResult> GetDrilldownBills(
+            string? category = "all",
+            int page = 1,
+            int pageSize = 50,
+            string? searchBill = null,
+            string? searchCustomer = null,
+            string? searchSalesRep = null)
+        {
+            var data = await _cache.GetOrCreateAsync("dashboard_page_data_cache", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+                return await LoadDashboardPageDataAsync();
+            }) ?? new DashboardPageData();
+
+            var query = data.DrilldownBills.AsEnumerable();
+
+            var cat = category?.Trim().ToLower() ?? "all";
+            if (cat == "cash7")
+            {
+                query = query.Where(b => !b.IsPaid && b.GroupCode == "1");
+            }
+            else if (cat == "cash10")
+            {
+                query = query.Where(b => !b.IsPaid && b.GroupCode == "2");
+            }
+            else if (cat == "upcountry")
+            {
+                query = query.Where(b => !b.IsPaid && b.GroupCode == "3");
+            }
+            else if (cat == "over120")
+            {
+                query = query.Where(b => !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade);
+            }
+            else if (cat == "collected")
+            {
+                query = query.Where(b => b.IsPaid);
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchBill))
+            {
+                var sBill = searchBill.Trim();
+                query = query.Where(b => b.BillNo.Contains(sBill, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchCustomer))
+            {
+                var sCust = searchCustomer.Trim();
+                query = query.Where(b => (b.CustomerName != null && b.CustomerName.Contains(sCust, StringComparison.OrdinalIgnoreCase)) ||
+                                         (b.CustomerCode != null && b.CustomerCode.Contains(sCust, StringComparison.OrdinalIgnoreCase)));
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchSalesRep))
+            {
+                var sRep = searchSalesRep.Trim();
+                query = query.Where(b => b.SalesRep != null && b.SalesRep.Contains(sRep, StringComparison.OrdinalIgnoreCase));
+            }
+
+            // Ordering
+            if (cat == "over120")
+            {
+                query = query.OrderByDescending(b => b.AgingDays).ThenByDescending(b => b.Amount);
+            }
+            else
+            {
+                query = query.OrderByDescending(b => b.BillDate).ThenBy(b => b.BillNo);
+            }
+
+            var totalItems = query.Count();
+            var totalAmount = query.Sum(b => b.Amount);
+
+            if (pageSize <= 0) pageSize = 50;
+            var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+            if (totalPages < 1) totalPages = 1;
+            if (page < 1) page = 1;
+            if (page > totalPages) page = totalPages;
+
+            var items = query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select((b, idx) => new
+                {
+                    index = (page - 1) * pageSize + idx + 1,
+                    billNo = b.BillNo,
+                    billDate = b.BillDate.ToString("dd/MM/yyyy"),
+                    customerCode = b.CustomerCode,
+                    customerName = b.CustomerName,
+                    district = b.District ?? "",
+                    province = b.Province ?? "",
+                    credit = b.Credit > 0 ? b.Credit.ToString() : "สด",
+                    agingDays = b.AgingDays,
+                    amount = b.Amount,
+                    amountFormatted = b.Amount.ToString("N2"),
+                    salesRep = b.SalesRep ?? "",
+                    isPaid = b.IsPaid,
+                    statusName = b.IsPaid ? "ชำระแล้ว" : (b.AgingDays > 120 ? $"เกิน {b.AgingDays} วัน" : (b.AgingDays > 0 ? $"{b.AgingDays} วัน" : "ยังไม่ถึงกำหนด"))
+                })
+                .ToList();
+
+            return Json(new
+            {
+                success = true,
+                category = cat,
+                totalItems,
+                totalPages,
+                currentPage = page,
+                pageSize,
+                totalAmount,
+                totalAmountFormatted = totalAmount.ToString("N2"),
+                items
+            });
+        }
+
+        // ==========================================
         // PAGE 2: AR DETAILED COMPARISON BOARD
         // ==========================================
         public async Task<IActionResult> Comparison()
@@ -543,25 +656,40 @@ namespace RoyalD.Web.Controllers
             var (summary, bills, _) = await GetDashboardDataAsync();
             var query = bills.AsEnumerable();
 
-            if (!string.IsNullOrEmpty(category) && category.ToLower() != "all")
-                query = query.Where(b => b.Category.Equals(category, StringComparison.OrdinalIgnoreCase));
+            var cat = category?.Trim().ToLower() ?? "all";
+            if (cat == "cash7")
+            {
+                query = query.Where(b => !b.IsPaid && b.GroupCode == "1");
+            }
+            else if (cat == "cash10")
+            {
+                query = query.Where(b => !b.IsPaid && b.GroupCode == "2");
+            }
+            else if (cat == "upcountry")
+            {
+                query = query.Where(b => !b.IsPaid && b.GroupCode == "3");
+            }
+            else if (cat == "over120")
+            {
+                query = query.Where(b => !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade);
+            }
+            else if (cat == "collected")
+            {
+                query = query.Where(b => b.IsPaid);
+            }
 
             if (!string.IsNullOrEmpty(searchBill))
                 query = query.Where(b => b.BillNo.Contains(searchBill, StringComparison.OrdinalIgnoreCase));
 
             if (!string.IsNullOrEmpty(searchCustomer))
-                query = query.Where(b => b.CustomerName.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase) || b.CustomerCode.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(b => (b.CustomerName != null && b.CustomerName.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase)) || (b.CustomerCode != null && b.CustomerCode.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase)));
 
             if (!string.IsNullOrEmpty(searchSalesRep))
-                query = query.Where(b => b.SalesRep.Contains(searchSalesRep, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(b => b.SalesRep != null && b.SalesRep.Contains(searchSalesRep, StringComparison.OrdinalIgnoreCase));
 
-            // When exporting over120, apply over120 filter + exclude Modern Trade
-            if (category?.ToLower() == "over120")
-                query = query.Where(b => !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade);
-
-            var filteredList = (category?.ToLower() == "over120")
-                ? query.OrderByDescending(b => b.AgingDays).ThenBy(b => b.BillDate).ToList()
-                : query.OrderBy(b => b.BillDate).ToList();
+            var filteredList = (cat == "over120")
+                ? query.OrderByDescending(b => b.AgingDays).ThenByDescending(b => b.Amount).ToList()
+                : query.OrderByDescending(b => b.BillDate).ThenBy(b => b.BillNo).ToList();
 
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             using var package = new ExcelPackage();
@@ -671,25 +799,40 @@ namespace RoyalD.Web.Controllers
             var (summary, bills, _) = await GetDashboardDataAsync();
             var query = bills.AsEnumerable();
 
-            if (!string.IsNullOrEmpty(category) && category.ToLower() != "all")
-                query = query.Where(b => b.Category.Equals(category, StringComparison.OrdinalIgnoreCase));
+            var cat = category?.Trim().ToLower() ?? "all";
+            if (cat == "cash7")
+            {
+                query = query.Where(b => !b.IsPaid && b.GroupCode == "1");
+            }
+            else if (cat == "cash10")
+            {
+                query = query.Where(b => !b.IsPaid && b.GroupCode == "2");
+            }
+            else if (cat == "upcountry")
+            {
+                query = query.Where(b => !b.IsPaid && b.GroupCode == "3");
+            }
+            else if (cat == "over120")
+            {
+                query = query.Where(b => !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade);
+            }
+            else if (cat == "collected")
+            {
+                query = query.Where(b => b.IsPaid);
+            }
 
             if (!string.IsNullOrEmpty(searchBill))
                 query = query.Where(b => b.BillNo.Contains(searchBill, StringComparison.OrdinalIgnoreCase));
 
             if (!string.IsNullOrEmpty(searchCustomer))
-                query = query.Where(b => b.CustomerName.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase) || b.CustomerCode.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(b => (b.CustomerName != null && b.CustomerName.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase)) || (b.CustomerCode != null && b.CustomerCode.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase)));
 
             if (!string.IsNullOrEmpty(searchSalesRep))
-                query = query.Where(b => b.SalesRep.Contains(searchSalesRep, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(b => b.SalesRep != null && b.SalesRep.Contains(searchSalesRep, StringComparison.OrdinalIgnoreCase));
 
-            // When exporting over120, apply over120 filter + exclude Modern Trade
-            if (category?.ToLower() == "over120")
-                query = query.Where(b => !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade);
-
-            var filteredList = (category?.ToLower() == "over120")
-                ? query.OrderByDescending(b => b.AgingDays).ThenBy(b => b.BillDate).ToList()
-                : query.OrderBy(b => b.BillDate).ToList();
+            var filteredList = (cat == "over120")
+                ? query.OrderByDescending(b => b.AgingDays).ThenByDescending(b => b.Amount).ToList()
+                : query.OrderByDescending(b => b.BillDate).ThenBy(b => b.BillNo).ToList();
 
             ViewBag.Category = category;
             ViewBag.CategoryTitle = category?.ToLower() switch
