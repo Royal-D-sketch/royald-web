@@ -214,6 +214,18 @@ using (var scope = app.Services.CreateScope())
         AddColumnIfMissing("OutstandingDebts", "ReturnedToAccountDate", "TEXT NULL");
         AddColumnIfMissing("OutstandingDebts", "ReturnedToAccountReason", "TEXT NULL DEFAULT ''");
         AddColumnIfMissing("OutstandingDebts", "ReturnedToDeliveryDate", "TEXT NULL");
+
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = @"
+                CREATE INDEX IF NOT EXISTS IX_OutstandingDebts_BillNo ON OutstandingDebts (BillNo);
+                CREATE INDEX IF NOT EXISTS IX_OutstandingDebts_CustomerCode ON OutstandingDebts (CustomerCode);
+                CREATE INDEX IF NOT EXISTS IX_OutstandingDebts_DueDate ON OutstandingDebts (DueDate);
+                CREATE INDEX IF NOT EXISTS IX_SalesBills_CustomerCode ON SalesBills (CustomerCode);
+                CREATE INDEX IF NOT EXISTS IX_SalesBills_IsFullyPaid ON SalesBills (IsFullyPaid);
+            ";
+            cmd.ExecuteNonQuery();
+        }
     }
 
         if (db.Database.IsNpgsql())
@@ -263,6 +275,15 @@ using (var scope = app.Services.CreateScope())
                 ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""ReturnedToAccountDate"" timestamp with time zone NULL;
                 ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""ReturnedToAccountReason"" varchar(500) NULL;
                 ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""ReturnedToDeliveryDate"" timestamp with time zone NULL;
+
+                -- High performance indexes
+                CREATE INDEX IF NOT EXISTS ""IX_OutstandingDebts_BillNo"" ON ""OutstandingDebts"" (""BillNo"");
+                CREATE INDEX IF NOT EXISTS ""IX_OutstandingDebts_CustomerCode"" ON ""OutstandingDebts"" (""CustomerCode"");
+                CREATE INDEX IF NOT EXISTS ""IX_OutstandingDebts_DueDate"" ON ""OutstandingDebts"" (""DueDate"");
+                CREATE INDEX IF NOT EXISTS ""IX_OutstandingDebts_BillDate"" ON ""OutstandingDebts"" (""BillDate"");
+                CREATE INDEX IF NOT EXISTS ""IX_OutstandingDebts_Province"" ON ""OutstandingDebts"" (""Province"");
+                CREATE INDEX IF NOT EXISTS ""IX_SalesBills_CustomerCode"" ON ""SalesBills"" (""CustomerCode"");
+                CREATE INDEX IF NOT EXISTS ""IX_SalesBills_IsFullyPaid"" ON ""SalesBills"" (""IsFullyPaid"");
             ";
             cmd.ExecuteNonQuery();
         }
@@ -324,6 +345,8 @@ using (var scope = app.Services.CreateScope())
     }
     catch { }
 }
+
+app.MapGet("/healthz", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
 
 app.Run();
 

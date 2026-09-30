@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -33,7 +33,9 @@ namespace RoyalD.Web.Controllers
             string? district = null,
             string? credit = null,
             DateTime? startDate = null,
-            DateTime? endDate = null)
+            DateTime? endDate = null,
+            int page = 1,
+            int pageSize = 50)
         {
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             bool isRestricted = currentUser != null && currentUser.Role != "admin";
@@ -226,7 +228,19 @@ namespace RoyalD.Web.Controllers
             ViewBag.CanDeleteDebtor = currentUser != null && (currentUser.Role == "admin" || currentUser.CanDeleteDebtor);
             ViewBag.CanDownload = canDownload;
 
-            return View(debts);
+            int totalRecords = debts.Count;
+            int effectivePageSize = pageSize > 0 ? pageSize : 50;
+            int totalPages = (int)Math.Ceiling((double)totalRecords / effectivePageSize);
+            page = Math.Max(1, Math.Min(page, totalPages > 0 ? totalPages : 1));
+
+            var pagedDebts = debts.Skip((page - 1) * effectivePageSize).Take(effectivePageSize).ToList();
+
+            ViewBag.Page = page;
+            ViewBag.PageSize = effectivePageSize;
+            ViewBag.TotalRecords = totalRecords;
+            ViewBag.TotalPages = totalPages;
+
+            return View(pagedDebts);
         }
 
         [HttpGet]

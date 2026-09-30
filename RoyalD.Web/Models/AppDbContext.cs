@@ -49,17 +49,33 @@ namespace RoyalD.Web.Models
                 .WithMany(d => d.PaymentRecords)
                 .HasForeignKey(p => p.OutstandingDebtId);
 
-            // Indexes
+            // Indexes for High Performance
             modelBuilder.Entity<SalesBill>()
                 .HasIndex(b => b.SalesRep);
             modelBuilder.Entity<SalesBill>()
                 .HasIndex(b => b.BillDate);
             modelBuilder.Entity<SalesBill>()
                 .HasIndex(b => b.SourceMonth);
+            modelBuilder.Entity<SalesBill>()
+                .HasIndex(b => b.CustomerCode);
+            modelBuilder.Entity<SalesBill>()
+                .HasIndex(b => b.IsFullyPaid);
+
             modelBuilder.Entity<OutstandingDebt>()
                 .HasIndex(d => d.Status);
             modelBuilder.Entity<OutstandingDebt>()
                 .HasIndex(d => d.SalesRep);
+            modelBuilder.Entity<OutstandingDebt>()
+                .HasIndex(d => d.BillNo);
+            modelBuilder.Entity<OutstandingDebt>()
+                .HasIndex(d => d.CustomerCode);
+            modelBuilder.Entity<OutstandingDebt>()
+                .HasIndex(d => d.DueDate);
+            modelBuilder.Entity<OutstandingDebt>()
+                .HasIndex(d => d.BillDate);
+            modelBuilder.Entity<OutstandingDebt>()
+                .HasIndex(d => d.Province);
+
             modelBuilder.Entity<AuditLog>()
                 .HasIndex(a => a.CreatedAt);
         }

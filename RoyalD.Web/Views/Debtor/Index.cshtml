@@ -260,6 +260,7 @@
     <div class="card mb-3 filter-card">
         <div class="card-body py-3">
             <form method="get" class="row g-2 align-items-end" id="debtor-filter-form">
+                <input type="hidden" name="pageSize" value="@(ViewBag.PageSize ?? 50)" />
                 
                 <div class="col-md-2">
                     <label class="form-label small fw-bold mb-1" style="color:#475569;">🔍 ค้นหา</label>
@@ -592,13 +593,73 @@
                 </tbody>
             </table>
         </div>
-        <div class="d-flex justify-content-between align-items-center text-muted small px-2 mb-4">
-            <div>
-                แสดงทั้งหมด <strong>@Model.Count</strong> รายการ
+        <!-- Pagination & Summary -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 px-3 py-2 bg-white rounded shadow-sm border mt-3 mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-muted small">
+                    @{
+                        int curPage = ViewBag.Page ?? 1;
+                        int pSize = ViewBag.PageSize ?? 50;
+                        int totRecords = ViewBag.TotalRecords ?? Model.Count;
+                        int totPages = ViewBag.TotalPages ?? 1;
+                        int startItem = totRecords == 0 ? 0 : ((curPage - 1) * pSize) + 1;
+                        int endItem = Math.Min(curPage * pSize, totRecords);
+                    }
+                    แสดง <strong>@startItem - @endItem</strong> จากทั้งหมด <strong>@totRecords.ToString("N0")</strong> รายการ
+                </div>
+                <div class="d-flex align-items-center gap-1 text-muted small">
+                    <label>แถวต่อหน้า:</label>
+                    <select class="form-select form-select-sm" style="width: auto; padding: 2px 24px 2px 8px; font-size: 0.8rem;" onchange="changePageSize(this.value)">
+                        <option value="30" selected="@(pSize == 30)">30</option>
+                        <option value="50" selected="@(pSize == 50)">50</option>
+                        <option value="100" selected="@(pSize == 100)">100</option>
+                        <option value="200" selected="@(pSize == 200)">200</option>
+                    </select>
+                </div>
             </div>
+
+            @if (totPages > 1)
+            {
+                <nav class="no-print">
+                    <ul class="pagination pagination-sm mb-0">
+                        @if (curPage > 1)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="@Url.Action("Index", new { search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, status = ViewBag.SelectedStatus, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, district = ViewBag.SelectedDistrict, credit = ViewBag.SelectedCredit, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate, page = 1, pageSize = pSize })" title="หน้าแรก">«</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="@Url.Action("Index", new { search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, status = ViewBag.SelectedStatus, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, district = ViewBag.SelectedDistrict, credit = ViewBag.SelectedCredit, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate, page = curPage - 1, pageSize = pSize })">‹ ก่อนหน้า</a>
+                            </li>
+                        }
+
+                        @for (int p = Math.Max(1, curPage - 2); p <= Math.Min(totPages, curPage + 2); p++)
+                        {
+                            if (p == curPage)
+                            {
+                                <li class="page-item active"><span class="page-link" style="background:#0d9488; border-color:#0d9488;">@p</span></li>
+                            }
+                            else
+                            {
+                                <li class="page-item"><a class="page-link" href="@Url.Action("Index", new { search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, status = ViewBag.SelectedStatus, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, district = ViewBag.SelectedDistrict, credit = ViewBag.SelectedCredit, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate, page = p, pageSize = pSize })">@p</a></li>
+                            }
+                        }
+
+                        @if (curPage < totPages)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="@Url.Action("Index", new { search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, status = ViewBag.SelectedStatus, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, district = ViewBag.SelectedDistrict, credit = ViewBag.SelectedCredit, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate, page = curPage + 1, pageSize = pSize })">ถัดไป ›</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="@Url.Action("Index", new { search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, status = ViewBag.SelectedStatus, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, district = ViewBag.SelectedDistrict, credit = ViewBag.SelectedCredit, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate, page = totPages, pageSize = pSize })" title="หน้าสุดท้าย">»</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+
             @if (overdue120Count > 0)
             {
-                <div class="fw-bold text-danger">
+                <div class="fw-bold text-danger small">
                     <i class="bi bi-exclamation-octagon-fill"></i>
                     แถบสีแดง = หนี้ค้างเกิน 120 วัน (@overdue120Count รายการ)
                 </div>
@@ -634,6 +695,13 @@
             if (p === selectedDebtorProv) opt.selected = true;
             provSelect.appendChild(opt);
         });
+    }
+
+    function changePageSize(size) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('pageSize', size);
+        url.searchParams.set('page', '1');
+        window.location.href = url.toString();
     }
 </script>
 }

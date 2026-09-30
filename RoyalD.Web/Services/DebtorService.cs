@@ -95,9 +95,7 @@ namespace RoyalD.Web.Services
             var today = DateTime.Today;
             var q = _db.OutstandingDebts
                 .AsNoTracking()
-                .Include(d => d.PaymentRecords)
                 .Include(d => d.Customer)
-                .Include(d => d.Attachments)
                 .AsQueryable();
 
             // Filtering by status
@@ -188,7 +186,7 @@ namespace RoyalD.Web.Services
 
             // 1. Get from OutstandingDebts
             var q = _db.OutstandingDebts
-                .Include(d => d.PaymentRecords)
+                .AsNoTracking()
                 .Include(d => d.Customer)
                 .Where(d => (d.Status == DebtStatus.PaidCash 
                          || d.Status == DebtStatus.PaidTransfer 

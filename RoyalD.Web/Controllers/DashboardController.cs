@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using RoyalD.Web.Models;
@@ -17,8 +18,13 @@ namespace RoyalD.Web.Controllers
     public class DashboardController : Controller
     {
         private readonly AppDbContext _db;
+        private readonly IMemoryCache _cache;
 
-        public DashboardController(AppDbContext db) => _db = db;
+        public DashboardController(AppDbContext db, IMemoryCache cache)
+        {
+            _db = db;
+            _cache = cache;
+        }
 
         // ==========================================
         // MODERN TRADE EXCLUSION LIST (Corporate Legal Entities & Customer Codes)
@@ -372,32 +378,36 @@ namespace RoyalD.Web.Controllers
             return (summary, drilldownBills, comparisonBoard);
         }
 
-        // ==========================================
-        // PAGE 1: AR EXECUTIVE SUMMARY & DASHBOARD
-        // ==========================================
-        public async Task<IActionResult> Index()
+        public class DashboardPageData
         {
-            var allowedPages = User.FindFirst("AllowedPages")?.Value?.Split(',').Select(p => p.Trim().ToLower()) ?? Array.Empty<string>();
-            if (!User.IsInRole("admin") && !allowedPages.Contains("dashboard"))
-                return RedirectToAction("Index", "SalesBill");
+            public int TotalBills { get; set; }
+            public DashboardSummary Summary { get; set; } = null!;
+            public List<DashboardBillItem> DrilldownBills { get; set; } = new();
+            public ComparisonBoardViewModel ComparisonBoard { get; set; } = null!;
+            public int InstallmentCount { get; set; }
+            public int PostponedCount { get; set; }
+            public int BadDebtCount { get; set; }
+            public List<string> ChartLabels { get; set; } = new();
+            public List<decimal> ChartValues { get; set; } = new();
+            public List<decimal> PaidValues { get; set; } = new();
+            public List<decimal> OverdueValues { get; set; } = new();
+            public List<OutstandingDebt> RecentDebts { get; set; } = new();
+            public DateTime? LatestBillDate { get; set; }
+            public DateTime? LatestDebtorDate { get; set; }
+            public DateTime? LatestReceiptDate { get; set; }
+        }
 
+        private async Task<DashboardPageData> LoadDashboardPageDataAsync()
+        {
             var today = DateTime.Today;
-
             var cancelledCount = await _db.OutstandingDebts.CountAsync(d => d.Status == DebtStatus.Cancelled);
-            ViewBag.TotalBills = (await _db.SalesBills.CountAsync()) - cancelledCount;
+            int totalBills = (await _db.SalesBills.CountAsync()) - cancelledCount;
 
             var (summary, drilldownBills, comparisonBoard) = await GetDashboardDataAsync();
 
-            ViewBag.Summary = summary;
-            ViewBag.DrilldownBills = drilldownBills;
-
-            ViewBag.TotalOutstanding = summary.TotalOutstandingAmount;
-            ViewBag.TotalDebtors = summary.TotalDebtors;
-
-            ViewBag.OverdueCount = summary.Overdue120Days.BillCount;
-            ViewBag.InstallmentCount = await _db.OutstandingDebts.CountAsync(d => d.Status == DebtStatus.Installment);
-            ViewBag.PostponedCount = await _db.OutstandingDebts.CountAsync(d => d.Status == DebtStatus.Postponed);
-            ViewBag.BadDebtCount = await _db.OutstandingDebts.CountAsync(d => d.Status == DebtStatus.BadDebt);
+            int installmentCount = await _db.OutstandingDebts.CountAsync(d => d.Status == DebtStatus.Installment);
+            int postponedCount = await _db.OutstandingDebts.CountAsync(d => d.Status == DebtStatus.Postponed);
+            int badDebtCount = await _db.OutstandingDebts.CountAsync(d => d.Status == DebtStatus.BadDebt);
 
             int currentYear = today.Year;
 
@@ -432,23 +442,74 @@ namespace RoyalD.Web.Controllers
                 overdueValues.Add(monthlyOverdue.ContainsKey(i) ? monthlyOverdue[i] : 0);
             }
 
-            ViewBag.ChartLabels = chartLabels;
-            ViewBag.ChartValues = chartValues;
-            ViewBag.PaidValues = paidValues;
-            ViewBag.OverdueValues = overdueValues;
-
             var recentDebts = await _db.OutstandingDebts
                 .Where(d => d.Status == DebtStatus.Outstanding)
                 .OrderBy(d => d.DueDate)
                 .Take(10)
                 .ToListAsync();
 
-            ViewBag.LatestBillDate = await _db.SalesBills.OrderByDescending(b => b.BillDate).Select(b => (DateTime?)b.BillDate).FirstOrDefaultAsync();
-            ViewBag.LatestDebtorDate = await _db.OutstandingDebts.OrderByDescending(d => d.BillDate).Select(d => (DateTime?)d.BillDate).FirstOrDefaultAsync();
-            ViewBag.LatestReceiptDate = await _db.SalesBills.Where(b => b.ReceiptDate != null).OrderByDescending(b => b.ReceiptDate).Select(b => (DateTime?)b.ReceiptDate).FirstOrDefaultAsync()
-                                      ?? await _db.OutstandingDebts.Where(d => d.ReceiptDate != null).OrderByDescending(d => d.ReceiptDate).Select(d => (DateTime?)d.ReceiptDate).FirstOrDefaultAsync();
+            var latestBillDate = await _db.SalesBills.OrderByDescending(b => b.BillDate).Select(b => (DateTime?)b.BillDate).FirstOrDefaultAsync();
+            var latestDebtorDate = await _db.OutstandingDebts.OrderByDescending(d => d.BillDate).Select(d => (DateTime?)d.BillDate).FirstOrDefaultAsync();
+            var latestReceiptDate = await _db.SalesBills.Where(b => b.ReceiptDate != null).OrderByDescending(b => b.ReceiptDate).Select(b => (DateTime?)b.ReceiptDate).FirstOrDefaultAsync()
+                                  ?? await _db.OutstandingDebts.Where(d => d.ReceiptDate != null).OrderByDescending(d => d.ReceiptDate).Select(d => (DateTime?)d.ReceiptDate).FirstOrDefaultAsync();
 
-            return View(recentDebts);
+            return new DashboardPageData
+            {
+                TotalBills = totalBills,
+                Summary = summary,
+                DrilldownBills = drilldownBills,
+                ComparisonBoard = comparisonBoard,
+                InstallmentCount = installmentCount,
+                PostponedCount = postponedCount,
+                BadDebtCount = badDebtCount,
+                ChartLabels = chartLabels,
+                ChartValues = chartValues,
+                PaidValues = paidValues,
+                OverdueValues = overdueValues,
+                RecentDebts = recentDebts,
+                LatestBillDate = latestBillDate,
+                LatestDebtorDate = latestDebtorDate,
+                LatestReceiptDate = latestReceiptDate
+            };
+        }
+
+        // ==========================================
+        // PAGE 1: AR EXECUTIVE SUMMARY & DASHBOARD
+        // ==========================================
+        public async Task<IActionResult> Index()
+        {
+            var allowedPages = User.FindFirst("AllowedPages")?.Value?.Split(',').Select(p => p.Trim().ToLower()) ?? Array.Empty<string>();
+            if (!User.IsInRole("admin") && !allowedPages.Contains("dashboard"))
+                return RedirectToAction("Index", "SalesBill");
+
+            var data = await _cache.GetOrCreateAsync("dashboard_page_data_cache", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2);
+                return await LoadDashboardPageDataAsync();
+            }) ?? new DashboardPageData();
+
+            ViewBag.TotalBills = data.TotalBills;
+            ViewBag.Summary = data.Summary;
+            ViewBag.DrilldownBills = data.DrilldownBills;
+
+            ViewBag.TotalOutstanding = data.Summary?.TotalOutstandingAmount ?? 0;
+            ViewBag.TotalDebtors = data.Summary?.TotalDebtors ?? 0;
+
+            ViewBag.OverdueCount = data.Summary?.Overdue120Days?.BillCount ?? 0;
+            ViewBag.InstallmentCount = data.InstallmentCount;
+            ViewBag.PostponedCount = data.PostponedCount;
+            ViewBag.BadDebtCount = data.BadDebtCount;
+
+            ViewBag.ChartLabels = data.ChartLabels;
+            ViewBag.ChartValues = data.ChartValues;
+            ViewBag.PaidValues = data.PaidValues;
+            ViewBag.OverdueValues = data.OverdueValues;
+
+            ViewBag.LatestBillDate = data.LatestBillDate;
+            ViewBag.LatestDebtorDate = data.LatestDebtorDate;
+            ViewBag.LatestReceiptDate = data.LatestReceiptDate;
+
+            return View(data.RecentDebts);
         }
 
         // ==========================================
@@ -460,8 +521,13 @@ namespace RoyalD.Web.Controllers
             if (!User.IsInRole("admin") && !allowedPages.Contains("dashboard"))
                 return RedirectToAction("Index", "SalesBill");
 
-            var (summary, drilldownBills, comparisonBoard) = await GetDashboardDataAsync();
-            return View(comparisonBoard);
+            var data = await _cache.GetOrCreateAsync("dashboard_page_data_cache", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2);
+                return await LoadDashboardPageDataAsync();
+            });
+
+            return View(data?.ComparisonBoard ?? (await GetDashboardDataAsync()).comparisonBoard);
         }
 
         // ==========================================
