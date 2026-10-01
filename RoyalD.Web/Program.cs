@@ -350,6 +350,43 @@ using (var scope = app.Services.CreateScope())
         }
     }
     catch { }
+
+    // Auto-sync IsFullyPaid on SalesBills based on OutstandingDebts
+    try
+    {
+        if (db.Database.IsNpgsql())
+        {
+            string syncSql = @"
+                UPDATE ""SalesBills"" b
+                SET ""IsFullyPaid"" = true
+                WHERE ""IsFullyPaid"" = false
+                AND NOT EXISTS (
+                    SELECT 1 FROM ""OutstandingDebts"" d
+                    WHERE d.""BillNo"" = b.""BillNo""
+                    AND d.""Status"" NOT IN (1, 2, 3, 14)
+                    AND (d.""RemainingAmount"" > 0 OR d.""Status"" = 4 OR d.""Status"" = 100)
+                    AND d.""FullyPaidDate"" IS NULL
+                )
+                AND b.""BillDate"" < (CURRENT_DATE - INTERVAL '7 days');
+
+                UPDATE ""SalesBills"" b
+                SET ""IsFullyPaid"" = false
+                WHERE ""IsFullyPaid"" = true
+                AND EXISTS (
+                    SELECT 1 FROM ""OutstandingDebts"" d
+                    WHERE d.""BillNo"" = b.""BillNo""
+                    AND d.""Status"" NOT IN (1, 2, 3, 14)
+                    AND (d.""RemainingAmount"" > 0 OR d.""Status"" = 4 OR d.""Status"" = 100)
+                    AND d.""FullyPaidDate"" IS NULL
+                );
+            ";
+            db.Database.ExecuteSqlRaw(syncSql);
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("Notice syncing IsFullyPaid: " + ex.Message);
+    }
 }
 
 app.MapGet("/healthz", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));

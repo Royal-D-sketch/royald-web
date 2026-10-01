@@ -244,52 +244,80 @@ namespace RoyalD.Web.Controllers
             {
                 if (status == "paid") 
                 {
-                    var installBillNos = await _cache.GetOrCreateAsync("installment_debt_bill_nos", async entry =>
+                    var activeDebtBillNos = await _cache.GetOrCreateAsync("active_debt_bill_nos", async entry =>
                     {
-                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
                         return await _db.OutstandingDebts.AsNoTracking()
-                            .Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100)
+                            .Where(d => d.Status != DebtStatus.PaidCash 
+                                     && d.Status != DebtStatus.PaidTransfer 
+                                     && d.Status != DebtStatus.PaidCheck 
+                                     && d.Status != DebtStatus.Cancelled
+                                     && (d.RemainingAmount > 0 || d.Status == DebtStatus.Installment || (int)d.Status == 100)
+                                     && d.FullyPaidDate == null)
                             .Select(d => d.BillNo)
                             .Distinct()
                             .ToListAsync();
                     }) ?? new List<string>();
 
-                    q = q.Where(b => b.IsFullyPaid);
-                    if (installBillNos.Count > 0)
-                    {
-                        q = q.Where(b => !installBillNos.Contains(b.BillNo));
-                    }
+                    q = q.Where(b => b.IsFullyPaid || !activeDebtBillNos.Contains(b.BillNo));
                 }
                 else if (status == "unpaid") 
                 {
-                    var installBillNos = await _cache.GetOrCreateAsync("installment_debt_bill_nos", async entry =>
+                    var unpaidBillNos = await _cache.GetOrCreateAsync("unpaid_debt_bill_nos", async entry =>
                     {
-                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
                         return await _db.OutstandingDebts.AsNoTracking()
-                            .Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100)
+                            .Where(d => d.Status != DebtStatus.PaidCash 
+                                     && d.Status != DebtStatus.PaidTransfer 
+                                     && d.Status != DebtStatus.PaidCheck 
+                                     && d.Status != DebtStatus.Cancelled
+                                     && (d.RemainingAmount > 0 || d.Status == DebtStatus.Installment || (int)d.Status == 100)
+                                     && d.FullyPaidDate == null)
                             .Select(d => d.BillNo)
                             .Distinct()
                             .ToListAsync();
                     }) ?? new List<string>();
 
-                    if (installBillNos.Count > 0)
-                    {
-                        q = q.Where(b => !b.IsFullyPaid || installBillNos.Contains(b.BillNo));
-                    }
-                    else
-                    {
-                        q = q.Where(b => !b.IsFullyPaid);
-                    }
+                    q = q.Where(b => unpaidBillNos.Contains(b.BillNo));
                 }
-                else if (status == "overdue_under_120")
+                else if (status == "overdue_under_120" || string.Equals(status, "overdue", StringComparison.OrdinalIgnoreCase))
                 {
                     var today = DateTime.Today;
-                    q = q.Where(b => !b.IsFullyPaid && b.BillDate.AddDays(b.Credit) < today && b.BillDate.AddDays(b.Credit + 120) >= today);
+                    var cutoff120 = today.AddDays(-120);
+                    var overdueUnder120BillNos = await _cache.GetOrCreateAsync("overdue_under_120_bill_nos", async entry =>
+                    {
+                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+                        return await _db.OutstandingDebts.AsNoTracking()
+                            .Where(d => d.Status == DebtStatus.Outstanding 
+                                     && d.RemainingAmount > 0 
+                                     && d.FullyPaidDate == null
+                                     && d.DueDate < today 
+                                     && d.DueDate >= cutoff120)
+                            .Select(d => d.BillNo)
+                            .Distinct()
+                            .ToListAsync();
+                    }) ?? new List<string>();
+
+                    q = q.Where(b => overdueUnder120BillNos.Contains(b.BillNo));
                 }
-                else if (status == "overdue120")
+                else if (status == "overdue120" || string.Equals(status, "Overdue120", StringComparison.OrdinalIgnoreCase))
                 {
                     var today = DateTime.Today;
-                    q = q.Where(b => !b.IsFullyPaid && b.BillDate.AddDays(b.Credit + 120) < today);
+                    var cutoff120 = today.AddDays(-120);
+                    var overdue120BillNos = await _cache.GetOrCreateAsync("overdue_120_bill_nos", async entry =>
+                    {
+                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+                        return await _db.OutstandingDebts.AsNoTracking()
+                            .Where(d => d.Status == DebtStatus.Outstanding 
+                                     && d.RemainingAmount > 0 
+                                     && d.FullyPaidDate == null
+                                     && d.DueDate < cutoff120)
+                            .Select(d => d.BillNo)
+                            .Distinct()
+                            .ToListAsync();
+                    }) ?? new List<string>();
+
+                    q = q.Where(b => overdue120BillNos.Contains(b.BillNo));
                 }
                 else if (status == "installment")
                 {
@@ -387,7 +415,20 @@ namespace RoyalD.Web.Controllers
                 q = q.Where(b => b.PoNumber.Contains(poSearch));
 
             var total = await q.CountAsync();
-            var totalAmount = await q.SumAsync(b => b.TotalAmount);
+            bool isDebtStatus = !string.IsNullOrEmpty(status) && status != "paid" && status != "cancelled";
+            decimal totalAmount = 0m;
+            if (isDebtStatus)
+            {
+                var matchedBillNos = await q.Select(b => b.BillNo).ToListAsync();
+                totalAmount = await _db.OutstandingDebts.AsNoTracking()
+                    .Where(d => matchedBillNos.Contains(d.BillNo) && d.RemainingAmount > 0)
+                    .SumAsync(d => (decimal?)d.RemainingAmount) ?? 0m;
+            }
+            else
+            {
+                totalAmount = await q.SumAsync(b => (decimal?)b.TotalAmount) ?? 0m;
+            }
+
             var bills = await q
                 .Include(b => b.Customer)
                 .OrderByDescending(b => b.BillDate)
@@ -400,6 +441,10 @@ namespace RoyalD.Web.Controllers
                 .Where(d => billNos.Contains(d.BillNo))
                 .ToListAsync();
             var debtDict = debts.GroupBy(d => d.BillNo).ToDictionary(g => g.Key, g => g.First());
+
+            ViewBag.TotalCount = total;
+            ViewBag.TotalAmount = totalAmount;
+            ViewBag.IsDebtStatus = isDebtStatus;
 
             ViewBag.Status = status;
             ViewBag.Search = search;
@@ -675,28 +720,80 @@ namespace RoyalD.Web.Controllers
             if (!string.IsNullOrEmpty(month))
                 q = q.Where(b => b.SourceMonth == month);
             
+            var canBillNos = await _db.OutstandingDebts.AsNoTracking()
+                .Where(d => d.Status == DebtStatus.Cancelled)
+                .Select(d => d.BillNo)
+                .Distinct()
+                .ToListAsync();
+
+            if (status != "cancelled" && canBillNos.Count > 0)
+            {
+                q = q.Where(b => !canBillNos.Contains(b.BillNo));
+            }
+
             if (!string.IsNullOrEmpty(status))
             {
                 if (status == "paid")
                 {
-                    var installBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100).Select(d => d.BillNo);
-                    q = q.Where(b => b.IsFullyPaid && !installBillNos.Contains(b.BillNo));
+                    var activeDebtBillNos = await _db.OutstandingDebts.AsNoTracking()
+                        .Where(d => d.Status != DebtStatus.PaidCash 
+                                 && d.Status != DebtStatus.PaidTransfer 
+                                 && d.Status != DebtStatus.PaidCheck 
+                                 && d.Status != DebtStatus.Cancelled
+                                 && (d.RemainingAmount > 0 || d.Status == DebtStatus.Installment || (int)d.Status == 100)
+                                 && d.FullyPaidDate == null)
+                        .Select(d => d.BillNo)
+                        .Distinct()
+                        .ToListAsync();
+
+                    q = q.Where(b => b.IsFullyPaid || !activeDebtBillNos.Contains(b.BillNo));
                 }
                 else if (status == "unpaid")
                 {
-                    var installBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100).Select(d => d.BillNo);
-                    q = q.Where(b => !b.IsFullyPaid || installBillNos.Contains(b.BillNo));
+                    var unpaidBillNos = await _db.OutstandingDebts.AsNoTracking()
+                        .Where(d => d.Status != DebtStatus.PaidCash 
+                                 && d.Status != DebtStatus.PaidTransfer 
+                                 && d.Status != DebtStatus.PaidCheck 
+                                 && d.Status != DebtStatus.Cancelled
+                                 && (d.RemainingAmount > 0 || d.Status == DebtStatus.Installment || (int)d.Status == 100)
+                                 && d.FullyPaidDate == null)
+                        .Select(d => d.BillNo)
+                        .Distinct()
+                        .ToListAsync();
+
+                    q = q.Where(b => unpaidBillNos.Contains(b.BillNo));
                 }
-                else if (status == "overdue_under_120")
-                  {
-                      var today = DateTime.Today;
-                      q = q.Where(b => !b.IsFullyPaid && b.BillDate.AddDays(b.Credit) < today && b.BillDate.AddDays(b.Credit + 120) >= today);
-                  }
-                  else if (status == "overdue120")
-                  {
-                      var today = DateTime.Today;
-                      q = q.Where(b => !b.IsFullyPaid && b.BillDate.AddDays(b.Credit + 120) < today);
-                  }
+                else if (status == "overdue_under_120" || string.Equals(status, "overdue", StringComparison.OrdinalIgnoreCase))
+                {
+                    var today = DateTime.Today;
+                    var cutoff120 = today.AddDays(-120);
+                    var overdueUnder120BillNos = await _db.OutstandingDebts.AsNoTracking()
+                        .Where(d => d.Status == DebtStatus.Outstanding 
+                                 && d.RemainingAmount > 0 
+                                 && d.FullyPaidDate == null
+                                 && d.DueDate < today 
+                                 && d.DueDate >= cutoff120)
+                        .Select(d => d.BillNo)
+                        .Distinct()
+                        .ToListAsync();
+
+                    q = q.Where(b => overdueUnder120BillNos.Contains(b.BillNo));
+                }
+                else if (status == "overdue120" || string.Equals(status, "Overdue120", StringComparison.OrdinalIgnoreCase))
+                {
+                    var today = DateTime.Today;
+                    var cutoff120 = today.AddDays(-120);
+                    var overdue120BillNos = await _db.OutstandingDebts.AsNoTracking()
+                        .Where(d => d.Status == DebtStatus.Outstanding 
+                                 && d.RemainingAmount > 0 
+                                 && d.FullyPaidDate == null
+                                 && d.DueDate < cutoff120)
+                        .Select(d => d.BillNo)
+                        .Distinct()
+                        .ToListAsync();
+
+                    q = q.Where(b => overdue120BillNos.Contains(b.BillNo));
+                }
                 else if (status == "installment")
                 {
                     var installBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100).Select(d => d.BillNo);
@@ -741,7 +838,6 @@ namespace RoyalD.Web.Controllers
                 }
                 else if (status == "cancelled")
                 {
-                    var canBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Cancelled).Select(d => d.BillNo);
                     q = q.Where(b => canBillNos.Contains(b.BillNo));
                 }
             }
@@ -784,17 +880,16 @@ namespace RoyalD.Web.Controllers
             int row = 2;
             foreach (var b in bills)
             {
-                string statusText = b.IsFullyPaid ? "ชำระครบแล้ว" : "ค้างชำระ";
-                decimal rem = b.TotalAmount;
-                if (!b.IsFullyPaid && debtDict.TryGetValue(b.BillNo, out var d))
-                {
-                    statusText = d.Status.ToString();
-                    rem = d.RemainingAmount;
-                }
-                else if (b.IsFullyPaid)
-                {
-                    rem = 0;
-                }
+                bool hasActiveDebt = debtDict.TryGetValue(b.BillNo, out var d)
+                    && (d.RemainingAmount > 0 || d.Status == DebtStatus.Installment || (int)d.Status == 100)
+                    && d.FullyPaidDate == null
+                    && d.Status != DebtStatus.PaidCash
+                    && d.Status != DebtStatus.PaidTransfer
+                    && d.Status != DebtStatus.PaidCheck
+                    && d.Status != DebtStatus.Cancelled;
+
+                string statusText = (b.IsFullyPaid || !hasActiveDebt) ? "ชำระครบแล้ว" : d.Status.ToString();
+                decimal rem = hasActiveDebt ? d.RemainingAmount : 0m;
 
                 sheet.Cells[row, 1].Value = b.BillNo;
                 sheet.Cells[row, 2].Value = b.BillDate.ToString("dd/MM/yyyy");
@@ -843,22 +938,79 @@ namespace RoyalD.Web.Controllers
             if (endDate.HasValue) q = q.Where(b => b.BillDate <= endDate.Value.Date.AddDays(1).AddTicks(-1));
             if (!string.IsNullOrEmpty(poSearch)) q = q.Where(b => b.PoNumber.Contains(poSearch));
 
+            var canBillNos = await _db.OutstandingDebts.AsNoTracking()
+                .Where(d => d.Status == DebtStatus.Cancelled)
+                .Select(d => d.BillNo)
+                .Distinct()
+                .ToListAsync();
+
+            if (status != "cancelled" && canBillNos.Count > 0)
+            {
+                q = q.Where(b => !canBillNos.Contains(b.BillNo));
+            }
+
             if (!string.IsNullOrEmpty(status))
             {
                 if (status == "paid")
                 {
-                    var installBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100).Select(d => d.BillNo);
-                    q = q.Where(b => b.IsFullyPaid && !installBillNos.Contains(b.BillNo));
+                    var activeDebtBillNos = await _db.OutstandingDebts.AsNoTracking()
+                        .Where(d => d.Status != DebtStatus.PaidCash 
+                                 && d.Status != DebtStatus.PaidTransfer 
+                                 && d.Status != DebtStatus.PaidCheck 
+                                 && d.Status != DebtStatus.Cancelled
+                                 && (d.RemainingAmount > 0 || d.Status == DebtStatus.Installment || (int)d.Status == 100)
+                                 && d.FullyPaidDate == null)
+                        .Select(d => d.BillNo)
+                        .Distinct()
+                        .ToListAsync();
+
+                    q = q.Where(b => b.IsFullyPaid || !activeDebtBillNos.Contains(b.BillNo));
                 }
                 else if (status == "unpaid")
                 {
-                    var installBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100).Select(d => d.BillNo);
-                    q = q.Where(b => !b.IsFullyPaid || installBillNos.Contains(b.BillNo));
+                    var unpaidBillNos = await _db.OutstandingDebts.AsNoTracking()
+                        .Where(d => d.Status != DebtStatus.PaidCash 
+                                 && d.Status != DebtStatus.PaidTransfer 
+                                 && d.Status != DebtStatus.PaidCheck 
+                                 && d.Status != DebtStatus.Cancelled
+                                 && (d.RemainingAmount > 0 || d.Status == DebtStatus.Installment || (int)d.Status == 100)
+                                 && d.FullyPaidDate == null)
+                        .Select(d => d.BillNo)
+                        .Distinct()
+                        .ToListAsync();
+
+                    q = q.Where(b => unpaidBillNos.Contains(b.BillNo));
                 }
-                else if (status == "overdue120")
+                else if (status == "overdue_under_120" || string.Equals(status, "overdue", StringComparison.OrdinalIgnoreCase))
                 {
                     var today = DateTime.Today;
-                    q = q.Where(b => !b.IsFullyPaid && b.BillDate.AddDays(b.Credit + 120) < today);
+                    var cutoff120 = today.AddDays(-120);
+                    var overdueUnder120BillNos = await _db.OutstandingDebts.AsNoTracking()
+                        .Where(d => d.Status == DebtStatus.Outstanding 
+                                 && d.RemainingAmount > 0 
+                                 && d.FullyPaidDate == null
+                                 && d.DueDate < today 
+                                 && d.DueDate >= cutoff120)
+                        .Select(d => d.BillNo)
+                        .Distinct()
+                        .ToListAsync();
+
+                    q = q.Where(b => overdueUnder120BillNos.Contains(b.BillNo));
+                }
+                else if (status == "overdue120" || string.Equals(status, "Overdue120", StringComparison.OrdinalIgnoreCase))
+                {
+                    var today = DateTime.Today;
+                    var cutoff120 = today.AddDays(-120);
+                    var overdue120BillNos = await _db.OutstandingDebts.AsNoTracking()
+                        .Where(d => d.Status == DebtStatus.Outstanding 
+                                 && d.RemainingAmount > 0 
+                                 && d.FullyPaidDate == null
+                                 && d.DueDate < cutoff120)
+                        .Select(d => d.BillNo)
+                        .Distinct()
+                        .ToListAsync();
+
+                    q = q.Where(b => overdue120BillNos.Contains(b.BillNo));
                 }
                 else if (status == "installment")
                 {
@@ -904,7 +1056,6 @@ namespace RoyalD.Web.Controllers
                 }
                 else if (status == "cancelled")
                 {
-                    var canBillNos = _db.OutstandingDebts.Where(d => d.Status == DebtStatus.Cancelled).Select(d => d.BillNo);
                     q = q.Where(b => canBillNos.Contains(b.BillNo));
                 }
             }
@@ -921,17 +1072,16 @@ namespace RoyalD.Web.Controllers
 
             foreach (var b in bills)
             {
-                string statusText = b.IsFullyPaid ? "ชำระครบแล้ว" : "ค้างชำระ";
-                decimal rem = b.TotalAmount;
-                if (!b.IsFullyPaid && debtDict.TryGetValue(b.BillNo, out var d))
-                {
-                    statusText = d.Status.ToString();
-                    rem = d.RemainingAmount;
-                }
-                else if (b.IsFullyPaid)
-                {
-                    rem = 0;
-                }
+                bool hasActiveDebt = debtDict.TryGetValue(b.BillNo, out var d)
+                    && (d.RemainingAmount > 0 || d.Status == DebtStatus.Installment || (int)d.Status == 100)
+                    && d.FullyPaidDate == null
+                    && d.Status != DebtStatus.PaidCash
+                    && d.Status != DebtStatus.PaidTransfer
+                    && d.Status != DebtStatus.PaidCheck
+                    && d.Status != DebtStatus.Cancelled;
+
+                string statusText = (b.IsFullyPaid || !hasActiveDebt) ? "ชำระครบแล้ว" : d.Status.ToString();
+                decimal rem = hasActiveDebt ? d.RemainingAmount : 0m;
                 csv.AppendLine($"\"{b.BillNo}\",\"{b.BillDate:dd/MM/yyyy}\",\"{b.CustomerCode}\",\"{b.CustomerName?.Replace("\"", "\"\"")}\",\"{b.Province}\",\"{b.SalesRep}\",\"{b.TotalAmount:F2}\",\"{rem:F2}\",\"{statusText}\",\"{b.PoNumber}\"");
             }
 

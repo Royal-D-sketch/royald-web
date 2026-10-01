@@ -78,15 +78,15 @@ namespace RoyalD.Web.Controllers
                 return (today - dateToCheck.Date).TotalDays <= 7;
             }).ToList();
             
-            if (status == "outstanding")
+            if (string.Equals(status, "outstanding", StringComparison.OrdinalIgnoreCase))
             {
                 debts = debts.Where(d => d.Status == DebtStatus.Outstanding || d.Status == DebtStatus.Installment || (int)d.Status == 100).ToList();
             }
-            else if (status == "paid")
+            else if (string.Equals(status, "paid", StringComparison.OrdinalIgnoreCase))
             {
                 debts = debts.Where(d => d.Status != DebtStatus.Outstanding && d.Status != DebtStatus.Installment && (int)d.Status != 100 && (d.RemainingAmount <= 0 || d.FullyPaidDate.HasValue)).ToList();
             }
-            else if (status == "overdue120")
+            else if (string.Equals(status, "overdue120", StringComparison.OrdinalIgnoreCase))
             {
                 debts = debts.Where(d => d.Status == DebtStatus.Outstanding && (today - d.BillDate.AddDays(d.Credit)).TotalDays > 120).OrderByDescending(d => (today - d.BillDate.AddDays(d.Credit)).TotalDays).ThenBy(d => d.BillDate).ToList();
             }
@@ -94,7 +94,7 @@ namespace RoyalD.Web.Controllers
             {
                 debts = debts.Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100).ToList();
             }
-            else if (!string.IsNullOrEmpty(status) && Enum.TryParse<DebtStatus>(status, out var parsedStatus))
+            else if (!string.IsNullOrEmpty(status) && Enum.TryParse<DebtStatus>(status, true, out var parsedStatus))
             {
                 debts = debts.Where(d => d.Status == parsedStatus).ToList();
             }
@@ -294,13 +294,15 @@ namespace RoyalD.Web.Controllers
                 return (today - dateToCheck.Date).TotalDays <= 7;
             }).ToList();
 
-            if (status == "outstanding")
+            if (string.Equals(status, "outstanding", StringComparison.OrdinalIgnoreCase))
                 debts = debts.Where(d => d.Status == DebtStatus.Outstanding).ToList();
-            else if (status == "paid")
+            else if (string.Equals(status, "paid", StringComparison.OrdinalIgnoreCase))
                 debts = debts.Where(d => d.Status != DebtStatus.Outstanding && (d.RemainingAmount <= 0 || d.FullyPaidDate.HasValue)).ToList();
-            else if (status == "overdue120")
+            else if (string.Equals(status, "overdue120", StringComparison.OrdinalIgnoreCase))
                 debts = debts.Where(d => d.Status == DebtStatus.Outstanding && (today - d.BillDate.AddDays(d.Credit)).TotalDays > 120).OrderByDescending(d => (today - d.BillDate.AddDays(d.Credit)).TotalDays).ThenBy(d => d.BillDate).ToList();
-            else if (!string.IsNullOrEmpty(status) && Enum.TryParse<DebtStatus>(status, out var parsedStatus))
+            else if (!string.IsNullOrEmpty(status) && (status.Equals("Installment", StringComparison.OrdinalIgnoreCase) || status == "100"))
+                debts = debts.Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100).ToList();
+            else if (!string.IsNullOrEmpty(status) && Enum.TryParse<DebtStatus>(status, true, out var parsedStatus))
                 debts = debts.Where(d => d.Status == parsedStatus).ToList();
 
             if (!string.IsNullOrEmpty(district))
@@ -361,12 +363,16 @@ namespace RoyalD.Web.Controllers
             var debts = await _svc.GetDebtorsAsync(search, region, province, salesRep, null, credit, userAllowedRegion, userAllowedProvinces, userAllowedDistricts);
 
             var today = DateTime.Today;
-            if (status == "outstanding")
+            if (string.Equals(status, "outstanding", StringComparison.OrdinalIgnoreCase))
                 debts = debts.Where(d => d.Status == DebtStatus.Outstanding).ToList();
-            else if (status == "paid")
+            else if (string.Equals(status, "paid", StringComparison.OrdinalIgnoreCase))
                 debts = debts.Where(d => d.Status != DebtStatus.Outstanding && (d.RemainingAmount <= 0 || d.FullyPaidDate.HasValue)).ToList();
-            else if (status == "overdue120")
+            else if (string.Equals(status, "overdue120", StringComparison.OrdinalIgnoreCase))
                 debts = debts.Where(d => d.Status == DebtStatus.Outstanding && (today - d.BillDate.AddDays(d.Credit)).TotalDays > 120).OrderByDescending(d => (today - d.BillDate.AddDays(d.Credit)).TotalDays).ThenBy(d => d.BillDate).ToList();
+            else if (!string.IsNullOrEmpty(status) && (status.Equals("Installment", StringComparison.OrdinalIgnoreCase) || status == "100"))
+                debts = debts.Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100).ToList();
+            else if (!string.IsNullOrEmpty(status) && Enum.TryParse<DebtStatus>(status, true, out var parsedStatus))
+                debts = debts.Where(d => d.Status == parsedStatus).ToList();
 
             if (!string.IsNullOrEmpty(district)) debts = debts.Where(d => !string.IsNullOrEmpty(d.District) && d.District.Contains(district)).ToList();
             if (startDate.HasValue) debts = debts.Where(d => d.BillDate >= startDate.Value.Date).ToList();
@@ -445,13 +451,15 @@ namespace RoyalD.Web.Controllers
                 return (today - dateToCheck.Date).TotalDays <= 7;
             }).ToList();
 
-            if (status == "outstanding")
+            if (string.Equals(status, "outstanding", StringComparison.OrdinalIgnoreCase))
                 debts = debts.Where(d => d.Status == DebtStatus.Outstanding).ToList();
-            else if (status == "paid")
+            else if (string.Equals(status, "paid", StringComparison.OrdinalIgnoreCase))
                 debts = debts.Where(d => d.Status != DebtStatus.Outstanding && (d.RemainingAmount <= 0 || d.FullyPaidDate.HasValue)).ToList();
-            else if (status == "overdue120")
+            else if (string.Equals(status, "overdue120", StringComparison.OrdinalIgnoreCase))
                 debts = debts.Where(d => d.Status == DebtStatus.Outstanding && (today - d.BillDate.AddDays(d.Credit)).TotalDays > 120).OrderByDescending(d => (today - d.BillDate.AddDays(d.Credit)).TotalDays).ThenBy(d => d.BillDate).ToList();
-            else if (!string.IsNullOrEmpty(status) && Enum.TryParse<DebtStatus>(status, out var parsedStatus))
+            else if (!string.IsNullOrEmpty(status) && (status.Equals("Installment", StringComparison.OrdinalIgnoreCase) || status == "100"))
+                debts = debts.Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100).ToList();
+            else if (!string.IsNullOrEmpty(status) && Enum.TryParse<DebtStatus>(status, true, out var parsedStatus))
                 debts = debts.Where(d => d.Status == parsedStatus).ToList();
 
             if (!string.IsNullOrEmpty(district))

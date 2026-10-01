@@ -233,7 +233,7 @@
     </div>
     <div class="col-6 col-md-3">
         <div class="card border-0 shadow-sm text-center py-3 px-2" style="border-radius:12px; background:linear-gradient(135deg,#fefce8,#fef08a);">
-            <div class="fs-6 text-muted mb-1">💰 ยอดเงินรวม</div>
+            <div class="fs-6 text-muted mb-1">💰 @(ViewBag.IsDebtStatus == true ? "ยอดหนี้คงค้างรวม" : "ยอดเงินรวม")</div>
             <div class="fw-bold fs-4 text-success" id="summary-amount">@((ViewBag.TotalAmount as decimal? ?? 0m).ToString("N2"))</div>
             <div class="small text-muted">บาท</div>
         </div>
@@ -273,10 +273,18 @@
                     debtDict.TryGetValue(b.BillNo, out var debt);
                     var debtStatus = debt?.Status;
                     bool isInstallment = debtStatus == DebtStatus.Installment || (int?)debtStatus == 100;
-                    bool isOverdue = !b.IsFullyPaid && !isInstallment && overdueDays > 0;
-                    bool isOverdue120 = !b.IsFullyPaid && !isInstallment && overdueDays > 120;
+                    bool hasActiveDebt = debt != null 
+                        && (debt.RemainingAmount > 0 || isInstallment) 
+                        && !debt.FullyPaidDate.HasValue 
+                        && debtStatus != DebtStatus.PaidCash 
+                        && debtStatus != DebtStatus.PaidTransfer 
+                        && debtStatus != DebtStatus.PaidCheck 
+                        && debtStatus != DebtStatus.Cancelled;
+                    bool isPaid = b.IsFullyPaid || !hasActiveDebt;
+                    bool isOverdue = !isPaid && !isInstallment && overdueDays > 0;
+                    bool isOverdue120 = !isPaid && !isInstallment && overdueDays > 120;
 
-                    var rowClass = isInstallment ? "table-warning" : (b.IsFullyPaid ? "table-success" : (debtStatus == DebtStatus.BadDebt || isOverdue120 ? "table-danger" : ""));
+                    var rowClass = isInstallment ? "table-warning" : (isPaid ? "table-success" : (debtStatus == DebtStatus.BadDebt || isOverdue120 ? "table-danger" : ""));
                     <tr class="@rowClass">
                         <td class="fw-bold text-primary">
                             @b.BillNo
@@ -300,7 +308,7 @@
                             {
                                 <span class="badge bg-warning text-dark"><i class="bi bi-clock-history me-1"></i>ผ่อนชำระ</span>
                             }
-                            else if (b.IsFullyPaid)
+                            else if (isPaid)
                             {
                                 <span class="badge bg-success">ชำระแล้ว</span>
                             }
@@ -315,7 +323,7 @@
                         </td>
                         <td class="text-end">
                             <div class="fw-bold text-success">@(debt != null ? debt.OriginalAmount.ToString("N2") : b.TotalAmount.ToString("N2"))</div>
-                            @if (debt != null && (debt.RemainingAmount < debt.OriginalAmount || isInstallment))
+                            @if (hasActiveDebt && (debt.RemainingAmount < debt.OriginalAmount || isInstallment || ViewBag.IsDebtStatus == true))
                             {
                                 <div class="text-danger small mt-1" style="line-height:1.2;">ยอดคงค้าง:<br/>@debt.RemainingAmount.ToString("N2")</div>
                             }
@@ -325,7 +333,7 @@
                             {
                                 <span class="badge bg-warning text-dark fw-bold"><i class="bi bi-clock-history me-1"></i>ผ่อนชำระ</span>
                             }
-                            else if (b.IsFullyPaid)
+                            else if (isPaid)
                             {
                                 <span class="badge bg-success">ชำระครบแล้ว</span>
                             }

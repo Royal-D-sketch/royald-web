@@ -736,6 +736,37 @@ namespace RoyalD.Web.Services
                       AND LENGTH(c.""Name"") > COALESCE(LENGTH(od.""CustomerName""), 0)");
             }
 
+            if (_db.Database.IsNpgsql())
+            {
+                try
+                {
+                    await _db.Database.ExecuteSqlRawAsync(@"
+                        UPDATE ""SalesBills"" b
+                        SET ""IsFullyPaid"" = true
+                        WHERE ""IsFullyPaid"" = false
+                        AND NOT EXISTS (
+                            SELECT 1 FROM ""OutstandingDebts"" d
+                            WHERE d.""BillNo"" = b.""BillNo""
+                            AND d.""Status"" NOT IN (1, 2, 3, 14)
+                            AND (d.""RemainingAmount"" > 0 OR d.""Status"" = 4 OR d.""Status"" = 100)
+                            AND d.""FullyPaidDate"" IS NULL
+                        )
+                        AND b.""BillDate"" < (CURRENT_DATE - INTERVAL '7 days');
+
+                        UPDATE ""SalesBills"" b
+                        SET ""IsFullyPaid"" = false
+                        WHERE ""IsFullyPaid"" = true
+                        AND EXISTS (
+                            SELECT 1 FROM ""OutstandingDebts"" d
+                            WHERE d.""BillNo"" = b.""BillNo""
+                            AND d.""Status"" NOT IN (1, 2, 3, 14)
+                            AND (d.""RemainingAmount"" > 0 OR d.""Status"" = 4 OR d.""Status"" = 100)
+                            AND d.""FullyPaidDate"" IS NULL
+                        );");
+                }
+                catch { }
+            }
+
             return (count, maxDate, cleanedDebts.Take(10).ToList());
         }
 
