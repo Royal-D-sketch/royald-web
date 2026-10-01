@@ -230,66 +230,70 @@ using (var scope = app.Services.CreateScope())
         }
     }
 
-        if (db.Database.IsNpgsql())
-    {
-        try
-        {
-            var conn = db.Database.GetDbConnection();
-            if (conn.State != System.Data.ConnectionState.Open) conn.Open();
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = @"
-                ALTER TABLE ""OutstandingDebts"" DROP CONSTRAINT IF EXISTS ""FK_OutstandingDebts_Customers_CustomerCode"";
-                ALTER TABLE ""SalesBills"" DROP CONSTRAINT IF EXISTS ""FK_SalesBills_Customers_CustomerCode"";
-                ALTER TABLE ""PaymentRecords"" DROP CONSTRAINT IF EXISTS ""FK_PaymentRecords_OutstandingDebts_OutstandingDebtId"";
-                ALTER TABLE ""PendingProducts"" DROP CONSTRAINT IF EXISTS ""FK_PendingProducts_OutstandingDebts_OutstandingDebtId"";
-            ";
-            cmd.ExecuteNonQuery();
-            Console.WriteLine("Successfully dropped FK constraints in PostgreSQL!");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Notice dropping FK: " + ex.Message);
-        }
-    }
-
     if (db.Database.IsNpgsql())
     {
         try
         {
             var conn = db.Database.GetDbConnection();
             if (conn.State != System.Data.ConnectionState.Open) conn.Open();
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = @"
-                ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""Position"" varchar(50) DEFAULT 'เธเธนเนเนเธ—เธเธเธฒเธข';
-                ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""CanViewPaymentDetails"" boolean DEFAULT true;
-                ALTER TABLE ""SalesBills"" ADD COLUMN IF NOT EXISTS ""PoNumber"" varchar(50) DEFAULT '';
-                ALTER TABLE ""SalesBills"" ADD COLUMN IF NOT EXISTS ""ReceiptNo"" varchar(50) DEFAULT '';
-                ALTER TABLE ""SalesBills"" ADD COLUMN IF NOT EXISTS ""ReceiptDate"" timestamp with time zone NULL;
-                ALTER TABLE ""SalesBills"" ADD COLUMN IF NOT EXISTS ""IsFullyPaid"" boolean DEFAULT false;
-                ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""ReceiptNo"" varchar(50) DEFAULT '';
-                ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""ReceiptDate"" timestamp with time zone NULL;
-                ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""PoNumber"" varchar(50) DEFAULT '';
-                ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""CancelledDate"" timestamp with time zone NULL;
-                ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""CancelledBy"" varchar(100) NULL;
-                ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""CancelReason"" varchar(500) NULL;
-                ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""LastEditedBy"" varchar(100) DEFAULT '';
-                ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""LastEditedDate"" timestamp with time zone NULL;
-                ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""ReturnedToAccountDate"" timestamp with time zone NULL;
-                ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""ReturnedToAccountReason"" varchar(500) NULL;
-                ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""ReturnedToDeliveryDate"" timestamp with time zone NULL;
 
-                -- High performance indexes
-                CREATE INDEX IF NOT EXISTS ""IX_OutstandingDebts_BillNo"" ON ""OutstandingDebts"" (""BillNo"");
-                CREATE INDEX IF NOT EXISTS ""IX_OutstandingDebts_CustomerCode"" ON ""OutstandingDebts"" (""CustomerCode"");
-                CREATE INDEX IF NOT EXISTS ""IX_OutstandingDebts_DueDate"" ON ""OutstandingDebts"" (""DueDate"");
-                CREATE INDEX IF NOT EXISTS ""IX_OutstandingDebts_BillDate"" ON ""OutstandingDebts"" (""BillDate"");
-                CREATE INDEX IF NOT EXISTS ""IX_OutstandingDebts_Province"" ON ""OutstandingDebts"" (""Province"");
-                CREATE INDEX IF NOT EXISTS ""IX_SalesBills_CustomerCode"" ON ""SalesBills"" (""CustomerCode"");
-                CREATE INDEX IF NOT EXISTS ""IX_SalesBills_IsFullyPaid"" ON ""SalesBills"" (""IsFullyPaid"");
-            ";
-            cmd.ExecuteNonQuery();
+            string[] alterStatements = new[]
+            {
+                @"ALTER TABLE ""OutstandingDebts"" DROP CONSTRAINT IF EXISTS ""FK_OutstandingDebts_Customers_CustomerCode""",
+                @"ALTER TABLE ""SalesBills"" DROP CONSTRAINT IF EXISTS ""FK_SalesBills_Customers_CustomerCode""",
+                @"ALTER TABLE ""PaymentRecords"" DROP CONSTRAINT IF EXISTS ""FK_PaymentRecords_OutstandingDebts_OutstandingDebtId""",
+                @"ALTER TABLE ""PendingProducts"" DROP CONSTRAINT IF EXISTS ""FK_PendingProducts_OutstandingDebts_OutstandingDebtId""",
+                @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""Position"" varchar(100) DEFAULT 'ผู้แทนขาย'",
+                @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""CanViewPaymentDetails"" boolean DEFAULT true",
+                @"ALTER TABLE ""Users"" ALTER COLUMN ""Position"" TYPE varchar(100)",
+                @"ALTER TABLE ""Users"" ALTER COLUMN ""SalesRepCode"" TYPE varchar(2000)",
+                @"ALTER TABLE ""Users"" ALTER COLUMN ""AllowedRegion"" TYPE varchar(500)",
+                @"ALTER TABLE ""Users"" ALTER COLUMN ""AllowedProvinces"" TYPE varchar(2000)",
+                @"ALTER TABLE ""Users"" ALTER COLUMN ""AllowedDistricts"" TYPE varchar(5000)",
+                @"ALTER TABLE ""Users"" ALTER COLUMN ""AllowedPages"" TYPE varchar(1000)",
+                @"ALTER TABLE ""AuditLogs"" ALTER COLUMN ""IPAddress"" TYPE varchar(200)",
+                @"ALTER TABLE ""SalesBills"" ADD COLUMN IF NOT EXISTS ""PoNumber"" varchar(50) DEFAULT ''",
+                @"ALTER TABLE ""SalesBills"" ADD COLUMN IF NOT EXISTS ""ReceiptNo"" varchar(50) DEFAULT ''",
+                @"ALTER TABLE ""SalesBills"" ADD COLUMN IF NOT EXISTS ""ReceiptDate"" timestamp with time zone NULL",
+                @"ALTER TABLE ""SalesBills"" ADD COLUMN IF NOT EXISTS ""IsFullyPaid"" boolean DEFAULT false",
+                @"ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""ReceiptNo"" varchar(50) DEFAULT ''",
+                @"ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""ReceiptDate"" timestamp with time zone NULL",
+                @"ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""PoNumber"" varchar(50) DEFAULT ''",
+                @"ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""CancelledDate"" timestamp with time zone NULL",
+                @"ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""CancelledBy"" varchar(100) NULL",
+                @"ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""CancelReason"" varchar(500) NULL",
+                @"ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""LastEditedBy"" varchar(100) DEFAULT ''",
+                @"ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""LastEditedDate"" timestamp with time zone NULL",
+                @"ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""ReturnedToAccountDate"" timestamp with time zone NULL",
+                @"ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""ReturnedToAccountReason"" varchar(500) NULL",
+                @"ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""ReturnedToDeliveryDate"" timestamp with time zone NULL",
+                @"CREATE INDEX IF NOT EXISTS ""IX_OutstandingDebts_BillNo"" ON ""OutstandingDebts"" (""BillNo"")",
+                @"CREATE INDEX IF NOT EXISTS ""IX_OutstandingDebts_CustomerCode"" ON ""OutstandingDebts"" (""CustomerCode"")",
+                @"CREATE INDEX IF NOT EXISTS ""IX_OutstandingDebts_DueDate"" ON ""OutstandingDebts"" (""DueDate"")",
+                @"CREATE INDEX IF NOT EXISTS ""IX_OutstandingDebts_BillDate"" ON ""OutstandingDebts"" (""BillDate"")",
+                @"CREATE INDEX IF NOT EXISTS ""IX_OutstandingDebts_Province"" ON ""OutstandingDebts"" (""Province"")",
+                @"CREATE INDEX IF NOT EXISTS ""IX_SalesBills_CustomerCode"" ON ""SalesBills"" (""CustomerCode"")",
+                @"CREATE INDEX IF NOT EXISTS ""IX_SalesBills_IsFullyPaid"" ON ""SalesBills"" (""IsFullyPaid"")"
+            };
+
+            foreach (var stmt in alterStatements)
+            {
+                try
+                {
+                    using var cmd = conn.CreateCommand();
+                    cmd.CommandText = stmt;
+                    cmd.ExecuteNonQuery();
+                }
+                catch (Exception sqlEx)
+                {
+                    Console.WriteLine($"Notice applying migration: {stmt} -> {sqlEx.Message}");
+                }
+            }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Notice applying postgres migrations: " + ex.Message);
+        }
     }
 
     // Ensure admin user exists with full privileges

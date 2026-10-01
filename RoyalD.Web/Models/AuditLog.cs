@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace RoyalD.Web.Models
 {
@@ -26,7 +26,7 @@ namespace RoyalD.Web.Models
 
         public int? DurationMinutes { get; set; }
 
-        [MaxLength(50)]
+        [MaxLength(200)]
         public string IPAddress { get; set; } = string.Empty;
 
         [MaxLength(20)]

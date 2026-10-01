@@ -19,22 +19,22 @@ namespace RoyalD.Web.Models
         [MaxLength(20)]
         public string Role { get; set; } = "user"; // admin, user
 
-        [MaxLength(50)]
+        [MaxLength(100)]
         public string Position { get; set; } = "ผู้แทนขาย"; // ผู้แทนขาย, พนักงาน, หัวหน้างาน, ผู้บริหาร, ผู้ดูแลระบบ
 
-        [MaxLength(50)]
-        public string SalesRepCode { get; set; } = string.Empty; // รหัสผู้แทนขาย (ถ้ามี)
+        [MaxLength(2000)]
+        public string SalesRepCode { get; set; } = string.Empty; // รหัสผู้แทนขาย (ถ้ามี หรือเลือกหลายคน)
 
-        [MaxLength(100)]
+        [MaxLength(500)]
         public string AllowedRegion { get; set; } = string.Empty; // ภาคที่รับผิดชอบ
 
-        [MaxLength(500)]
+        [MaxLength(2000)]
         public string AllowedProvinces { get; set; } = string.Empty; // จังหวัดที่รับผิดชอบ (คั่นด้วย comma)
 
-        [MaxLength(1000)]
+        [MaxLength(5000)]
         public string AllowedDistricts { get; set; } = string.Empty; // เขต/อำเภอที่รับผิดชอบ (คั่นด้วย comma)
 
-        [MaxLength(500)]
+        [MaxLength(1000)]
         public string AllowedPages { get; set; } = "Dashboard,SalesBill,Debtor,DebtorHistory,SalesReport,WaitingGoods,PaymentDetails"; // สิทธิ์เข้าดูหน้าจอ (คั่นด้วย comma)
 
         public bool CanViewPaymentDetails { get; set; } = true; // สิทธิ์ดูรายละเอียดการรับชำระเงิน

@@ -526,7 +526,7 @@ namespace RoyalD.Web.Controllers
                 Username = User.Identity?.Name ?? "",
                 Action = "CREATE_USER",
                 Detail = $"Created user: {cleanUsername} ({position}) role={role} timeout={sessionTimeoutMinutes} pages={allowedPagesStr}",
-                IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
+                IPAddress = GetRealIpAddress(),
                 CreatedAt = DateTime.Now
             });
             await _db.SaveChangesAsync();
@@ -588,7 +588,7 @@ namespace RoyalD.Web.Controllers
                 Username = User.Identity?.Name ?? "",
                 Action = "EDIT_USER",
                 Detail = $"Edited user id={id} role={role} pos={position} pages={user.AllowedPages}",
-                IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
+                IPAddress = GetRealIpAddress(),
                 CreatedAt = DateTime.Now
             });
             await _db.SaveChangesAsync();
