@@ -9,6 +9,7 @@
         .Distinct()
         .OrderBy(x => x)
         .ToList();
+    int totalBillCount = allBills.Count;
 }
 
 <style>
@@ -465,6 +466,42 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
         </div>
     </div>
 
+    <!-- Badge: โหลดเร็ว -->
+    <div class="alert alert-light border py-2 px-3 small d-flex flex-wrap justify-content-between align-items-center mb-3" style="background:#f0fdfa; border-color:#ccfbf1; border-radius:10px;">
+        <div class="text-teal fw-semibold" style="color:#0f766e;">
+            <i class="bi bi-lightning-charge-fill text-warning me-1"></i> ระบบแบ่งหน้าละ <strong id="currentBadgePageSize">50</strong> รายการ โหลดเร็วติดทันที ข้อมูลทั้งหมด <strong>@totalBillCount.ToString("N0")</strong> รายการ
+        </div>
+        <span class="badge bg-white text-secondary border px-2 py-1"><i class="bi bi-speedometer2 me-1 text-success"></i>โหลดเร็ว &lt; 0.1 วิ</span>
+    </div>
+
+    <!-- Pagination Toolbar (Top) -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 px-1 gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-muted small">
+                แสดง <strong id="pageStart" class="text-dark">0</strong> - <strong id="pageEnd" class="text-dark">0</strong> จากทั้งหมด <strong id="pageTotal" class="text-primary">@totalBillCount.ToString("N0")</strong> รายการ (หน้า <strong id="pageCurrent" class="text-dark">1</strong>/<span id="pageMax">1</span>)
+            </span>
+            <div id="loadingSpinner" class="spinner-border spinner-border-sm text-teal d-none" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center gap-1">
+                <label for="compSelectPageSize" class="text-muted small fw-semibold text-nowrap mb-0">แสดงหน้าละ:</label>
+                <select id="compSelectPageSize" class="form-select form-select-sm" style="width: auto;" onchange="changeCompPageSize(this.value)">
+                    <option value="30">30 รายการ</option>
+                    <option value="50" selected>50 รายการ (แนะนำ)</option>
+                    <option value="100">100 รายการ</option>
+                    <option value="200">200 รายการ</option>
+                </select>
+            </div>
+            <nav aria-label="Page navigation top">
+                <ul class="pagination pagination-sm mb-0" id="compPaginationTop">
+                    <!-- Dynamic JS pagination -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+
     <!-- 10 Columns Standard Detail Table -->
     <div class="table-responsive" style="max-height: 560px; overflow-y: auto;">
         <table class="table table-sm table-bordered table-hover align-middle detail-table mb-0" id="comparisonTable">
@@ -484,80 +521,49 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                 </tr>
             </thead>
             <tbody id="compTableBody">
-                @if (!allBills.Any())
-                {
-                    <tr id="emptyRow"><td colspan="11" class="text-center text-muted py-4">ไม่พบรายการข้อมูล</td></tr>
-                }
-                @for (int i = 0; i < allBills.Count; i++)
-                {
-                    var b = allBills[i];
-                    <tr class="comp-bill-row"
-                        data-init-idx="@i"
-                        data-group="@b.GroupCode"
-                        data-billno="@b.BillNo"
-                        data-custcode="@b.CustomerCode"
-                        data-custname="@b.CustomerName"
-                        data-salesrep="@b.SalesRep"
-                        data-district="@b.District"
-                        data-province="@b.Province"
-                        data-credit="@b.Credit"
-                        data-ispaid="@(b.IsPaid ? "true" : "false")"
-                        data-aging="@b.AgingDays"
-                        data-ismt="@(b.IsModernTrade ? "true" : "false")"
-                        data-amount="@b.Amount">
-                        <td class="text-center text-muted row-idx">@(i + 1)</td>
-                        <td class="text-center fw-bold">
-                            <span class="badge bg-light text-dark border">@b.BillNo</span>
-                        </td>
-                        <td class="text-center text-muted">@b.BillDate.ToString("dd/MM/yyyy")</td>
-                        <td class="text-center"><code class="text-dark fw-bold">@b.CustomerCode</code></td>
-                        <td class="fw-bold text-dark col-customer-name" style="min-width: 260px; white-space: normal !important; word-break: break-word !important;">@b.CustomerName</td>
-                        <td>@b.District</td>
-                        <td>@b.Province</td>
-                        <td class="text-center">@(b.Credit > 0 ? b.Credit.ToString() : "สด")</td>
-                        <td class="text-center">
-                            @if (b.IsPaid)
-                            {
-                                <span class="badge" style="background:#059669; color:#fff;">ชำระแล้ว</span>
-                            }
-                            else if (b.AgingDays > 120)
-                            {
-                                <span class="badge" style="background:#be123c; color:#fff;">เกิน @b.AgingDays วัน</span>
-                            }
-                            else if (b.AgingDays > 0)
-                            {
-                                <span class="badge" style="background:#d97706; color:#fff;">@b.AgingDays วัน</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-light text-muted border">ยังไม่ถึงกำหนด</span>
-                            }
-                        </td>
-                        <td class="text-end fw-black text-dark" style="font-size:0.95rem;">@b.Amount.ToString("N2")</td>
-                        <td class="fw-semibold text-muted text-truncate" style="max-width:110px;" title="@b.SalesRep">@b.SalesRep</td>
-                    </tr>
-                }
+                <tr id="compLoadingRow">
+                    <td colspan="11" class="text-center py-5 text-muted">
+                        <div class="spinner-border spinner-border-sm text-teal me-2" role="status"></div>
+                        กำลังโหลดข้อมูลบิล...
+                    </td>
+                </tr>
             </tbody>
             <tfoot class="table-light sticky-bottom" style="font-weight: 800; border-top: 2px solid #0f766e;">
                 <tr>
                     <td colspan="9" class="text-end py-2">
-                        ยอดรวมทั้งสิ้น (<span id="visibleRowCount" class="text-primary">@allBills.Count.ToString("N0")</span> รายการ):
+                        ยอดรวมทั้งสิ้น (<span id="visibleRowCount" class="text-primary">0</span> รายการ):
                     </td>
                     <td class="text-end py-2 fs-6 fw-black" style="color:#0f766e;" id="visibleTotalAmount">
-                        @allBills.Sum(x => x.Amount).ToString("N2")
+                        0.00
                     </td>
                     <td></td>
                 </tr>
             </tfoot>
         </table>
     </div>
+
+    <!-- Pagination Toolbar (Bottom) -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 px-1 gap-2">
+        <span class="text-muted small">
+            แสดง <strong id="pageStartBottom" class="text-dark">0</strong> - <strong id="pageEndBottom" class="text-dark">0</strong> จากทั้งหมด <strong id="pageTotalBottom" class="text-primary">@totalBillCount.ToString("N0")</strong> รายการ
+        </span>
+        <nav aria-label="Page navigation bottom">
+            <ul class="pagination pagination-sm mb-0" id="compPaginationBottom">
+                <!-- Dynamic JS pagination -->
+            </ul>
+        </nav>
+    </div>
 </div>
 
 @section Scripts {
 <script>
-// Filter State
-let currentGroup = 'all';      // '1', '2', '3', or 'all'
-let currentSubFilter = 'all';  // 'outstanding', 'under120', 'over120', 'collected', 'all'
+// State
+let compCurrentGroup = 'all';
+let compCurrentSubFilter = 'all';
+let compCurrentPage = 1;
+let compPageSize = 50;
+let compIsLoading = false;
+let compSearchTimer = null;
 
 const groupNames = {
     '1': '1. บิลเก็บสด 7 วัน (กทม.&ปริมณฑล)',
@@ -565,7 +571,6 @@ const groupNames = {
     '3': '3. บิลค้างชำระ ต่างจังหวัด (ทุกภาค)',
     'all': 'ทุกกลุ่ม'
 };
-
 const subFilterNames = {
     'outstanding': 'ยอดหนี้ค้างชำระทั้งหมด',
     'under120': 'เกินกำหนดชำระไม่เกิน 120 วัน',
@@ -575,197 +580,202 @@ const subFilterNames = {
 };
 
 function setFilter(grp, sub, autoScroll = true) {
-    currentGroup = grp;
-    currentSubFilter = sub;
+    compCurrentGroup = grp;
+    compCurrentSubFilter = sub;
+    compCurrentPage = 1;
 
-    // Remove active highlight from all boxes
     document.querySelectorAll('.metric-row-box').forEach(b => b.classList.remove('active-filter'));
-
-    // Highlight selected box if any
     if (grp !== 'all' && sub !== 'all') {
         const targetBtn = document.getElementById(`btn-g${grp}-${sub}`);
         if (targetBtn) targetBtn.classList.add('active-filter');
     }
 
-    // Update table header title
     const grpTitle = groupNames[grp] || 'ทุกกลุ่ม';
     const subTitle = subFilterNames[sub] || 'รายการทั้งหมด';
     document.getElementById('currentTableTitle').innerText = `รายงานรายละเอียดรายบิล: [${grpTitle}] — ${subTitle}`;
 
-    // Apply filters
-    applyAllFilters();
+    fetchComparisonBills();
 
-    // Smooth scroll down to table
     if (autoScroll) {
         document.getElementById('drilldownSection')?.scrollIntoView({ behavior: 'smooth' });
     }
 }
 
 function applyAllFilters() {
-    const sBill = (document.getElementById('compSearchBill').value || '').trim().toLowerCase();
-    const sCustCode = (document.getElementById('compSearchCustomerCode').value || '').trim().toLowerCase();
-    const sCustName = (document.getElementById('compSearchCustomerName').value || '').trim().toLowerCase();
-    const sRep = (document.getElementById('compSearchSalesRep').value || '').trim().toLowerCase();
+    clearTimeout(compSearchTimer);
+    compSearchTimer = setTimeout(() => {
+        compCurrentPage = 1;
+        fetchComparisonBills();
+    }, 250);
+}
 
-    const rows = document.querySelectorAll('.comp-bill-row');
+function changeCompPageSize(newSize) {
+    compPageSize = parseInt(newSize, 10) || 50;
+    compCurrentPage = 1;
+    const badgeEl = document.getElementById('currentBadgePageSize');
+    if (badgeEl) badgeEl.innerText = compPageSize;
+    fetchComparisonBills();
+}
 
-    // Counters for 3 Big Cards
-    // Group 1
-    let g1_outAmt = 0, g1_outCnt = 0;
-    let g1_underAmt = 0, g1_underCnt = 0;
-    let g1_overAmt = 0, g1_overCnt = 0;
-    let g1_colAmt = 0, g1_colCnt = 0;
+function compGoToPage(page) {
+    if (page < 1 || compIsLoading) return;
+    compCurrentPage = page;
+    fetchComparisonBills();
+    document.getElementById('comparisonTable')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
-    // Group 2
-    let g2_outAmt = 0, g2_outCnt = 0;
-    let g2_underAmt = 0, g2_underCnt = 0;
-    let g2_overAmt = 0, g2_overCnt = 0;
-    let g2_colAmt = 0, g2_colCnt = 0;
+async function fetchComparisonBills() {
+    if (compIsLoading) return;
+    compIsLoading = true;
 
-    // Group 3
-    let g3_outAmt = 0, g3_outCnt = 0;
-    let g3_underAmt = 0, g3_underCnt = 0;
-    let g3_overAmt = 0, g3_overCnt = 0;
-    let g3_colAmt = 0, g3_colCnt = 0;
+    const spinner = document.getElementById('loadingSpinner');
+    if (spinner) spinner.classList.remove('d-none');
 
-    const compTableBody = document.getElementById('compTableBody');
-    if (compTableBody && rows.length > 0) {
-        const rowArray = Array.from(rows);
-        if (currentSubFilter === 'over120') {
-            // เรียงลำดับตามหนี้ค้างนานสุดก่อน (AgingDays มากสุด -> น้อยสุด)
-            rowArray.sort((a, b) => {
-                const agingA = parseInt(a.getAttribute('data-aging') || '0', 10);
-                const agingB = parseInt(b.getAttribute('data-aging') || '0', 10);
-                if (agingB !== agingA) return agingB - agingA;
-                return parseFloat(b.getAttribute('data-amount') || '0') - parseFloat(a.getAttribute('data-amount') || '0');
-            });
-            rowArray.forEach(r => compTableBody.appendChild(r));
-        } else {
-            rowArray.sort((a, b) => {
-                const idxA = parseInt(a.getAttribute('data-init-idx') || '0', 10);
-                const idxB = parseInt(b.getAttribute('data-init-idx') || '0', 10);
-                return idxA - idxB;
-            });
-            rowArray.forEach(r => compTableBody.appendChild(r));
+    const sBill = encodeURIComponent((document.getElementById('compSearchBill')?.value || '').trim());
+    const sCustCode = encodeURIComponent((document.getElementById('compSearchCustomerCode')?.value || '').trim());
+    const sCustName = encodeURIComponent((document.getElementById('compSearchCustomerName')?.value || '').trim());
+    const sRep = encodeURIComponent((document.getElementById('compSearchSalesRep')?.value || '').trim());
+    const sCust = sCustName || sCustCode;
+
+    const url = `/Dashboard/GetComparisonBills?group=${compCurrentGroup}&subFilter=${compCurrentSubFilter}&page=${compCurrentPage}&pageSize=${compPageSize}&searchBill=${sBill}&searchCustomer=${sCust}&searchSalesRep=${sRep}`;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Network error: ' + response.status);
+        const data = await response.json();
+
+        if (data.warming) {
+            const tbody = document.getElementById('compTableBody');
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="11" class="text-center py-5 text-muted">
+                    <div class="spinner-border spinner-border-sm text-teal me-2" role="status"></div>
+                    <span class="fw-semibold">กำลังเตรียมข้อมูล...</span>
+                    <div class="text-muted small mt-1">ระบบกำลัง Warmup ข้อมูลใน Background จะโหลดอัตโนมัติ</div>
+                </td></tr>`;
+            }
+            compIsLoading = false;
+            if (spinner) spinner.classList.add('d-none');
+            setTimeout(() => fetchComparisonBills(), 2000);
+            return;
         }
+
+        renderCompTable(data);
+        renderCompPagination(data);
+        updateCompMetrics(data.metrics);
+    } catch (err) {
+        console.error('Error fetching comparison bills:', err);
+        const tbody = document.getElementById('compTableBody');
+        if (tbody) tbody.innerHTML = `<tr><td colspan="11" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle me-1"></i> เกิดข้อผิดพลาด กรุณาลองใหม่</td></tr>`;
+    } finally {
+        compIsLoading = false;
+        if (spinner) spinner.classList.add('d-none');
+    }
+}
+
+function renderCompTable(data) {
+    const tbody = document.getElementById('compTableBody');
+    if (!tbody) return;
+
+    if (!data.items || data.items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="11" class="text-center text-muted py-5"><i class="bi bi-inbox fs-3 d-block mb-1"></i>ไม่พบรายการข้อมูลที่ตรงกับเงื่อนไข</td></tr>`;
+        document.getElementById('visibleRowCount').innerText = '0';
+        document.getElementById('visibleTotalAmount').innerText = '0.00';
+        return;
     }
 
-    let visibleCount = 0;
-    let visibleSum = 0;
-    let idx = 1;
-
-    const sortedCompRows = document.querySelectorAll('.comp-bill-row');
-    sortedCompRows.forEach(row => {
-        const grp = row.getAttribute('data-group') || '3';
-        const billNo = (row.getAttribute('data-billno') || '').toLowerCase();
-        const custCode = (row.getAttribute('data-custcode') || '').toLowerCase();
-        const custName = (row.getAttribute('data-custname') || '').toLowerCase();
-        const salesRep = (row.getAttribute('data-salesrep') || '').toLowerCase();
-        const amt = parseFloat(row.getAttribute('data-amount') || '0');
-        const isPaid = row.getAttribute('data-ispaid') === 'true';
-        const aging = parseInt(row.getAttribute('data-aging') || '0', 10);
-        const isMt = row.getAttribute('data-ismt') === 'true';
-
-        // Search match
-        const matchSearch = (!sBill || billNo.includes(sBill)) &&
-                            (!sCustCode || custCode.includes(sCustCode)) &&
-                            (!sCustName || custName.includes(sCustName)) &&
-                            (!sRep || salesRep.includes(sRep));
-
-        if (matchSearch) {
-            // Aggregate metrics per group
-            if (grp === '1') {
-                if (isPaid) { g1_colAmt += amt; g1_colCnt++; }
-                else {
-                    g1_outAmt += amt; g1_outCnt++;
-                    if (aging > 120 && !isMt) { g1_overAmt += amt; g1_overCnt++; }
-                    else if (aging <= 120) { g1_underAmt += amt; g1_underCnt++; }
-                }
-            } else if (grp === '2') {
-                if (isPaid) { g2_colAmt += amt; g2_colCnt++; }
-                else {
-                    g2_outAmt += amt; g2_outCnt++;
-                    if (aging > 120 && !isMt) { g2_overAmt += amt; g2_overCnt++; }
-                    else if (aging <= 120) { g2_underAmt += amt; g2_underCnt++; }
-                }
-            } else if (grp === '3') {
-                if (isPaid) { g3_colAmt += amt; g3_colCnt++; }
-                else {
-                    g3_outAmt += amt; g3_outCnt++;
-                    if (aging > 120 && !isMt) { g3_overAmt += amt; g3_overCnt++; }
-                    else if (aging <= 120) { g3_underAmt += amt; g3_underCnt++; }
-                }
-            }
-        }
-
-        // Check if row matches current active group and sub-filter
-        let matchGroup = (currentGroup === 'all' || grp === currentGroup);
-        let matchSub = true;
-        if (currentSubFilter === 'outstanding') matchSub = !isPaid;
-        else if (currentSubFilter === 'under120') matchSub = (!isPaid && aging <= 120);
-        else if (currentSubFilter === 'over120') matchSub = (!isPaid && aging > 120 && !isMt);
-        else if (currentSubFilter === 'collected') matchSub = isPaid;
-
-        if (matchSearch && matchGroup && matchSub) {
-            row.style.display = '';
-            row.querySelector('.row-idx').innerText = idx++;
-            visibleCount++;
-            visibleSum += amt;
+    const rowsHtml = data.items.map(item => {
+        let badgeHtml = '';
+        if (item.isPaid) {
+            badgeHtml = `<span class="badge" style="background:#059669; color:#fff;">ชำระแล้ว</span>`;
+        } else if (item.agingDays > 120) {
+            badgeHtml = `<span class="badge" style="background:#be123c; color:#fff;">เกิน ${item.agingDays} วัน</span>`;
+        } else if (item.agingDays > 0) {
+            badgeHtml = `<span class="badge" style="background:#d97706; color:#fff;">${item.agingDays} วัน</span>`;
         } else {
-            row.style.display = 'none';
+            badgeHtml = `<span class="badge bg-light text-muted border">ยังไม่ถึงกำหนด</span>`;
         }
-    });
+        return `<tr>
+            <td class="text-center text-muted">${item.index}</td>
+            <td class="text-center fw-bold"><span class="badge bg-light text-dark border">${item.billNo}</span></td>
+            <td class="text-center text-muted">${item.billDate}</td>
+            <td class="text-center"><code class="text-dark fw-bold">${item.customerCode || '-'}</code></td>
+            <td class="fw-bold text-dark col-customer-name" style="min-width:260px;white-space:normal!important;word-break:break-word!important;">${item.customerName || '-'}</td>
+            <td>${item.district || '-'}</td>
+            <td>${item.province || '-'}</td>
+            <td class="text-center">${item.credit}</td>
+            <td class="text-center">${badgeHtml}</td>
+            <td class="text-end fw-black text-dark" style="font-size:0.95rem;">${item.amountFormatted}</td>
+            <td class="fw-semibold text-muted">${item.salesRep || '-'}</td>
+        </tr>`;
+    }).join('');
 
-    // Update Card 1 Metrics
-    document.getElementById('g1-outstanding-amt').innerText = g1_outAmt.toLocaleString('en-US', { maximumFractionDigits: 0 });
-    document.getElementById('g1-outstanding-sub').innerText = `จำนวน ${g1_outCnt.toLocaleString('en-US')} บิล (ค้างชำระ)`;
-    document.getElementById('g1-under120-amt').innerText = g1_underAmt.toLocaleString('en-US', { maximumFractionDigits: 0 });
-    document.getElementById('g1-under120-sub').innerText = `จำนวน ${g1_underCnt.toLocaleString('en-US')} บิล`;
-    document.getElementById('g1-over120-amt').innerText = g1_overAmt.toLocaleString('en-US', { maximumFractionDigits: 0 });
-    document.getElementById('g1-over120-sub').innerText = `จำนวน ${g1_overCnt.toLocaleString('en-US')} บิล (วิกฤต)`;
-    document.getElementById('g1-collected-amt').innerText = g1_colAmt.toLocaleString('en-US', { maximumFractionDigits: 0 });
-    document.getElementById('g1-collected-sub').innerText = `จำนวน ${g1_colCnt.toLocaleString('en-US')} บิล (ชำระแล้ว)`;
-    const totalG1 = g1_outAmt + g1_colAmt;
-    const rateG1 = totalG1 > 0 ? ((g1_colAmt / totalG1) * 100).toFixed(2) : '0.00';
-    document.getElementById('rate-g1').innerText = `${rateG1}%`;
+    tbody.innerHTML = rowsHtml;
 
-    // Update Card 2 Metrics
-    document.getElementById('g2-outstanding-amt').innerText = g2_outAmt.toLocaleString('en-US', { maximumFractionDigits: 0 });
-    document.getElementById('g2-outstanding-sub').innerText = `จำนวน ${g2_outCnt.toLocaleString('en-US')} บิล (ค้างชำระ)`;
-    document.getElementById('g2-under120-amt').innerText = g2_underAmt.toLocaleString('en-US', { maximumFractionDigits: 0 });
-    document.getElementById('g2-under120-sub').innerText = `จำนวน ${g2_underCnt.toLocaleString('en-US')} บิล`;
-    document.getElementById('g2-over120-amt').innerText = g2_overAmt.toLocaleString('en-US', { maximumFractionDigits: 0 });
-    document.getElementById('g2-over120-sub').innerText = `จำนวน ${g2_overCnt.toLocaleString('en-US')} บิล (วิกฤต)`;
-    document.getElementById('g2-collected-amt').innerText = g2_colAmt.toLocaleString('en-US', { maximumFractionDigits: 0 });
-    document.getElementById('g2-collected-sub').innerText = `จำนวน ${g2_colCnt.toLocaleString('en-US')} บิล (ชำระแล้ว)`;
-    const totalG2 = g2_outAmt + g2_colAmt;
-    const rateG2 = totalG2 > 0 ? ((g2_colAmt / totalG2) * 100).toFixed(2) : '0.00';
-    document.getElementById('rate-g2').innerText = `${rateG2}%`;
+    const startIdx = (data.currentPage - 1) * data.pageSize + 1;
+    const endIdx = Math.min(startIdx + data.items.length - 1, data.totalItems);
+    const safeStart = data.totalItems > 0 ? startIdx : 0;
+    const safeEnd = data.totalItems > 0 ? endIdx : 0;
 
-    // Update Card 3 Metrics
-    document.getElementById('g3-outstanding-amt').innerText = g3_outAmt.toLocaleString('en-US', { maximumFractionDigits: 0 });
-    document.getElementById('g3-outstanding-sub').innerText = `จำนวน ${g3_outCnt.toLocaleString('en-US')} บิล (ค้างชำระ)`;
-    document.getElementById('g3-under120-amt').innerText = g3_underAmt.toLocaleString('en-US', { maximumFractionDigits: 0 });
-    document.getElementById('g3-under120-sub').innerText = `จำนวน ${g3_underCnt.toLocaleString('en-US')} บิล`;
-    document.getElementById('g3-over120-amt').innerText = g3_overAmt.toLocaleString('en-US', { maximumFractionDigits: 0 });
-    document.getElementById('g3-over120-sub').innerText = `จำนวน ${g3_overCnt.toLocaleString('en-US')} บิล (วิกฤต)`;
-    document.getElementById('g3-collected-amt').innerText = g3_colAmt.toLocaleString('en-US', { maximumFractionDigits: 0 });
-    document.getElementById('g3-collected-sub').innerText = `จำนวน ${g3_colCnt.toLocaleString('en-US')} บิล (ชำระแล้ว)`;
-    const totalG3 = g3_outAmt + g3_colAmt;
-    const rateG3 = totalG3 > 0 ? ((g3_colAmt / totalG3) * 100).toFixed(2) : '0.00';
-    document.getElementById('rate-g3').innerText = `${rateG3}%`;
+    const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.innerText = txt; };
+    setTxt('pageStart', safeStart.toLocaleString('en-US'));
+    setTxt('pageEnd', safeEnd.toLocaleString('en-US'));
+    setTxt('pageTotal', data.totalItems.toLocaleString('en-US'));
+    setTxt('pageCurrent', data.currentPage);
+    setTxt('pageMax', data.totalPages);
+    setTxt('pageStartBottom', safeStart.toLocaleString('en-US'));
+    setTxt('pageEndBottom', safeEnd.toLocaleString('en-US'));
+    setTxt('pageTotalBottom', data.totalItems.toLocaleString('en-US'));
+    setTxt('visibleRowCount', data.totalItems.toLocaleString('en-US'));
+    setTxt('visibleTotalAmount', data.totalAmountFormatted);
+}
 
-    // Update Table Footer
-    document.getElementById('visibleRowCount').innerText = visibleCount.toLocaleString('en-US');
-    document.getElementById('visibleTotalAmount').innerText = visibleSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function renderCompPagination(data) {
+    const { currentPage, totalPages } = data;
+    const buildPagination = (containerId) => {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        let html = '';
+        html += `<li class="page-item ${currentPage <= 1 ? 'disabled' : ''}"><a class="page-link" href="javascript:void(0)" onclick="compGoToPage(${currentPage - 1})">&laquo;</a></li>`;
+        const delta = 2;
+        let pages = [];
+        for (let i = Math.max(1, currentPage - delta); i <= Math.min(totalPages, currentPage + delta); i++) pages.push(i);
+        if (pages[0] > 1) { html += `<li class="page-item"><a class="page-link" href="javascript:void(0)" onclick="compGoToPage(1)">1</a></li>`; if (pages[0] > 2) html += `<li class="page-item disabled"><span class="page-link">…</span></li>`; }
+        pages.forEach(p => { html += `<li class="page-item ${p === currentPage ? 'active' : ''}"><a class="page-link" href="javascript:void(0)" onclick="compGoToPage(${p})">${p}</a></li>`; });
+        if (pages[pages.length - 1] < totalPages) { if (pages[pages.length - 1] < totalPages - 1) html += `<li class="page-item disabled"><span class="page-link">…</span></li>`; html += `<li class="page-item"><a class="page-link" href="javascript:void(0)" onclick="compGoToPage(${totalPages})">${totalPages}</a></li>`; }
+        html += `<li class="page-item ${currentPage >= totalPages ? 'disabled' : ''}"><a class="page-link" href="javascript:void(0)" onclick="compGoToPage(${currentPage + 1})">&raquo;</a></li>`;
+        container.innerHTML = html;
+    };
+    buildPagination('compPaginationTop');
+    buildPagination('compPaginationBottom');
+}
+
+function updateCompMetrics(m) {
+    if (!m) return;
+    const fmt = (v) => (v || 0).toLocaleString('en-US', { maximumFractionDigits: 0 });
+    const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.innerText = txt; };
+    // G1
+    setTxt('g1-outstanding-amt', fmt(m.g1.outAmt)); setTxt('g1-outstanding-sub', `จำนวน ${m.g1.outCnt.toLocaleString('en-US')} บิล (ค้างชำระ)`);
+    setTxt('g1-under120-amt', fmt(m.g1.under120Amt)); setTxt('g1-under120-sub', `จำนวน ${m.g1.under120Cnt.toLocaleString('en-US')} บิล`);
+    setTxt('g1-over120-amt', fmt(m.g1.over120Amt)); setTxt('g1-over120-sub', `จำนวน ${m.g1.over120Cnt.toLocaleString('en-US')} บิล (วิกฤต)`);
+    setTxt('g1-collected-amt', fmt(m.g1.colAmt)); setTxt('g1-collected-sub', `จำนวน ${m.g1.colCnt.toLocaleString('en-US')} บิล (ชำระแล้ว)`);
+    const t1 = m.g1.outAmt + m.g1.colAmt; setTxt('rate-g1', `${t1 > 0 ? ((m.g1.colAmt / t1) * 100).toFixed(2) : '0.00'}%`);
+    // G2
+    setTxt('g2-outstanding-amt', fmt(m.g2.outAmt)); setTxt('g2-outstanding-sub', `จำนวน ${m.g2.outCnt.toLocaleString('en-US')} บิล (ค้างชำระ)`);
+    setTxt('g2-under120-amt', fmt(m.g2.under120Amt)); setTxt('g2-under120-sub', `จำนวน ${m.g2.under120Cnt.toLocaleString('en-US')} บิล`);
+    setTxt('g2-over120-amt', fmt(m.g2.over120Amt)); setTxt('g2-over120-sub', `จำนวน ${m.g2.over120Cnt.toLocaleString('en-US')} บิล (วิกฤต)`);
+    setTxt('g2-collected-amt', fmt(m.g2.colAmt)); setTxt('g2-collected-sub', `จำนวน ${m.g2.colCnt.toLocaleString('en-US')} บิล (ชำระแล้ว)`);
+    const t2 = m.g2.outAmt + m.g2.colAmt; setTxt('rate-g2', `${t2 > 0 ? ((m.g2.colAmt / t2) * 100).toFixed(2) : '0.00'}%`);
+    // G3
+    setTxt('g3-outstanding-amt', fmt(m.g3.outAmt)); setTxt('g3-outstanding-sub', `จำนวน ${m.g3.outCnt.toLocaleString('en-US')} บิล (ค้างชำระ)`);
+    setTxt('g3-under120-amt', fmt(m.g3.under120Amt)); setTxt('g3-under120-sub', `จำนวน ${m.g3.under120Cnt.toLocaleString('en-US')} บิล`);
+    setTxt('g3-over120-amt', fmt(m.g3.over120Amt)); setTxt('g3-over120-sub', `จำนวน ${m.g3.over120Cnt.toLocaleString('en-US')} บิล (วิกฤต)`);
+    setTxt('g3-collected-amt', fmt(m.g3.colAmt)); setTxt('g3-collected-sub', `จำนวน ${m.g3.colCnt.toLocaleString('en-US')} บิล (ชำระแล้ว)`);
+    const t3 = m.g3.outAmt + m.g3.colAmt; setTxt('rate-g3', `${t3 > 0 ? ((m.g3.colAmt / t3) * 100).toFixed(2) : '0.00'}%`);
 }
 
 function setCompSalesRep(name) {
     const input = document.getElementById('compSearchSalesRep');
-    if (input) {
-        input.value = name;
-        applyAllFilters();
-    }
+    if (input) { input.value = name; applyAllFilters(); }
 }
 
 function clearFilters() {
@@ -780,23 +790,15 @@ function getSearchParams() {
     const sBill = encodeURIComponent((document.getElementById('compSearchBill').value || '').trim());
     const sCust = encodeURIComponent((document.getElementById('compSearchCustomerName').value || document.getElementById('compSearchCustomerCode').value || '').trim());
     const sRep = encodeURIComponent((document.getElementById('compSearchSalesRep').value || '').trim());
-    return `section=${currentGroup}&filterType=${currentSubFilter}&searchBill=${sBill}&searchCustomer=${sCust}&searchSalesRep=${sRep}`;
+    return `section=${compCurrentGroup}&filterType=${compCurrentSubFilter}&searchBill=${sBill}&searchCustomer=${sCust}&searchSalesRep=${sRep}`;
 }
 
-function triggerExportExcel() {
-    window.location.href = `/Dashboard/ExportComparisonExcel?${getSearchParams()}`;
-}
-
-function triggerExportPdf() {
-    window.open(`/Dashboard/ExportComparisonPdf?${getSearchParams()}`, '_blank');
-}
-
-function triggerExportAllExcel() {
-    window.location.href = `/Dashboard/ExportComparisonExcel?section=all&filterType=all`;
-}
+function triggerExportExcel() { window.location.href = `/Dashboard/ExportComparisonExcel?${getSearchParams()}`; }
+function triggerExportPdf() { window.open(`/Dashboard/ExportComparisonPdf?${getSearchParams()}`, '_blank'); }
+function triggerExportAllExcel() { window.location.href = `/Dashboard/ExportComparisonExcel?section=all&filterType=all`; }
 
 document.addEventListener('DOMContentLoaded', () => {
-    applyAllFilters();
+    fetchComparisonBills();
 });
 </script>
 }

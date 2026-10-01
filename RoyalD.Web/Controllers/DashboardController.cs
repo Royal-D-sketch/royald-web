@@ -19,11 +19,13 @@ namespace RoyalD.Web.Controllers
     {
         private readonly AppDbContext _db;
         private readonly IMemoryCache _cache;
+        private readonly IServiceScopeFactory _scopeFactory;
 
-        public DashboardController(AppDbContext db, IMemoryCache cache)
+        public DashboardController(AppDbContext db, IMemoryCache cache, IServiceScopeFactory scopeFactory)
         {
             _db = db;
             _cache = cache;
+            _scopeFactory = scopeFactory;
         }
 
         // ==========================================
@@ -528,16 +530,24 @@ namespace RoyalD.Web.Controllers
             // ---- FAST PATH: ถ้า cache มีข้อมูลอยู่แล้ว ตอบกลับทันทีโดยไม่ต้องรอ DB ----
             if (!_cache.TryGetValue("dashboard_page_data_cache", out DashboardPageData? cachedData) || cachedData == null)
             {
-                // Cache หมดอายุหรือ server restart → โหลดข้อมูลและ set cache
-                // ใช้ GetOrCreateAsync เพื่อป้องกัน stampede (หลาย request ไม่ดึง DB ซ้ำกัน)
-                cachedData = await _cache.GetOrCreateAsync("dashboard_page_data_cache", async entry =>
+                // Cache miss: warmup ใน background scope ใหม่ (ป้องกัน DbContext disposed)
+                // ตอบกลับ warming=true ทันที → JS จะ retry อัตโนมัติใน 2 วินาที
+                _ = Task.Run(async () =>
                 {
-                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(60);
-                    return await LoadDashboardPageDataAsync();
-                }) ?? new DashboardPageData();
+                    try
+                    {
+                        using var scope = _scopeFactory.CreateScope();
+                        var dashSvc = scope.ServiceProvider.GetRequiredService<DashboardService>();
+                        var freshData = await dashSvc.LoadDashboardPageDataAsync();
+                        _cache.Set("dashboard_page_data_cache", freshData, TimeSpan.FromMinutes(90));
+                    }
+                    catch { }
+                });
+                return Json(new { warming = true, message = "กำลังเตรียมข้อมูล..." });
             }
 
             var data = cachedData;
+
 
             var query = data.DrilldownBills.AsEnumerable();
 
@@ -635,6 +645,112 @@ namespace RoyalD.Web.Controllers
                 totalAmountFormatted = totalAmount.ToString("N2"),
                 items
             });
+        }
+
+        // ==========================================
+        // API: COMPARISON BILLS PAGINATION
+        // แบ่งหน้าละ 50 รายการ โหลดเร็วติดทันที
+        // ==========================================
+        [HttpGet]
+        public IActionResult GetComparisonBills(
+            string? group = "all",
+            string? subFilter = "all",
+            int page = 1,
+            int pageSize = 50,
+            string? searchBill = null,
+            string? searchCustomer = null,
+            string? searchSalesRep = null)
+        {
+            if (!_cache.TryGetValue("dashboard_page_data_cache", out DashboardPageData? cachedData) || cachedData == null)
+            {
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        using var scope = _scopeFactory.CreateScope();
+                        var dashSvc = scope.ServiceProvider.GetRequiredService<DashboardService>();
+                        var freshData = await dashSvc.LoadDashboardPageDataAsync();
+                        _cache.Set("dashboard_page_data_cache", freshData, TimeSpan.FromMinutes(90));
+                    }
+                    catch { }
+                });
+                return Json(new { warming = true, message = "กำลังเตรียมข้อมูล..." });
+            }
+
+            var allBills = cachedData.DrilldownBills.AsEnumerable();
+
+            var grp = group?.Trim() ?? "all";
+            var sub = subFilter?.Trim().ToLower() ?? "all";
+
+            // กรองตาม Group
+            if (grp == "1") allBills = allBills.Where(b => b.GroupCode == "1");
+            else if (grp == "2") allBills = allBills.Where(b => b.GroupCode == "2");
+            else if (grp == "3") allBills = allBills.Where(b => b.GroupCode == "3");
+
+            // กรองตาม SubFilter
+            if (sub == "outstanding") allBills = allBills.Where(b => !b.IsPaid);
+            else if (sub == "under120") allBills = allBills.Where(b => !b.IsPaid && b.AgingDays <= 120);
+            else if (sub == "over120") allBills = allBills.Where(b => !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade);
+            else if (sub == "collected") allBills = allBills.Where(b => b.IsPaid);
+
+            // กรองตาม Search
+            if (!string.IsNullOrWhiteSpace(searchBill))
+                allBills = allBills.Where(b => b.BillNo.Contains(searchBill, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(searchCustomer))
+                allBills = allBills.Where(b => (b.CustomerName != null && b.CustomerName.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase)) || (b.CustomerCode != null && b.CustomerCode.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase)));
+            if (!string.IsNullOrWhiteSpace(searchSalesRep))
+                allBills = allBills.Where(b => b.SalesRep != null && b.SalesRep.Contains(searchSalesRep, StringComparison.OrdinalIgnoreCase));
+
+            // Sort
+            var query = (sub == "over120")
+                ? allBills.OrderByDescending(b => b.AgingDays).ThenByDescending(b => b.Amount)
+                : allBills.OrderByDescending(b => b.BillDate).ThenBy(b => b.BillNo);
+
+            var totalItems = query.Count();
+            var totalAmount = query.Sum(b => b.Amount);
+            if (pageSize <= 0) pageSize = 50;
+            var totalPages = Math.Max(1, (int)Math.Ceiling((double)totalItems / pageSize));
+            if (page < 1) page = 1;
+            if (page > totalPages) page = totalPages;
+
+            var items = query.Skip((page - 1) * pageSize).Take(pageSize)
+                .Select((b, idx) => new
+                {
+                    index = (page - 1) * pageSize + idx + 1,
+                    billNo = b.BillNo,
+                    billDate = b.BillDate.ToString("dd/MM/yyyy"),
+                    customerCode = b.CustomerCode,
+                    customerName = b.CustomerName,
+                    district = b.District ?? "",
+                    province = b.Province ?? "",
+                    credit = b.Credit > 0 ? b.Credit.ToString() : "สด",
+                    agingDays = b.AgingDays,
+                    amount = b.Amount,
+                    amountFormatted = b.Amount.ToString("N2"),
+                    salesRep = b.SalesRep ?? "",
+                    isPaid = b.IsPaid,
+                    groupCode = b.GroupCode,
+                    isModernTrade = b.IsModernTrade
+                }).ToList();
+
+            // คำนวณ summary metrics สำหรับ 3 Big Cards (จาก filtered data ก่อน pagination)
+            var allFiltered = cachedData.DrilldownBills.AsEnumerable();
+            if (!string.IsNullOrWhiteSpace(searchBill))
+                allFiltered = allFiltered.Where(b => b.BillNo.Contains(searchBill, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(searchCustomer))
+                allFiltered = allFiltered.Where(b => (b.CustomerName != null && b.CustomerName.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase)) || (b.CustomerCode != null && b.CustomerCode.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase)));
+            if (!string.IsNullOrWhiteSpace(searchSalesRep))
+                allFiltered = allFiltered.Where(b => b.SalesRep != null && b.SalesRep.Contains(searchSalesRep, StringComparison.OrdinalIgnoreCase));
+
+            var filteredList = allFiltered.ToList();
+            var metrics = new
+            {
+                g1 = new { outAmt = filteredList.Where(b => b.GroupCode == "1" && !b.IsPaid).Sum(b => b.Amount), outCnt = filteredList.Count(b => b.GroupCode == "1" && !b.IsPaid), under120Amt = filteredList.Where(b => b.GroupCode == "1" && !b.IsPaid && b.AgingDays <= 120).Sum(b => b.Amount), under120Cnt = filteredList.Count(b => b.GroupCode == "1" && !b.IsPaid && b.AgingDays <= 120), over120Amt = filteredList.Where(b => b.GroupCode == "1" && !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade).Sum(b => b.Amount), over120Cnt = filteredList.Count(b => b.GroupCode == "1" && !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade), colAmt = filteredList.Where(b => b.GroupCode == "1" && b.IsPaid).Sum(b => b.Amount), colCnt = filteredList.Count(b => b.GroupCode == "1" && b.IsPaid) },
+                g2 = new { outAmt = filteredList.Where(b => b.GroupCode == "2" && !b.IsPaid).Sum(b => b.Amount), outCnt = filteredList.Count(b => b.GroupCode == "2" && !b.IsPaid), under120Amt = filteredList.Where(b => b.GroupCode == "2" && !b.IsPaid && b.AgingDays <= 120).Sum(b => b.Amount), under120Cnt = filteredList.Count(b => b.GroupCode == "2" && !b.IsPaid && b.AgingDays <= 120), over120Amt = filteredList.Where(b => b.GroupCode == "2" && !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade).Sum(b => b.Amount), over120Cnt = filteredList.Count(b => b.GroupCode == "2" && !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade), colAmt = filteredList.Where(b => b.GroupCode == "2" && b.IsPaid).Sum(b => b.Amount), colCnt = filteredList.Count(b => b.GroupCode == "2" && b.IsPaid) },
+                g3 = new { outAmt = filteredList.Where(b => b.GroupCode == "3" && !b.IsPaid).Sum(b => b.Amount), outCnt = filteredList.Count(b => b.GroupCode == "3" && !b.IsPaid), under120Amt = filteredList.Where(b => b.GroupCode == "3" && !b.IsPaid && b.AgingDays <= 120).Sum(b => b.Amount), under120Cnt = filteredList.Count(b => b.GroupCode == "3" && !b.IsPaid && b.AgingDays <= 120), over120Amt = filteredList.Where(b => b.GroupCode == "3" && !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade).Sum(b => b.Amount), over120Cnt = filteredList.Count(b => b.GroupCode == "3" && !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade), colAmt = filteredList.Where(b => b.GroupCode == "3" && b.IsPaid).Sum(b => b.Amount), colCnt = filteredList.Count(b => b.GroupCode == "3" && b.IsPaid) }
+            };
+
+            return Json(new { success = true, totalItems, totalPages, currentPage = page, pageSize, totalAmount, totalAmountFormatted = totalAmount.ToString("N2"), items, metrics });
         }
 
         // ==========================================
