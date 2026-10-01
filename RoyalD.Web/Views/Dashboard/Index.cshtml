@@ -588,6 +588,10 @@ Chart.register(ChartDataLabels);
 
 // State Management
 let currentCategory = 'all';
+let currentPage = 1;
+let currentPageSize = 50;
+let isLoading = false;
+let searchDebounceTimer = null;
 
 const categoryTitles = {
     'all': 'ภาพรวมทั้งหมด',
