@@ -412,7 +412,10 @@
                                 </div>
                                 <div class="input-group input-group-sm mb-2">
                                     <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                                    <input type="text" id="salesRepSearchInput" class="form-control" placeholder="พิมพ์ค้นหาชื่อผู้แทน..." oninput="filterSalesRepChips()" />
+                                    <input type="text" id="salesRepSearchInput" class="form-control" placeholder="พิมพ์ค้นหา หรือพิมพ์ชื่อเพื่อเพิ่ม..." oninput="filterSalesRepChips()" onkeydown="handleSalesRepSearchKeyDown(event)" />
+                                    <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="addCustomSearchedSalesRep()" title="เพิ่มผู้แทนที่พิมพ์นี้ทันที">
+                                        <i class="bi bi-plus-circle"></i> เพิ่ม
+                                    </button>
                                 </div>
                                 <div class="picker-container mb-2" id="salesRepChipContainer">
                                     @foreach (var rep in dbSalesReps)
@@ -1067,6 +1070,35 @@
     }
 
     function filterSalesRepChips() {
+        renderSalesRepChips();
+    }
+
+    function handleSalesRepSearchKeyDown(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addCustomSearchedSalesRep();
+        }
+    }
+
+    function addCustomSearchedSalesRep() {
+        const input = document.getElementById('salesRepSearchInput');
+        const val = (input.value || '').trim();
+        if (!val) return;
+
+        // If it matches existing in dbSalesReps (case-insensitive)
+        const match = dbSalesReps.find(r => r.toLowerCase() === val.toLowerCase());
+        const repToAdd = match || val;
+
+        if (!selectedSalesReps.includes(repToAdd)) {
+            selectedSalesReps.push(repToAdd);
+            if (!dbSalesReps.includes(repToAdd)) {
+                dbSalesReps.push(repToAdd);
+                dbSalesReps.sort();
+            }
+            renderSalesRepChips();
+            renderSalesRepTags();
+        }
+        input.value = '';
         renderSalesRepChips();
     }
 

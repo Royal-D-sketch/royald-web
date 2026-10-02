@@ -1,11 +1,69 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using RoyalD.Web.Models;
 
 namespace RoyalD.Web.Services
 {
     public static class SalesRepHelper
     {
+        /// <summary>
+        /// Retrieves all unique sales reps across SalesBills, OutstandingDebts, and configured AppUsers.
+        /// Results are filtered from junk items, cached for 10 minutes, and ordered.
+        /// </summary>
+        public static async Task<List<string>> GetAllKnownSalesRepsAsync(AppDbContext db, IMemoryCache cache)
+        {
+            return await cache.GetOrCreateAsync("all_known_sales_reps_v1", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+
+                var billRepsTask = db.SalesBills.AsNoTracking()
+                    .Where(b => !string.IsNullOrEmpty(b.SalesRep))
+                    .Select(b => b.SalesRep!)
+                    .Distinct()
+                    .ToListAsync();
+
+                var debtRepsTask = db.OutstandingDebts.AsNoTracking()
+                    .Where(d => !string.IsNullOrEmpty(d.SalesRep))
+                    .Select(d => d.SalesRep!)
+                    .Distinct()
+                    .ToListAsync();
+
+                var userRepsTask = db.Users.AsNoTracking()
+                    .Where(u => !string.IsNullOrEmpty(u.SalesRepCode))
+                    .Select(u => u.SalesRepCode!)
+                    .ToListAsync();
+
+                await Task.WhenAll(billRepsTask, debtRepsTask, userRepsTask);
+
+                var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                void AddIfValid(string? rep)
+                {
+                    if (string.IsNullOrWhiteSpace(rep)) return;
+                    var s = rep.Trim();
+                    if (s.Contains("5%") ||
+                        s.Contains("page", StringComparison.OrdinalIgnoreCase) ||
+                        s.Contains("หน้า", StringComparison.OrdinalIgnoreCase) ||
+                        s.All(char.IsDigit))
+                    {
+                        return;
+                    }
+                    set.Add(s);
+                }
+
+                foreach (var r in billRepsTask.Result) AddIfValid(r);
+                foreach (var r in debtRepsTask.Result) AddIfValid(r);
+                foreach (var rawCode in userRepsTask.Result)
+                {
+                    if (string.IsNullOrWhiteSpace(rawCode)) continue;
+                    var parts = rawCode.Split(new[] { ',', ';', '/', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var p in parts) AddIfValid(p);
+                }
+
+                return set.OrderBy(s => s).ToList();
+            }) ?? new List<string>();
+        }
         /// <summary>
         /// Cleans Thai string for comparison (removes titles, garun, whitespace, lowercase)
         /// </summary>

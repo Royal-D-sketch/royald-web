@@ -144,25 +144,8 @@ namespace RoyalD.Web.Controllers
                 }
             }
 
-            // Query distinct sales reps dynamically to ensure up-to-date dropdowns (with cache for high performance)
-            var allDbReps = await _cache.GetOrCreateAsync("all_salesbill_reps", async entry =>
-            {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
-                var raw = await _db.SalesBills.AsNoTracking()
-                    .Select(b => b.SalesRep)
-                    .Where(s => !string.IsNullOrEmpty(s))
-                    .Distinct()
-                    .ToListAsync();
-
-                return raw
-                    .Where(s => !string.IsNullOrWhiteSpace(s) &&
-                                !s.Contains("5%") &&
-                                !s.Contains("page", StringComparison.OrdinalIgnoreCase) &&
-                                !s.Contains("หน้า", StringComparison.OrdinalIgnoreCase) &&
-                                !s.All(char.IsDigit))
-                    .OrderBy(s => s)
-                    .ToList();
-            }) ?? new List<string>();
+            // Query distinct sales reps dynamically across all bills and debts (with cache for high performance)
+            var allDbReps = await SalesRepHelper.GetAllKnownSalesRepsAsync(_db, _cache);
             var (filterReps, selectedRepForUi, hasMultipleAssigned) = SalesRepHelper.ResolveFilter(
                 isRestricted, currentUser?.SalesRepCode, salesRep, allDbReps);
 

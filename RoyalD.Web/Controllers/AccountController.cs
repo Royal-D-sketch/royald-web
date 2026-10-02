@@ -462,7 +462,7 @@ namespace RoyalD.Web.Controllers
             return View(userList);
         }
 
-        private void LoadLocationData()
+        private async Task LoadLocationDataAsync()
         {
             ViewBag.Regions = RegionHelper.GetRegions();
             ViewBag.Provinces = RegionHelper.DisplayProvinces;
@@ -471,17 +471,7 @@ namespace RoyalD.Web.Controllers
             try
             {
                 ViewBag.ProvinceDistricts = ThailandDistrictData.All;
-
-                ViewBag.DbSalesReps = _cache.GetOrCreate("loc_db_sales_reps", entry =>
-                {
-                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15);
-                    return _db.SalesBills.AsNoTracking()
-                        .Select(b => b.SalesRep)
-                        .Where(s => !string.IsNullOrEmpty(s))
-                        .Distinct()
-                        .OrderBy(s => s)
-                        .ToList();
-                }) ?? new List<string>();
+                ViewBag.DbSalesReps = await SalesRepHelper.GetAllKnownSalesRepsAsync(_db, _cache);
             }
             catch
             {
@@ -498,7 +488,7 @@ namespace RoyalD.Web.Controllers
                 TempData["Error"] = "คุณไม่มีสิทธิ์สร้างหรือแก้ไขผู้ใช้";
                 return RedirectToAction("Index", "Home");
             }
-            LoadLocationData();
+            await LoadLocationDataAsync();
             return View(new AppUser());
         }
 
@@ -580,7 +570,7 @@ namespace RoyalD.Web.Controllers
             }
             var user = await _db.Users.FindAsync(id);
             if (user == null) return NotFound();
-            LoadLocationData();
+            await LoadLocationDataAsync();
             return View(user);
         }
 

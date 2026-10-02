@@ -43,20 +43,7 @@ namespace RoyalD.Web.Controllers
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
 
-            var rawDbReps = await _cache.GetOrCreateAsync("all_debtor_reps", async entry =>
-            {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
-                return await _db.OutstandingDebts.AsNoTracking().Select(d => d.SalesRep).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s).ToListAsync();
-            }) ?? new List<string>();
-
-            var allDbReps = rawDbReps
-                .Where(s => !string.IsNullOrWhiteSpace(s) &&
-                            !s.Contains("5%") &&
-                            !s.Contains("page", StringComparison.OrdinalIgnoreCase) &&
-                            !s.Contains("หน้า", StringComparison.OrdinalIgnoreCase) &&
-                            !s.All(char.IsDigit))
-                .OrderBy(s => s)
-                .ToList();
+            var allDbReps = await SalesRepHelper.GetAllKnownSalesRepsAsync(_db, _cache);
 
             var (filterReps, selectedRepForUi, hasMultipleAssigned) = SalesRepHelper.ResolveFilter(
                 isRestricted, currentUser?.SalesRepCode, salesRep, allDbReps);
