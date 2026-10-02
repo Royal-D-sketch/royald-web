@@ -558,7 +558,7 @@ namespace RoyalD.Web.Controllers
                 Action = "DELETE_DEBTOR_CARD",
                 Detail = $"Deleted Debtor Card {billNo} (Customer: {customerName}, Amount: {amount:N2})",
                 IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             });
 
             await _db.SaveChangesAsync();
@@ -800,7 +800,7 @@ namespace RoyalD.Web.Controllers
                 Action = "RECORD_PAYMENT",
                 Detail = $"Recorded payment of {amount:N2} ({method}) for Bill {billNo}. Remaining: {debt.RemainingAmount:N2}",
                 IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             });
 
             await _db.SaveChangesAsync();
@@ -1082,7 +1082,7 @@ namespace RoyalD.Web.Controllers
                 Action = "UPDATE_RECEIPT",
                 Detail = $"Updated Receipt for Bill {debt.BillNo}. Old: {oldReceiptNo}, New: {receiptNo}",
                 IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             });
 
             await _db.SaveChangesAsync();

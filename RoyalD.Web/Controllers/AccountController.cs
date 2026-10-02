@@ -195,7 +195,7 @@ namespace RoyalD.Web.Controllers
                     Longitude = lng ?? "",
                     Area = !string.IsNullOrEmpty(locationName) ? locationName : GeoLocationHelper.ReverseGeocode(lat, lng),
                     IPAddress = GetRealIpAddress(),
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 });
                 await _db.SaveChangesAsync();
                 return View();
@@ -221,7 +221,7 @@ namespace RoyalD.Web.Controllers
                     Longitude = "",
                     Area = "ไม่ระบุตำแหน่ง",
                     IPAddress = GetRealIpAddress(),
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 });
                 await _db.SaveChangesAsync();
                 return View();
@@ -289,7 +289,7 @@ namespace RoyalD.Web.Controllers
                 Longitude = lng ?? "",
                 Area = resolvedArea,
                 IPAddress = GetRealIpAddress(),
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             });
             await _db.SaveChangesAsync();
 
@@ -315,13 +315,25 @@ namespace RoyalD.Web.Controllers
         public async Task<IActionResult> Logout()
         {
             var username = User.Identity?.Name ?? "Unknown";
+            var lastLogin = await _db.AuditLogs
+                .Where(a => a.Username == username && a.Action == "LOGIN")
+                .OrderByDescending(a => a.CreatedAt)
+                .FirstOrDefaultAsync();
+            int? duration = null;
+            if (lastLogin != null)
+            {
+                var mins = (int)(DateTime.UtcNow - lastLogin.CreatedAt).TotalMinutes;
+                if (mins >= 0 && mins <= 1440) duration = mins;
+            }
+
             _db.AuditLogs.Add(new AuditLog
             {
                 Username = username,
                 Action = "LOGOUT",
                 Detail = $"User {username} logged out manually",
+                DurationMinutes = duration,
                 IPAddress = GetRealIpAddress(),
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             });
             await _db.SaveChangesAsync();
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -332,13 +344,25 @@ namespace RoyalD.Web.Controllers
         public async Task<IActionResult> SecurityLogout(string? reason)
         {
             var username = User.Identity?.Name ?? "Unknown";
+            var lastLogin = await _db.AuditLogs
+                .Where(a => a.Username == username && a.Action == "LOGIN")
+                .OrderByDescending(a => a.CreatedAt)
+                .FirstOrDefaultAsync();
+            int? duration = null;
+            if (lastLogin != null)
+            {
+                var mins = (int)(DateTime.UtcNow - lastLogin.CreatedAt).TotalMinutes;
+                if (mins >= 0 && mins <= 1440) duration = mins;
+            }
+
             _db.AuditLogs.Add(new AuditLog
             {
                 Username = username,
                 Action = "SECURITY_VIOLATION_LOGOUT",
                 Detail = $"Forced Security Logout for {username}: {reason ?? "CAPTURE_VIOLATION"}",
+                DurationMinutes = duration,
                 IPAddress = GetRealIpAddress(),
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             });
             await _db.SaveChangesAsync();
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -350,16 +374,28 @@ namespace RoyalD.Web.Controllers
         public async Task<IActionResult> ForceLogout([FromBody] ForceLogoutRequest req)
         {
             var username = User.Identity?.Name ?? "Unknown";
+            var lastLogin = await _db.AuditLogs
+                .Where(a => a.Username == username && a.Action == "LOGIN")
+                .OrderByDescending(a => a.CreatedAt)
+                .FirstOrDefaultAsync();
+            int? duration = null;
+            if (lastLogin != null)
+            {
+                var mins = (int)(DateTime.UtcNow - lastLogin.CreatedAt).TotalMinutes;
+                if (mins >= 0 && mins <= 1440) duration = mins;
+            }
+
             _db.AuditLogs.Add(new AuditLog
             {
                 Username = username,
                 Action = "SECURITY_VIOLATION_LOGOUT",
                 Detail = $"System forced logout for {username}: {req?.Reason ?? "TIMEOUT"}",
+                DurationMinutes = duration,
                 Latitude = req?.Lat ?? "",
                 Longitude = req?.Lng ?? "",
                 Area = GeoLocationHelper.ReverseGeocode(req?.Lat, req?.Lng),
                 IPAddress = GetRealIpAddress(),
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             });
             await _db.SaveChangesAsync();
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -527,7 +563,7 @@ namespace RoyalD.Web.Controllers
                 Action = "CREATE_USER",
                 Detail = $"Created user: {cleanUsername} ({position}) role={role} timeout={sessionTimeoutMinutes} pages={allowedPagesStr}",
                 IPAddress = GetRealIpAddress(),
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             });
             await _db.SaveChangesAsync();
             TempData["Success"] = $"สร้างบัญชีผู้ใช้ '{cleanUsername}' สำเร็จ";
@@ -589,7 +625,7 @@ namespace RoyalD.Web.Controllers
                 Action = "EDIT_USER",
                 Detail = $"Edited user id={id} role={role} pos={position} pages={user.AllowedPages}",
                 IPAddress = GetRealIpAddress(),
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             });
             await _db.SaveChangesAsync();
             TempData["Success"] = $"แก้ไขข้อมูลและสิทธิ์ผู้ใช้ '{user.Username}' สำเร็จ";
@@ -622,7 +658,7 @@ namespace RoyalD.Web.Controllers
                 Action = "RESET_PASSWORD",
                 Detail = $"Admin reset password for user '{user.Username}' ({user.FullName})",
                 IPAddress = GetRealIpAddress(),
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             });
 
             await _db.SaveChangesAsync();
@@ -652,7 +688,7 @@ namespace RoyalD.Web.Controllers
                 Action = "DELETE_USER",
                 Detail = $"Deleted user: {user.Username} (Role: {user.Role}, Position: {user.Position})",
                 IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             });
 
             _db.Users.Remove(user);

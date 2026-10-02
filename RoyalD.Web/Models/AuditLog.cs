@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using RoyalD.Web.Services;
 
 namespace RoyalD.Web.Models
 {
@@ -38,6 +40,9 @@ namespace RoyalD.Web.Models
         [MaxLength(200)]
         public string Area { get; set; } = string.Empty;
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        [NotMapped]
+        public DateTime CreatedAtThai => TimeHelper.ToThaiTime(CreatedAt);
     }
 }

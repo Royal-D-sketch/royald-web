@@ -132,7 +132,7 @@ namespace RoyalD.Web.Controllers
                     Action = "CLEAR_DATA",
                     Detail = $"Cleared: {msg}",
                     IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 });
                 await _db.SaveChangesAsync();
 
@@ -197,7 +197,7 @@ namespace RoyalD.Web.Controllers
                         Action = "UPLOAD_OUTSTANDING_DEBTS",
                         Detail = $"File={file.FileName}, Count={count}, LatestDate={dateStr}",
                         IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
-                        CreatedAt = DateTime.Now
+                        CreatedAt = DateTime.UtcNow
                     });
                     await _db.SaveChangesAsync();
                     ReportPrewarmBackgroundService.SignalRefresh();
@@ -258,7 +258,7 @@ namespace RoyalD.Web.Controllers
                     Action = "CONFIRM_IMPORT_SALESBILL",
                     Detail = $"File={preview.FileName}, Inserted={ins}, Updated={upd}, Skipped={skip}, LatestDate={dateStr}",
                     IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 });
                 await _db.SaveChangesAsync();
                 ReportPrewarmBackgroundService.SignalRefresh();
@@ -326,7 +326,7 @@ namespace RoyalD.Web.Controllers
                     Action = "UPLOAD_SALES_BILLS_MULTIPLE",
                     Detail = $"Files={processedFiles}, Inserted={totalInserted}, Updated={totalUpdated}, LatestDate={dateStr}",
                     IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 });
                 await _db.SaveChangesAsync();
             }
@@ -376,7 +376,7 @@ namespace RoyalD.Web.Controllers
                         Action = "UPLOAD_RECEIPTS",
                         Detail = $"File={file.FileName}, Matched={matched}, NotFound={notFound}, LatestDate={dateStr}",
                         IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
-                        CreatedAt = DateTime.Now
+                        CreatedAt = DateTime.UtcNow
                     });
                     await _db.SaveChangesAsync();
                     return RedirectToAction("Index");
@@ -422,7 +422,7 @@ namespace RoyalD.Web.Controllers
                     Action = "CONFIRM_RECEIPT_IMPORT",
                     Detail = $"File={preview.FileName}, Matched={matched}, NotFound={notFound}, Skipped={skippedDups}, LatestDate={dateStr}",
                     IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 });
                 await _db.SaveChangesAsync();
             }

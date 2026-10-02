@@ -1,4 +1,4 @@
-﻿@using RoyalD.Web.Models
+@using RoyalD.Web.Models
 @using RoyalD.Web.Services
 @model List<RoyalD.Web.Models.AuditLog>
 @{
@@ -88,7 +88,7 @@
                         <tr>
                             <!-- 1. วันเวลา -->
                             <td class="text-center text-muted fw-semibold text-nowrap">
-                                @log.CreatedAt.ToString("dd/MM/yyyy HH:mm:ss")
+                                @log.CreatedAtThai.ToString("dd/MM/yyyy HH:mm:ss")
                             </td>
 
                             <!-- 2. ชื่อ-นามสกุล และ บัญชีผู้ใช้ -->
