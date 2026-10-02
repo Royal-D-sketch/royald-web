@@ -505,6 +505,7 @@ namespace RoyalD.Web.Controllers
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             ViewBag.CanViewPaymentDetails = currentUser != null && (currentUser.Role == "admin" || currentUser.CanViewPaymentDetails);
             ViewBag.CanChangeDebtStatus = currentUser != null && (currentUser.Role == "admin" || currentUser.CanChangeDebtStatus);
+            ViewBag.CanManageReturnedBills = currentUser != null && (currentUser.Role == "admin" || currentUser.CanManageReturnedBills);
             ViewBag.CanDeleteDebtor = currentUser != null && (currentUser.Role == "admin" || currentUser.CanDeleteDebtor);
             ViewBag.CanScreenCapture = currentUser != null && (currentUser.Role == "admin" || currentUser.CanScreenCapture);
 
@@ -827,20 +828,16 @@ namespace RoyalD.Web.Controllers
             string? note, 
             IFormFile? statusFile)
         {
-            if (IsSalesRepUser())
-            {
-                TempData["Error"] = "รหัสผู้แทนขายไม่มีสิทธิ์บันทึกเปลี่ยนแปลงสถานะ";
-                return RedirectToAction("Detail", new { id = billNo });
-            }
-
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
-            bool canChangeStatus = currentUser != null && (currentUser.Role == "admin" || currentUser.CanChangeDebtStatus || currentUser.CanManageReturnedBills);
-            if (!canChangeStatus)
+            bool isAdmin = currentUser != null && currentUser.Role == "admin";
+            bool hasChangeDebtStatus = currentUser != null && currentUser.CanChangeDebtStatus;
+            bool hasReturnedBills = currentUser != null && currentUser.CanManageReturnedBills;
+            bool canChangeThisStatus = isAdmin || hasChangeDebtStatus || (hasReturnedBills && status == DebtStatus.ReturnedToAccount);
+            if (!canChangeThisStatus)
             {
-                TempData["Error"] = "เน€เธยเน€เธเธเน€เธโ€เน€เธยเน€เธเธเน€เธยเน€เธเธเน€เธเธ•เน€เธเธเน€เธเธ”เน€เธโ€”เน€เธยเน€เธเธ”เน€เธยเน€เธยเน€เธยเน€เธยเน€เธเธ’เน€เธเธเน€เธโฌเน€เธยเน€เธเธ…เน€เธเธ•เน€เธยเน€เธเธเน€เธยเน€เธเธเน€เธโ€“เน€เธเธ’เน€เธยเน€เธเธเน€เธเธเน€เธยเน€เธเธ•เน€เธย";
+                TempData["Error"] = "คุณไม่มีสิทธิ์ในการเปลี่ยนสถานะหนี้";
                 return RedirectToAction("Detail", new { id = billNo });
             }
-
             var debt = await _db.OutstandingDebts.FirstOrDefaultAsync(d => d.BillNo == billNo);
             if (debt == null) return NotFound();
 
