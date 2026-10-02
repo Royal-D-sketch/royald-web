@@ -43,10 +43,26 @@ namespace RoyalD.Web.Controllers
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
 
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion) && string.IsNullOrEmpty(currentUser?.AllowedProvinces))
+            var rawDbReps = await _cache.GetOrCreateAsync("all_debtor_reps", async entry =>
             {
-                salesRep = currentUser.SalesRepCode;
-            }
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                return await _db.OutstandingDebts.AsNoTracking().Select(d => d.SalesRep).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s).ToListAsync();
+            }) ?? new List<string>();
+
+            var allDbReps = rawDbReps
+                .Where(s => !string.IsNullOrWhiteSpace(s) &&
+                            !s.Contains("5%") &&
+                            !s.Contains("page", StringComparison.OrdinalIgnoreCase) &&
+                            !s.Contains("หน้า", StringComparison.OrdinalIgnoreCase) &&
+                            !s.All(char.IsDigit))
+                .OrderBy(s => s)
+                .ToList();
+
+            var (filterReps, selectedRepForUi, hasMultipleAssigned) = SalesRepHelper.ResolveFilter(
+                isRestricted, currentUser?.SalesRepCode, salesRep, allDbReps);
+
+            var effectiveRepParam = filterReps != null && filterReps.Count > 0 ? string.Join(",", filterReps) : null;
+
             if (isRestricted && !string.IsNullOrEmpty(userAllowedRegion))
             {
                 region = userAllowedRegion;
@@ -56,7 +72,7 @@ namespace RoyalD.Web.Controllers
                 search: search,
                 region: region,
                 province: province,
-                salesRep: salesRep,
+                salesRep: effectiveRepParam,
                 status: null, // we will filter status locally
                 credit: credit,
                 userAllowedRegion: userAllowedRegion,
@@ -152,7 +168,7 @@ namespace RoyalD.Web.Controllers
 
             ViewBag.SearchTerm = search;
             ViewBag.PoSearch = poSearch;
-            ViewBag.SelectedSalesRep = salesRep;
+            ViewBag.SelectedSalesRep = selectedRepForUi;
             ViewBag.SelectedStatus = status;
             ViewBag.SelectedRegion = isRestricted && !string.IsNullOrEmpty(userAllowedRegion) ? userAllowedRegion : region;
             ViewBag.SelectedProvince = province;
@@ -182,39 +198,24 @@ namespace RoyalD.Web.Controllers
 
             ViewBag.AllProvincesMap = RegionHelper.DisplayProvinces;
 
-            var rawDbReps = await _cache.GetOrCreateAsync("all_debtor_reps", async entry =>
-            {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
-                return await _db.OutstandingDebts.AsNoTracking().Select(d => d.SalesRep).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s).ToListAsync();
-            }) ?? new List<string>();
 
-            var allDbReps = rawDbReps
-                .Where(s => !string.IsNullOrWhiteSpace(s) &&
-                            !s.Contains("5%") &&
-                            !s.Contains("page", StringComparison.OrdinalIgnoreCase) &&
-                            !s.Contains("เน€เธเธเน€เธยเน€เธยเน€เธเธ’", StringComparison.OrdinalIgnoreCase) &&
-                            !s.All(char.IsDigit))
-                .OrderBy(s => s)
-                .ToList();
 
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion) && string.IsNullOrEmpty(currentUser?.AllowedProvinces))
+
+            var assignedReps = isRestricted && !string.IsNullOrWhiteSpace(currentUser?.SalesRepCode)
+                ? SalesRepHelper.GetAssignedSalesReps(currentUser.SalesRepCode, allDbReps)
+                : new List<string>();
+
+            if (isRestricted && assignedReps.Count > 0)
             {
-                var userRepInputs = currentUser.SalesRepCode.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList();
-                var matchedForUser = allDbReps.Where(dbRep => 
-                    userRepInputs.Any(u => 
-                        dbRep.IndexOf(u, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        u.IndexOf(dbRep, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        dbRep.Replace(" ", "").IndexOf(u.Replace(" ", ""), StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        u.Replace(" ", "").IndexOf(dbRep.Replace(" ", ""), StringComparison.OrdinalIgnoreCase) >= 0
-                    )
-                ).ToList();
-                ViewBag.SalesReps = matchedForUser.Count > 0 ? matchedForUser : userRepInputs;
-                ViewBag.IsLockedSalesRep = true;
+                ViewBag.SalesReps = assignedReps;
+                ViewBag.IsLockedSalesRep = assignedReps.Count <= 1;
+                ViewBag.IsMultiAssignedRep = assignedReps.Count > 1;
             }
             else
             {
                 ViewBag.SalesReps = allDbReps;
                 ViewBag.IsLockedSalesRep = false;
+                ViewBag.IsMultiAssignedRep = false;
             }
 
             string pos = (currentUser?.Position ?? "").Trim();
@@ -267,14 +268,21 @@ namespace RoyalD.Web.Controllers
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
 
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion) && string.IsNullOrEmpty(currentUser?.AllowedProvinces)) salesRep = currentUser.SalesRepCode;
+            var rawDbReps = await _cache.GetOrCreateAsync("all_debtor_reps", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                return await _db.OutstandingDebts.AsNoTracking().Select(d => d.SalesRep).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s).ToListAsync();
+            }) ?? new List<string>();
+
+            var (filterReps, _, _) = SalesRepHelper.ResolveFilter(isRestricted, currentUser?.SalesRepCode, salesRep, rawDbReps);
+            var effectiveRepParam = filterReps != null && filterReps.Count > 0 ? string.Join(",", filterReps) : null;
             if (isRestricted && !string.IsNullOrEmpty(userAllowedRegion)) region = userAllowedRegion;
 
             var debts = await _svc.GetDebtorsAsync(
                 search: search,
                 region: region,
                 province: province,
-                salesRep: salesRep,
+                salesRep: effectiveRepParam,
                 status: null,
                 credit: credit,
                 userAllowedRegion: userAllowedRegion,
@@ -357,10 +365,17 @@ namespace RoyalD.Web.Controllers
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
 
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion) && string.IsNullOrEmpty(currentUser?.AllowedProvinces)) salesRep = currentUser.SalesRepCode;
+            var rawDbReps = await _cache.GetOrCreateAsync("all_debtor_reps", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                return await _db.OutstandingDebts.AsNoTracking().Select(d => d.SalesRep).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s).ToListAsync();
+            }) ?? new List<string>();
+
+            var (filterReps, selectedRepForUi, _) = SalesRepHelper.ResolveFilter(isRestricted, currentUser?.SalesRepCode, salesRep, rawDbReps);
+            var effectiveRepParam = filterReps != null && filterReps.Count > 0 ? string.Join(",", filterReps) : null;
             if (isRestricted && !string.IsNullOrEmpty(userAllowedRegion)) region = userAllowedRegion;
 
-            var debts = await _svc.GetDebtorsAsync(search, region, province, salesRep, null, credit, userAllowedRegion, userAllowedProvinces, userAllowedDistricts);
+            var debts = await _svc.GetDebtorsAsync(search, region, province, effectiveRepParam, null, credit, userAllowedRegion, userAllowedProvinces, userAllowedDistricts);
 
             var today = DateTime.Today;
             if (string.Equals(status, "outstanding", StringComparison.OrdinalIgnoreCase))
@@ -418,10 +433,17 @@ namespace RoyalD.Web.Controllers
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
 
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion) && string.IsNullOrEmpty(currentUser?.AllowedProvinces))
+            var allDbReps = await _cache.GetOrCreateAsync("all_debtor_reps", async entry =>
             {
-                salesRep = currentUser.SalesRepCode;
-            }
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                return await _db.OutstandingDebts.AsNoTracking().Select(d => d.SalesRep).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s).ToListAsync();
+            }) ?? new List<string>();
+
+            var (filterReps, selectedRepForUi, _) = SalesRepHelper.ResolveFilter(
+                isRestricted, currentUser?.SalesRepCode, salesRep, allDbReps);
+
+            var effectiveRepParam = filterReps != null && filterReps.Count > 0 ? string.Join(",", filterReps) : null;
+
             if (isRestricted && !string.IsNullOrEmpty(userAllowedRegion))
             {
                 region = userAllowedRegion;
@@ -431,7 +453,7 @@ namespace RoyalD.Web.Controllers
                 search: search,
                 region: region,
                 province: province,
-                salesRep: salesRep,
+                salesRep: effectiveRepParam,
                 status: null, // we will filter status locally
                 credit: credit,
                 userAllowedRegion: userAllowedRegion,
@@ -472,7 +494,7 @@ namespace RoyalD.Web.Controllers
                 debts = debts.Where(d => !string.IsNullOrEmpty(d.PoNumber) && d.PoNumber.Contains(poSearch)).ToList();
 
             ViewBag.Search = search;
-            ViewBag.SalesRep = salesRep;
+            ViewBag.SalesRep = selectedRepForUi;
             ViewBag.Status = status;
             ViewBag.PrintedBy = currentUser?.FullName ?? User.Identity?.Name ?? "Admin";
             return View("PrintPdf", debts);
@@ -567,12 +589,16 @@ namespace RoyalD.Web.Controllers
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
 
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion) && string.IsNullOrEmpty(currentUser?.AllowedProvinces))
+            var allDbReps = await _cache.GetOrCreateAsync("all_debtor_reps", async entry =>
             {
-                salesRep = currentUser.SalesRepCode;
-            }
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
+                return await _db.OutstandingDebts.AsNoTracking().Select(d => d.SalesRep).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s).ToListAsync();
+            }) ?? new List<string>();
 
-            var debts = await _svc.GetPaidHistoryAsync(search, salesRep, userAllowedRegion, userAllowedProvinces, userAllowedDistricts);
+            var (filterReps, selectedRepForUi, _) = SalesRepHelper.ResolveFilter(isRestricted, currentUser?.SalesRepCode, salesRep, allDbReps);
+            var effectiveRepParam = filterReps != null && filterReps.Count > 0 ? string.Join(",", filterReps) : null;
+
+            var debts = await _svc.GetPaidHistoryAsync(search, effectiveRepParam, userAllowedRegion, userAllowedProvinces, userAllowedDistricts);
             if (fromDate.HasValue) { if (dateType == "bill") debts = debts.Where(d => d.BillDate >= fromDate.Value.Date).ToList(); else debts = debts.Where(d => (d.ReceiptDate ?? d.FullyPaidDate ?? d.PaidDate) >= fromDate.Value.Date).ToList(); }
             if (toDate.HasValue) { if (dateType == "bill") debts = debts.Where(d => d.BillDate <= toDate.Value.Date.AddDays(1).AddTicks(-1)).ToList(); else debts = debts.Where(d => (d.ReceiptDate ?? d.FullyPaidDate ?? d.PaidDate) <= toDate.Value.Date.AddDays(1).AddTicks(-1)).ToList(); }
             ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd"); ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd"); ViewBag.DateType = dateType;
@@ -632,14 +658,13 @@ namespace RoyalD.Web.Controllers
                 return days > 7 && days <= 120;
             }).ToList();
             ViewBag.Search = search;
-            ViewBag.SalesRep = salesRep;
+            ViewBag.SalesRep = selectedRepForUi;
             ViewBag.TotalCount = debts.Count();
             ViewBag.TotalAmount = debts.Sum(d => d.OriginalAmount);
-            ViewBag.SalesReps = await _cache.GetOrCreateAsync("all_debtor_reps", async entry =>
-            {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
-                return await _db.OutstandingDebts.AsNoTracking().Select(d => d.SalesRep).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s).ToListAsync();
-            }) ?? new List<string>();
+            var assignedReps = isRestricted && !string.IsNullOrWhiteSpace(currentUser?.SalesRepCode)
+                ? SalesRepHelper.GetAssignedSalesReps(currentUser.SalesRepCode, allDbReps)
+                : new List<string>();
+            ViewBag.SalesReps = (isRestricted && assignedReps.Count > 0) ? assignedReps : allDbReps;
             ViewBag.IsRestricted = isRestricted;
 
             int totalRecords = debts.Count;
@@ -665,21 +690,26 @@ namespace RoyalD.Web.Controllers
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
 
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion) && string.IsNullOrEmpty(currentUser?.AllowedProvinces))
-            {
-                salesRep = currentUser.SalesRepCode;
-            }
-
-            var debts = await _svc.GetCancelledDebtsAsync(search, salesRep, userAllowedRegion, userAllowedProvinces, userAllowedDistricts);
-            ViewBag.Search = search;
-            ViewBag.SalesRep = salesRep;
-            ViewBag.TotalCount = debts.Count();
-            ViewBag.TotalAmount = debts.Sum(d => d.OriginalAmount);
-            ViewBag.SalesReps = await _cache.GetOrCreateAsync("all_debtor_reps", async entry =>
+            var allDbReps = await _cache.GetOrCreateAsync("all_debtor_reps", async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
                 return await _db.OutstandingDebts.AsNoTracking().Select(d => d.SalesRep).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s).ToListAsync();
             }) ?? new List<string>();
+
+            var (filterReps, selectedRepForUi, _) = SalesRepHelper.ResolveFilter(isRestricted, currentUser?.SalesRepCode, salesRep, allDbReps);
+            var effectiveRepParam = filterReps != null && filterReps.Count > 0 ? string.Join(",", filterReps) : null;
+
+            var debts = await _svc.GetCancelledDebtsAsync(search, effectiveRepParam, userAllowedRegion, userAllowedProvinces, userAllowedDistricts);
+            var assignedReps = isRestricted && !string.IsNullOrWhiteSpace(currentUser?.SalesRepCode)
+                ? SalesRepHelper.GetAssignedSalesReps(currentUser.SalesRepCode, allDbReps)
+                : new List<string>();
+
+            ViewBag.Search = search;
+            ViewBag.SalesRep = selectedRepForUi;
+            ViewBag.SelectedSalesRep = selectedRepForUi;
+            ViewBag.TotalCount = debts.Count();
+            ViewBag.TotalAmount = debts.Sum(d => d.OriginalAmount);
+            ViewBag.SalesReps = (isRestricted && assignedReps.Count > 0) ? assignedReps : allDbReps;
             ViewBag.IsRestricted = isRestricted;
 
             int totalRecords = debts.Count;
@@ -1081,23 +1111,32 @@ namespace RoyalD.Web.Controllers
             string? userAllowedRegion = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedRegion) ? currentUser.AllowedRegion : null;
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion) && string.IsNullOrEmpty(currentUser?.AllowedProvinces)) salesRep = currentUser.SalesRepCode;
+
+            var allDbReps = await _db.OutstandingDebts.AsNoTracking()
+                .Where(d => d.Status == DebtStatus.Installment || d.PaymentRecords.Count > 1)
+                .Select(d => d.SalesRep).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s).ToListAsync();
+
+            var (filterReps, selectedRepForUi, hasMultipleAssigned) = SalesRepHelper.ResolveFilter(
+                isRestricted, currentUser?.SalesRepCode, salesRep, allDbReps);
 
             var q = _db.OutstandingDebts
                 .Include(d => d.PaymentRecords)
                 .Where(d => d.Status == DebtStatus.Installment || d.PaymentRecords.Count > 1);
 
             if (!string.IsNullOrEmpty(userAllowedRegion)) q = q.Where(d => d.Province != null && d.Province.Contains(userAllowedRegion));
-            if (!string.IsNullOrEmpty(salesRep)) q = q.Where(d => d.SalesRep != null && d.SalesRep.Contains(salesRep));
+            if (filterReps != null && filterReps.Count > 0) q = q.Where(d => filterReps.Contains(d.SalesRep));
             if (!string.IsNullOrEmpty(search))
                 q = q.Where(d => d.CustomerName.Contains(search) || d.BillNo.Contains(search) || d.CustomerCode.Contains(search));
 
             var debts = await q.OrderByDescending(d => d.BillDate).ToListAsync();
+            var assignedReps = isRestricted && !string.IsNullOrWhiteSpace(currentUser?.SalesRepCode)
+                ? SalesRepHelper.GetAssignedSalesReps(currentUser.SalesRepCode, allDbReps)
+                : new List<string>();
+
             ViewBag.Search = search;
-            ViewBag.SalesRep = salesRep;
-            ViewBag.SalesReps = await _db.OutstandingDebts.AsNoTracking()
-                .Where(d => d.Status == DebtStatus.Installment || d.PaymentRecords.Count > 1)
-                .Select(d => d.SalesRep).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s).ToListAsync();
+            ViewBag.SalesRep = selectedRepForUi;
+            ViewBag.SalesReps = (isRestricted && assignedReps.Count > 0) ? assignedReps : allDbReps;
+            ViewBag.IsRestricted = isRestricted;
             return View(debts);
         }
         [HttpGet]
@@ -1109,13 +1148,19 @@ namespace RoyalD.Web.Controllers
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
 
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion) && string.IsNullOrEmpty(currentUser?.AllowedProvinces)) salesRep = currentUser.SalesRepCode;
+            var allDbReps = await _db.OutstandingDebts.AsNoTracking().Select(d => d.SalesRep).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s).ToListAsync();
+            var (filterReps, selectedRepForUi, hasMultipleAssigned) = SalesRepHelper.ResolveFilter(
+                isRestricted, currentUser?.SalesRepCode, salesRep, allDbReps);
+            var effectiveRepParam = filterReps != null && filterReps.Count > 0 ? string.Join(",", filterReps) : null;
 
-            var debts = await _svc.GetDebtorsAsync(search, userAllowedRegion, userAllowedProvinces, salesRep, "BadDebt", null, userAllowedRegion, userAllowedProvinces, userAllowedDistricts);
+            var debts = await _svc.GetDebtorsAsync(search, userAllowedRegion, userAllowedProvinces, effectiveRepParam, "BadDebt", null, userAllowedRegion, userAllowedProvinces, userAllowedDistricts);
+            var assignedReps = isRestricted && !string.IsNullOrWhiteSpace(currentUser?.SalesRepCode)
+                ? SalesRepHelper.GetAssignedSalesReps(currentUser.SalesRepCode, allDbReps)
+                : new List<string>();
 
             ViewBag.Search = search;
-            ViewBag.SalesRep = salesRep;
-            ViewBag.SalesReps = await _db.OutstandingDebts.AsNoTracking().Select(d => d.SalesRep).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s).ToListAsync();
+            ViewBag.SalesRep = selectedRepForUi;
+            ViewBag.SalesReps = (isRestricted && assignedReps.Count > 0) ? assignedReps : allDbReps;
             ViewBag.IsRestricted = isRestricted;
 
             return View(debts);
@@ -1129,9 +1174,16 @@ namespace RoyalD.Web.Controllers
             if (!canDownload) return Forbid();
 
             bool isRestricted = currentUser != null && currentUser.Role != "admin";
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion) && string.IsNullOrEmpty(currentUser?.AllowedProvinces)) salesRep = currentUser.SalesRepCode;
+            var allDbReps = await _cache.GetOrCreateAsync("all_debtor_reps", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
+                return await _db.OutstandingDebts.AsNoTracking().Select(d => d.SalesRep).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s).ToListAsync();
+            }) ?? new List<string>();
 
-            var debts = await _svc.GetCancelledDebtsAsync(search, salesRep, 
+            var (filterReps, _, _) = SalesRepHelper.ResolveFilter(isRestricted, currentUser?.SalesRepCode, salesRep, allDbReps);
+            var effectiveRepParam = filterReps != null && filterReps.Count > 0 ? string.Join(",", filterReps) : null;
+
+            var debts = await _svc.GetCancelledDebtsAsync(search, effectiveRepParam, 
                 isRestricted ? currentUser?.AllowedRegion : null,
                 isRestricted ? currentUser?.AllowedProvinces : null,
                 isRestricted ? currentUser?.AllowedDistricts : null);
@@ -1148,14 +1200,25 @@ namespace RoyalD.Web.Controllers
             if (!canDownload) return Forbid();
 
             bool isRestricted = currentUser != null && currentUser.Role != "admin";
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion) && string.IsNullOrEmpty(currentUser?.AllowedProvinces)) salesRep = currentUser.SalesRepCode;
+            var allDbReps = await _cache.GetOrCreateAsync("all_debtor_reps", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
+                return await _db.OutstandingDebts.AsNoTracking().Select(d => d.SalesRep).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s).ToListAsync();
+            }) ?? new List<string>();
 
-            var debts = await _svc.GetCancelledDebtsAsync(search, salesRep, 
+            var (filterReps, selectedRepForUi, _) = SalesRepHelper.ResolveFilter(isRestricted, currentUser?.SalesRepCode, salesRep, allDbReps);
+            var effectiveRepParam = filterReps != null && filterReps.Count > 0 ? string.Join(",", filterReps) : null;
+
+            var debts = await _svc.GetCancelledDebtsAsync(search, effectiveRepParam, 
                 isRestricted ? currentUser?.AllowedRegion : null,
                 isRestricted ? currentUser?.AllowedProvinces : null,
                 isRestricted ? currentUser?.AllowedDistricts : null);
                 
-            ViewBag.Search = search; ViewBag.SalesRep = salesRep; ViewBag.Status = "cancelled"; ViewBag.PrintedBy = currentUser?.FullName ?? User.Identity?.Name ?? "Admin"; return View("PrintPdf", debts);
+            ViewBag.Search = search; 
+            ViewBag.SalesRep = selectedRepForUi; 
+            ViewBag.Status = "cancelled"; 
+            ViewBag.PrintedBy = currentUser?.FullName ?? User.Identity?.Name ?? "Admin"; 
+            return View("PrintPdf", debts);
         }
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> RestoreCancelledBill(int debtId, string confirmPassword)

@@ -88,7 +88,7 @@
             </div>
             <div class="col-md-4">
                 <select name="salesRep" class="form-select select2-searchable">
-                    <option value="">-- พนักงานขายทั้งหมด --</option>
+                    <option value="">@(ViewBag.IsRestricted == true ? "-- ทุกผู้แทนที่รับผิดชอบ --" : "-- พนักงานขายทั้งหมด --")</option>
                     @if (ViewBag.SalesReps != null)
                     {
                         foreach (var rep in (List<string>)ViewBag.SalesReps)

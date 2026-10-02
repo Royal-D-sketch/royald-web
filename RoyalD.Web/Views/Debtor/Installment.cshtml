@@ -1,4 +1,4 @@
-﻿@model List<RoyalD.Web.Models.OutstandingDebt>
+@model List<RoyalD.Web.Models.OutstandingDebt>
 @using RoyalD.Web.Models
 @{
     ViewData["Title"] = "ลูกค้าผ่อนชำระ";
@@ -41,7 +41,7 @@
                 </div>
                 <div class="col-md-4">
                     <select name="salesRep" class="form-select select2-searchable">
-                        <option value="">-- ทุกผู้แทน --</option>
+                        <option value="">@(ViewBag.IsRestricted == true ? "-- ทุกผู้แทนที่รับผิดชอบ --" : "-- ทุกผู้แทน --")</option>
                         @foreach (var r in salesReps)
                         {
                             if (ViewBag.SalesRep as string == r) { <option value="@r" selected>@r</option> }

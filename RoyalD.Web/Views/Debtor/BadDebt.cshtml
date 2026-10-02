@@ -1,4 +1,4 @@
-﻿@model List<RoyalD.Web.Models.OutstandingDebt>
+@model List<RoyalD.Web.Models.OutstandingDebt>
 @using RoyalD.Web.Models
 @{
     ViewData["Title"] = "รายงานหนี้สูญ";
@@ -51,26 +51,24 @@
             <div class="col-md-4">
                 <input type="text" name="search" class="form-control" placeholder="ชื่อลูกค้า / เลขที่บิล / รหัสลูกค้า..." value="@ViewBag.Search" />
             </div>
-            @if (ViewBag.IsRestricted == true)
-            {
-                <div class="col-md-3">
+            <div class="col-md-3">
+                @if (ViewBag.IsRestricted == true && (ViewBag.SalesReps as List<string>)?.Count <= 1)
+                {
                     <input type="text" class="form-control bg-light fw-bold text-danger" value="@ViewBag.SalesRep" readonly />
                     <input type="hidden" name="salesRep" value="@ViewBag.SalesRep" />
-                </div>
-            }
-            else
-            {
-                <div class="col-md-3">
+                }
+                else
+                {
                     <select name="salesRep" class="form-select select2-searchable">
-                        <option value="">-- ทุกผู้แทน --</option>
+                        <option value="">@(ViewBag.IsRestricted == true ? "-- ทุกผู้แทนที่รับผิดชอบ --" : "-- ทุกผู้แทน --")</option>
                         @foreach (var s in (ViewBag.SalesReps as List<string> ?? new()))
                         {
                             if (s == ViewBag.SalesRep as string) { <option value="@s" selected>@s</option> }
                             else { <option value="@s">@s</option> }
                         }
                     </select>
-                </div>
-            }
+                }
+            </div>
             <div class="col-md-3 d-flex gap-2">
                 <button type="submit" class="btn btn-danger w-100 fw-bold"><i class="bi bi-filter me-1"></i> กรอง</button>
                 <a href="/Debtor/BadDebt" class="btn btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i></a>

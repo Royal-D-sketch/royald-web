@@ -186,27 +186,24 @@
                 </datalist>
             }
         </div>
-        @if (ViewBag.IsRestricted == true)
-        {
-            <div class="col-md-2">
-                <label class="form-label small fw-bold text-primary mb-1">👔 ผู้แทนขาย</label>
-                <input type="text" class="form-control form-control-sm bg-light fw-bold text-primary" value="@ViewBag.AssignedSalesRep" readonly />
-                <input type="hidden" name="salesRep" value="@ViewBag.AssignedSalesRep" />
-            </div>
-        }
-        else
-        {
-            <div class="col-md-2">
-                <label class="form-label small fw-bold text-primary mb-1">👔 ผู้แทนขาย</label>
+        <div class="col-md-2">
+            <label class="form-label small fw-bold text-primary mb-1">👔 ผู้แทนขาย@(ViewBag.IsRestricted == true ? " (ตามสิทธิ์)" : "")</label>
+            @if (ViewBag.IsRestricted == true && (ViewBag.SalesReps as List<string>)?.Count <= 1)
+            {
+                <input type="text" class="form-control form-control-sm bg-light fw-bold text-primary" value="@(ViewBag.SalesRep ?? ViewBag.AssignedSalesRep)" readonly />
+                <input type="hidden" name="salesRep" value="@(ViewBag.SalesRep ?? ViewBag.AssignedSalesRep)" />
+            }
+            else
+            {
                 <select name="salesRep" class="form-select form-select-sm select2-searchable">
-                      <option value="">-- ทุกผู้แทน --</option>
-                      @foreach (var s in (ViewBag.SalesReps as List<string> ?? new())) {
-                          if (s == ViewBag.SalesRep) { <option value="@s" selected>@s</option> }
-                          else { <option value="@s">@s</option> }
-                      }
-                  </select>
-            </div>
-        }
+                    <option value="">@(ViewBag.IsRestricted == true ? "-- ทุกผู้แทนที่รับผิดชอบ --" : "-- ทุกผู้แทน --")</option>
+                    @foreach (var s in (ViewBag.SalesReps as List<string> ?? new())) {
+                        if (s == ViewBag.SalesRep) { <option value="@s" selected>@s</option> }
+                        else { <option value="@s">@s</option> }
+                    }
+                </select>
+            }
+        </div>
         <div class="col-md-2">
             <label class="form-label small fw-bold text-primary mb-1">📅 แฟ้มเดือน</label>
             <input type="month" name="month" class="form-control form-control-sm" value="@ViewBag.Month" />

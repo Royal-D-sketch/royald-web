@@ -132,7 +132,7 @@
                 else
                 {
                     <select name="rep" class="form-select select2-searchable">
-                        <option value="">@(isSalesRep ? "-- ทั้งหมด --" : "-- ทุกคน --")</option>
+                        <option value="">@(isSalesRep ? "-- ทุกผู้แทนที่รับผิดชอบ --" : "-- ทุกคน --")</option>
                         @foreach (var r in Model.AllReps)
                         {
                             if (Model.SelectedRep == r)

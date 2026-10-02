@@ -111,6 +111,7 @@ namespace RoyalD.Web.Services
         public List<string> SalesReps { get; set; } = new();
         public string? SelectedSalesRep { get; set; }
         public string? SelectedMonth { get; set; }
+        public bool IsRestrictedRep { get; set; }
         public List<SalesRepProductReport> RepReports { get; set; } = new();
     }
 
@@ -390,13 +391,33 @@ namespace RoyalD.Web.Services
         }
 
         // 3. Product Movement Details with Delivering Deduction Logic
-        public async Task<ProductDetailsReportViewModel> GetProductDetailsReportAsync(string? selectedRep = null, string? selectedMonth = null)
+        public async Task<ProductDetailsReportViewModel> GetProductDetailsReportAsync(
+            string? selectedRep = null, 
+            string? selectedMonth = null,
+            string? userSalesRepCode = null,
+            string? userFullName = null,
+            string? username = null,
+            bool isRestricted = false)
         {
             var monthKeys = StandardMonthsMap.Keys.ToList();
             var monthLabels = StandardMonthsMap.Values.ToList();
 
+            var allReps = await _db.SalesBills
+                .Where(b => !string.IsNullOrEmpty(b.SalesRep))
+                .Select(b => b.SalesRep)
+                .Distinct()
+                .OrderBy(r => r)
+                .ToListAsync();
+
+            bool isRestrictedRep = isRestricted || !string.IsNullOrWhiteSpace(userSalesRepCode);
+            var (filterReps, selectedRepForUi, hasMultipleAssigned) = SalesRepHelper.ResolveFilter(
+                isRestrictedRep, userSalesRepCode, selectedRep, allReps);
+
             var billQuery = _db.SalesBills.AsNoTracking().AsQueryable();
-            if (!string.IsNullOrEmpty(selectedRep)) { var sRepTrim = selectedRep.Trim(); billQuery = billQuery.Where(b => b.SalesRep != null && b.SalesRep.Contains(sRepTrim)); }
+            if (filterReps != null && filterReps.Count > 0)
+            {
+                billQuery = billQuery.Where(b => filterReps.Contains(b.SalesRep));
+            }
             if (!string.IsNullOrEmpty(selectedMonth))
             {
                 if (DateTime.TryParse(selectedMonth + "-01", out var mDate))
@@ -440,23 +461,23 @@ namespace RoyalD.Web.Services
                 .ToListAsync();
             var deliveringSet = new HashSet<string>(deliveringBillNos);
 
-            var allReps = await _db.SalesBills
-                .Where(b => !string.IsNullOrEmpty(b.SalesRep))
-                .Select(b => b.SalesRep)
-                .Distinct()
-                .OrderBy(r => r)
-                .ToListAsync();
+            var uiReps = isRestrictedRep && !string.IsNullOrWhiteSpace(userSalesRepCode)
+                ? SalesRepHelper.GetAssignedSalesReps(userSalesRepCode, allReps)
+                : allReps;
 
             var vm = new ProductDetailsReportViewModel
             {
                 MonthKeys = monthKeys,
                 Months = monthLabels,
-                SalesReps = allReps,
-                SelectedSalesRep = selectedRep,
-                SelectedMonth = selectedMonth
+                SalesReps = uiReps,
+                SelectedSalesRep = selectedRepForUi,
+                SelectedMonth = selectedMonth,
+                IsRestrictedRep = isRestrictedRep && uiReps.Count > 0
             };
 
-            var targetReps = string.IsNullOrEmpty(selectedRep) ? allReps : new List<string> { selectedRep };
+            var targetReps = (filterReps != null && filterReps.Count > 0)
+                ? filterReps
+                : allReps;
             var targetMonths = string.IsNullOrEmpty(selectedMonth) ? monthKeys : new List<string> { selectedMonth };
 
             foreach (var rep in targetReps)
@@ -465,7 +486,7 @@ namespace RoyalD.Web.Services
 
                 foreach (var mk in targetMonths)
                 {
-                    var repMonthBills = bills.Where(b => (b.SalesRep != null && b.SalesRep.Contains(rep.Trim())) && (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) == mk)).Select(b => b.BillNo).ToHashSet();
+                    var repMonthBills = bills.Where(b => (b.SalesRep != null && (b.SalesRep == rep || b.SalesRep.Trim() == rep.Trim())) && (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) == mk)).Select(b => b.BillNo).ToHashSet();
                     if (!repMonthBills.Any()) continue;
 
                     var monthItems = items.Where(i => repMonthBills.Contains(i.BillNo)).ToList();
@@ -846,7 +867,6 @@ namespace RoyalD.Web.Services
             {
                 var cTrim = cand.Trim();
                 if (cTrim.Length < 2) continue;
-                if (decimal.TryParse(cTrim, out _)) continue;
 
                 var cClean = CleanThai(cTrim);
 
@@ -1095,23 +1115,15 @@ namespace RoyalD.Web.Services
                 var repMatches = ResolveMatchingReps(userSalesRepCode, userFullName, username, allDbReps);
                 if (repMatches.Count > 0)
                 {
-                    if (string.IsNullOrEmpty(selectedRep) || !repMatches.Contains(selectedRep, StringComparer.OrdinalIgnoreCase))
-                    {
-                        selectedRep = repMatches[0];
-                    }
                     vm.SalesReps = repMatches;
-                    vm.SelectedSalesRep = selectedRep;
-
-                    if (repMatches.Count == 1)
+                    if (!string.IsNullOrEmpty(selectedRep) && repMatches.Contains(selectedRep, StringComparer.OrdinalIgnoreCase))
                     {
-                        itemQuery = itemQuery.Where(i => i.SalesBill.SalesRep == repMatches[0]);
-                    }
-                    else if (!string.IsNullOrEmpty(selectedRep))
-                    {
+                        vm.SelectedSalesRep = selectedRep;
                         itemQuery = itemQuery.Where(i => i.SalesBill.SalesRep == selectedRep);
                     }
                     else
                     {
+                        vm.SelectedSalesRep = repMatches.Count == 1 ? repMatches[0] : null;
                         itemQuery = itemQuery.Where(i => repMatches.Contains(i.SalesBill.SalesRep));
                     }
                 }

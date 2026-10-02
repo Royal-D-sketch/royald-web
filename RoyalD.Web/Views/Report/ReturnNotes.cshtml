@@ -1,4 +1,4 @@
-﻿@model IEnumerable<RoyalD.Web.Models.OutstandingDebt>
+@model IEnumerable<RoyalD.Web.Models.OutstandingDebt>
 @{
     ViewData["Title"] = "รับคืนสินค้า (Return Notes)";
 }
@@ -17,7 +17,7 @@
             </div>
             <div class="col-auto">
                 <select name="salesRep" class="form-select form-select-sm select2-searchable" style="min-width: 180px;">
-                    <option value="">-- พนักงานขายทั้งหมด --</option>
+                    <option value="">@(ViewBag.IsRestricted == true ? "-- ทุกผู้แทนที่รับผิดชอบ --" : "-- พนักงานขายทั้งหมด --")</option>
                     @if(ViewBag.SalesReps != null)
                     {
                         foreach(string r in ViewBag.SalesReps)

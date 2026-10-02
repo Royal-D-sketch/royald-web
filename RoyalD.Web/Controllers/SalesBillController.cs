@@ -124,11 +124,6 @@ namespace RoyalD.Web.Controllers
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
 
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion) && string.IsNullOrEmpty(currentUser?.AllowedProvinces))
-            {
-                salesRep = currentUser.SalesRepCode;
-            }
-
             var q = _db.SalesBills.AsNoTracking().AsQueryable();
 
             // Combined Region + Province Permission logic
@@ -197,26 +192,12 @@ namespace RoyalD.Web.Controllers
                     .OrderBy(s => s)
                     .ToList();
             }) ?? new List<string>();
+            var (filterReps, selectedRepForUi, hasMultipleAssigned) = SalesRepHelper.ResolveFilter(
+                isRestricted, currentUser?.SalesRepCode, salesRep, allDbReps);
 
-            if (!string.IsNullOrEmpty(salesRep))
+            if (filterReps != null && filterReps.Count > 0)
             {
-                var repInputs = salesRep.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList();
-                var matchedReps = allDbReps.Where(dbRep => 
-                    repInputs.Any(u => 
-                        dbRep.IndexOf(u, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        u.IndexOf(dbRep, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        dbRep.Replace(" ", "").IndexOf(u.Replace(" ", ""), StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        u.Replace(" ", "").IndexOf(dbRep.Replace(" ", ""), StringComparison.OrdinalIgnoreCase) >= 0
-                    )
-                ).ToList();
-                if (matchedReps.Count > 0)
-                {
-                    q = q.Where(b => matchedReps.Contains(b.SalesRep));
-                }
-                else
-                {
-                    q = q.Where(b => repInputs.Contains(b.SalesRep) || b.SalesRep == salesRep);
-                }
+                q = q.Where(b => filterReps.Contains(b.SalesRep));
             }
 
             if (!string.IsNullOrEmpty(search))
@@ -450,8 +431,7 @@ namespace RoyalD.Web.Controllers
             ViewBag.Search = search;
             ViewBag.PoSearch = poSearch;
             ViewBag.SelectedRegion = isRestricted && !string.IsNullOrEmpty(userAllowedRegion) ? userAllowedRegion : region;
-            ViewBag.SelectedProvince = province;
-            ViewBag.SalesRep = salesRep;
+            ViewBag.SalesRep = selectedRepForUi;
             ViewBag.Month = month;
             ViewBag.IsRestricted = isRestricted;
             ViewBag.AssignedSalesRep = currentUser?.SalesRepCode;
@@ -475,24 +455,21 @@ namespace RoyalD.Web.Controllers
             
             ViewBag.AllProvincesMap = RegionHelper.DisplayProvinces;
 
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion) && string.IsNullOrEmpty(currentUser?.AllowedProvinces))
+            var assignedReps = isRestricted && !string.IsNullOrWhiteSpace(currentUser?.SalesRepCode)
+                ? SalesRepHelper.GetAssignedSalesReps(currentUser.SalesRepCode, allDbReps)
+                : new List<string>();
+
+            if (isRestricted && assignedReps.Count > 0)
             {
-                var userRepInputs = currentUser.SalesRepCode.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList();
-                var matchedForUser = allDbReps.Where(dbRep => 
-                    userRepInputs.Any(u => 
-                        dbRep.IndexOf(u, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        u.IndexOf(dbRep, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        dbRep.Replace(" ", "").IndexOf(u.Replace(" ", ""), StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        u.Replace(" ", "").IndexOf(dbRep.Replace(" ", ""), StringComparison.OrdinalIgnoreCase) >= 0
-                    )
-                ).ToList();
-                ViewBag.SalesReps = matchedForUser.Count > 0 ? matchedForUser : userRepInputs;
-                ViewBag.IsLockedSalesRep = true;
+                ViewBag.SalesReps = assignedReps;
+                ViewBag.IsLockedSalesRep = assignedReps.Count <= 1;
+                ViewBag.IsMultiAssignedRep = assignedReps.Count > 1;
             }
             else
             {
                 ViewBag.SalesReps = allDbReps;
                 ViewBag.IsLockedSalesRep = false;
+                ViewBag.IsMultiAssignedRep = false;
             }
 
             ViewBag.Months = await _cache.GetOrCreateAsync("all_salesbills_months", async entry =>
@@ -657,11 +634,6 @@ namespace RoyalD.Web.Controllers
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
 
-            if (isRestricted && !string.IsNullOrEmpty(currentUser?.SalesRepCode) && string.IsNullOrEmpty(currentUser?.AllowedRegion) && string.IsNullOrEmpty(currentUser?.AllowedProvinces))
-            {
-                salesRep = currentUser.SalesRepCode;
-            }
-
             var q = _db.SalesBills.AsNoTracking().AsQueryable();
 
             if (!string.IsNullOrEmpty(userAllowedRegion) || !string.IsNullOrEmpty(userAllowedProvinces))
@@ -709,10 +681,29 @@ namespace RoyalD.Web.Controllers
                 }
             }
 
-            if (!string.IsNullOrEmpty(salesRep))
+            var allDbReps = await _cache.GetOrCreateAsync("all_salesbill_reps", async entry =>
             {
-                var repInputs = salesRep.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList();
-                q = q.Where(b => repInputs.Contains(b.SalesRep) || b.SalesRep.Contains(salesRep));
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                var raw = await _db.SalesBills.AsNoTracking()
+                    .Select(b => b.SalesRep)
+                    .Where(s => !string.IsNullOrEmpty(s))
+                    .Distinct()
+                    .ToListAsync();
+
+                return raw
+                    .Where(s => !string.IsNullOrWhiteSpace(s) &&
+                                !s.Contains("5%") &&
+                                !s.Contains("page", StringComparison.OrdinalIgnoreCase) &&
+                                !s.Contains("หน้า", StringComparison.OrdinalIgnoreCase) &&
+                                !s.All(char.IsDigit))
+                    .OrderBy(s => s)
+                    .ToList();
+            }) ?? new List<string>();
+
+            var (filterReps, _, _) = SalesRepHelper.ResolveFilter(isRestricted, currentUser?.SalesRepCode, salesRep, allDbReps);
+            if (filterReps != null && filterReps.Count > 0)
+            {
+                q = q.Where(b => filterReps.Contains(b.SalesRep));
             }
 
             if (!string.IsNullOrEmpty(search))

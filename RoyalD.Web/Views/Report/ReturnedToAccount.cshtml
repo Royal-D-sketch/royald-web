@@ -87,7 +87,7 @@
                 <div class="col-12 col-md-3">
                     <label class="form-label small fw-bold text-secondary mb-1">ผู้แทนขาย</label>
                     <select name="salesRep" class="form-select form-select-sm">
-                        <option value="">-- ทั้งหมด --</option>
+                        <option value="">@(ViewBag.IsRestricted == true ? "-- ทุกผู้แทนที่รับผิดชอบ --" : "-- ทั้งหมด --")</option>
                         @foreach (var rep in salesReps)
                         {
                             <option value="@rep" selected="@(rep == ViewBag.SalesRep ? "selected" : null)">@rep</option>

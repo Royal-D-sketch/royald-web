@@ -45,6 +45,17 @@ namespace RoyalD.Web.Controllers
 
         public async Task<IActionResult> WaitingGoods([FromServices] AppDbContext db, [FromServices] Microsoft.Extensions.Caching.Memory.IMemoryCache cache, string? search, string? salesRep, int page = 1, int pageSize = 50)
         {
+            var currentUser = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            bool isRestricted = currentUser != null && currentUser.Role != "admin";
+
+            var reps = await cache.GetOrCreateAsync("all_debtor_reps", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
+                return await db.OutstandingDebts.AsNoTracking().Where(d => d.SalesRep != null && d.SalesRep != "").Select(d => d.SalesRep).Distinct().OrderBy(x => x).ToListAsync();
+            }) ?? new List<string>();
+
+            var (filterReps, selectedRepForUi, _) = SalesRepHelper.ResolveFilter(isRestricted, currentUser?.SalesRepCode, salesRep, reps);
+
             var qPending = db.PendingProducts
                 .Include(p => p.OutstandingDebt)
                 .AsQueryable();
@@ -53,9 +64,9 @@ namespace RoyalD.Web.Controllers
             {
                 qPending = qPending.Where(p => p.OutstandingDebt.CustomerName.Contains(search) || p.OutstandingDebt.BillNo.Contains(search) || p.OutstandingDebt.CustomerCode.Contains(search));
             }
-            if (!string.IsNullOrEmpty(salesRep))
+            if (filterReps != null && filterReps.Count > 0)
             {
-                qPending = qPending.Where(p => p.OutstandingDebt.SalesRep == salesRep);
+                qPending = qPending.Where(p => filterReps.Contains(p.OutstandingDebt.SalesRep));
             }
 
             var data1 = await qPending.Select(p => new {
@@ -80,9 +91,9 @@ namespace RoyalD.Web.Controllers
             {
                 qDebt = qDebt.Where(d => d.CustomerName.Contains(search) || d.BillNo.Contains(search) || d.CustomerCode.Contains(search));
             }
-            if (!string.IsNullOrEmpty(salesRep))
+            if (filterReps != null && filterReps.Count > 0)
             {
-                qDebt = qDebt.Where(d => d.SalesRep == salesRep);
+                qDebt = qDebt.Where(d => filterReps.Contains(d.SalesRep));
             }
 
             var data2 = await qDebt.Select(d => new {
@@ -100,14 +111,14 @@ namespace RoyalD.Web.Controllers
 
             var data = data1.Concat(data2).OrderByDescending(x => x.UpdatedAt).ToList();
 
-            var reps = await cache.GetOrCreateAsync("all_debtor_reps", async entry =>
-            {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
-                return await db.OutstandingDebts.AsNoTracking().Where(d => d.SalesRep != null && d.SalesRep != "").Select(d => d.SalesRep).Distinct().OrderBy(x => x).ToListAsync();
-            }) ?? new List<string>();
-            ViewBag.SalesReps = reps;
+            var assignedReps = isRestricted && !string.IsNullOrWhiteSpace(currentUser?.SalesRepCode)
+                ? SalesRepHelper.GetAssignedSalesReps(currentUser.SalesRepCode, reps)
+                : new List<string>();
+
+            ViewBag.SalesReps = (isRestricted && assignedReps.Count > 0) ? assignedReps : reps;
             ViewBag.Search = search;
-            ViewBag.SalesRep = salesRep;
+            ViewBag.SalesRep = selectedRepForUi;
+            ViewBag.IsRestricted = isRestricted;
 
             int totalRecords = data.Count;
             int effectivePageSize = pageSize > 0 ? pageSize : 50;
@@ -153,6 +164,17 @@ namespace RoyalD.Web.Controllers
 
         public async Task<IActionResult> ReturnNotes([FromServices] AppDbContext db, [FromServices] Microsoft.Extensions.Caching.Memory.IMemoryCache cache, string? search, string? salesRep)
         {
+            var currentUser = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            bool isRestricted = currentUser != null && currentUser.Role != "admin";
+
+            var reps = await cache.GetOrCreateAsync("all_debtor_reps", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
+                return await db.OutstandingDebts.AsNoTracking().Where(d => d.SalesRep != null && d.SalesRep != "").Select(d => d.SalesRep).Distinct().OrderBy(x => x).ToListAsync();
+            }) ?? new List<string>();
+
+            var (filterReps, selectedRepForUi, _) = SalesRepHelper.ResolveFilter(isRestricted, currentUser?.SalesRepCode, salesRep, reps);
+
             var q = db.OutstandingDebts.AsNoTracking()
                 .Include(d => d.Attachments)
                 .Where(d => d.Status == DebtStatus.ReturnIssued || d.Status == DebtStatus.ReturnPending)
@@ -162,21 +184,21 @@ namespace RoyalD.Web.Controllers
             {
                 q = q.Where(d => d.CustomerName.Contains(search) || d.BillNo.Contains(search) || d.CustomerCode.Contains(search));
             }
-            if (!string.IsNullOrEmpty(salesRep))
+            if (filterReps != null && filterReps.Count > 0)
             {
-                q = q.Where(d => d.SalesRep == salesRep);
+                q = q.Where(d => filterReps.Contains(d.SalesRep));
             }
 
             var data = await q.OrderByDescending(d => d.BillDate).ToListAsync();
             
-            var reps = await cache.GetOrCreateAsync("all_debtor_reps", async entry =>
-            {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
-                return await db.OutstandingDebts.AsNoTracking().Where(d => d.SalesRep != null && d.SalesRep != "").Select(d => d.SalesRep).Distinct().OrderBy(x => x).ToListAsync();
-            }) ?? new List<string>();
-            ViewBag.SalesReps = reps;
+            var assignedReps = isRestricted && !string.IsNullOrWhiteSpace(currentUser?.SalesRepCode)
+                ? SalesRepHelper.GetAssignedSalesReps(currentUser.SalesRepCode, reps)
+                : new List<string>();
+
+            ViewBag.SalesReps = (isRestricted && assignedReps.Count > 0) ? assignedReps : reps;
             ViewBag.Search = search;
-            ViewBag.SalesRep = salesRep;
+            ViewBag.SalesRep = selectedRepForUi;
+            ViewBag.IsRestricted = isRestricted;
 
             return View(data);
         }
@@ -246,6 +268,22 @@ namespace RoyalD.Web.Controllers
         // ==============================================================
         public async Task<IActionResult> ReturnedToAccount([FromServices] AppDbContext db, [FromServices] Microsoft.Extensions.Caching.Memory.IMemoryCache cache, string? search, string? salesRep, DateTime? fromDate, DateTime? toDate)
         {
+            var currentUser = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            bool isRestricted = currentUser != null && currentUser.Role != "admin";
+
+            var reps = await cache.GetOrCreateAsync("all_returned_account_reps", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
+                return await db.OutstandingDebts.AsNoTracking()
+                    .Where(d => (d.Status == DebtStatus.ReturnedToAccount || d.ReturnedToDeliveryDate != null || d.ReturnedToAccountDate != null) && d.SalesRep != null && d.SalesRep != "")
+                    .Select(d => d.SalesRep)
+                    .Distinct()
+                    .OrderBy(x => x)
+                    .ToListAsync();
+            }) ?? new List<string>();
+
+            var (filterReps, selectedRepForUi, _) = SalesRepHelper.ResolveFilter(isRestricted, currentUser?.SalesRepCode, salesRep, reps);
+
             // ดึงบิลที่มีประวัติส่งคืนกลับมาบัญชี และยังไม่จบดีล (คงค้างไว้จนกว่าจะจ่ายครบ 0.00 บาท)
             var q = db.OutstandingDebts
                 .AsNoTracking()
@@ -260,9 +298,9 @@ namespace RoyalD.Web.Controllers
                 q = q.Where(d => d.BillNo.Contains(s) || d.CustomerName.Contains(s) || d.CustomerCode.Contains(s));
             }
 
-            if (!string.IsNullOrWhiteSpace(salesRep))
+            if (filterReps != null && filterReps.Count > 0)
             {
-                q = q.Where(d => d.SalesRep == salesRep);
+                q = q.Where(d => filterReps.Contains(d.SalesRep));
             }
 
             if (fromDate.HasValue)
@@ -277,20 +315,14 @@ namespace RoyalD.Web.Controllers
 
             var data = await q.OrderByDescending(d => d.ReturnedToAccountDate ?? d.BillDate).ToListAsync();
 
-            var reps = await cache.GetOrCreateAsync("all_returned_account_reps", async entry =>
-            {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
-                return await db.OutstandingDebts.AsNoTracking()
-                    .Where(d => (d.Status == DebtStatus.ReturnedToAccount || d.ReturnedToDeliveryDate != null || d.ReturnedToAccountDate != null) && d.SalesRep != null && d.SalesRep != "")
-                    .Select(d => d.SalesRep)
-                    .Distinct()
-                    .OrderBy(x => x)
-                    .ToListAsync();
-            }) ?? new List<string>();
+            var assignedReps = isRestricted && !string.IsNullOrWhiteSpace(currentUser?.SalesRepCode)
+                ? SalesRepHelper.GetAssignedSalesReps(currentUser.SalesRepCode, reps)
+                : new List<string>();
 
-            ViewBag.SalesReps = reps;
+            ViewBag.SalesReps = (isRestricted && assignedReps.Count > 0) ? assignedReps : reps;
             ViewBag.Search = search;
-            ViewBag.SalesRep = salesRep;
+            ViewBag.SalesRep = selectedRepForUi;
+            ViewBag.IsRestricted = isRestricted;
             ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
             ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
             ViewBag.IsAuthorized = IsAuthorizedUserForReturn(User);

@@ -67,11 +67,19 @@ namespace RoyalD.Web.Controllers
         public async Task<IActionResult> ProductDetails(string? salesRep = null, string? month = null) 
         { 
             if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
-            var cacheKey = $"prod_details_{salesRep}_{month}";
+            bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
+            var pos = User.FindFirst("Position")?.Value ?? "";
+            bool isSalesRepRole = !isAdmin && (pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย"));
+            string? userRepCode = User.FindFirst("SalesRepCode")?.Value;
+            string? userFullName = User.FindFirst("FullName")?.Value;
+            string? username = User.Identity?.Name;
+            bool isRestricted = isSalesRepRole || !string.IsNullOrWhiteSpace(userRepCode);
+
+            var cacheKey = $"prod_details_{salesRep}_{month}_{userRepCode}_{username}_{isRestricted}";
             var data = await _cache.GetOrCreateAsync(cacheKey, async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
-                return await _svc.GetProductDetailsReportAsync(salesRep, month);
+                return await _svc.GetProductDetailsReportAsync(salesRep, month, userRepCode, userFullName, username, isRestricted);
             });
             return View(data);
         }
@@ -79,11 +87,19 @@ namespace RoyalD.Web.Controllers
         public async Task<IActionResult> ProductDetailsAmount(string? salesRep = null, string? month = null) 
         { 
             if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
-            var cacheKey = $"prod_details_{salesRep}_{month}";
+            bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
+            var pos = User.FindFirst("Position")?.Value ?? "";
+            bool isSalesRepRole = !isAdmin && (pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย"));
+            string? userRepCode = User.FindFirst("SalesRepCode")?.Value;
+            string? userFullName = User.FindFirst("FullName")?.Value;
+            string? username = User.Identity?.Name;
+            bool isRestricted = isSalesRepRole || !string.IsNullOrWhiteSpace(userRepCode);
+
+            var cacheKey = $"prod_details_{salesRep}_{month}_{userRepCode}_{username}_{isRestricted}";
             var data = await _cache.GetOrCreateAsync(cacheKey, async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
-                return await _svc.GetProductDetailsReportAsync(salesRep, month);
+                return await _svc.GetProductDetailsReportAsync(salesRep, month, userRepCode, userFullName, username, isRestricted);
             });
             return View(data);
         }
@@ -237,7 +253,15 @@ namespace RoyalD.Web.Controllers
         public async Task<IActionResult> ExportProductDetailsExcel(string? salesRep = null, string? month = null)
         {
             if (!CanDownload()) return Forbid();
-            var data = await _svc.GetProductDetailsReportAsync(salesRep, month);
+            bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
+            var pos = User.FindFirst("Position")?.Value ?? "";
+            bool isSalesRepRole = !isAdmin && (pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย"));
+            string? userRepCode = User.FindFirst("SalesRepCode")?.Value;
+            string? userFullName = User.FindFirst("FullName")?.Value;
+            string? username = User.Identity?.Name;
+            bool isRestricted = isSalesRepRole || !string.IsNullOrWhiteSpace(userRepCode);
+
+            var data = await _svc.GetProductDetailsReportAsync(salesRep, month, userRepCode, userFullName, username, isRestricted);
             var bytes = await _svc.ExportProductDetailsExcelAsync(data);
             return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 $"SalesReport_Products_{DateTime.Now:yyyyMMdd}.xlsx");

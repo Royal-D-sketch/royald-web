@@ -32,7 +32,7 @@
                 </div>
                 <div class="col-md-3">
                     <select name="salesRep" class="form-select select2-searchable">
-                        <option value="">-- ทุกผู้แทน --</option>
+                        <option value="">@(ViewBag.IsRestricted == true ? "-- ทุกผู้แทนที่รับผิดชอบ --" : "-- ทุกผู้แทน --")</option>
                         @{ var __histReps = ViewBag.SalesReps as List<string> ?? new List<string>(); }
                         @foreach (var r in __histReps)
                         {

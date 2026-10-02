@@ -1,4 +1,4 @@
-﻿@using RoyalD.Web.Services
+@using RoyalD.Web.Services
 @model RoyalD.Web.Services.ProductDetailsReportViewModel
 @{
     ViewData["Title"] = "3. รายละเอียดสินค้าที่ขายได้รายผู้แทน";
@@ -111,7 +111,7 @@
             <div class="col-md-4">
                 <label class="form-label small fw-bold text-primary mb-1">👤 เลือกผู้แทนขาย</label>
                 <select name="salesRep" class="form-select form-select-sm select2-searchable">
-                    <option value="">-- ผู้แทนขายทุกคน --</option>
+                    <option value="">@(Model.IsRestrictedRep ? "-- ทุกผู้แทนที่รับผิดชอบ --" : "-- ผู้แทนขายทุกคน --")</option>
                     @foreach (var r in reps)
                     {
                         if (r == Model.SelectedSalesRep) { <option value="@r" selected>@r</option> }
