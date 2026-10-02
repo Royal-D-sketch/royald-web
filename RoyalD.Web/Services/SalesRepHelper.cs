@@ -17,24 +17,22 @@ namespace RoyalD.Web.Services
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
 
-                var billRepsTask = db.SalesBills.AsNoTracking()
+                var billReps = await db.SalesBills.AsNoTracking()
                     .Where(b => !string.IsNullOrEmpty(b.SalesRep))
                     .Select(b => b.SalesRep!)
                     .Distinct()
                     .ToListAsync();
 
-                var debtRepsTask = db.OutstandingDebts.AsNoTracking()
+                var debtReps = await db.OutstandingDebts.AsNoTracking()
                     .Where(d => !string.IsNullOrEmpty(d.SalesRep))
                     .Select(d => d.SalesRep!)
                     .Distinct()
                     .ToListAsync();
 
-                var userRepsTask = db.Users.AsNoTracking()
+                var userReps = await db.Users.AsNoTracking()
                     .Where(u => !string.IsNullOrEmpty(u.SalesRepCode))
                     .Select(u => u.SalesRepCode!)
                     .ToListAsync();
-
-                await Task.WhenAll(billRepsTask, debtRepsTask, userRepsTask);
 
                 var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -52,9 +50,9 @@ namespace RoyalD.Web.Services
                     set.Add(s);
                 }
 
-                foreach (var r in billRepsTask.Result) AddIfValid(r);
-                foreach (var r in debtRepsTask.Result) AddIfValid(r);
-                foreach (var rawCode in userRepsTask.Result)
+                foreach (var r in billReps) AddIfValid(r);
+                foreach (var r in debtReps) AddIfValid(r);
+                foreach (var rawCode in userReps)
                 {
                     if (string.IsNullOrWhiteSpace(rawCode)) continue;
                     var parts = rawCode.Split(new[] { ',', ';', '/', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
