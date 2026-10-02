@@ -495,11 +495,19 @@
                                     var displayName = billName.Length >= masterName.Length ? billName : masterName;
                                     if (string.IsNullOrEmpty(displayName)) displayName = "-";
                                 }
-                                <div class="customer-name fw-bold text-dark" style="white-space: normal !important; word-break: break-word !important; line-height: 1.35; font-size: 0.92rem; min-width: 260px;">
+                                <div class="customer-name fw-bold text-dark" style="white-space: normal !important; word-break: break-word !important; line-height: 1.35; font-size: 0.92rem; min-width: 260px;" title="@(!string.IsNullOrEmpty(d.Customer?.Address) ? $"ที่อยู่: {d.Customer.Address}" : "")">
                                     @displayName
                                 </div>
                                 <small class="text-muted d-block font-monospace mt-1" style="font-size: 0.74rem;">
                                     รหัส: @(d.Customer?.CustomerCode ?? d.CustomerCode)
+                                    @if (!string.IsNullOrEmpty(d.Customer?.TaxId))
+                                    {
+                                        <span class="ms-1 text-secondary" title="เลขประจำตัวผู้เสียภาษี">| ภาษี: @d.Customer.TaxId</span>
+                                    }
+                                    @if (!string.IsNullOrEmpty(d.Customer?.Phone))
+                                    {
+                                        <span class="ms-1 text-primary" title="เบอร์โทรศัพท์"><i class="bi bi-telephone-fill"></i> @d.Customer.Phone</span>
+                                    }
                                 </small>
                             </td>
 

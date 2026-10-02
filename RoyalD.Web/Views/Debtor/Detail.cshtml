@@ -188,13 +188,38 @@ else if (overdue120)
                     <div class="col-4 text-muted fw-semibold">ชื่อลูกค้า/ร้านค้า</div>
                     <div class="col-8 fw-bold text-dark fs-6">@Model.CustomerName</div>
                 </div>
+                @if (!string.IsNullOrEmpty(Model.Customer?.TaxId))
+                {
+                    <div class="row mb-2">
+                        <div class="col-4 text-muted fw-semibold">เลขผู้เสียภาษี</div>
+                        <div class="col-8"><span class="badge bg-light text-dark border font-monospace fs-6">@Model.Customer.TaxId</span> @(!string.IsNullOrEmpty(Model.Customer.Branch) ? $" (สาขา: {Model.Customer.Branch})" : "")</div>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.Customer?.Address))
+                {
+                    <div class="row mb-2">
+                        <div class="col-4 text-muted fw-semibold">ที่อยู่ลูกค้า</div>
+                        <div class="col-8 small text-dark">@Model.Customer.Address</div>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.Customer?.DeliveryAddress) && Model.Customer.DeliveryAddress != Model.Customer.Address)
+                {
+                    <div class="row mb-2">
+                        <div class="col-4 text-muted fw-semibold">ที่อยู่จัดส่ง</div>
+                        <div class="col-8 small text-dark">@Model.Customer.DeliveryAddress</div>
+                    </div>
+                }
                 <div class="row mb-2">
                     <div class="col-4 text-muted">เขต/อำเภอ</div>
-                    <div class="col-8">@(!string.IsNullOrEmpty(Model.District) ? Model.District : "-")</div>
+                    <div class="col-8">@(!string.IsNullOrEmpty(Model.District) ? Model.District : (!string.IsNullOrEmpty(Model.Customer?.District) ? Model.Customer.District : "-"))</div>
                 </div>
                 <div class="row mb-2">
                     <div class="col-4 text-muted">จังหวัด</div>
-                    <div class="col-8">@(!string.IsNullOrEmpty(Model.Province) ? Model.Province : "-")</div>
+                    <div class="col-8">@(!string.IsNullOrEmpty(Model.Province) ? Model.Province : (!string.IsNullOrEmpty(Model.Customer?.Province) ? Model.Customer.Province : "-"))</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-4 text-muted">เบอร์โทรศัพท์</div>
+                    <div class="col-8 fw-semibold text-primary">@(!string.IsNullOrEmpty(Model.Customer?.Phone) ? Model.Customer.Phone : "-")</div>
                 </div>
                 <div class="row mb-2">
                     <div class="col-4 text-muted">ผู้แทนขาย</div>

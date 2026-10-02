@@ -167,9 +167,21 @@
                     <table class="table table-borderless table-sm mb-0">
                         <tr><td class="fw-semibold text-muted" width="140">ชื่อลูกค้า:</td><td class="fw-bold text-dark">@Model.CustomerName</td></tr>
                         <tr><td class="fw-semibold text-muted">รหัสลูกค้า:</td><td><code>@Model.CustomerCode</code></td></tr>
-                        <tr><td class="fw-semibold text-muted">เขต/อำเภอ:</td><td>@(!string.IsNullOrEmpty(Model.District) ? Model.District : "-")</td></tr>
-                        <tr><td class="fw-semibold text-muted">จังหวัด:</td><td>@(!string.IsNullOrEmpty(Model.Province) ? Model.Province : "-")</td></tr>
-                        <tr><td class="fw-semibold text-muted">เบอร์โทร:</td><td>@(!string.IsNullOrEmpty(Model.Customer?.Phone) ? Model.Customer.Phone : (!string.IsNullOrEmpty(Model.Phone) ? Model.Phone : "-"))</td></tr>
+                        @if (!string.IsNullOrEmpty(Model.Customer?.TaxId))
+                        {
+                            <tr><td class="fw-semibold text-muted">เลขผู้เสียภาษี:</td><td><span class="badge bg-light text-dark border font-monospace fs-6">@Model.Customer.TaxId</span> @(!string.IsNullOrEmpty(Model.Customer.Branch) ? $" (สาขา: {Model.Customer.Branch})" : "")</td></tr>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Customer?.Address))
+                        {
+                            <tr><td class="fw-semibold text-muted align-top">ที่อยู่ลูกค้า:</td><td class="text-dark small">@Model.Customer.Address</td></tr>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Customer?.DeliveryAddress) && Model.Customer.DeliveryAddress != Model.Customer.Address)
+                        {
+                            <tr><td class="fw-semibold text-muted align-top">ที่อยู่จัดส่ง:</td><td class="text-dark small">@Model.Customer.DeliveryAddress</td></tr>
+                        }
+                        <tr><td class="fw-semibold text-muted">เขต/อำเภอ:</td><td>@(!string.IsNullOrEmpty(Model.District) ? Model.District : (!string.IsNullOrEmpty(Model.Customer?.District) ? Model.Customer.District : "-"))</td></tr>
+                        <tr><td class="fw-semibold text-muted">จังหวัด:</td><td>@(!string.IsNullOrEmpty(Model.Province) ? Model.Province : (!string.IsNullOrEmpty(Model.Customer?.Province) ? Model.Customer.Province : "-"))</td></tr>
+                        <tr><td class="fw-semibold text-muted">เบอร์โทร:</td><td class="fw-semibold text-primary">@(!string.IsNullOrEmpty(Model.Customer?.Phone) ? Model.Customer.Phone : (!string.IsNullOrEmpty(Model.Phone) ? Model.Phone : "-"))</td></tr>
                     </table>
                 </div>
                 <div class="col-md-6">

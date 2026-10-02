@@ -291,13 +291,24 @@
                         </td>
                         <td>@b.BillDate.ToString("dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture)</td>
                         <td>@(!string.IsNullOrEmpty(b.PoNumber) ? b.PoNumber : "-")</td>
-                        <td><code>@b.CustomerCode</code></td>
-                        <td class="fw-semibold text-dark col-customer-name" style="min-width: 260px; white-space: normal !important; word-break: break-word !important;">@{
+                        <td>
+                            <code>@b.CustomerCode</code>
+                            @if (!string.IsNullOrEmpty(b.Customer?.TaxId))
+                            {
+                                <small class="text-muted d-block" style="font-size:0.72rem;">ภาษี: @b.Customer.TaxId</small>
+                            }
+                        </td>
+                        <td class="fw-semibold text-dark col-customer-name" style="min-width: 260px; white-space: normal !important; word-break: break-word !important;" title="@(!string.IsNullOrEmpty(b.Customer?.Address) ? $"ที่อยู่: {b.Customer.Address}" : "")">@{
                             var sbBillName   = b.CustomerName ?? "";
                             var sbMasterName = b.Customer?.Name ?? "";
                             var sbDisplayName = sbBillName.Length >= sbMasterName.Length ? sbBillName : sbMasterName;
                             if (string.IsNullOrEmpty(sbDisplayName)) sbDisplayName = "-";
-                        }@sbDisplayName</td>
+                        }@sbDisplayName
+                        @if (!string.IsNullOrEmpty(b.Customer?.Phone) || !string.IsNullOrEmpty(b.Phone))
+                        {
+                            <small class="text-primary d-block fw-normal" style="font-size:0.74rem;"><i class="bi bi-telephone-fill"></i> @(!string.IsNullOrEmpty(b.Customer?.Phone) ? b.Customer.Phone : b.Phone)</small>
+                        }
+                        </td>
                         <td>@(!string.IsNullOrEmpty(b.District) ? b.District : "-")</td>
                         <td>@(!string.IsNullOrEmpty(b.Province) ? b.Province : "-")</td>
                         <td class="text-center">
