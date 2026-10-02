@@ -63,15 +63,13 @@ namespace RoyalD.Web.Controllers
 
             var effectiveRepParam = filterReps != null && filterReps.Count > 0 ? string.Join(",", filterReps) : null;
 
-            if (isRestricted && !string.IsNullOrEmpty(userAllowedRegion))
-            {
-                region = userAllowedRegion;
-            }
+            var areaScope = RegionHelper.ResolveAreaFilter(
+                isRestricted, userAllowedRegion, userAllowedProvinces, region, province);
 
             var debts = await _svc.GetDebtorsAsync(
                 search: search,
-                region: region,
-                province: province,
+                region: areaScope.SelectedRegion,
+                province: areaScope.SelectedProvince,
                 salesRep: effectiveRepParam,
                 status: null, // we will filter status locally
                 credit: credit,
@@ -170,32 +168,22 @@ namespace RoyalD.Web.Controllers
             ViewBag.PoSearch = poSearch;
             ViewBag.SelectedSalesRep = selectedRepForUi;
             ViewBag.SelectedStatus = status;
-            ViewBag.SelectedRegion = isRestricted && !string.IsNullOrEmpty(userAllowedRegion) ? userAllowedRegion : region;
-            ViewBag.SelectedProvince = province;
+            ViewBag.SelectedRegion = areaScope.SelectedRegion;
+            ViewBag.SelectedProvince = areaScope.SelectedProvince;
             ViewBag.SelectedDistrict = district;
             ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
             ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
             ViewBag.SelectedCredit = credit;
             ViewBag.IsRestricted = isRestricted;
             ViewBag.AssignedSalesRep = currentUser?.SalesRepCode;
-            ViewBag.IsLockedRegion = !string.IsNullOrEmpty(userAllowedRegion);
-            ViewBag.IsLockedProvince = !string.IsNullOrEmpty(userAllowedProvinces);
+            ViewBag.IsLockedRegion = false;
+            ViewBag.IsLockedProvince = false;
             ViewBag.IsLockedDistrict = !string.IsNullOrEmpty(userAllowedDistricts);
-            ViewBag.Regions = !string.IsNullOrEmpty(userAllowedRegion) ? new List<string> { userAllowedRegion } : RegionHelper.GetRegions();
-            
-            if (!string.IsNullOrEmpty(userAllowedProvinces))
-            {
-                ViewBag.Provinces = userAllowedProvinces.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim()).ToList();
-            }
-            else if (!string.IsNullOrEmpty(userAllowedRegion))
-            {
-                ViewBag.Provinces = RegionHelper.GetDisplayProvinces(userAllowedRegion);
-            }
-            else
-            {
-                ViewBag.Provinces = RegionHelper.GetDisplayProvinces(region);
-            }
-
+            ViewBag.Regions = areaScope.AvailableRegions;
+            ViewBag.Provinces = areaScope.AvailableProvinces;
+            ViewBag.HasRegionRestriction = areaScope.HasRegionRestriction;
+            ViewBag.HasProvinceRestriction = areaScope.HasProvinceRestriction;
+            ViewBag.RegionProvincesMap = areaScope.RegionProvincesMap;
             ViewBag.AllProvincesMap = RegionHelper.DisplayProvinces;
 
 
@@ -373,9 +361,10 @@ namespace RoyalD.Web.Controllers
 
             var (filterReps, selectedRepForUi, _) = SalesRepHelper.ResolveFilter(isRestricted, currentUser?.SalesRepCode, salesRep, rawDbReps);
             var effectiveRepParam = filterReps != null && filterReps.Count > 0 ? string.Join(",", filterReps) : null;
-            if (isRestricted && !string.IsNullOrEmpty(userAllowedRegion)) region = userAllowedRegion;
+            var areaScope = RegionHelper.ResolveAreaFilter(
+                isRestricted, userAllowedRegion, userAllowedProvinces, region, province);
 
-            var debts = await _svc.GetDebtorsAsync(search, region, province, effectiveRepParam, null, credit, userAllowedRegion, userAllowedProvinces, userAllowedDistricts);
+            var debts = await _svc.GetDebtorsAsync(search, areaScope.SelectedRegion, areaScope.SelectedProvince, effectiveRepParam, null, credit, userAllowedRegion, userAllowedProvinces, userAllowedDistricts);
 
             var today = DateTime.Today;
             if (string.Equals(status, "outstanding", StringComparison.OrdinalIgnoreCase))
@@ -444,15 +433,13 @@ namespace RoyalD.Web.Controllers
 
             var effectiveRepParam = filterReps != null && filterReps.Count > 0 ? string.Join(",", filterReps) : null;
 
-            if (isRestricted && !string.IsNullOrEmpty(userAllowedRegion))
-            {
-                region = userAllowedRegion;
-            }
+            var areaScope = RegionHelper.ResolveAreaFilter(
+                isRestricted, userAllowedRegion, userAllowedProvinces, region, province);
 
             var debts = await _svc.GetDebtorsAsync(
                 search: search,
-                region: region,
-                province: province,
+                region: areaScope.SelectedRegion,
+                province: areaScope.SelectedProvince,
                 salesRep: effectiveRepParam,
                 status: null, // we will filter status locally
                 credit: credit,

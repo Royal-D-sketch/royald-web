@@ -126,26 +126,12 @@ namespace RoyalD.Web.Controllers
 
             var q = _db.SalesBills.AsNoTracking().AsQueryable();
 
-            // Combined Region + Province Permission logic
-            if (!string.IsNullOrEmpty(userAllowedRegion) || !string.IsNullOrEmpty(userAllowedProvinces))
+            var areaScope = RegionHelper.ResolveAreaFilter(
+                isRestricted, userAllowedRegion, userAllowedProvinces, region, province);
+
+            if (areaScope.EffectiveProvinceVariants != null && areaScope.EffectiveProvinceVariants.Count > 0)
             {
-                var combinedAllowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                if (!string.IsNullOrEmpty(userAllowedRegion))
-                {
-                    var regionMatch = RegionHelper.GetMatchingProvinces(userAllowedRegion);
-                    foreach (var p in regionMatch) combinedAllowed.Add(p);
-                }
-                if (!string.IsNullOrEmpty(userAllowedProvinces))
-                {
-                    var rawList = userAllowedProvinces.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim());
-                    var provMatch = RegionHelper.ExpandProvinceVariants(rawList);
-                    foreach (var p in provMatch) combinedAllowed.Add(p);
-                }
-                if (combinedAllowed.Count > 0)
-                {
-                    var allowedList = combinedAllowed.ToList();
-                    q = q.Where(b => allowedList.Contains(b.Province));
-                }
+                q = q.Where(b => areaScope.EffectiveProvinceVariants.Contains(b.Province));
             }
 
             if (!string.IsNullOrEmpty(userAllowedDistricts))
@@ -155,21 +141,6 @@ namespace RoyalD.Web.Controllers
                 if (allowedDistList != null && allowedDistList.Count > 0)
                 {
                     q = q.Where(b => allowedDistList.Contains(b.District));
-                }
-            }
-
-            // UI filter selection (when user searches/filters on page)
-            if (!string.IsNullOrEmpty(province))
-            {
-                var filterVariants = RegionHelper.ExpandProvinceVariants(new[] { province });
-                q = q.Where(b => filterVariants.Contains(b.Province) || b.Province.Contains(province));
-            }
-            else if (!string.IsNullOrEmpty(region) && !isRestricted)
-            {
-                var matchProvs = RegionHelper.GetMatchingProvinces(region);
-                if (matchProvs != null && matchProvs.Count > 0)
-                {
-                    q = q.Where(b => matchProvs.Contains(b.Province));
                 }
             }
 
@@ -430,30 +401,21 @@ namespace RoyalD.Web.Controllers
             ViewBag.Status = status;
             ViewBag.Search = search;
             ViewBag.PoSearch = poSearch;
-            ViewBag.SelectedRegion = isRestricted && !string.IsNullOrEmpty(userAllowedRegion) ? userAllowedRegion : region;
+            ViewBag.SelectedRegion = areaScope.SelectedRegion;
             ViewBag.SalesRep = selectedRepForUi;
             ViewBag.Month = month;
             ViewBag.IsRestricted = isRestricted;
             ViewBag.AssignedSalesRep = currentUser?.SalesRepCode;
-            ViewBag.IsLockedRegion = isRestricted;
-            ViewBag.IsLockedProvince = !string.IsNullOrEmpty(userAllowedProvinces) && !userAllowedProvinces.Contains(',');
+            ViewBag.IsLockedRegion = false;
+            ViewBag.IsLockedProvince = false;
             ViewBag.IsLockedDistrict = !string.IsNullOrEmpty(userAllowedDistricts);
-            ViewBag.Regions = RegionHelper.GetRegions();
-            
-            if (!string.IsNullOrEmpty(userAllowedProvinces))
-            {
-                ViewBag.Provinces = userAllowedProvinces.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim()).ToList();
-            }
-            else if (!string.IsNullOrEmpty(userAllowedRegion))
-            {
-                ViewBag.Provinces = RegionHelper.GetDisplayProvinces(userAllowedRegion);
-            }
-            else
-            {
-                ViewBag.Provinces = RegionHelper.GetDisplayProvinces(region);
-            }
-            
+            ViewBag.Regions = areaScope.AvailableRegions;
+            ViewBag.Provinces = areaScope.AvailableProvinces;
+            ViewBag.SelectedProvince = areaScope.SelectedProvince;
+            ViewBag.HasRegionRestriction = areaScope.HasRegionRestriction;
+            ViewBag.HasProvinceRestriction = areaScope.HasProvinceRestriction;
             ViewBag.AllProvincesMap = RegionHelper.DisplayProvinces;
+            ViewBag.RegionProvincesMap = areaScope.RegionProvincesMap;
 
             var assignedReps = isRestricted && !string.IsNullOrWhiteSpace(currentUser?.SalesRepCode)
                 ? SalesRepHelper.GetAssignedSalesReps(currentUser.SalesRepCode, allDbReps)
@@ -636,25 +598,12 @@ namespace RoyalD.Web.Controllers
 
             var q = _db.SalesBills.AsNoTracking().AsQueryable();
 
-            if (!string.IsNullOrEmpty(userAllowedRegion) || !string.IsNullOrEmpty(userAllowedProvinces))
+            var areaScope = RegionHelper.ResolveAreaFilter(
+                isRestricted, userAllowedRegion, userAllowedProvinces, region, province);
+
+            if (areaScope.EffectiveProvinceVariants != null && areaScope.EffectiveProvinceVariants.Count > 0)
             {
-                var combinedAllowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                if (!string.IsNullOrEmpty(userAllowedRegion))
-                {
-                    var regionMatch = RegionHelper.GetMatchingProvinces(userAllowedRegion);
-                    foreach (var p in regionMatch) combinedAllowed.Add(p);
-                }
-                if (!string.IsNullOrEmpty(userAllowedProvinces))
-                {
-                    var rawList = userAllowedProvinces.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim());
-                    var provMatch = RegionHelper.ExpandProvinceVariants(rawList);
-                    foreach (var p in provMatch) combinedAllowed.Add(p);
-                }
-                if (combinedAllowed.Count > 0)
-                {
-                    var allowedList = combinedAllowed.ToList();
-                    q = q.Where(b => allowedList.Contains(b.Province));
-                }
+                q = q.Where(b => areaScope.EffectiveProvinceVariants.Contains(b.Province));
             }
 
             if (!string.IsNullOrEmpty(userAllowedDistricts))
@@ -664,20 +613,6 @@ namespace RoyalD.Web.Controllers
                 if (allowedDistList != null && allowedDistList.Count > 0)
                 {
                     q = q.Where(b => allowedDistList.Contains(b.District));
-                }
-            }
-
-            if (!string.IsNullOrEmpty(province))
-            {
-                var filterVariants = RegionHelper.ExpandProvinceVariants(new[] { province });
-                q = q.Where(b => filterVariants.Contains(b.Province) || b.Province.Contains(province));
-            }
-            else if (!string.IsNullOrEmpty(region) && !isRestricted)
-            {
-                var matchProvs = RegionHelper.GetMatchingProvinces(region);
-                if (matchProvs != null && matchProvs.Count > 0)
-                {
-                    q = q.Where(b => matchProvs.Contains(b.Province));
                 }
             }
 
@@ -920,10 +855,57 @@ namespace RoyalD.Web.Controllers
                 return Forbid();
             }
 
+            bool isRestricted = currentUser != null && currentUser.Role != "admin";
+            string? userAllowedRegion = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedRegion) ? currentUser.AllowedRegion : null;
+            string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
+            string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
+
             var q = _db.SalesBills.AsNoTracking().AsQueryable();
-            if (!string.IsNullOrEmpty(salesRep)) q = q.Where(b => b.SalesRep.Contains(salesRep));
+
+            var areaScope = RegionHelper.ResolveAreaFilter(
+                isRestricted, userAllowedRegion, userAllowedProvinces, region, province);
+
+            if (areaScope.EffectiveProvinceVariants != null && areaScope.EffectiveProvinceVariants.Count > 0)
+            {
+                q = q.Where(b => areaScope.EffectiveProvinceVariants.Contains(b.Province));
+            }
+
+            if (!string.IsNullOrEmpty(userAllowedDistricts))
+            {
+                var rawDist = userAllowedDistricts.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(d => d.Trim());
+                var allowedDistList = RegionHelper.ExpandDistrictVariants(rawDist);
+                if (allowedDistList != null && allowedDistList.Count > 0)
+                {
+                    q = q.Where(b => allowedDistList.Contains(b.District));
+                }
+            }
+
+            var allDbReps = await _cache.GetOrCreateAsync("all_salesbill_reps", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                var raw = await _db.SalesBills.AsNoTracking()
+                    .Select(b => b.SalesRep)
+                    .Where(s => !string.IsNullOrEmpty(s))
+                    .Distinct()
+                    .ToListAsync();
+
+                return raw
+                    .Where(s => !string.IsNullOrWhiteSpace(s) &&
+                                !s.Contains("5%") &&
+                                !s.Contains("page", StringComparison.OrdinalIgnoreCase) &&
+                                !s.Contains("หน้า", StringComparison.OrdinalIgnoreCase) &&
+                                !s.All(char.IsDigit))
+                    .OrderBy(s => s)
+                    .ToList();
+            }) ?? new List<string>();
+
+            var (filterReps, _, _) = SalesRepHelper.ResolveFilter(isRestricted, currentUser?.SalesRepCode, salesRep, allDbReps);
+            if (filterReps != null && filterReps.Count > 0)
+            {
+                q = q.Where(b => filterReps.Contains(b.SalesRep));
+            }
+
             if (!string.IsNullOrEmpty(search)) q = q.Where(b => b.BillNo.Contains(search) || b.CustomerName.Contains(search) || b.CustomerCode.Contains(search));
-            if (!string.IsNullOrEmpty(province)) q = q.Where(b => b.Province.Contains(province));
             if (!string.IsNullOrEmpty(month)) q = q.Where(b => b.SourceMonth == month);
             if (startDate.HasValue) q = q.Where(b => b.BillDate >= startDate.Value.Date);
             if (endDate.HasValue) q = q.Where(b => b.BillDate <= endDate.Value.Date.AddDays(1).AddTicks(-1));

@@ -156,35 +156,23 @@
         </div>
         <div class="col-md-2">
             <label class="form-label small fw-bold text-primary mb-1">🗺️ ภาค/ภูมิภาค</label>
-            <select name="region" id="region-select" class="form-select form-select-sm" onchange="onRegionChange()" @(isLockedRegion ? "disabled" : "")>
-                @if (!isLockedRegion) {
-                    <option value="">-- ทุกภาค --</option>
-                }
+            <select name="region" id="region-select" class="form-select form-select-sm" onchange="onRegionChange()">
+                <option value="">@(ViewBag.HasRegionRestriction == true ? "-- ทุกภาคที่รับผิดชอบ --" : "-- ทุกภาค --")</option>
                 @foreach (var reg in regions) {
-                    if (reg == ViewBag.SelectedRegion) { <option value="@reg" selected>@reg</option> }
+                    if (reg == (string)ViewBag.SelectedRegion) { <option value="@reg" selected>@reg</option> }
                     else { <option value="@reg">@reg</option> }
                 }
             </select>
-            @if (isLockedRegion) { <input type="hidden" name="region" value="@ViewBag.SelectedRegion" /> }
         </div>
         <div class="col-md-2">
             <label class="form-label small fw-bold text-primary mb-1">📍 จังหวัด</label>
-            @if (isLockedProvince && provinces.Count == 1)
-            {
-                <input type="text" class="form-control form-control-sm bg-light fw-bold text-primary" value="@ViewBag.SelectedProvince" readonly />
-                <input type="hidden" name="province" value="@ViewBag.SelectedProvince" />
-            }
-            else
-            {
-                <input type="text" list="salesBillProvinceList" name="province" id="province-select" class="form-control form-control-sm"
-                       placeholder="ทุกจังหวัด" value="@ViewBag.SelectedProvince" />
-                <datalist id="salesBillProvinceList">
-                    <option value="">-- ทุกจังหวัด --</option>
-                    @foreach (var p in provinces) {
-                        <option value="@p">@p</option>
-                    }
-                </datalist>
-            }
+            <select name="province" id="province-select" class="form-select form-select-sm select2-searchable">
+                <option value="">@(ViewBag.HasProvinceRestriction == true ? "-- ทุกจังหวัดที่รับผิดชอบ --" : "-- ทุกจังหวัด --")</option>
+                @foreach (var p in provinces) {
+                    if (p == (string)ViewBag.SelectedProvince) { <option value="@p" selected>@p</option> }
+                    else { <option value="@p">@p</option> }
+                }
+            </select>
         </div>
         <div class="col-md-2">
             <label class="form-label small fw-bold text-primary mb-1">👔 ผู้แทนขาย@(ViewBag.IsRestricted == true ? " (ตามสิทธิ์)" : "")</label>
@@ -439,17 +427,17 @@ function changePageSize(sz) {
 </script>
 
 <script>
-const allProvincesMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(allProvincesMap));
+const allProvincesMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.RegionProvincesMap ?? allProvincesMap));
+const allAvailableProvinces = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(provinces));
+const hasProvRestriction = @(ViewBag.HasProvinceRestriction == true ? "true" : "false");
 
 function onRegionChange() {
     const reg = document.getElementById('region-select').value;
     const pSel = document.getElementById('province-select');
-    pSel.innerHTML = '<option value="">-- ทุกจังหวัด --</option>';
+    pSel.innerHTML = '<option value="">' + (hasProvRestriction ? '-- ทุกจังหวัดที่รับผิดชอบ --' : '-- ทุกจังหวัด --') + '</option>';
     let provList = [];
     if (!reg) {
-        Object.values(allProvincesMap).forEach(list => {
-            list.forEach(p => { if (!provList.includes(p)) provList.push(p); });
-        });
+        provList = allAvailableProvinces;
     } else if (allProvincesMap[reg]) {
         provList = allProvincesMap[reg];
     }
@@ -459,6 +447,9 @@ function onRegionChange() {
         opt.textContent = p;
         pSel.appendChild(opt);
     });
+    if (window.jQuery && $(pSel).data('select2')) {
+        $(pSel).val('').trigger('change.select2');
+    }
 }
 </script>
 @Html.AntiForgeryToken()

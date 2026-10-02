@@ -274,37 +274,27 @@
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small fw-bold mb-1" style="color:#475569;">🗺️ ภาค/ภูมิภาค</label>
-                    <select name="region" id="debtor-region-select" class="form-select form-select-sm" onchange="onDebtorRegionChange()" @(isLockedRegion ? "disabled" : "") style="border-color:#cbd5e1;">
-                        @if (!isLockedRegion) {
-                            <option value="">-- ทุกภาค / ทุกพื้นที่ --</option>
+                    <select name="region" id="debtor-region-select" class="form-select form-select-sm" onchange="onDebtorRegionChange()" style="border-color:#cbd5e1;">
+                        <option value="">@(ViewBag.HasRegionRestriction == true ? "-- ทุกภาคที่รับผิดชอบ --" : "-- ทุกภาค / ทุกพื้นที่ --")</option>
+                        @if (ViewBag.HasRegionRestriction != true) {
                             <option value="กรุงเทพฯ" selected="@(ViewBag.SelectedRegion == "กรุงเทพฯ" || ViewBag.SelectedRegion == "กรุงเทพ")">🏙️ กรุงเทพฯ</option>
                             <option value="ต่างจังหวัด" selected="@(ViewBag.SelectedRegion == "ต่างจังหวัด")">🌾 ต่างจังหวัด (ทุกภาค)</option>
                         }
                         @foreach (var reg in regions) {
-                            if (reg == ViewBag.SelectedRegion) { <option value="@reg" selected>@reg</option> }
+                            if (reg == (string)ViewBag.SelectedRegion) { <option value="@reg" selected>@reg</option> }
                             else { <option value="@reg">@reg</option> }
                         }
                     </select>
-                    @if (isLockedRegion) { <input type="hidden" name="region" value="@ViewBag.SelectedRegion" /> }
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small fw-bold mb-1" style="color:#475569;">📍 จังหวัด (พิมพ์หรือเลือก)</label>
-                    @if (isLockedProvince && provinces.Count == 1)
-                    {
-                        <input type="text" class="form-control form-control-sm bg-light fw-bold text-primary" value="@ViewBag.SelectedProvince" readonly style="border-color:#cbd5e1;" />
-                        <input type="hidden" name="province" value="@ViewBag.SelectedProvince" />
-                    }
-                    else
-                    {
-                        <input type="text" list="debtorProvinceList" name="province" id="debtor-province-select" class="form-control form-control-sm"
-                               placeholder="🔍 พิมพ์ชื่อจังหวัด (เช่น น, เชียง)..." value="@ViewBag.SelectedProvince" style="border-color:#cbd5e1;" />
-                        <datalist id="debtorProvinceList">
-                            <option value="">-- ทุกจังหวัด --</option>
-                            @foreach (var prov in provinces) {
-                                <option value="@prov">@prov</option>
-                            }
-                        </datalist>
-                    }
+                    <label class="form-label small fw-bold mb-1" style="color:#475569;">📍 จังหวัด</label>
+                    <select name="province" id="debtor-province-select" class="form-select form-select-sm select2-searchable" style="border-color:#cbd5e1;">
+                        <option value="">@(ViewBag.HasProvinceRestriction == true ? "-- ทุกจังหวัดที่รับผิดชอบ --" : "-- ทุกจังหวัด --")</option>
+                        @foreach (var prov in provinces) {
+                            if (prov == (string)ViewBag.SelectedProvince) { <option value="@prov" selected>@prov</option> }
+                            else { <option value="@prov">@prov</option> }
+                        }
+                    </select>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small fw-bold mb-1" style="color:#475569;">👤 ผู้แทนขาย@(ViewBag.IsRestricted == true ? " (ตามสิทธิ์)" : "")</label>
@@ -666,7 +656,9 @@
 
 @section Scripts {
 <script>
-    const debtorProvincesMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(allProvincesMap));
+    const debtorProvincesMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.RegionProvincesMap ?? allProvincesMap));
+    const allDebtorProvinces = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(provinces));
+    const hasProvRestriction = @(ViewBag.HasProvinceRestriction == true ? "true" : "false");
     const selectedDebtorProv = "@ViewBag.SelectedProvince";
 
     function onDebtorRegionChange() {
@@ -674,23 +666,28 @@
         const provSelect = document.getElementById('debtor-province-select');
         const selectedRegion = regionSelect ? regionSelect.value : '';
         
-        provSelect.innerHTML = '<option value="">-- ทุกจังหวัด --</option>';
+        provSelect.innerHTML = '<option value="">' + (hasProvRestriction ? '-- ทุกจังหวัดที่รับผิดชอบ --' : '-- ทุกจังหวัด --') + '</option>';
         let list = [];
         if (!selectedRegion) {
-            Object.values(debtorProvincesMap).forEach(arr => {
-                arr.forEach(p => { if (!list.includes(p)) list.push(p); });
-            });
+            list = allDebtorProvinces;
         } else if (debtorProvincesMap[selectedRegion]) {
             list = debtorProvincesMap[selectedRegion];
+        } else if (selectedRegion === 'กรุงเทพฯ' || selectedRegion === 'กรุงเทพ') {
+            list = ['กรุงเทพมหานคร'];
+        } else {
+            list = allDebtorProvinces;
         }
 
         list.sort().forEach(p => {
             const opt = document.createElement('option');
             opt.value = p;
             opt.textContent = p;
-            if (p === selectedDebtorProv) opt.selected = true;
             provSelect.appendChild(opt);
         });
+
+        if (window.jQuery && $(provSelect).data('select2')) {
+            $(provSelect).val('').trigger('change.select2');
+        }
     }
 
     function changePageSize(size) {

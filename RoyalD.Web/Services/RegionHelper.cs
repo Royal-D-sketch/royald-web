@@ -251,5 +251,197 @@ namespace RoyalD.Web.Services
             var bkkKeywords = new[] { "กรุงเทพ", "กทม", "bangkok", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสาคร", "นครปฐม" };
             return bkkKeywords.Any(k => combined.Contains(k));
         }
+
+        public static string CleanProvinceName(string p)
+        {
+            if (string.IsNullOrEmpty(p)) return "";
+            var s = p.Trim();
+            if (s.StartsWith("จ.", StringComparison.OrdinalIgnoreCase)) s = s.Substring(2).Trim();
+            else if (s.StartsWith("จังหวัด", StringComparison.OrdinalIgnoreCase)) s = s.Substring(6).Trim();
+            return s;
+        }
+
+        public static AreaFilterResult ResolveAreaFilter(
+            bool isRestricted,
+            string? userAllowedRegion,
+            string? userAllowedProvinces,
+            string? requestedRegion,
+            string? requestedProvince)
+        {
+            var res = new AreaFilterResult();
+
+            var assignedRegions = new List<string>();
+            if (isRestricted && !string.IsNullOrWhiteSpace(userAllowedRegion))
+            {
+                assignedRegions = userAllowedRegion
+                    .Split(new[] { ',', ';', '/', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(r => r.Trim())
+                    .Where(r => !string.IsNullOrEmpty(r))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+            }
+
+            var assignedProvinces = new List<string>();
+            if (isRestricted && !string.IsNullOrWhiteSpace(userAllowedProvinces))
+            {
+                assignedProvinces = userAllowedProvinces
+                    .Split(new[] { ',', ';', '/', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(p => p.Trim())
+                    .Where(p => !string.IsNullOrEmpty(p))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+            }
+
+            res.HasRegionRestriction = assignedRegions.Count > 0;
+            res.HasProvinceRestriction = assignedProvinces.Count > 0;
+
+            // 1. Available Regions for Dropdown
+            if (res.HasRegionRestriction)
+            {
+                res.AvailableRegions = assignedRegions;
+            }
+            else
+            {
+                res.AvailableRegions = GetRegions();
+            }
+
+            // 2. Resolve Selected Region
+            string? effectiveRegion = null;
+            if (!string.IsNullOrWhiteSpace(requestedRegion))
+            {
+                var reqTrim = requestedRegion.Trim();
+                if (res.HasRegionRestriction)
+                {
+                    var matched = assignedRegions.FirstOrDefault(r => 
+                        string.Equals(r, reqTrim, StringComparison.OrdinalIgnoreCase) ||
+                        r.IndexOf(reqTrim, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        reqTrim.IndexOf(r, StringComparison.OrdinalIgnoreCase) >= 0);
+                    if (matched != null)
+                    {
+                        effectiveRegion = matched;
+                    }
+                }
+                else
+                {
+                    effectiveRegion = reqTrim;
+                }
+            }
+            res.SelectedRegion = effectiveRegion ?? "";
+
+            // 3. Resolve Available Provinces for Dropdown
+            List<string> baseProvinces;
+            if (res.HasProvinceRestriction)
+            {
+                if (!string.IsNullOrEmpty(res.SelectedRegion))
+                {
+                    var regionProvs = GetMatchingProvinces(res.SelectedRegion);
+                    var matchedProvs = assignedProvinces.Where(p => regionProvs.Contains(p, StringComparer.OrdinalIgnoreCase)).ToList();
+                    baseProvinces = matchedProvs.Count > 0 ? matchedProvs : assignedProvinces;
+                }
+                else
+                {
+                    baseProvinces = assignedProvinces;
+                }
+            }
+            else if (!string.IsNullOrEmpty(res.SelectedRegion))
+            {
+                baseProvinces = GetDisplayProvinces(res.SelectedRegion);
+            }
+            else if (res.HasRegionRestriction)
+            {
+                baseProvinces = GetDisplayProvinces(string.Join(",", assignedRegions));
+            }
+            else
+            {
+                baseProvinces = AllThailandProvinces;
+            }
+            res.AvailableProvinces = baseProvinces.Distinct().OrderBy(p => p).ToList();
+
+            // 4. Resolve Selected Province
+            string? effectiveProvince = null;
+            if (!string.IsNullOrWhiteSpace(requestedProvince))
+            {
+                var provTrim = requestedProvince.Trim();
+                var matchedProv = res.AvailableProvinces.FirstOrDefault(p => 
+                    string.Equals(p, provTrim, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(CleanProvinceName(p), CleanProvinceName(provTrim), StringComparison.OrdinalIgnoreCase) ||
+                    p.Contains(provTrim, StringComparison.OrdinalIgnoreCase) ||
+                    provTrim.Contains(p, StringComparison.OrdinalIgnoreCase));
+                
+                if (matchedProv != null)
+                {
+                    effectiveProvince = matchedProv;
+                }
+                else if (!res.HasProvinceRestriction && !res.HasRegionRestriction)
+                {
+                    effectiveProvince = provTrim;
+                }
+            }
+            res.SelectedProvince = effectiveProvince ?? "";
+
+            // 5. Effective Province Variants to filter in DB Query
+            if (!string.IsNullOrEmpty(effectiveProvince))
+            {
+                res.EffectiveProvinceVariants = ExpandProvinceVariants(new[] { effectiveProvince });
+            }
+            else if (!string.IsNullOrEmpty(effectiveRegion))
+            {
+                var regProvs = GetMatchingProvinces(effectiveRegion);
+                if (res.HasProvinceRestriction)
+                {
+                    var expAssigned = ExpandProvinceVariants(assignedProvinces);
+                    res.EffectiveProvinceVariants = regProvs.Where(p => expAssigned.Contains(p)).ToList();
+                }
+                else
+                {
+                    res.EffectiveProvinceVariants = regProvs;
+                }
+            }
+            else if (res.HasProvinceRestriction)
+            {
+                res.EffectiveProvinceVariants = ExpandProvinceVariants(assignedProvinces);
+            }
+            else if (res.HasRegionRestriction)
+            {
+                res.EffectiveProvinceVariants = GetMatchingProvinces(string.Join(",", assignedRegions));
+            }
+            else
+            {
+                res.EffectiveProvinceVariants = null;
+            }
+
+            // 6. Populate RegionProvincesMap for cascaded dropdowns in UI
+            foreach (var r in res.AvailableRegions)
+            {
+                if (res.HasProvinceRestriction)
+                {
+                    var regProvs = GetMatchingProvinces(r);
+                    var matched = assignedProvinces.Where(p => regProvs.Contains(p, StringComparer.OrdinalIgnoreCase)).Distinct().OrderBy(p => p).ToList();
+                    res.RegionProvincesMap[r] = matched.Count > 0 ? matched : new List<string>();
+                }
+                else if (DisplayProvinces.TryGetValue(r, out var provList))
+                {
+                    res.RegionProvincesMap[r] = provList.OrderBy(p => p).ToList();
+                }
+                else
+                {
+                    res.RegionProvincesMap[r] = GetDisplayProvinces(r);
+                }
+            }
+
+            return res;
+        }
+    }
+
+    public class AreaFilterResult
+    {
+        public bool HasRegionRestriction { get; set; }
+        public bool HasProvinceRestriction { get; set; }
+        public List<string> AvailableRegions { get; set; } = new();
+        public string SelectedRegion { get; set; } = "";
+        public List<string> AvailableProvinces { get; set; } = new();
+        public string SelectedProvince { get; set; } = "";
+        public List<string>? EffectiveProvinceVariants { get; set; }
+        public Dictionary<string, List<string>> RegionProvincesMap { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     }
 }
