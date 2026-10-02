@@ -119,7 +119,8 @@ namespace RoyalD.Web.Controllers
 
             if (!string.IsNullOrEmpty(district))
             {
-                debts = debts.Where(d => !string.IsNullOrEmpty(d.District) && d.District.Contains(district)).ToList();
+                var distVariants = RegionHelper.ExpandDistrictVariants(new[] { district });
+                debts = debts.Where(d => !string.IsNullOrEmpty(d.District) && (distVariants.Contains(d.District) || d.District.Contains(district) || distVariants.Any(v => d.District.Contains(v)))).ToList();
             }
 
             if (startDate.HasValue)
@@ -172,6 +173,7 @@ namespace RoyalD.Web.Controllers
             ViewBag.HasProvinceRestriction = areaScope.HasProvinceRestriction;
             ViewBag.RegionProvincesMap = areaScope.RegionProvincesMap;
             ViewBag.AllProvincesMap = RegionHelper.DisplayProvinces;
+            ViewBag.ProvinceDistricts = ThailandDistrictData.All;
 
 
 
@@ -289,7 +291,10 @@ namespace RoyalD.Web.Controllers
                 debts = debts.Where(d => d.Status == parsedStatus).ToList();
 
             if (!string.IsNullOrEmpty(district))
-                debts = debts.Where(d => !string.IsNullOrEmpty(d.District) && d.District.Contains(district)).ToList();
+            {
+                var distVariants = RegionHelper.ExpandDistrictVariants(new[] { district });
+                debts = debts.Where(d => !string.IsNullOrEmpty(d.District) && (distVariants.Contains(d.District) || d.District.Contains(district) || distVariants.Any(v => d.District.Contains(v)))).ToList();
+            }
             if (startDate.HasValue)
                 debts = debts.Where(d => d.BillDate >= startDate.Value.Date).ToList();
             if (endDate.HasValue)
@@ -365,7 +370,11 @@ namespace RoyalD.Web.Controllers
             else if (!string.IsNullOrEmpty(status) && Enum.TryParse<DebtStatus>(status, true, out var parsedStatus))
                 debts = debts.Where(d => d.Status == parsedStatus).ToList();
 
-            if (!string.IsNullOrEmpty(district)) debts = debts.Where(d => !string.IsNullOrEmpty(d.District) && d.District.Contains(district)).ToList();
+            if (!string.IsNullOrEmpty(district))
+            {
+                var distVariants = RegionHelper.ExpandDistrictVariants(new[] { district });
+                debts = debts.Where(d => !string.IsNullOrEmpty(d.District) && (distVariants.Contains(d.District) || d.District.Contains(district) || distVariants.Any(v => d.District.Contains(v)))).ToList();
+            }
             if (startDate.HasValue) debts = debts.Where(d => d.BillDate >= startDate.Value.Date).ToList();
             if (endDate.HasValue) debts = debts.Where(d => d.BillDate <= endDate.Value.Date.AddDays(1).AddTicks(-1)).ToList();
             if (!string.IsNullOrEmpty(poSearch)) debts = debts.Where(d => !string.IsNullOrEmpty(d.PoNumber) && d.PoNumber.Contains(poSearch)).ToList();
@@ -459,7 +468,10 @@ namespace RoyalD.Web.Controllers
                 debts = debts.Where(d => d.Status == parsedStatus).ToList();
 
             if (!string.IsNullOrEmpty(district))
-                debts = debts.Where(d => !string.IsNullOrEmpty(d.District) && d.District.Contains(district)).ToList();
+            {
+                var distVariants = RegionHelper.ExpandDistrictVariants(new[] { district });
+                debts = debts.Where(d => !string.IsNullOrEmpty(d.District) && (distVariants.Contains(d.District) || d.District.Contains(district) || distVariants.Any(v => d.District.Contains(v)))).ToList();
+            }
             if (startDate.HasValue)
                 debts = debts.Where(d => d.BillDate >= startDate.Value.Date).ToList();
             if (endDate.HasValue)

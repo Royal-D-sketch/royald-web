@@ -109,9 +109,10 @@ namespace RoyalD.Web.Controllers
             string? search, 
             string? region, 
             string? province, 
+            string? district,
             string? salesRep, 
             string? month, 
-            string? poSearch,
+            string? poSearch, 
             string? status,
             DateTime? startDate,
             DateTime? endDate,
@@ -142,6 +143,12 @@ namespace RoyalD.Web.Controllers
                 {
                     q = q.Where(b => allowedDistList.Contains(b.District));
                 }
+            }
+
+            if (!string.IsNullOrEmpty(district))
+            {
+                var distVariants = RegionHelper.ExpandDistrictVariants(new[] { district });
+                q = q.Where(b => distVariants.Contains(b.District) || b.District.Contains(district));
             }
 
             // Query distinct sales reps dynamically across all bills and debts (with cache for high performance)
@@ -395,6 +402,8 @@ namespace RoyalD.Web.Controllers
             ViewBag.Regions = areaScope.AvailableRegions;
             ViewBag.Provinces = areaScope.AvailableProvinces;
             ViewBag.SelectedProvince = areaScope.SelectedProvince;
+            ViewBag.SelectedDistrict = district ?? "";
+            ViewBag.ProvinceDistricts = ThailandDistrictData.All;
             ViewBag.HasRegionRestriction = areaScope.HasRegionRestriction;
             ViewBag.HasProvinceRestriction = areaScope.HasProvinceRestriction;
             ViewBag.AllProvincesMap = RegionHelper.DisplayProvinces;
@@ -560,6 +569,7 @@ namespace RoyalD.Web.Controllers
             string? search, 
             string? region, 
             string? province, 
+            string? district,
             string? salesRep, 
             string? month, 
             string? poSearch, 
@@ -597,6 +607,12 @@ namespace RoyalD.Web.Controllers
                 {
                     q = q.Where(b => allowedDistList.Contains(b.District));
                 }
+            }
+
+            if (!string.IsNullOrEmpty(district))
+            {
+                var distVariants = RegionHelper.ExpandDistrictVariants(new[] { district });
+                q = q.Where(b => distVariants.Contains(b.District) || b.District.Contains(district));
             }
 
             var allDbReps = await _cache.GetOrCreateAsync("all_salesbill_reps", async entry =>
@@ -825,6 +841,7 @@ namespace RoyalD.Web.Controllers
             string? search, 
             string? region, 
             string? province, 
+            string? district,
             string? salesRep, 
             string? month, 
             string? poSearch, 
@@ -861,6 +878,12 @@ namespace RoyalD.Web.Controllers
                 {
                     q = q.Where(b => allowedDistList.Contains(b.District));
                 }
+            }
+
+            if (!string.IsNullOrEmpty(district))
+            {
+                var distVariants = RegionHelper.ExpandDistrictVariants(new[] { district });
+                q = q.Where(b => distVariants.Contains(b.District) || b.District.Contains(district));
             }
 
             var allDbReps = await _cache.GetOrCreateAsync("all_salesbill_reps", async entry =>

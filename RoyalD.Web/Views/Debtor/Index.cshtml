@@ -235,19 +235,19 @@
                 <div class="ms-auto d-flex gap-2">
                     @if (ViewBag.SelectedStatus == "paid")
                     {
-                        <a href="@Url.Action("ExportPaidExcel", new { search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, credit = ViewBag.SelectedCredit })" 
+                        <a href="@Url.Action("ExportPaidExcel", new { search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, district = ViewBag.SelectedDistrict, credit = ViewBag.SelectedCredit })" 
                            class="btn btn-sm btn-success fw-bold shadow-sm px-3" style="background:#15803d; border-color:#15803d;">
                             <i class="bi bi-file-earmark-excel-fill me-1"></i> ดาวน์โหลด Excel (ชำระแล้ว)
                         </a>
                     }
                     else
                     {
-                        <a href="@Url.Action("ExportExcel", new { search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, status = ViewBag.SelectedStatus, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, credit = ViewBag.SelectedCredit })" 
+                        <a href="@Url.Action("ExportExcel", new { search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, status = ViewBag.SelectedStatus, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, district = ViewBag.SelectedDistrict, credit = ViewBag.SelectedCredit })" 
                            class="btn btn-sm btn-success fw-bold shadow-sm px-3" style="background:#15803d; border-color:#15803d;">
                             <i class="bi bi-file-earmark-excel-fill me-1"></i> ดาวน์โหลด Excel
                         </a>
                     }
-                    <a href="@Url.Action("ExportPdf", new { search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, status = ViewBag.SelectedStatus, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, credit = ViewBag.SelectedCredit })" 
+                    <a href="@Url.Action("ExportPdf", new { search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, status = ViewBag.SelectedStatus, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, district = ViewBag.SelectedDistrict, credit = ViewBag.SelectedCredit })" 
                        target="_blank" class="btn btn-sm btn-danger fw-bold shadow-sm px-3" style="background:#b91c1c; border-color:#b91c1c;">
                         <i class="bi bi-file-earmark-pdf-fill me-1"></i> ดาวน์โหลด PDF
                     </a>
@@ -288,11 +288,26 @@
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small fw-bold mb-1" style="color:#475569;">📍 จังหวัด</label>
-                    <select name="province" id="debtor-province-select" class="form-select form-select-sm select2-searchable" style="border-color:#cbd5e1;">
+                    <select name="province" id="debtor-province-select" class="form-select form-select-sm select2-searchable" onchange="onDebtorProvinceChange()" style="border-color:#cbd5e1;">
                         <option value="">@(ViewBag.HasProvinceRestriction == true ? "-- ทุกจังหวัดที่รับผิดชอบ --" : "-- ทุกจังหวัด --")</option>
                         @foreach (var prov in provinces) {
                             if (prov == (string)ViewBag.SelectedProvince) { <option value="@prov" selected>@prov</option> }
                             else { <option value="@prov">@prov</option> }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2" id="debtor-district-col" style="@(ViewBag.SelectedProvince == "กรุงเทพมหานคร" || ViewBag.SelectedProvince == "กรุงเทพฯ" || ViewBag.SelectedProvince == "กรุงเทพ" || ViewBag.SelectedRegion == "กรุงเทพฯ" || ViewBag.SelectedRegion == "กรุงเทพ" ? "" : "display:none;")">
+                    <label class="form-label small fw-bold mb-1" style="color:#475569;">🏙️ เขต/อำเภอ</label>
+                    <select name="district" id="debtor-district-select" class="form-select form-select-sm select2-searchable" style="border-color:#cbd5e1;">
+                        <option value="">-- ทุกเขต (กรุงเทพฯ) --</option>
+                        @if (ViewBag.ProvinceDistricts is Dictionary<string, List<string>> distMap && distMap.TryGetValue("กรุงเทพมหานคร", out var bkkDists))
+                        {
+                            foreach (var d in bkkDists)
+                            {
+                                string dLabel = "เขต" + d.Replace("เขต", "").Trim();
+                                bool isDSelected = (string)ViewBag.SelectedDistrict == d || (string)ViewBag.SelectedDistrict == dLabel;
+                                <option value="@dLabel" selected="@isDSelected">@dLabel</option>
+                            }
                         }
                     </select>
                 </div>
@@ -658,8 +673,46 @@
 <script>
     const debtorProvincesMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.RegionProvincesMap ?? allProvincesMap));
     const allDebtorProvinces = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(provinces));
+    const debtorDistrictsMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.ProvinceDistricts ?? new Dictionary<string, List<string>>()));
     const hasProvRestriction = @(ViewBag.HasProvinceRestriction == true ? "true" : "false");
     const selectedDebtorProv = "@ViewBag.SelectedProvince";
+
+    function onDebtorProvinceChange() {
+        const pSel = document.getElementById('debtor-province-select');
+        const selectedProv = pSel ? pSel.value : '';
+        const distCol = document.getElementById('debtor-district-col');
+        const distSel = document.getElementById('debtor-district-select');
+
+        const isBkk = selectedProv === 'กรุงเทพมหานคร' || selectedProv === 'กรุงเทพฯ' || selectedProv === 'กรุงเทพ' || selectedProv === 'กทม';
+
+        if (isBkk) {
+            if (distCol) distCol.style.display = '';
+            if (distSel) {
+                const currentDistVal = distSel.value;
+                distSel.innerHTML = '<option value="">-- ทุกเขต (กรุงเทพฯ) --</option>';
+                const bkkDists = debtorDistrictsMap['กรุงเทพมหานคร'] || [];
+                bkkDists.forEach(d => {
+                    const dLabel = 'เขต' + d.replace(/^เขต/, '').trim();
+                    const opt = document.createElement('option');
+                    opt.value = dLabel;
+                    opt.textContent = dLabel;
+                    if (currentDistVal === dLabel || currentDistVal === d) opt.selected = true;
+                    distSel.appendChild(opt);
+                });
+                if (window.jQuery && $(distSel).data('select2')) {
+                    $(distSel).trigger('change.select2');
+                }
+            }
+        } else {
+            if (distCol) distCol.style.display = 'none';
+            if (distSel) {
+                distSel.value = '';
+                if (window.jQuery && $(distSel).data('select2')) {
+                    $(distSel).val('').trigger('change.select2');
+                }
+            }
+        }
+    }
 
     function onDebtorRegionChange() {
         const regionSelect = document.getElementById('debtor-region-select');
@@ -688,7 +741,12 @@
         if (window.jQuery && $(provSelect).data('select2')) {
             $(provSelect).val('').trigger('change.select2');
         }
+        onDebtorProvinceChange();
     }
+
+    $(document).ready(function() {
+        $('#debtor-province-select').on('change', onDebtorProvinceChange);
+    });
 
     function changePageSize(size) {
         const url = new URL(window.location.href);

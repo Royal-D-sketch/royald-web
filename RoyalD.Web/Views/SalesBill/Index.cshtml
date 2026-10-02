@@ -102,10 +102,10 @@
     <div class="d-flex gap-2">
         @if (canDownload)
         {
-            <a href="/SalesBill/ExportExcel?search=@ViewBag.Search&region=@ViewBag.SelectedRegion&province=@ViewBag.SelectedProvince&salesRep=@ViewBag.SalesRep&month=@ViewBag.Month&poSearch=@ViewBag.PoSearch&status=@ViewBag.Status&startDate=@ViewBag.StartDate&endDate=@ViewBag.EndDate" class="btn btn-success btn-sm no-print shadow-sm">
+            <a href="/SalesBill/ExportExcel?search=@ViewBag.Search&region=@ViewBag.SelectedRegion&province=@ViewBag.SelectedProvince&district=@ViewBag.SelectedDistrict&salesRep=@ViewBag.SalesRep&month=@ViewBag.Month&poSearch=@ViewBag.PoSearch&status=@ViewBag.Status&startDate=@ViewBag.StartDate&endDate=@ViewBag.EndDate" class="btn btn-success btn-sm no-print shadow-sm">
                 <i class="bi bi-file-earmark-excel"></i> Export Excel
             </a>
-            <a href="/SalesBill/ExportCsv?search=@ViewBag.Search&region=@ViewBag.SelectedRegion&province=@ViewBag.SelectedProvince&salesRep=@ViewBag.SalesRep&month=@ViewBag.Month&poSearch=@ViewBag.PoSearch&status=@ViewBag.Status&startDate=@ViewBag.StartDate&endDate=@ViewBag.EndDate" class="btn btn-outline-success btn-sm no-print shadow-sm">
+            <a href="/SalesBill/ExportCsv?search=@ViewBag.Search&region=@ViewBag.SelectedRegion&province=@ViewBag.SelectedProvince&district=@ViewBag.SelectedDistrict&salesRep=@ViewBag.SalesRep&month=@ViewBag.Month&poSearch=@ViewBag.PoSearch&status=@ViewBag.Status&startDate=@ViewBag.StartDate&endDate=@ViewBag.EndDate" class="btn btn-outline-success btn-sm no-print shadow-sm">
                 <i class="bi bi-filetype-csv"></i> Export CSV
             </a>
             <button onclick="window.print()" class="btn btn-outline-danger btn-sm no-print shadow-sm">
@@ -166,11 +166,26 @@
         </div>
         <div class="col-md-2">
             <label class="form-label small fw-bold text-primary mb-1">📍 จังหวัด</label>
-            <select name="province" id="province-select" class="form-select form-select-sm select2-searchable">
+            <select name="province" id="province-select" class="form-select form-select-sm select2-searchable" onchange="onProvinceChange()">
                 <option value="">@(ViewBag.HasProvinceRestriction == true ? "-- ทุกจังหวัดที่รับผิดชอบ --" : "-- ทุกจังหวัด --")</option>
                 @foreach (var p in provinces) {
                     if (p == (string)ViewBag.SelectedProvince) { <option value="@p" selected>@p</option> }
                     else { <option value="@p">@p</option> }
+                }
+            </select>
+        </div>
+        <div class="col-md-2" id="district-filter-col" style="@(ViewBag.SelectedProvince == "กรุงเทพมหานคร" || ViewBag.SelectedProvince == "กรุงเทพฯ" || ViewBag.SelectedProvince == "กรุงเทพ" ? "" : "display:none;")">
+            <label class="form-label small fw-bold text-primary mb-1">🏙️ เขต/อำเภอ</label>
+            <select name="district" id="district-select" class="form-select form-select-sm select2-searchable">
+                <option value="">-- ทุกเขต (กรุงเทพฯ) --</option>
+                @if (ViewBag.ProvinceDistricts is Dictionary<string, List<string>> distMap && distMap.TryGetValue("กรุงเทพมหานคร", out var bkkDists))
+                {
+                    foreach (var d in bkkDists)
+                    {
+                        string dLabel = "เขต" + d.Replace("เขต", "").Trim();
+                        bool isDSelected = (string)ViewBag.SelectedDistrict == d || (string)ViewBag.SelectedDistrict == dLabel;
+                        <option value="@dLabel" selected="@isDSelected">@dLabel</option>
+                    }
                 }
             </select>
         </div>
@@ -429,7 +444,45 @@ function changePageSize(sz) {
 <script>
 const allProvincesMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.RegionProvincesMap ?? allProvincesMap));
 const allAvailableProvinces = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(provinces));
+const provinceDistrictsMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.ProvinceDistricts ?? new Dictionary<string, List<string>>()));
 const hasProvRestriction = @(ViewBag.HasProvinceRestriction == true ? "true" : "false");
+
+function onProvinceChange() {
+    const pSel = document.getElementById('province-select');
+    const selectedProv = pSel ? pSel.value : '';
+    const distCol = document.getElementById('district-filter-col');
+    const distSel = document.getElementById('district-select');
+
+    const isBkk = selectedProv === 'กรุงเทพมหานคร' || selectedProv === 'กรุงเทพฯ' || selectedProv === 'กรุงเทพ' || selectedProv === 'กทม';
+
+    if (isBkk) {
+        if (distCol) distCol.style.display = '';
+        if (distSel) {
+            const currentDistVal = distSel.value;
+            distSel.innerHTML = '<option value="">-- ทุกเขต (กรุงเทพฯ) --</option>';
+            const bkkDists = provinceDistrictsMap['กรุงเทพมหานคร'] || [];
+            bkkDists.forEach(d => {
+                const dLabel = 'เขต' + d.replace(/^เขต/, '').trim();
+                const opt = document.createElement('option');
+                opt.value = dLabel;
+                opt.textContent = dLabel;
+                if (currentDistVal === dLabel || currentDistVal === d) opt.selected = true;
+                distSel.appendChild(opt);
+            });
+            if (window.jQuery && $(distSel).data('select2')) {
+                $(distSel).trigger('change.select2');
+            }
+        }
+    } else {
+        if (distCol) distCol.style.display = 'none';
+        if (distSel) {
+            distSel.value = '';
+            if (window.jQuery && $(distSel).data('select2')) {
+                $(distSel).val('').trigger('change.select2');
+            }
+        }
+    }
+}
 
 function onRegionChange() {
     const reg = document.getElementById('region-select').value;
@@ -450,6 +503,7 @@ function onRegionChange() {
     if (window.jQuery && $(pSel).data('select2')) {
         $(pSel).val('').trigger('change.select2');
     }
+    onProvinceChange();
 }
 </script>
 @Html.AntiForgeryToken()
