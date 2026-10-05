@@ -828,6 +828,11 @@ namespace RoyalD.Web.Controllers
             string? note, 
             IFormFile? statusFile)
         {
+            if (Request.Form.ContainsKey("newStatus") && Enum.TryParse<DebtStatus>(Request.Form["newStatus"], true, out var formStatus))
+            {
+                status = formStatus;
+            }
+
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             bool isAdmin = currentUser != null && currentUser.Role == "admin";
             bool hasChangeDebtStatus = currentUser != null && currentUser.CanChangeDebtStatus;
@@ -846,11 +851,18 @@ namespace RoyalD.Web.Controllers
             {
                 status = DebtStatus.Installment;
                 debt.Status = DebtStatus.Installment;
-                var payments = await _db.PaymentRecords.Where(p => p.OutstandingDebtId == debt.Id).ToListAsync();
-                decimal paid = payments.Sum(p => p.PaidAmount);
-                if (debt.RemainingAmount <= 0)
+                if (decimal.TryParse(Request.Form["installmentRemainingAmount"], out var customAmt) && customAmt > 0)
                 {
-                    debt.RemainingAmount = (debt.OriginalAmount > paid) ? (debt.OriginalAmount - paid) : debt.OriginalAmount;
+                    debt.RemainingAmount = customAmt;
+                }
+                else
+                {
+                    var payments = await _db.PaymentRecords.Where(p => p.OutstandingDebtId == debt.Id).ToListAsync();
+                    decimal paid = payments.Sum(p => p.PaidAmount);
+                    if (debt.RemainingAmount <= 0)
+                    {
+                        debt.RemainingAmount = (debt.OriginalAmount > paid) ? (debt.OriginalAmount - paid) : debt.OriginalAmount;
+                    }
                 }
                 debt.FullyPaidDate = null;
                 var bill = await _db.SalesBills.FirstOrDefaultAsync(b => b.BillNo == billNo);

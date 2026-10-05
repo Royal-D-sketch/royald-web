@@ -207,7 +207,7 @@ namespace RoyalD.Web.Controllers
         {
             var data = await db.OutstandingDebts
                                 .AsNoTracking()
-                                .Where(d => (int)d.Status == 100)
+                                .Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100)
                                 .OrderBy(d => d.DueDate)
                                 .ToListAsync();
             return View(data);
