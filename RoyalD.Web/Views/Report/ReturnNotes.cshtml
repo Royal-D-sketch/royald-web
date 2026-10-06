@@ -12,11 +12,11 @@
             <div class="col-auto">
                 <div class="input-group input-group-sm">
                     <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                    <input type="text" name="search" class="form-control" placeholder="ค้นหาเลขที่บิล, รหัสลูกค้า, ชื่อลูกค้า..." value="@ViewBag.Search" style="width: 280px;">
+                    <input type="text" name="search" class="form-control" placeholder="ค้นหาเลขที่บิล, รหัสลูกค้า, ชื่อลูกค้า..." value="@ViewBag.Search" style="width: 240px;">
                 </div>
             </div>
             <div class="col-auto">
-                <select name="salesRep" class="form-select form-select-sm select2-searchable" style="min-width: 180px;">
+                <select name="salesRep" class="form-select form-select-sm select2-searchable" style="min-width: 160px;">
                     <option value="">@(ViewBag.IsRestricted == true ? "-- ทุกผู้แทนที่รับผิดชอบ --" : "-- พนักงานขายทั้งหมด --")</option>
                     @if(ViewBag.SalesReps != null)
                     {
@@ -26,6 +26,15 @@
                         }
                     }
                 </select>
+            </div>
+            <div class="col-auto">
+                <input type="date" name="fromDate" class="form-control form-control-sm" value="@ViewBag.FromDate" title="ตั้งแต่วันที่" />
+            </div>
+            <div class="col-auto">
+                <input type="date" name="toDate" class="form-control form-control-sm" value="@ViewBag.ToDate" title="ถึงวันที่" />
+            </div>
+            <div class="col-auto" style="width: 100px;">
+                <input type="number" name="credit" class="form-control form-control-sm" placeholder="เครดิต (วัน)" value="@ViewBag.Credit" min="0" />
             </div>
             <div class="col-auto">
                 <button type="submit" class="btn btn-sm btn-primary px-3" style="background-color: #0d9488; border-color: #0d9488;">
@@ -45,6 +54,7 @@
                     <th class="col-customer-name" style="min-width: 260px; white-space: normal !important;">ชื่อลูกค้า</th>
                     <th>ผู้แทนขาย</th>
                     <th>วันที่บิล</th>
+                    <th class="text-center">เครดิต</th>
                     <th>สถานะการคืน</th>
                     <th class="text-end">ยอดรับคืน (บาท)</th>
                     <th>ตัดยอดทันที</th>
@@ -52,13 +62,22 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var item in Model)
+                @if (Model == null || !Model.Any())
                 {
                     <tr>
-                        <td><a href="/SalesBill/Detail?id=@Uri.EscapeDataString(item.BillNo)" class="text-decoration-none fw-bold">@item.BillNo</a></td>
-                        <td class="col-customer-name fw-bold" style="min-width: 260px; white-space: normal !important; word-break: break-word !important;">@item.CustomerName</td>
-                        <td><span class="badge bg-light text-dark border">@item.SalesRep</span></td>
-                        <td>@(item.PaidDate?.ToString("dd/MM/yyyy") ?? item.BillDate.ToString("dd/MM/yyyy"))</td>
+                        <td colspan="9" class="text-center py-4 text-muted">ไม่พบรายการรับคืนสินค้า</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td><a href="/SalesBill/Detail?id=@Uri.EscapeDataString(item.BillNo)" class="text-decoration-none fw-bold">@item.BillNo</a></td>
+                            <td class="col-customer-name fw-bold" style="min-width: 260px; white-space: normal !important; word-break: break-word !important;">@item.CustomerName</td>
+                            <td><span class="badge bg-light text-dark border">@item.SalesRep</span></td>
+                            <td>@(item.PaidDate?.ToString("dd/MM/yyyy") ?? item.BillDate.ToString("dd/MM/yyyy"))</td>
+                            <td class="text-center"><span class="badge bg-light text-secondary border">@(item.Credit == 0 ? "สด" : $"{item.Credit} วัน")</span></td>
                         <td>
                             <span class="badge @(item.Status == RoyalD.Web.Models.DebtStatus.ReturnIssued ? "bg-success" : "bg-warning text-dark")">
                                 @(item.Status == RoyalD.Web.Models.DebtStatus.ReturnIssued ? "ออกใบลดหนี้" : "รอออกใบลดหนี้")
@@ -90,6 +109,7 @@
                         </td>
                     </tr>
                 }
+            }
             </tbody>
         </table>
     </div>

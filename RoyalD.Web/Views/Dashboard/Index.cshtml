@@ -442,7 +442,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
         </button>
     </div>
 
-    <!-- 4 Real-time Search Input Fields -->
+    <!-- 7 Real-time Search Input Fields -->
     <div class="row g-2 search-input-group mb-3 p-3 bg-light rounded-3 border">
         <div class="col-12 col-md-3">
             <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-receipt"></i> 1. เลขที่บิล</label>
@@ -456,7 +456,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
             <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-shop"></i> 3. ชื่อลูกค้า</label>
             <input type="text" id="inputSearchCustomerName" class="form-control" placeholder="พิมพ์ชื่อร้านค้า / ลูกค้า..." oninput="handleSearch()" />
         </div>
-        <div class="col-12 col-md-2">
+        <div class="col-12 col-md-3">
             <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-person-fill"></i> 4. ผู้แทนขาย</label>
             <div class="input-group">
                 <input type="text" id="inputSearchSalesRep" class="form-control" list="salesRepList" placeholder="เลือก/พิมพ์ชื่อผู้แทน..." oninput="handleSearch()" />
@@ -479,9 +479,21 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                 }
             </datalist>
         </div>
-        <div class="col-12 col-md-1 d-flex align-items-end">
-            <button type="button" class="btn btn-outline-secondary w-100 btn-sm py-2" onclick="clearFilters()" title="ล้างตัวกรองทั้งหมด">
-                <i class="bi bi-x-circle"></i> ล้าง
+        <div class="col-12 col-md-3">
+            <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-calendar-event"></i> 5. ตั้งแต่วันที่</label>
+            <input type="date" id="inputSearchFromDate" class="form-control" onchange="handleSearch()" />
+        </div>
+        <div class="col-12 col-md-3">
+            <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-calendar-event"></i> 6. ถึงวันที่</label>
+            <input type="date" id="inputSearchToDate" class="form-control" onchange="handleSearch()" />
+        </div>
+        <div class="col-12 col-md-3">
+            <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-clock-history"></i> 7. เครดิต (วัน)</label>
+            <input type="number" id="inputSearchCredit" class="form-control" placeholder="เช่น 30" min="0" oninput="handleSearch()" />
+        </div>
+        <div class="col-12 col-md-3 d-flex align-items-end">
+            <button type="button" class="btn btn-outline-secondary w-100 py-2 fw-bold" onclick="clearFilters()" title="ล้างตัวกรองทั้งหมด">
+                <i class="bi bi-x-circle me-1"></i> ล้างตัวกรอง
             </button>
         </div>
     </div>
@@ -771,8 +783,11 @@ async function fetchBills() {
     const sBill = encodeURIComponent((document.getElementById('inputSearchBill')?.value || '').trim());
     const sCust = encodeURIComponent((document.getElementById('inputSearchCustomerName')?.value || document.getElementById('inputSearchCustomerCode')?.value || '').trim());
     const sRep = encodeURIComponent((document.getElementById('inputSearchSalesRep')?.value || '').trim());
+    const sFromDate = encodeURIComponent((document.getElementById('inputSearchFromDate')?.value || '').trim());
+    const sToDate = encodeURIComponent((document.getElementById('inputSearchToDate')?.value || '').trim());
+    const sCredit = encodeURIComponent((document.getElementById('inputSearchCredit')?.value || '').trim());
 
-    const url = `/Dashboard/GetDrilldownBills?category=${encodeURIComponent(currentCategory)}&page=${currentPage}&pageSize=${currentPageSize}&searchBill=${sBill}&searchCustomer=${sCust}&searchSalesRep=${sRep}`;
+    const url = `/Dashboard/GetDrilldownBills?category=${encodeURIComponent(currentCategory)}&page=${currentPage}&pageSize=${currentPageSize}&searchBill=${sBill}&searchCustomer=${sCust}&searchSalesRep=${sRep}&fromDate=${sFromDate}&toDate=${sToDate}&credit=${sCredit}`;
 
     try {
         const response = await fetch(url);
@@ -952,6 +967,9 @@ function clearFilters() {
     if (document.getElementById('inputSearchCustomerCode')) document.getElementById('inputSearchCustomerCode').value = '';
     if (document.getElementById('inputSearchCustomerName')) document.getElementById('inputSearchCustomerName').value = '';
     if (document.getElementById('inputSearchSalesRep')) document.getElementById('inputSearchSalesRep').value = '';
+    if (document.getElementById('inputSearchFromDate')) document.getElementById('inputSearchFromDate').value = '';
+    if (document.getElementById('inputSearchToDate')) document.getElementById('inputSearchToDate').value = '';
+    if (document.getElementById('inputSearchCredit')) document.getElementById('inputSearchCredit').value = '';
     currentPage = 1;
     fetchBills();
 }
@@ -960,7 +978,10 @@ function triggerExportExcel() {
     const sBill = encodeURIComponent((document.getElementById('inputSearchBill')?.value || '').trim());
     const sCust = encodeURIComponent((document.getElementById('inputSearchCustomerName')?.value || document.getElementById('inputSearchCustomerCode')?.value || '').trim());
     const sRep = encodeURIComponent((document.getElementById('inputSearchSalesRep')?.value || '').trim());
-    const url = `/Dashboard/ExportExcel?category=${currentCategory}&searchBill=${sBill}&searchCustomer=${sCust}&searchSalesRep=${sRep}`;
+    const sFromDate = encodeURIComponent((document.getElementById('inputSearchFromDate')?.value || '').trim());
+    const sToDate = encodeURIComponent((document.getElementById('inputSearchToDate')?.value || '').trim());
+    const sCredit = encodeURIComponent((document.getElementById('inputSearchCredit')?.value || '').trim());
+    const url = `/Dashboard/ExportExcel?category=${currentCategory}&searchBill=${sBill}&searchCustomer=${sCust}&searchSalesRep=${sRep}&fromDate=${sFromDate}&toDate=${sToDate}&credit=${sCredit}`;
     window.location.href = url;
 }
 
@@ -968,7 +989,10 @@ function triggerExportPdf() {
     const sBill = encodeURIComponent((document.getElementById('inputSearchBill')?.value || '').trim());
     const sCust = encodeURIComponent((document.getElementById('inputSearchCustomerName')?.value || document.getElementById('inputSearchCustomerCode')?.value || '').trim());
     const sRep = encodeURIComponent((document.getElementById('inputSearchSalesRep')?.value || '').trim());
-    const url = `/Dashboard/ExportPdf?category=${currentCategory}&searchBill=${sBill}&searchCustomer=${sCust}&searchSalesRep=${sRep}`;
+    const sFromDate = encodeURIComponent((document.getElementById('inputSearchFromDate')?.value || '').trim());
+    const sToDate = encodeURIComponent((document.getElementById('inputSearchToDate')?.value || '').trim());
+    const sCredit = encodeURIComponent((document.getElementById('inputSearchCredit')?.value || '').trim());
+    const url = `/Dashboard/ExportPdf?category=${currentCategory}&searchBill=${sBill}&searchCustomer=${sCust}&searchSalesRep=${sRep}&fromDate=${sFromDate}&toDate=${sToDate}&credit=${sCredit}`;
     window.open(url, '_blank');
 }
 

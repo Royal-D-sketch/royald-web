@@ -17,11 +17,11 @@
             <div class="text-muted small">บิลที่ส่งคืนกลับมาฝ่ายบัญชีเนื่องจากบิลไม่พร้อมส่ง หรือลูกค้ายังไม่รับของ</div>
         </div>
         <div class="d-flex flex-wrap gap-2">
-            <a href="@Url.Action("ExportReturnedToAccountExcel", "Report", new { search = ViewBag.Search, salesRep = ViewBag.SalesRep, fromDate = ViewBag.FromDate, toDate = ViewBag.ToDate })"
+            <a href="@Url.Action("ExportReturnedToAccountExcel", "Report", new { search = ViewBag.Search, salesRep = ViewBag.SalesRep, fromDate = ViewBag.FromDate, toDate = ViewBag.ToDate, credit = ViewBag.Credit })"
                class="btn btn-success btn-sm btn-export px-3 shadow-sm">
                 <i class="bi bi-file-earmark-excel me-1"></i> ส่งออก Excel
             </a>
-            <a href="@Url.Action("ExportReturnedToAccountPdf", "Report", new { search = ViewBag.Search, salesRep = ViewBag.SalesRep, fromDate = ViewBag.FromDate, toDate = ViewBag.ToDate })"
+            <a href="@Url.Action("ExportReturnedToAccountPdf", "Report", new { search = ViewBag.Search, salesRep = ViewBag.SalesRep, fromDate = ViewBag.FromDate, toDate = ViewBag.ToDate, credit = ViewBag.Credit })"
                target="_blank" class="btn btn-danger btn-sm btn-export px-3 shadow-sm">
                 <i class="bi bi-file-earmark-pdf me-1"></i> ส่งออก PDF / พิมพ์
             </a>
@@ -84,7 +84,7 @@
                         <input type="text" name="search" class="form-control" placeholder="เลขที่บิล, รหัส/ชื่อลูกค้า..." value="@ViewBag.Search" />
                     </div>
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-2">
                     <label class="form-label small fw-bold text-secondary mb-1">ผู้แทนขาย</label>
                     <select name="salesRep" class="form-select form-select-sm">
                         <option value="">@(ViewBag.IsRestricted == true ? "-- ทุกผู้แทนที่รับผิดชอบ --" : "-- ทั้งหมด --")</option>
@@ -102,6 +102,10 @@
                     <label class="form-label small fw-bold text-secondary mb-1">ถึงวันที่</label>
                     <input type="date" name="toDate" class="form-control form-control-sm" value="@ViewBag.ToDate" />
                 </div>
+                <div class="col-6 col-md-1">
+                    <label class="form-label small fw-bold text-secondary mb-1">เครดิต (วัน)</label>
+                    <input type="number" name="credit" class="form-control form-control-sm" placeholder="วัน" value="@ViewBag.Credit" min="0" />
+                </div>
                 <div class="col-12 col-md-2 d-flex gap-2">
                     <button type="submit" class="btn btn-primary btn-sm flex-fill" style="background:#0d9488; border-color:#0d9488;">
                         <i class="bi bi-funnel me-1"></i> คัดกรอง
@@ -114,7 +118,7 @@
         </div>
     </div>
 
-    <!-- Data Table Card (11 Columns Standard) -->
+    <!-- Data Table Card (12 Columns Standard) -->
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -124,6 +128,7 @@
                             <th class="text-center" style="width: 50px;">#</th>
                             <th>เลขที่บิล</th>
                             <th>วันที่บิล</th>
+                            <th class="text-center">เครดิต</th>
                             <th>รหัสลูกค้า</th>
                             <th class="col-customer-name" style="min-width: 260px; white-space: normal !important;">ชื่อลูกค้า</th>
                             <th>ผู้แทนขาย</th>
@@ -150,6 +155,7 @@
                                         </a>
                                     </td>
                                     <td>@item.BillDate.ToString("dd/MM/yyyy")</td>
+                                    <td class="text-center"><span class="badge bg-light text-secondary border">@(item.Credit == 0 ? "สด" : $"{item.Credit} วัน")</span></td>
                                     <td><code>@item.CustomerCode</code></td>
                                     <td class="col-customer-name fw-bold text-dark" style="min-width: 260px; white-space: normal !important; word-break: break-word !important;">
                                         @item.CustomerName
@@ -224,7 +230,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="11" class="text-center py-5 text-muted">
+                                <td colspan="12" class="text-center py-5 text-muted">
                                     <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
                                     ไม่มีรายการบิลส่งคืนกลับมาบัญชีในขณะนี้
                                 </td>
@@ -235,7 +241,7 @@
                     {
                         <tfoot class="table-light fw-bold">
                             <tr>
-                                <td colspan="9" class="text-end">รวมทั้งสิ้น (@totalBills บิล):</td>
+                                <td colspan="10" class="text-end">รวมทั้งสิ้น (@totalBills บิล):</td>
                                 <td class="text-end text-danger fs-6">@totalAmount.ToString("N2")</td>
                                 <td></td>
                             </tr>

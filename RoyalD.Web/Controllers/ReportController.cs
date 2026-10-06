@@ -31,19 +31,19 @@ namespace RoyalD.Web.Controllers
             return View(data);
         }
 
-        public async Task<IActionResult> ExportExcel(DateTime? from, DateTime? to)
+        public async Task<IActionResult> ExportExcel(DateTime? from, DateTime? to, int? credit = null)
         {
             var pos = User.FindFirst("Position")?.Value ?? "";
             bool isSalesRep = pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย");
             if (isSalesRep || (!User.IsInRole("admin") && User.FindFirst("CanDownload")?.Value != "true")) return Forbid();
 
-            var data = await _svc.GetSalesSummaryAsync(from, to);
+            var data = await _svc.GetSalesSummaryAsync(from, to, credit);
             var bytes = await _svc.ExportToExcelAsync(data, from, to);
             return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 $"SalesReport_{DateTime.Now:yyyyMMdd}.xlsx");
         }
 
-        public async Task<IActionResult> WaitingGoods([FromServices] AppDbContext db, [FromServices] Microsoft.Extensions.Caching.Memory.IMemoryCache cache, string? search, string? salesRep, int page = 1, int pageSize = 50)
+        public async Task<IActionResult> WaitingGoods([FromServices] AppDbContext db, [FromServices] Microsoft.Extensions.Caching.Memory.IMemoryCache cache, string? search, string? salesRep, DateTime? fromDate = null, DateTime? toDate = null, int? credit = null, int page = 1, int pageSize = 50)
         {
             var currentUser = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             bool isRestricted = currentUser != null && currentUser.Role != "admin";
@@ -68,6 +68,20 @@ namespace RoyalD.Web.Controllers
             {
                 qPending = qPending.Where(p => filterReps.Contains(p.OutstandingDebt.SalesRep));
             }
+            if (fromDate.HasValue)
+            {
+                var fDate = fromDate.Value.Date;
+                qPending = qPending.Where(p => p.OutstandingDebt.BillDate >= fDate);
+            }
+            if (toDate.HasValue)
+            {
+                var tDate = toDate.Value.Date.AddDays(1).AddTicks(-1);
+                qPending = qPending.Where(p => p.OutstandingDebt.BillDate <= tDate);
+            }
+            if (credit.HasValue)
+            {
+                qPending = qPending.Where(p => p.OutstandingDebt.Credit == credit.Value);
+            }
 
             var data1 = await qPending.Select(p => new {
                 BillNo = p.OutstandingDebt.BillNo,
@@ -75,6 +89,7 @@ namespace RoyalD.Web.Controllers
                 CustomerCode = p.OutstandingDebt.CustomerCode,
                 CustomerName = p.OutstandingDebt.CustomerName,
                 SalesRep = p.OutstandingDebt.SalesRep,
+                Credit = p.OutstandingDebt.Credit,
                 UpdatedAt = p.OutstandingDebt.WaitingGoodsDate ?? p.OutstandingDebt.BillDate,
                 ProductCode = p.ProductCode,
                 ProductName = p.ProductName,
@@ -95,6 +110,20 @@ namespace RoyalD.Web.Controllers
             {
                 qDebt = qDebt.Where(d => filterReps.Contains(d.SalesRep));
             }
+            if (fromDate.HasValue)
+            {
+                var fDate = fromDate.Value.Date;
+                qDebt = qDebt.Where(d => d.BillDate >= fDate);
+            }
+            if (toDate.HasValue)
+            {
+                var tDate = toDate.Value.Date.AddDays(1).AddTicks(-1);
+                qDebt = qDebt.Where(d => d.BillDate <= tDate);
+            }
+            if (credit.HasValue)
+            {
+                qDebt = qDebt.Where(d => d.Credit == credit.Value);
+            }
 
             var data2 = await qDebt.Select(d => new {
                 BillNo = d.BillNo,
@@ -102,6 +131,7 @@ namespace RoyalD.Web.Controllers
                 CustomerCode = d.CustomerCode,
                 CustomerName = d.CustomerName,
                 SalesRep = d.SalesRep,
+                Credit = d.Credit,
                 UpdatedAt = d.WaitingGoodsDate ?? d.BillDate,
                 ProductCode = "-",
                 ProductName = "หลายรายการ / ไม่ได้ระบุรหัสสินค้า",
@@ -118,6 +148,9 @@ namespace RoyalD.Web.Controllers
             ViewBag.SalesReps = (isRestricted && assignedReps.Count > 0) ? assignedReps : reps;
             ViewBag.Search = search;
             ViewBag.SalesRep = selectedRepForUi;
+            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
+            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
+            ViewBag.Credit = credit;
             ViewBag.IsRestricted = isRestricted;
 
             int totalRecords = data.Count;
@@ -135,10 +168,17 @@ namespace RoyalD.Web.Controllers
             return View(pagedData);
         }
         
-        public async Task<IActionResult> PaidHistory([FromServices] AppDbContext db, string? search)
+        public async Task<IActionResult> PaidHistory([FromServices] AppDbContext db, string? search, DateTime? fromDate = null, DateTime? toDate = null, int? credit = null)
         {
             var dateLimit = DateTime.Now.AddDays(-120);
-            var q = db.SalesBills.AsNoTracking().Where(b => b.IsFullyPaid && b.ReceiptDate >= dateLimit);
+            var q = db.SalesBills.AsNoTracking().Where(b => b.IsFullyPaid);
+            if (!fromDate.HasValue && !toDate.HasValue)
+            {
+                q = q.Where(b => b.ReceiptDate >= dateLimit);
+            }
+            if (fromDate.HasValue) q = q.Where(b => (b.ReceiptDate ?? b.BillDate) >= fromDate.Value.Date);
+            if (toDate.HasValue) q = q.Where(b => (b.ReceiptDate ?? b.BillDate) <= toDate.Value.Date.AddDays(1).AddTicks(-1));
+            if (credit.HasValue) q = q.Where(b => b.Credit == credit.Value);
             
             if (!string.IsNullOrEmpty(search))
             {
@@ -150,19 +190,36 @@ namespace RoyalD.Web.Controllers
             
             var data = await q.OrderByDescending(b => b.ReceiptDate).ToListAsync();
             ViewBag.SearchTerm = search;
+            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
+            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
+            ViewBag.Credit = credit;
             return View(data);
         }
 
-        public async Task<IActionResult> CancelledBills([FromServices] AppDbContext db)
+        public async Task<IActionResult> CancelledBills([FromServices] AppDbContext db, DateTime? fromDate = null, DateTime? toDate = null, int? credit = null, string? search = null)
         {
-            var dateLimit = DateTime.Now.AddDays(-30);
-            var data = await db.OutstandingDebts.AsNoTracking()
-                .Where(d => d.Status == DebtStatus.Cancelled && d.CancelledDate >= dateLimit)
-                .ToListAsync();
+            var q = db.OutstandingDebts.AsNoTracking().Where(d => d.Status == DebtStatus.Cancelled);
+            if (!string.IsNullOrEmpty(search))
+            {
+                q = q.Where(d => d.CustomerName.Contains(search) || d.BillNo.Contains(search) || d.CustomerCode.Contains(search));
+            }
+            if (fromDate.HasValue) q = q.Where(d => (d.CancelledDate ?? d.BillDate) >= fromDate.Value.Date);
+            if (toDate.HasValue) q = q.Where(d => (d.CancelledDate ?? d.BillDate) <= toDate.Value.Date.AddDays(1).AddTicks(-1));
+            if (credit.HasValue) q = q.Where(d => d.Credit == credit.Value);
+            if (!fromDate.HasValue && !toDate.HasValue)
+            {
+                var dateLimit = DateTime.Now.AddDays(-30);
+                q = q.Where(d => d.CancelledDate >= dateLimit);
+            }
+            var data = await q.OrderByDescending(d => d.CancelledDate ?? d.BillDate).ToListAsync();
+            ViewBag.Search = search;
+            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
+            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
+            ViewBag.Credit = credit;
             return View(data);
         }
 
-        public async Task<IActionResult> ReturnNotes([FromServices] AppDbContext db, [FromServices] Microsoft.Extensions.Caching.Memory.IMemoryCache cache, string? search, string? salesRep)
+        public async Task<IActionResult> ReturnNotes([FromServices] AppDbContext db, [FromServices] Microsoft.Extensions.Caching.Memory.IMemoryCache cache, string? search, string? salesRep, DateTime? fromDate = null, DateTime? toDate = null, int? credit = null)
         {
             var currentUser = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             bool isRestricted = currentUser != null && currentUser.Role != "admin";
@@ -188,6 +245,18 @@ namespace RoyalD.Web.Controllers
             {
                 q = q.Where(d => filterReps.Contains(d.SalesRep));
             }
+            if (fromDate.HasValue)
+            {
+                q = q.Where(d => d.BillDate >= fromDate.Value.Date);
+            }
+            if (toDate.HasValue)
+            {
+                q = q.Where(d => d.BillDate <= toDate.Value.Date.AddDays(1).AddTicks(-1));
+            }
+            if (credit.HasValue)
+            {
+                q = q.Where(d => d.Credit == credit.Value);
+            }
 
             var data = await q.OrderByDescending(d => d.BillDate).ToListAsync();
             
@@ -198,18 +267,32 @@ namespace RoyalD.Web.Controllers
             ViewBag.SalesReps = (isRestricted && assignedReps.Count > 0) ? assignedReps : reps;
             ViewBag.Search = search;
             ViewBag.SalesRep = selectedRepForUi;
+            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
+            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
+            ViewBag.Credit = credit;
             ViewBag.IsRestricted = isRestricted;
 
             return View(data);
         }
 
-        public async Task<IActionResult> InstallmentDebtors([FromServices] AppDbContext db)
+        public async Task<IActionResult> InstallmentDebtors([FromServices] AppDbContext db, DateTime? fromDate = null, DateTime? toDate = null, int? credit = null, string? search = null)
         {
-            var data = await db.OutstandingDebts
-                                .AsNoTracking()
-                                .Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100)
-                                .OrderBy(d => d.DueDate)
-                                .ToListAsync();
+            var q = db.OutstandingDebts
+                        .AsNoTracking()
+                        .Where(d => d.Status == DebtStatus.Installment || (int)d.Status == 100);
+            if (!string.IsNullOrEmpty(search))
+            {
+                q = q.Where(d => d.CustomerName.Contains(search) || d.BillNo.Contains(search) || d.CustomerCode.Contains(search));
+            }
+            if (fromDate.HasValue) q = q.Where(d => d.BillDate >= fromDate.Value.Date);
+            if (toDate.HasValue) q = q.Where(d => d.BillDate <= toDate.Value.Date.AddDays(1).AddTicks(-1));
+            if (credit.HasValue) q = q.Where(d => d.Credit == credit.Value);
+
+            var data = await q.OrderBy(d => d.DueDate).ToListAsync();
+            ViewBag.Search = search;
+            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
+            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
+            ViewBag.Credit = credit;
             return View(data);
         }
 
@@ -266,7 +349,7 @@ namespace RoyalD.Web.Controllers
         // ==============================================================
         // 1. รายงานบิลส่งคืนกลับมาบัญชี (บิลไม่พร้อมส่ง/ลูกค้ายังไม่เอาของ)
         // ==============================================================
-        public async Task<IActionResult> ReturnedToAccount([FromServices] AppDbContext db, [FromServices] Microsoft.Extensions.Caching.Memory.IMemoryCache cache, string? search, string? salesRep, DateTime? fromDate, DateTime? toDate)
+        public async Task<IActionResult> ReturnedToAccount([FromServices] AppDbContext db, [FromServices] Microsoft.Extensions.Caching.Memory.IMemoryCache cache, string? search, string? salesRep, DateTime? fromDate, DateTime? toDate, int? credit = null)
         {
             var currentUser = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             bool isRestricted = currentUser != null && currentUser.Role != "admin";
@@ -313,6 +396,11 @@ namespace RoyalD.Web.Controllers
                 q = q.Where(d => (d.ReturnedToAccountDate ?? d.BillDate) <= toDate.Value.Date.AddDays(1).AddTicks(-1));
             }
 
+            if (credit.HasValue)
+            {
+                q = q.Where(d => d.Credit == credit.Value);
+            }
+
             var data = await q.OrderByDescending(d => d.ReturnedToAccountDate ?? d.BillDate).ToListAsync();
 
             var assignedReps = isRestricted && !string.IsNullOrWhiteSpace(currentUser?.SalesRepCode)
@@ -325,6 +413,7 @@ namespace RoyalD.Web.Controllers
             ViewBag.IsRestricted = isRestricted;
             ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
             ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
+            ViewBag.Credit = credit;
             ViewBag.IsAuthorized = IsAuthorizedUserForReturn(User);
 
             return View(data);

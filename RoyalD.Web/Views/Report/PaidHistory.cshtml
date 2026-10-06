@@ -1,27 +1,40 @@
-﻿@model IEnumerable<RoyalD.Web.Models.SalesBill>
+@model IEnumerable<RoyalD.Web.Models.SalesBill>
 @{
     ViewData["Title"] = "ประวัติบิลที่ชำระครบ (Paid History)";
 }
 
-<div class=""card shadow-sm border-0 mb-3"" style=""border-radius:12px;"">
-    <div class=""card-body p-3"">
-        <form method=""get"" class=""row g-2 align-items-center"">
-            <div class=""col-md-6"">
-                <div class=""input-group"">
-                    <span class=""input-group-text bg-white""><i class=""bi bi-search text-muted""></i></span>
-                    <input type=""text"" name=""search"" class=""form-control"" placeholder=""ค้นหา: เลขที่บิล, เลขที่ใบเสร็จ, รหัสลูกค้า, ชื่อลูกค้า..."" value=""@ViewBag.SearchTerm"">
-                    <button type=""submit"" class=""btn btn-primary"">ค้นหา</button>
-                    @if(ViewBag.SearchTerm != null) {
-                        <a href=""/Report/PaidHistory"" class=""btn btn-outline-secondary"">ล้าง</a>
-                    }
+<div class="card shadow-sm border-0 mb-3" style="border-radius:12px;">
+    <div class="card-body p-3 bg-light">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-auto">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="เลขที่บิล, ใบเสร็จ, รหัส/ชื่อลูกค้า..." value="@ViewBag.SearchTerm" style="width: 240px;">
                 </div>
+            </div>
+            <div class="col-auto">
+                <input type="date" name="fromDate" class="form-control form-control-sm" value="@ViewBag.FromDate" title="ตั้งแต่วันที่" />
+            </div>
+            <div class="col-auto">
+                <input type="date" name="toDate" class="form-control form-control-sm" value="@ViewBag.ToDate" title="ถึงวันที่" />
+            </div>
+            <div class="col-auto" style="width: 100px;">
+                <input type="number" name="credit" class="form-control form-control-sm" placeholder="เครดิต (วัน)" value="@ViewBag.Credit" min="0" />
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-sm btn-primary px-3">
+                    <i class="bi bi-funnel"></i> ค้นหา
+                </button>
+                <a href="/Report/PaidHistory" class="btn btn-sm btn-outline-secondary px-3">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
             </div>
         </form>
     </div>
 </div>
 <div class="card shadow-sm border-0" style="border-radius:12px;">
     <div class="card-header bg-success text-white py-3 fw-bold">
-        <i class="bi bi-check-circle me-1"></i> ประวัติบิลที่ชำระครบ (120 วันย้อนหลัง)
+        <i class="bi bi-check-circle me-1"></i> ประวัติบิลที่ชำระครบ (Paid History)
     </div>
     <div class="card-body p-0">
         <table class="table table-hover align-middle mb-0">
@@ -29,6 +42,7 @@
                 <tr>
                     <th>เลขที่บิล</th>
                     <th>วันที่บิล</th>
+                    <th class="text-center">เครดิต</th>
                     <th>รหัสลูกค้า</th>
                     <th class="col-customer-name" style="min-width: 260px; white-space: normal !important;">ชื่อลูกค้า</th>
                     <th>ยอดบิล (บาท)</th>
@@ -37,17 +51,27 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var item in Model)
+                @if (Model == null || !Model.Any())
                 {
                     <tr>
-                        <td><a href="/SalesBill/Detail?id=@Uri.EscapeDataString(item.BillNo)" class="text-decoration-none fw-bold">@item.BillNo</a></td>
-                        <td>@item.BillDate.ToString("dd/MM/yyyy")</td>
-                        <td><code>@item.CustomerCode</code></td>
-                        <td class="col-customer-name fw-bold" style="min-width: 260px; white-space: normal !important; word-break: break-word !important;">@item.CustomerName</td>
-                        <td>@item.TotalAmount.ToString("N2")</td>
-                        <td><span class="badge bg-light text-dark border">@(item.ReceiptNo ?? "-")</span></td>
-                        <td>@(item.ReceiptDate?.ToString("dd/MM/yyyy") ?? "-")</td>
+                        <td colspan="8" class="text-center py-4 text-muted">ไม่พบประวัติบิลที่ชำระครบ</td>
                     </tr>
+                }
+                else
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td><a href="/SalesBill/Detail?id=@Uri.EscapeDataString(item.BillNo)" class="text-decoration-none fw-bold">@item.BillNo</a></td>
+                            <td>@item.BillDate.ToString("dd/MM/yyyy")</td>
+                            <td class="text-center"><span class="badge bg-light text-secondary border">@(item.Credit == 0 ? "สด" : $"{item.Credit} วัน")</span></td>
+                            <td><code>@item.CustomerCode</code></td>
+                            <td class="col-customer-name fw-bold" style="min-width: 260px; white-space: normal !important; word-break: break-word !important;">@item.CustomerName</td>
+                            <td>@item.TotalAmount.ToString("N2")</td>
+                            <td><span class="badge bg-light text-dark border">@(item.ReceiptNo ?? "-")</span></td>
+                            <td>@(item.ReceiptDate?.ToString("dd/MM/yyyy") ?? "-")</td>
+                        </tr>
+                    }
                 }
             </tbody>
         </table>

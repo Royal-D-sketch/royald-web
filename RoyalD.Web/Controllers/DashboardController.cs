@@ -525,7 +525,10 @@ namespace RoyalD.Web.Controllers
             int pageSize = 50,
             string? searchBill = null,
             string? searchCustomer = null,
-            string? searchSalesRep = null)
+            string? searchSalesRep = null,
+            DateTime? fromDate = null,
+            DateTime? toDate = null,
+            int? credit = null)
         {
             // ---- FAST PATH: ถ้า cache มีข้อมูลอยู่แล้ว ตอบกลับทันทีโดยไม่ต้องรอ DB ----
             if (!_cache.TryGetValue("dashboard_page_data_cache", out DashboardPageData? cachedData) || cachedData == null)
@@ -590,6 +593,21 @@ namespace RoyalD.Web.Controllers
             {
                 var sRep = searchSalesRep.Trim();
                 query = query.Where(b => b.SalesRep != null && b.SalesRep.Contains(sRep, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (fromDate.HasValue)
+            {
+                query = query.Where(b => b.BillDate.Date >= fromDate.Value.Date);
+            }
+
+            if (toDate.HasValue)
+            {
+                query = query.Where(b => b.BillDate.Date <= toDate.Value.Date);
+            }
+
+            if (credit.HasValue)
+            {
+                query = query.Where(b => b.Credit == credit.Value);
             }
 
             // Ordering
@@ -659,7 +677,10 @@ namespace RoyalD.Web.Controllers
             int pageSize = 50,
             string? searchBill = null,
             string? searchCustomer = null,
-            string? searchSalesRep = null)
+            string? searchSalesRep = null,
+            DateTime? fromDate = null,
+            DateTime? toDate = null,
+            int? credit = null)
         {
             if (!_cache.TryGetValue("dashboard_page_data_cache", out DashboardPageData? cachedData) || cachedData == null)
             {
@@ -700,6 +721,12 @@ namespace RoyalD.Web.Controllers
                 allBills = allBills.Where(b => (b.CustomerName != null && b.CustomerName.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase)) || (b.CustomerCode != null && b.CustomerCode.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase)));
             if (!string.IsNullOrWhiteSpace(searchSalesRep))
                 allBills = allBills.Where(b => b.SalesRep != null && b.SalesRep.Contains(searchSalesRep, StringComparison.OrdinalIgnoreCase));
+            if (fromDate.HasValue)
+                allBills = allBills.Where(b => b.BillDate.Date >= fromDate.Value.Date);
+            if (toDate.HasValue)
+                allBills = allBills.Where(b => b.BillDate.Date <= toDate.Value.Date);
+            if (credit.HasValue)
+                allBills = allBills.Where(b => b.Credit == credit.Value);
 
             // Sort
             var query = (sub == "over120")
@@ -741,6 +768,12 @@ namespace RoyalD.Web.Controllers
                 allFiltered = allFiltered.Where(b => (b.CustomerName != null && b.CustomerName.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase)) || (b.CustomerCode != null && b.CustomerCode.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase)));
             if (!string.IsNullOrWhiteSpace(searchSalesRep))
                 allFiltered = allFiltered.Where(b => b.SalesRep != null && b.SalesRep.Contains(searchSalesRep, StringComparison.OrdinalIgnoreCase));
+            if (fromDate.HasValue)
+                allFiltered = allFiltered.Where(b => b.BillDate.Date >= fromDate.Value.Date);
+            if (toDate.HasValue)
+                allFiltered = allFiltered.Where(b => b.BillDate.Date <= toDate.Value.Date);
+            if (credit.HasValue)
+                allFiltered = allFiltered.Where(b => b.Credit == credit.Value);
 
             var filteredList = allFiltered.ToList();
             var metrics = new
@@ -775,7 +808,14 @@ namespace RoyalD.Web.Controllers
         // EXPORT EXCEL ENDPOINTS (PAGE 1)
         // ==========================================
         [HttpGet]
-        public async Task<IActionResult> ExportExcel(string? category, string? searchBill, string? searchCustomer, string? searchSalesRep)
+        public async Task<IActionResult> ExportExcel(
+            string? category, 
+            string? searchBill, 
+            string? searchCustomer, 
+            string? searchSalesRep,
+            DateTime? fromDate = null,
+            DateTime? toDate = null,
+            int? credit = null)
         {
             var (summary, bills, _) = await GetDashboardDataAsync();
             var query = bills.AsEnumerable();
@@ -810,6 +850,15 @@ namespace RoyalD.Web.Controllers
 
             if (!string.IsNullOrEmpty(searchSalesRep))
                 query = query.Where(b => b.SalesRep != null && b.SalesRep.Contains(searchSalesRep, StringComparison.OrdinalIgnoreCase));
+
+            if (fromDate.HasValue)
+                query = query.Where(b => b.BillDate.Date >= fromDate.Value.Date);
+
+            if (toDate.HasValue)
+                query = query.Where(b => b.BillDate.Date <= toDate.Value.Date);
+
+            if (credit.HasValue)
+                query = query.Where(b => b.Credit == credit.Value);
 
             var filteredList = (cat == "over120")
                 ? query.OrderByDescending(b => b.AgingDays).ThenByDescending(b => b.Amount).ToList()
@@ -918,7 +967,14 @@ namespace RoyalD.Web.Controllers
         // EXPORT PDF ENDPOINTS (PAGE 1)
         // ==========================================
         [HttpGet]
-        public async Task<IActionResult> ExportPdf(string? category, string? searchBill, string? searchCustomer, string? searchSalesRep)
+        public async Task<IActionResult> ExportPdf(
+            string? category, 
+            string? searchBill, 
+            string? searchCustomer, 
+            string? searchSalesRep,
+            DateTime? fromDate = null,
+            DateTime? toDate = null,
+            int? credit = null)
         {
             var (summary, bills, _) = await GetDashboardDataAsync();
             var query = bills.AsEnumerable();
@@ -954,6 +1010,15 @@ namespace RoyalD.Web.Controllers
             if (!string.IsNullOrEmpty(searchSalesRep))
                 query = query.Where(b => b.SalesRep != null && b.SalesRep.Contains(searchSalesRep, StringComparison.OrdinalIgnoreCase));
 
+            if (fromDate.HasValue)
+                query = query.Where(b => b.BillDate.Date >= fromDate.Value.Date);
+
+            if (toDate.HasValue)
+                query = query.Where(b => b.BillDate.Date <= toDate.Value.Date);
+
+            if (credit.HasValue)
+                query = query.Where(b => b.Credit == credit.Value);
+
             var filteredList = (cat == "over120")
                 ? query.OrderByDescending(b => b.AgingDays).ThenByDescending(b => b.Amount).ToList()
                 : query.OrderByDescending(b => b.BillDate).ThenBy(b => b.BillNo).ToList();
@@ -980,7 +1045,7 @@ namespace RoyalD.Web.Controllers
         // EXPORT EXCEL ENDPOINT (PAGE 2: COMPARISON)
         // ==========================================
         [HttpGet]
-        public async Task<IActionResult> ExportComparisonExcel(string? section, string? filterType, string? searchBill, string? searchCustomer, string? searchSalesRep)
+        public async Task<IActionResult> ExportComparisonExcel(string? section, string? filterType, string? searchBill, string? searchCustomer, string? searchSalesRep, DateTime? fromDate, DateTime? toDate, int? credit)
         {
             var (_, _, comp) = await GetDashboardDataAsync();
 
@@ -989,6 +1054,9 @@ namespace RoyalD.Web.Controllers
                 if (!string.IsNullOrEmpty(searchBill) && !b.BillNo.Contains(searchBill, StringComparison.OrdinalIgnoreCase)) return false;
                 if (!string.IsNullOrEmpty(searchCustomer) && !b.CustomerName.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase) && !b.CustomerCode.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase)) return false;
                 if (!string.IsNullOrEmpty(searchSalesRep) && !b.SalesRep.Contains(searchSalesRep, StringComparison.OrdinalIgnoreCase)) return false;
+                if (fromDate.HasValue && b.BillDate.Date < fromDate.Value.Date) return false;
+                if (toDate.HasValue && b.BillDate.Date > toDate.Value.Date) return false;
+                if (credit.HasValue && b.Credit != credit.Value) return false;
 
                 if (!string.IsNullOrEmpty(filterType) && filterType.ToLower() != "all")
                 {
@@ -1126,7 +1194,7 @@ namespace RoyalD.Web.Controllers
         // EXPORT PDF ENDPOINT (PAGE 2: COMPARISON)
         // ==========================================
         [HttpGet]
-        public async Task<IActionResult> ExportComparisonPdf(string? section, string? filterType, string? searchBill, string? searchCustomer, string? searchSalesRep)
+        public async Task<IActionResult> ExportComparisonPdf(string? section, string? filterType, string? searchBill, string? searchCustomer, string? searchSalesRep, DateTime? fromDate, DateTime? toDate, int? credit)
         {
             var (_, _, comp) = await GetDashboardDataAsync();
 
@@ -1135,6 +1203,9 @@ namespace RoyalD.Web.Controllers
                 if (!string.IsNullOrEmpty(searchBill) && !b.BillNo.Contains(searchBill, StringComparison.OrdinalIgnoreCase)) return false;
                 if (!string.IsNullOrEmpty(searchCustomer) && !b.CustomerName.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase) && !b.CustomerCode.Contains(searchCustomer, StringComparison.OrdinalIgnoreCase)) return false;
                 if (!string.IsNullOrEmpty(searchSalesRep) && !b.SalesRep.Contains(searchSalesRep, StringComparison.OrdinalIgnoreCase)) return false;
+                if (fromDate.HasValue && b.BillDate.Date < fromDate.Value.Date) return false;
+                if (toDate.HasValue && b.BillDate.Date > toDate.Value.Date) return false;
+                if (credit.HasValue && b.Credit != credit.Value) return false;
 
                 if (!string.IsNullOrEmpty(filterType) && filterType.ToLower() != "all")
                 {

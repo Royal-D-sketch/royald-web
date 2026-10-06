@@ -13,11 +13,11 @@
             <div class="col-auto">
                 <div class="input-group input-group-sm">
                     <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                    <input type="text" name="search" class="form-control" placeholder="ค้นหาเลขที่บิล, รหัสลูกค้า, ชื่อลูกค้า..." value="@ViewBag.Search" style="width: 280px;">
+                    <input type="text" name="search" class="form-control" placeholder="ค้นหาเลขที่บิล, รหัสลูกค้า, ชื่อลูกค้า..." value="@ViewBag.Search" style="width: 240px;">
                 </div>
             </div>
             <div class="col-auto">
-                <select name="salesRep" class="form-select form-select-sm select2-searchable" style="min-width: 180px;">
+                <select name="salesRep" class="form-select form-select-sm select2-searchable" style="min-width: 160px;">
                     <option value="">@(ViewBag.IsRestricted == true ? "-- ทุกผู้แทนที่รับผิดชอบ --" : "-- พนักงานขายทั้งหมด --")</option>
                     @if(ViewBag.SalesReps != null)
                     {
@@ -27,6 +27,15 @@
                         }
                     }
                 </select>
+            </div>
+            <div class="col-auto">
+                <input type="date" name="fromDate" class="form-control form-control-sm" value="@ViewBag.FromDate" title="ตั้งแต่วันที่" />
+            </div>
+            <div class="col-auto">
+                <input type="date" name="toDate" class="form-control form-control-sm" value="@ViewBag.ToDate" title="ถึงวันที่" />
+            </div>
+            <div class="col-auto" style="width: 100px;">
+                <input type="number" name="credit" class="form-control form-control-sm" placeholder="เครดิต (วัน)" value="@ViewBag.Credit" min="0" />
             </div>
             <div class="col-auto">
                 <button type="submit" class="btn btn-sm btn-primary px-3" style="background-color: #0d9488; border-color: #0d9488;">
@@ -44,6 +53,7 @@
                 <tr>
                     <th>เลขที่บิล</th>
                     <th>วันที่บิล</th>
+                    <th class="text-center">เครดิต</th>
                     <th>รหัสลูกค้า</th>
                     <th class="col-customer-name" style="min-width: 260px; white-space: normal !important;">ชื่อลูกค้า</th>
                     <th>ผู้แทนขาย</th>
@@ -58,7 +68,7 @@
                 @if (Model == null || !Model.Any())
                 {
                     <tr>
-                        <td colspan="10" class="text-center py-4 text-muted">ไม่พบรายการสินค้ารอส่งมอบ</td>
+                        <td colspan="11" class="text-center py-4 text-muted">ไม่พบรายการสินค้ารอส่งมอบ</td>
                     </tr>
                 }
                 else
@@ -68,6 +78,7 @@
                         <tr>
                             <td><a href="/SalesBill/Detail?id=@Uri.EscapeDataString(item.BillNo)" class="text-decoration-none fw-bold">@item.BillNo</a></td>
                             <td>@item.BillDate.ToString("dd/MM/yyyy")</td>
+                            <td class="text-center"><span class="badge bg-light text-secondary border">@(item.Credit == 0 ? "สด" : $"{item.Credit} วัน")</span></td>
                             <td><code>@item.CustomerCode</code></td>
                             <td class="col-customer-name fw-bold" style="min-width: 260px; white-space: normal !important; word-break: break-word !important;">@item.CustomerName</td>
                             <td><span class="badge bg-light text-dark border">@item.SalesRep</span></td>
@@ -117,10 +128,10 @@
                 @if (curPage > 1)
                 {
                     <li class="page-item">
-                        <a class="page-link" href="@Url.Action("WaitingGoods", new { search = ViewBag.Search, salesRep = ViewBag.SalesRep, page = 1, pageSize = pSize })" title="หน้าแรก">«</a>
+                        <a class="page-link" href="@Url.Action("WaitingGoods", new { search = ViewBag.Search, salesRep = ViewBag.SalesRep, fromDate = ViewBag.FromDate, toDate = ViewBag.ToDate, credit = ViewBag.Credit, page = 1, pageSize = pSize })" title="หน้าแรก">«</a>
                     </li>
                     <li class="page-item">
-                        <a class="page-link" href="@Url.Action("WaitingGoods", new { search = ViewBag.Search, salesRep = ViewBag.SalesRep, page = curPage - 1, pageSize = pSize })">‹ ก่อนหน้า</a>
+                        <a class="page-link" href="@Url.Action("WaitingGoods", new { search = ViewBag.Search, salesRep = ViewBag.SalesRep, fromDate = ViewBag.FromDate, toDate = ViewBag.ToDate, credit = ViewBag.Credit, page = curPage - 1, pageSize = pSize })">‹ ก่อนหน้า</a>
                     </li>
                 }
 
@@ -132,17 +143,17 @@
                     }
                     else
                     {
-                        <li class="page-item"><a class="page-link" href="@Url.Action("WaitingGoods", new { search = ViewBag.Search, salesRep = ViewBag.SalesRep, page = p, pageSize = pSize })">@p</a></li>
+                        <li class="page-item"><a class="page-link" href="@Url.Action("WaitingGoods", new { search = ViewBag.Search, salesRep = ViewBag.SalesRep, fromDate = ViewBag.FromDate, toDate = ViewBag.ToDate, credit = ViewBag.Credit, page = p, pageSize = pSize })">@p</a></li>
                     }
                 }
 
                 @if (curPage < totPages)
                 {
                     <li class="page-item">
-                        <a class="page-link" href="@Url.Action("WaitingGoods", new { search = ViewBag.Search, salesRep = ViewBag.SalesRep, page = curPage + 1, pageSize = pSize })">ถัดไป ›</a>
+                        <a class="page-link" href="@Url.Action("WaitingGoods", new { search = ViewBag.Search, salesRep = ViewBag.SalesRep, fromDate = ViewBag.FromDate, toDate = ViewBag.ToDate, credit = ViewBag.Credit, page = curPage + 1, pageSize = pSize })">ถัดไป ›</a>
                     </li>
                     <li class="page-item">
-                        <a class="page-link" href="@Url.Action("WaitingGoods", new { search = ViewBag.Search, salesRep = ViewBag.SalesRep, page = totPages, pageSize = pSize })" title="หน้าสุดท้าย">»</a>
+                        <a class="page-link" href="@Url.Action("WaitingGoods", new { search = ViewBag.Search, salesRep = ViewBag.SalesRep, fromDate = ViewBag.FromDate, toDate = ViewBag.ToDate, credit = ViewBag.Credit, page = totPages, pageSize = pSize })" title="หน้าสุดท้าย">»</a>
                     </li>
                 }
             </ul>

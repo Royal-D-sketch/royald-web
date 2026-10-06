@@ -422,21 +422,21 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
         </div>
     </div>
 
-    <!-- 4 Real-time Search Input Fields -->
+    <!-- 7 Real-time Search Input Fields -->
     <div class="row g-2 search-input-group mb-3 p-3 bg-light rounded-3 border">
-        <div class="col-12 col-md-3">
+        <div class="col-12 col-md-4 col-lg-2">
             <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-receipt"></i> 1. เลขที่บิล</label>
             <input type="text" id="compSearchBill" class="form-control form-control-sm" placeholder="พิมพ์เลขที่บิล..." oninput="applyAllFilters()" />
         </div>
-        <div class="col-12 col-md-3">
+        <div class="col-12 col-md-4 col-lg-2">
             <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-qr-code"></i> 2. รหัสลูกค้า</label>
             <input type="text" id="compSearchCustomerCode" class="form-control form-control-sm" placeholder="พิมพ์รหัสลูกค้า..." oninput="applyAllFilters()" />
         </div>
-        <div class="col-12 col-md-3">
+        <div class="col-12 col-md-4 col-lg-2">
             <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-shop"></i> 3. ชื่อลูกค้า</label>
             <input type="text" id="compSearchCustomerName" class="form-control form-control-sm" placeholder="พิมพ์ชื่อร้านค้า / ลูกค้า..." oninput="applyAllFilters()" />
         </div>
-        <div class="col-12 col-md-2">
+        <div class="col-12 col-md-6 col-lg-2">
             <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-person-fill"></i> 4. ผู้แทนขาย</label>
             <div class="input-group input-group-sm">
                 <input type="text" id="compSearchSalesRep" class="form-control form-control-sm" list="compSalesRepList" placeholder="เลือก/พิมพ์ผู้แทน..." oninput="applyAllFilters()" />
@@ -459,7 +459,19 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                 }
             </datalist>
         </div>
-        <div class="col-12 col-md-1 d-flex align-items-end">
+        <div class="col-12 col-md-3 col-lg-1">
+            <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-calendar-event"></i> 5. ตั้งแต่วันที่</label>
+            <input type="date" id="compSearchFromDate" class="form-control form-control-sm" onchange="applyAllFilters()" />
+        </div>
+        <div class="col-12 col-md-3 col-lg-1">
+            <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-calendar-check"></i> 6. ถึงวันที่</label>
+            <input type="date" id="compSearchToDate" class="form-control form-control-sm" onchange="applyAllFilters()" />
+        </div>
+        <div class="col-12 col-md-3 col-lg-1">
+            <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-clock-history"></i> 7. เครดิต (วัน)</label>
+            <input type="number" id="compSearchCredit" class="form-control form-control-sm" placeholder="เช่น 30" oninput="applyAllFilters()" />
+        </div>
+        <div class="col-12 col-md-3 col-lg-1 d-flex align-items-end">
             <button type="button" class="btn btn-outline-secondary w-100 btn-sm py-1" onclick="clearFilters()" title="ล้างตัวกรอง">
                 <i class="bi bi-x-circle"></i> ล้าง
             </button>
@@ -635,9 +647,12 @@ async function fetchComparisonBills() {
     const sCustCode = encodeURIComponent((document.getElementById('compSearchCustomerCode')?.value || '').trim());
     const sCustName = encodeURIComponent((document.getElementById('compSearchCustomerName')?.value || '').trim());
     const sRep = encodeURIComponent((document.getElementById('compSearchSalesRep')?.value || '').trim());
+    const sFromDate = encodeURIComponent((document.getElementById('compSearchFromDate')?.value || '').trim());
+    const sToDate = encodeURIComponent((document.getElementById('compSearchToDate')?.value || '').trim());
+    const sCredit = encodeURIComponent((document.getElementById('compSearchCredit')?.value || '').trim());
     const sCust = sCustName || sCustCode;
 
-    const url = `/Dashboard/GetComparisonBills?group=${compCurrentGroup}&subFilter=${compCurrentSubFilter}&page=${compCurrentPage}&pageSize=${compPageSize}&searchBill=${sBill}&searchCustomer=${sCust}&searchSalesRep=${sRep}`;
+    const url = `/Dashboard/GetComparisonBills?group=${compCurrentGroup}&subFilter=${compCurrentSubFilter}&page=${compCurrentPage}&pageSize=${compPageSize}&searchBill=${sBill}&searchCustomer=${sCust}&searchSalesRep=${sRep}&fromDate=${sFromDate}&toDate=${sToDate}&credit=${sCredit}`;
 
     try {
         const response = await fetch(url);
@@ -783,6 +798,9 @@ function clearFilters() {
     document.getElementById('compSearchCustomerCode').value = '';
     document.getElementById('compSearchCustomerName').value = '';
     document.getElementById('compSearchSalesRep').value = '';
+    if (document.getElementById('compSearchFromDate')) document.getElementById('compSearchFromDate').value = '';
+    if (document.getElementById('compSearchToDate')) document.getElementById('compSearchToDate').value = '';
+    if (document.getElementById('compSearchCredit')) document.getElementById('compSearchCredit').value = '';
     setFilter('all', 'all', false);
 }
 
@@ -790,7 +808,10 @@ function getSearchParams() {
     const sBill = encodeURIComponent((document.getElementById('compSearchBill').value || '').trim());
     const sCust = encodeURIComponent((document.getElementById('compSearchCustomerName').value || document.getElementById('compSearchCustomerCode').value || '').trim());
     const sRep = encodeURIComponent((document.getElementById('compSearchSalesRep').value || '').trim());
-    return `section=${compCurrentGroup}&filterType=${compCurrentSubFilter}&searchBill=${sBill}&searchCustomer=${sCust}&searchSalesRep=${sRep}`;
+    const sFromDate = encodeURIComponent((document.getElementById('compSearchFromDate')?.value || '').trim());
+    const sToDate = encodeURIComponent((document.getElementById('compSearchToDate')?.value || '').trim());
+    const sCredit = encodeURIComponent((document.getElementById('compSearchCredit')?.value || '').trim());
+    return `section=${compCurrentGroup}&filterType=${compCurrentSubFilter}&searchBill=${sBill}&searchCustomer=${sCust}&searchSalesRep=${sRep}&fromDate=${sFromDate}&toDate=${sToDate}&credit=${sCredit}`;
 }
 
 function triggerExportExcel() { window.location.href = `/Dashboard/ExportComparisonExcel?${getSearchParams()}`; }

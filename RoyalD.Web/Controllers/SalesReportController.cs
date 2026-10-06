@@ -64,7 +64,7 @@ namespace RoyalD.Web.Controllers
         }
 
         // Screen 3: Product Movement Details
-        public async Task<IActionResult> ProductDetails(string? salesRep = null, string? month = null) 
+        public async Task<IActionResult> ProductDetails(string? salesRep = null, DateTime? startDate = null, DateTime? endDate = null, int? credit = null, string? month = null) 
         { 
             if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
             bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
@@ -75,16 +75,16 @@ namespace RoyalD.Web.Controllers
             string? username = User.Identity?.Name;
             bool isRestricted = isSalesRepRole || !string.IsNullOrWhiteSpace(userRepCode);
 
-            var cacheKey = $"prod_details_{salesRep}_{month}_{userRepCode}_{username}_{isRestricted}";
+            var cacheKey = $"prod_details_{salesRep}_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}_{credit}_{month}_{userRepCode}_{username}_{isRestricted}";
             var data = await _cache.GetOrCreateAsync(cacheKey, async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
-                return await _svc.GetProductDetailsReportAsync(salesRep, month, userRepCode, userFullName, username, isRestricted);
+                return await _svc.GetProductDetailsReportAsync(salesRep, startDate, endDate, credit, userRepCode, userFullName, username, isRestricted, month);
             });
             return View(data);
         }
 
-        public async Task<IActionResult> ProductDetailsAmount(string? salesRep = null, string? month = null) 
+        public async Task<IActionResult> ProductDetailsAmount(string? salesRep = null, DateTime? startDate = null, DateTime? endDate = null, int? credit = null, string? month = null) 
         { 
             if (!CheckPerm("salesreport")) return RedirectToAction("Index", "SalesBill");
             bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
@@ -95,17 +95,17 @@ namespace RoyalD.Web.Controllers
             string? username = User.Identity?.Name;
             bool isRestricted = isSalesRepRole || !string.IsNullOrWhiteSpace(userRepCode);
 
-            var cacheKey = $"prod_details_{salesRep}_{month}_{userRepCode}_{username}_{isRestricted}";
+            var cacheKey = $"prod_details_{salesRep}_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}_{credit}_{month}_{userRepCode}_{username}_{isRestricted}";
             var data = await _cache.GetOrCreateAsync(cacheKey, async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
-                return await _svc.GetProductDetailsReportAsync(salesRep, month, userRepCode, userFullName, username, isRestricted);
+                return await _svc.GetProductDetailsReportAsync(salesRep, startDate, endDate, credit, userRepCode, userFullName, username, isRestricted, month);
             });
             return View(data);
         }
 
         // Screen 4: Customer Product Details
-        public async Task<IActionResult> CustomerProduct(string? rep = null, string? month = null, DateTime? date = null, string? q = null, int page = 1, int pageSize = 100) 
+        public async Task<IActionResult> CustomerProduct(string? rep = null, DateTime? startDate = null, DateTime? endDate = null, int? credit = null, string? q = null, string? month = null, DateTime? date = null, int page = 1, int pageSize = 100) 
         { 
             if (!CheckPerm("customerproduct")) return RedirectToAction("Index", "SalesBill");
 
@@ -123,11 +123,11 @@ namespace RoyalD.Web.Controllers
                 username = User.Identity?.Name;
             }
 
-            var cacheKey = $"cust_prod_{rep}_{month}_{date?.ToString("yyyyMMdd")}_{q}_{userRepCode}_{username}";
+            var cacheKey = $"cust_prod_{rep}_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}_{credit}_{month}_{date:yyyyMMdd}_{q}_{userRepCode}_{username}";
             var vm = await _cache.GetOrCreateAsync(cacheKey, async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
-                return await _svc.GetCustomerProductReportAsync(rep, month, date, q, userRepCode, userFullName, username);
+                return await _svc.GetCustomerProductReportAsync(rep, startDate, endDate, credit, q, userRepCode, userFullName, username, month, date);
             }) ?? new CustomerProductViewModel();
 
             int totalRecords = vm.Items?.Count ?? 0;
@@ -147,6 +147,9 @@ namespace RoyalD.Web.Controllers
             ViewBag.SelectedRep = rep;
             ViewBag.SelectedMonth = month;
             ViewBag.SelectedDate = date?.ToString("yyyy-MM-dd");
+            ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
+            ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
+            ViewBag.Credit = credit;
             ViewBag.SearchQ = q;
 
             return View(vm);
@@ -162,10 +165,13 @@ namespace RoyalD.Web.Controllers
 
         public async Task<IActionResult> CustomerPurchaseSummary(
             string? salesRep = null, 
-            string? month = null,
+            DateTime? startDate = null,
+            DateTime? endDate = null,
+            int? credit = null,
             string? searchCustomerCode = null,
             string? searchCustomerName = null,
             string? searchProductCode = null,
+            string? month = null,
             int page = 1,
             int pageSize = 100) 
         { 
@@ -185,11 +191,11 @@ namespace RoyalD.Web.Controllers
                 username = User.Identity?.Name;
             }
 
-            var cacheKey = $"cust_purch_{salesRep}_{month}_{userRepCode}_{username}_{searchCustomerCode}_{searchCustomerName}_{searchProductCode}";
+            var cacheKey = $"cust_purch_{salesRep}_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}_{credit}_{month}_{userRepCode}_{username}_{searchCustomerCode}_{searchCustomerName}_{searchProductCode}";
             var vm = await _cache.GetOrCreateAsync(cacheKey, async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
-                return await _svc.GetCustomerPurchaseSummaryAsync(salesRep, month, userRepCode, userFullName, username, searchCustomerCode, searchCustomerName, searchProductCode);
+                return await _svc.GetCustomerPurchaseSummaryAsync(salesRep, startDate, endDate, credit, userRepCode, userFullName, username, searchCustomerCode, searchCustomerName, searchProductCode, month);
             }) ?? new CustomerPurchaseSummaryViewModel();
 
             int totalRecords = vm.Rows?.Count ?? 0;
@@ -208,6 +214,9 @@ namespace RoyalD.Web.Controllers
             ViewBag.PagedRows = pagedRows;
             ViewBag.SelectedSalesRep = salesRep;
             ViewBag.SelectedMonth = month;
+            ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
+            ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
+            ViewBag.Credit = credit;
             ViewBag.SearchCustomerCode = searchCustomerCode;
             ViewBag.SearchCustomerName = searchCustomerName;
             ViewBag.SearchProductCode = searchProductCode;
@@ -234,7 +243,7 @@ namespace RoyalD.Web.Controllers
                 $"SalesReport_Matrix_{DateTime.Now:yyyyMMdd}.xlsx");
         }
 
-                public async Task<IActionResult> ExportCustomerProductExcel(string? rep = null, string? month = null, DateTime? date = null, string? q = null)
+        public async Task<IActionResult> ExportCustomerProductExcel(string? rep = null, DateTime? startDate = null, DateTime? endDate = null, int? credit = null, string? q = null, string? month = null, DateTime? date = null)
         {
             if (!CanDownload()) return Forbid();
             bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
@@ -244,13 +253,13 @@ namespace RoyalD.Web.Controllers
             string? userFullName = isSalesRep ? User.FindFirst("FullName")?.Value : null;
             string? username = isSalesRep ? User.Identity?.Name : null;
 
-            var data = await _svc.GetCustomerProductReportAsync(rep, month, date, q, userRepCode, userFullName, username);
+            var data = await _svc.GetCustomerProductReportAsync(rep, startDate, endDate, credit, q, userRepCode, userFullName, username, month, date);
             var bytes = await _svc.ExportCustomerProductExcelAsync(data);
             return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 $"CustomerProduct_{DateTime.Now:yyyyMMdd}.xlsx");
         }
 
-        public async Task<IActionResult> ExportProductDetailsExcel(string? salesRep = null, string? month = null)
+        public async Task<IActionResult> ExportProductDetailsExcel(string? salesRep = null, DateTime? startDate = null, DateTime? endDate = null, int? credit = null, string? month = null)
         {
             if (!CanDownload()) return Forbid();
             bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
@@ -261,13 +270,13 @@ namespace RoyalD.Web.Controllers
             string? username = User.Identity?.Name;
             bool isRestricted = isSalesRepRole || !string.IsNullOrWhiteSpace(userRepCode);
 
-            var data = await _svc.GetProductDetailsReportAsync(salesRep, month, userRepCode, userFullName, username, isRestricted);
+            var data = await _svc.GetProductDetailsReportAsync(salesRep, startDate, endDate, credit, userRepCode, userFullName, username, isRestricted, month);
             var bytes = await _svc.ExportProductDetailsExcelAsync(data);
             return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 $"SalesReport_Products_{DateTime.Now:yyyyMMdd}.xlsx");
         }
 
-        public async Task<IActionResult> ExportCustomerProductCsv(string? rep = null, string? month = null, DateTime? date = null, string? q = null)
+        public async Task<IActionResult> ExportCustomerProductCsv(string? rep = null, DateTime? startDate = null, DateTime? endDate = null, int? credit = null, string? q = null, string? month = null, DateTime? date = null)
         {
             if (!CanDownload()) return Forbid();
             bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
@@ -277,7 +286,7 @@ namespace RoyalD.Web.Controllers
             string? userFullName = isSalesRep ? User.FindFirst("FullName")?.Value : null;
             string? username = isSalesRep ? User.Identity?.Name : null;
 
-            var data = await _svc.GetCustomerProductReportAsync(rep, month, date, q, userRepCode, userFullName, username);
+            var data = await _svc.GetCustomerProductReportAsync(rep, startDate, endDate, credit, q, userRepCode, userFullName, username, month, date);
             var sb = new System.Text.StringBuilder();
             sb.AppendLine("ลำดับ,เดือน,รหัสลูกค้า,ชื่อลูกค้า,รหัสสินค้า,ชื่อสินค้า,หน่วยสินค้า,ราคาต่อหน่วย,เครดิต(วัน),ชื่อผู้แทนขาย");
             int idx = 1;

@@ -87,11 +87,11 @@
     <div class="card-body py-3">
         <form method="get" id="searchForm" class="row g-2 align-items-end">
             <input type="hidden" name="pageSize" value="@(ViewBag.PageSize ?? 100)" />
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="form-label small fw-bold text-primary mb-1">🔢 รหัสลูกค้า</label>
                 <input type="text" name="searchCustomerCode" class="form-control form-control-sm" placeholder="เช่น 192738" value="@Model.SearchCustomerCode" />
             </div>
-            <div class="col-md-4 position-relative">
+            <div class="col-md-3 position-relative">
                 <label class="form-label small fw-bold text-primary mb-1">👤 ชื่อลูกค้า (พิมพ์เพื่อค้นหา)</label>
                 <input type="text" name="searchCustomerName" id="customerNameInput" class="form-control form-control-sm" placeholder="พิมพ์ชื่อลูกค้า..." value="@Model.SearchCustomerName" autocomplete="off" />
                 <div id="customerNameDropdown" class="dropdown-menu w-100 shadow-sm" style="max-height:220px;overflow-y:auto;display:none;position:absolute;z-index:9999;top:100%;left:0;border-radius:8px;"></div>
@@ -101,10 +101,20 @@
                 <input type="text" name="searchProductCode" class="form-control form-control-sm" placeholder="เช่น 308534" value="@Model.SearchProductCode" />
             </div>
             <div class="col-md-2">
-                <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold mt-3"><i class="bi bi-search"></i> ค้นหา</button>
+                <label class="form-label small fw-bold text-primary mb-1">📅 ตั้งแต่วันที่</label>
+                <input type="date" name="startDate" class="form-control form-control-sm" value="@(Model.StartDate?.ToString("yyyy-MM-dd"))" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-primary mb-1">📅 ถึงวันที่</label>
+                <input type="date" name="endDate" class="form-control form-control-sm" value="@(Model.EndDate?.ToString("yyyy-MM-dd"))" />
             </div>
             <div class="col-md-1">
-                <a href="/SalesReport/CustomerPurchaseSummary" class="btn btn-outline-secondary btn-sm w-100 mt-3" title="ล้างตัวกรอง"><i class="bi bi-x-circle"></i></a>
+                <label class="form-label small fw-bold text-primary mb-1">💳 เครดิต</label>
+                <input type="number" name="credit" class="form-control form-control-sm" placeholder="วัน" value="@Model.Credit" min="0" />
+            </div>
+            <div class="col-12 d-flex justify-content-end gap-2 mt-2">
+                <button type="submit" class="btn btn-primary btn-sm fw-bold px-3"><i class="bi bi-search me-1"></i> ค้นหา</button>
+                <a href="/SalesReport/CustomerPurchaseSummary" class="btn btn-outline-secondary btn-sm px-3" title="ล้างตัวกรอง"><i class="bi bi-arrow-counterclockwise me-1"></i> ล้าง</a>
             </div>
         </form>
     </div>
@@ -138,6 +148,7 @@
                 <th style="width:120px;">รหัสสินค้า</th>
                 <th style="min-width:180px;">ชื่อสินค้า</th>
                 <th style="width:100px;" class="text-center">หน่วยสินค้า</th>
+                <th style="width:100px;" class="text-center">เครดิต (วัน)</th>
                 <th style="width:120px;" class="text-end">จำนวนที่ซื้อ</th>
                 <th style="width:120px;" class="text-end">ราคา/หน่วย</th>
                 <th style="width:150px;" class="text-end">จำนวนเงินรวม</th>
@@ -146,7 +157,7 @@
         <tbody>
             @if (!pagedRows.Any())
             {
-                <tr><td colspan="8" class="text-center py-4 text-muted">ไม่พบข้อมูล — กรุณาใส่รหัสลูกค้า ชื่อลูกค้า หรือรหัสสินค้าเพื่อค้นหา</td></tr>
+                <tr><td colspan="9" class="text-center py-4 text-muted">ไม่พบข้อมูล — กรุณาใส่รหัสลูกค้า ชื่อลูกค้า หรือรหัสสินค้าเพื่อค้นหา</td></tr>
             }
             else
             {
@@ -164,6 +175,7 @@
                         <td class="text-secondary">@row.ProductCode</td>
                         <td class="fw-semibold text-dark">@row.ProductName</td>
                         <td class="text-center"><span class="badge bg-secondary bg-opacity-10 text-dark border px-2 py-1">@(string.IsNullOrWhiteSpace(row.Unit) ? "-" : row.Unit)</span></td>
+                        <td class="text-center">@(row.Credit == 0 ? "เงินสด" : $"{row.Credit} วัน")</td>
                         <td class="text-end fw-bold text-info">@row.Quantity.ToString("N0")</td>
                         <td class="text-end">@row.UnitPrice.ToString("N2")</td>
                         <td class="text-end fw-bold text-success">@row.Amount.ToString("N2")</td>
@@ -171,7 +183,7 @@
                     lastCustomerId = row.CustomerId;
                 }
                 <tr class="table-light fw-bold" style="border-top:2px solid #334155;">
-                    <td colspan="7" class="text-end fs-6">รวมจำนวนเงินดิบทั้งสิ้น (ก่อนหักลด/ไม่รวม VAT - ทั้งหมด @totRecords.ToString("N0") รายการ):</td>
+                    <td colspan="8" class="text-end fs-6">รวมจำนวนเงินดิบทั้งสิ้น (ก่อนหักลด/ไม่รวม VAT - ทั้งหมด @totRecords.ToString("N0") รายการ):</td>
                     <td class="text-end text-success fs-5">@totalGrandAmount.ToString("N2")</td>
                 </tr>
             }
@@ -203,10 +215,10 @@
                 @if (curPage > 1)
                 {
                     <li class="page-item">
-                        <a class="page-link" href="@Url.Action("CustomerPurchaseSummary", new { salesRep = ViewBag.SelectedSalesRep, month = ViewBag.SelectedMonth, searchCustomerCode = ViewBag.SearchCustomerCode, searchCustomerName = ViewBag.SearchCustomerName, searchProductCode = ViewBag.SearchProductCode, page = 1, pageSize = pSize })" title="หน้าแรก">«</a>
+                        <a class="page-link" href="@Url.Action("CustomerPurchaseSummary", new { salesRep = ViewBag.SelectedSalesRep, month = ViewBag.SelectedMonth, startDate = Model.StartDate?.ToString("yyyy-MM-dd"), endDate = Model.EndDate?.ToString("yyyy-MM-dd"), credit = Model.Credit, searchCustomerCode = ViewBag.SearchCustomerCode, searchCustomerName = ViewBag.SearchCustomerName, searchProductCode = ViewBag.SearchProductCode, page = 1, pageSize = pSize })" title="หน้าแรก">«</a>
                     </li>
                     <li class="page-item">
-                        <a class="page-link" href="@Url.Action("CustomerPurchaseSummary", new { salesRep = ViewBag.SelectedSalesRep, month = ViewBag.SelectedMonth, searchCustomerCode = ViewBag.SearchCustomerCode, searchCustomerName = ViewBag.SearchCustomerName, searchProductCode = ViewBag.SearchProductCode, page = curPage - 1, pageSize = pSize })">‹ ก่อนหน้า</a>
+                        <a class="page-link" href="@Url.Action("CustomerPurchaseSummary", new { salesRep = ViewBag.SelectedSalesRep, month = ViewBag.SelectedMonth, startDate = Model.StartDate?.ToString("yyyy-MM-dd"), endDate = Model.EndDate?.ToString("yyyy-MM-dd"), credit = Model.Credit, searchCustomerCode = ViewBag.SearchCustomerCode, searchCustomerName = ViewBag.SearchCustomerName, searchProductCode = ViewBag.SearchProductCode, page = curPage - 1, pageSize = pSize })">‹ ก่อนหน้า</a>
                     </li>
                 }
 
@@ -218,17 +230,17 @@
                     }
                     else
                     {
-                        <li class="page-item"><a class="page-link" href="@Url.Action("CustomerPurchaseSummary", new { salesRep = ViewBag.SelectedSalesRep, month = ViewBag.SelectedMonth, searchCustomerCode = ViewBag.SearchCustomerCode, searchCustomerName = ViewBag.SearchCustomerName, searchProductCode = ViewBag.SearchProductCode, page = p, pageSize = pSize })">@p</a></li>
+                        <li class="page-item"><a class="page-link" href="@Url.Action("CustomerPurchaseSummary", new { salesRep = ViewBag.SelectedSalesRep, month = ViewBag.SelectedMonth, startDate = Model.StartDate?.ToString("yyyy-MM-dd"), endDate = Model.EndDate?.ToString("yyyy-MM-dd"), credit = Model.Credit, searchCustomerCode = ViewBag.SearchCustomerCode, searchCustomerName = ViewBag.SearchCustomerName, searchProductCode = ViewBag.SearchProductCode, page = p, pageSize = pSize })">@p</a></li>
                     }
                 }
 
                 @if (curPage < totPages)
                 {
                     <li class="page-item">
-                        <a class="page-link" href="@Url.Action("CustomerPurchaseSummary", new { salesRep = ViewBag.SelectedSalesRep, month = ViewBag.SelectedMonth, searchCustomerCode = ViewBag.SearchCustomerCode, searchCustomerName = ViewBag.SearchCustomerName, searchProductCode = ViewBag.SearchProductCode, page = curPage + 1, pageSize = pSize })">ถัดไป ›</a>
+                        <a class="page-link" href="@Url.Action("CustomerPurchaseSummary", new { salesRep = ViewBag.SelectedSalesRep, month = ViewBag.SelectedMonth, startDate = Model.StartDate?.ToString("yyyy-MM-dd"), endDate = Model.EndDate?.ToString("yyyy-MM-dd"), credit = Model.Credit, searchCustomerCode = ViewBag.SearchCustomerCode, searchCustomerName = ViewBag.SearchCustomerName, searchProductCode = ViewBag.SearchProductCode, page = curPage + 1, pageSize = pSize })">ถัดไป ›</a>
                     </li>
                     <li class="page-item">
-                        <a class="page-link" href="@Url.Action("CustomerPurchaseSummary", new { salesRep = ViewBag.SelectedSalesRep, month = ViewBag.SelectedMonth, searchCustomerCode = ViewBag.SearchCustomerCode, searchCustomerName = ViewBag.SearchCustomerName, searchProductCode = ViewBag.SearchProductCode, page = totPages, pageSize = pSize })" title="หน้าสุดท้าย">»</a>
+                        <a class="page-link" href="@Url.Action("CustomerPurchaseSummary", new { salesRep = ViewBag.SelectedSalesRep, month = ViewBag.SelectedMonth, startDate = Model.StartDate?.ToString("yyyy-MM-dd"), endDate = Model.EndDate?.ToString("yyyy-MM-dd"), credit = Model.Credit, searchCustomerCode = ViewBag.SearchCustomerCode, searchCustomerName = ViewBag.SearchCustomerName, searchProductCode = ViewBag.SearchProductCode, page = totPages, pageSize = pSize })" title="หน้าสุดท้าย">»</a>
                     </li>
                 }
             </ul>

@@ -116,6 +116,7 @@ namespace RoyalD.Web.Controllers
             string? status,
             DateTime? startDate,
             DateTime? endDate,
+            int? credit = null,
             int page = 1, 
             int pageSize = 50)
         {
@@ -165,6 +166,8 @@ namespace RoyalD.Web.Controllers
                 q = q.Where(b => b.BillNo.Contains(search) || b.CustomerName.Contains(search) || b.CustomerCode.Contains(search));
             if (!string.IsNullOrEmpty(month))
                 q = q.Where(b => b.SourceMonth == month);
+            if (credit.HasValue)
+                q = q.Where(b => b.Credit == credit.Value);
             
             // EXCLUDE Cancelled bills by default, unless explicitly requested (cached for high performance)
             var canBillNos = await _cache.GetOrCreateAsync("cancelled_debt_bill_nos", async entry =>
@@ -438,6 +441,7 @@ namespace RoyalD.Web.Controllers
             ViewBag.TotalCount = total;
             ViewBag.TotalAmount = totalAmount;
             ViewBag.DebtDict = debtDict;
+            ViewBag.Credit = credit;
             ViewBag.CanDeleteSalesBill = currentUser != null && (currentUser.Role == "admin" || currentUser.CanDeleteSalesBill);
 
             return View(bills);
@@ -575,7 +579,8 @@ namespace RoyalD.Web.Controllers
             string? poSearch, 
             string? status,
             DateTime? startDate,
-            DateTime? endDate)
+            DateTime? endDate,
+            int? credit = null)
         {
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             bool isRestricted = currentUser != null && currentUser.Role != "admin";
@@ -644,6 +649,8 @@ namespace RoyalD.Web.Controllers
                 q = q.Where(b => b.BillNo.Contains(search) || b.CustomerName.Contains(search) || b.CustomerCode.Contains(search));
             if (!string.IsNullOrEmpty(month))
                 q = q.Where(b => b.SourceMonth == month);
+            if (credit.HasValue)
+                q = q.Where(b => b.Credit == credit.Value);
             
             var canBillNos = await _db.OutstandingDebts.AsNoTracking()
                 .Where(d => d.Status == DebtStatus.Cancelled)
@@ -847,7 +854,8 @@ namespace RoyalD.Web.Controllers
             string? poSearch, 
             string? status,
             DateTime? startDate,
-            DateTime? endDate)
+            DateTime? endDate,
+            int? credit = null)
         {
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             if (currentUser != null && currentUser.Role != "admin" && !currentUser.CanDownload)
@@ -915,6 +923,7 @@ namespace RoyalD.Web.Controllers
             if (!string.IsNullOrEmpty(month)) q = q.Where(b => b.SourceMonth == month);
             if (startDate.HasValue) q = q.Where(b => b.BillDate >= startDate.Value.Date);
             if (endDate.HasValue) q = q.Where(b => b.BillDate <= endDate.Value.Date.AddDays(1).AddTicks(-1));
+            if (credit.HasValue) q = q.Where(b => b.Credit == credit.Value);
             if (!string.IsNullOrEmpty(poSearch)) q = q.Where(b => b.PoNumber.Contains(poSearch));
 
             var canBillNos = await _db.OutstandingDebts.AsNoTracking()

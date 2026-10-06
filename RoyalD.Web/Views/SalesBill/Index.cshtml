@@ -102,10 +102,10 @@
     <div class="d-flex gap-2">
         @if (canDownload)
         {
-            <a href="/SalesBill/ExportExcel?search=@ViewBag.Search&region=@ViewBag.SelectedRegion&province=@ViewBag.SelectedProvince&district=@ViewBag.SelectedDistrict&salesRep=@ViewBag.SalesRep&month=@ViewBag.Month&poSearch=@ViewBag.PoSearch&status=@ViewBag.Status&startDate=@ViewBag.StartDate&endDate=@ViewBag.EndDate" class="btn btn-success btn-sm no-print shadow-sm">
+            <a href="/SalesBill/ExportExcel?search=@ViewBag.Search&region=@ViewBag.SelectedRegion&province=@ViewBag.SelectedProvince&district=@ViewBag.SelectedDistrict&salesRep=@ViewBag.SalesRep&month=@ViewBag.Month&poSearch=@ViewBag.PoSearch&status=@ViewBag.Status&startDate=@ViewBag.StartDate&endDate=@ViewBag.EndDate&credit=@ViewBag.Credit" class="btn btn-success btn-sm no-print shadow-sm">
                 <i class="bi bi-file-earmark-excel"></i> Export Excel
             </a>
-            <a href="/SalesBill/ExportCsv?search=@ViewBag.Search&region=@ViewBag.SelectedRegion&province=@ViewBag.SelectedProvince&district=@ViewBag.SelectedDistrict&salesRep=@ViewBag.SalesRep&month=@ViewBag.Month&poSearch=@ViewBag.PoSearch&status=@ViewBag.Status&startDate=@ViewBag.StartDate&endDate=@ViewBag.EndDate" class="btn btn-outline-success btn-sm no-print shadow-sm">
+            <a href="/SalesBill/ExportCsv?search=@ViewBag.Search&region=@ViewBag.SelectedRegion&province=@ViewBag.SelectedProvince&district=@ViewBag.SelectedDistrict&salesRep=@ViewBag.SalesRep&month=@ViewBag.Month&poSearch=@ViewBag.PoSearch&status=@ViewBag.Status&startDate=@ViewBag.StartDate&endDate=@ViewBag.EndDate&credit=@ViewBag.Credit" class="btn btn-outline-success btn-sm no-print shadow-sm">
                 <i class="bi bi-filetype-csv"></i> Export CSV
             </a>
             <button onclick="window.print()" class="btn btn-outline-danger btn-sm no-print shadow-sm">
@@ -153,6 +153,10 @@
         <div class="col-md-2">
             <label class="form-label small fw-bold text-primary mb-1">📅 วันที่สิ้นสุด</label>
             <input type="date" name="endDate" class="form-control form-control-sm" value="@ViewBag.EndDate" />
+        </div>
+        <div class="col-md-1">
+            <label class="form-label small fw-bold text-primary mb-1">💳 เครดิต</label>
+            <input type="number" name="credit" class="form-control form-control-sm" placeholder="วัน" value="@ViewBag.Credit" min="0" />
         </div>
         <div class="col-md-2">
             <label class="form-label small fw-bold text-primary mb-1">🗺️ ภาค/ภูมิภาค</label>
@@ -206,10 +210,6 @@
                     }
                 </select>
             }
-        </div>
-        <div class="col-md-2">
-            <label class="form-label small fw-bold text-primary mb-1">📅 แฟ้มเดือน</label>
-            <input type="month" name="month" class="form-control form-control-sm" value="@ViewBag.Month" />
         </div>
         <div class="col-md-2 d-flex gap-1">
             <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">
@@ -435,7 +435,7 @@
                     if (p == ViewBag.Page) {
                         <li class="page-item active"><span class="page-link" style="background:#0d9488; border-color:#0d9488;">@p</span></li>
                     } else if (p == 1 || p == ViewBag.TotalPages || Math.Abs(p - (int)ViewBag.Page) <= 2) {
-                        <li class="page-item"><a class="page-link" href="?search=@ViewBag.Search&poSearch=@ViewBag.PoSearch&region=@ViewBag.SelectedRegion&province=@ViewBag.SelectedProvince&salesRep=@ViewBag.SalesRep&month=@ViewBag.Month&status=@ViewBag.Status&startDate=@ViewBag.StartDate&endDate=@ViewBag.EndDate&pageSize=@ViewBag.PageSize&page=@p">@p</a></li>
+                        <li class="page-item"><a class="page-link" href="?search=@ViewBag.Search&poSearch=@ViewBag.PoSearch&region=@ViewBag.SelectedRegion&province=@ViewBag.SelectedProvince&salesRep=@ViewBag.SalesRep&month=@ViewBag.Month&status=@ViewBag.Status&startDate=@ViewBag.StartDate&endDate=@ViewBag.EndDate&credit=@ViewBag.Credit&pageSize=@ViewBag.PageSize&page=@p">@p</a></li>
                     }
                 }
             </ul>

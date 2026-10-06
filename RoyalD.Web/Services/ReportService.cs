@@ -111,6 +111,9 @@ namespace RoyalD.Web.Services
         public List<string> SalesReps { get; set; } = new();
         public string? SelectedSalesRep { get; set; }
         public string? SelectedMonth { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public int? Credit { get; set; }
         public bool IsRestrictedRep { get; set; }
         public List<SalesRepProductReport> RepReports { get; set; } = new();
     }
@@ -393,11 +396,14 @@ namespace RoyalD.Web.Services
         // 3. Product Movement Details with Delivering Deduction Logic
         public async Task<ProductDetailsReportViewModel> GetProductDetailsReportAsync(
             string? selectedRep = null, 
-            string? selectedMonth = null,
+            DateTime? startDate = null,
+            DateTime? endDate = null,
+            int? credit = null,
             string? userSalesRepCode = null,
             string? userFullName = null,
             string? username = null,
-            bool isRestricted = false)
+            bool isRestricted = false,
+            string? selectedMonth = null)
         {
             var monthKeys = StandardMonthsMap.Keys.ToList();
             var monthLabels = StandardMonthsMap.Values.ToList();
@@ -418,7 +424,21 @@ namespace RoyalD.Web.Services
             {
                 billQuery = billQuery.Where(b => filterReps.Contains(b.SalesRep));
             }
-            if (!string.IsNullOrEmpty(selectedMonth))
+            if (startDate.HasValue)
+            {
+                var sDate = startDate.Value.Date;
+                billQuery = billQuery.Where(b => b.BillDate >= sDate);
+            }
+            if (endDate.HasValue)
+            {
+                var eDate = endDate.Value.Date.AddDays(1).AddTicks(-1);
+                billQuery = billQuery.Where(b => b.BillDate <= eDate);
+            }
+            if (credit.HasValue)
+            {
+                billQuery = billQuery.Where(b => b.Credit == credit.Value);
+            }
+            if (!startDate.HasValue && !endDate.HasValue && !string.IsNullOrEmpty(selectedMonth))
             {
                 if (DateTime.TryParse(selectedMonth + "-01", out var mDate))
                 {
@@ -472,13 +492,33 @@ namespace RoyalD.Web.Services
                 SalesReps = uiReps,
                 SelectedSalesRep = selectedRepForUi,
                 SelectedMonth = selectedMonth,
+                StartDate = startDate,
+                EndDate = endDate,
+                Credit = credit,
                 IsRestrictedRep = isRestrictedRep && uiReps.Count > 0
             };
 
             var targetReps = (filterReps != null && filterReps.Count > 0)
                 ? filterReps
                 : allReps;
-            var targetMonths = string.IsNullOrEmpty(selectedMonth) ? monthKeys : new List<string> { selectedMonth };
+            List<string> targetMonths;
+            if (!string.IsNullOrEmpty(selectedMonth))
+            {
+                targetMonths = new List<string> { selectedMonth };
+            }
+            else if (startDate.HasValue || endDate.HasValue || credit.HasValue)
+            {
+                var derivedMonths = bills
+                    .Select(b => !string.IsNullOrEmpty(b.SourceMonth) ? b.SourceMonth : b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture))
+                    .Distinct()
+                    .OrderBy(m => m)
+                    .ToList();
+                targetMonths = derivedMonths.Any() ? derivedMonths : monthKeys;
+            }
+            else
+            {
+                targetMonths = monthKeys;
+            }
 
             foreach (var rep in targetReps)
             {
@@ -653,11 +693,12 @@ namespace RoyalD.Web.Services
             return await pkg.GetAsByteArrayAsync();
         }
 
-        public async Task<List<SalesReportData>> GetSalesSummaryAsync(DateTime? from = null, DateTime? to = null)
+        public async Task<List<SalesReportData>> GetSalesSummaryAsync(DateTime? from = null, DateTime? to = null, int? credit = null)
         {
             var billQ = _db.SalesBills.AsQueryable();
-            if (from.HasValue) billQ = billQ.Where(b => b.BillDate >= from.Value);
-            if (to.HasValue) billQ = billQ.Where(b => b.BillDate <= to.Value);
+            if (from.HasValue) billQ = billQ.Where(b => b.BillDate >= from.Value.Date);
+            if (to.HasValue) billQ = billQ.Where(b => b.BillDate <= to.Value.Date.AddDays(1).AddTicks(-1));
+            if (credit.HasValue) billQ = billQ.Where(b => b.Credit == credit.Value);
 
             var rawBills = await billQ
                 .Select(b => new { b.SalesRep, b.TotalAmount })
@@ -900,12 +941,15 @@ namespace RoyalD.Web.Services
 
         public async Task<CustomerProductViewModel> GetCustomerProductReportAsync(
             string? selectedRep, 
-            string? selectedMonth, 
-            DateTime? selectedDate, 
+            DateTime? startDate = null,
+            DateTime? endDate = null,
+            int? credit = null,
             string? q = null,
             string? userSalesRepCode = null,
             string? userFullName = null,
-            string? username = null)
+            string? username = null,
+            string? selectedMonth = null, 
+            DateTime? selectedDate = null)
         {
             var allDbReps = await _db.SalesBills
                 .Where(b => b.SalesRep != null && b.SalesRep != "")
@@ -917,8 +961,12 @@ namespace RoyalD.Web.Services
             var vm = new CustomerProductViewModel
             {
                 SearchQuery = q,
+                SelectedRep = selectedRep,
                 SelectedMonth = selectedMonth,
                 SelectedDate = selectedDate,
+                StartDate = startDate,
+                EndDate = endDate,
+                Credit = credit,
                 AllMonths = StandardMonthsMap
             };
 
@@ -963,20 +1011,37 @@ namespace RoyalD.Web.Services
                 }
             }
 
-            if (selectedDate.HasValue)
-                query = query.Where(i => i.SalesBill.BillDate.Date == selectedDate.Value.Date);
-
-            if (!string.IsNullOrEmpty(selectedMonth))
+            if (startDate.HasValue)
             {
-                if (DateTime.TryParse(selectedMonth + "-01", out var mDate))
+                var sDate = startDate.Value.Date;
+                query = query.Where(i => i.SalesBill.BillDate >= sDate);
+            }
+            if (endDate.HasValue)
+            {
+                var eDate = endDate.Value.Date.AddDays(1).AddTicks(-1);
+                query = query.Where(i => i.SalesBill.BillDate <= eDate);
+            }
+            if (credit.HasValue)
+            {
+                query = query.Where(i => i.SalesBill.Credit == credit.Value);
+            }
+            if (!startDate.HasValue && !endDate.HasValue)
+            {
+                if (selectedDate.HasValue)
+                    query = query.Where(i => i.SalesBill.BillDate.Date == selectedDate.Value.Date);
+
+                if (!string.IsNullOrEmpty(selectedMonth))
                 {
-                    var startOfMonth = new DateTime(mDate.Year, mDate.Month, 1);
-                    var endOfMonth = startOfMonth.AddMonths(1);
-                    query = query.Where(i => i.SalesBill.SourceMonth == selectedMonth || (i.SalesBill.BillDate >= startOfMonth && i.SalesBill.BillDate < endOfMonth));
-                }
-                else
-                {
-                    query = query.Where(i => i.SalesBill.SourceMonth == selectedMonth);
+                    if (DateTime.TryParse(selectedMonth + "-01", out var mDate))
+                    {
+                        var startOfMonth = new DateTime(mDate.Year, mDate.Month, 1);
+                        var endOfMonth = startOfMonth.AddMonths(1);
+                        query = query.Where(i => i.SalesBill.SourceMonth == selectedMonth || (i.SalesBill.BillDate >= startOfMonth && i.SalesBill.BillDate < endOfMonth));
+                    }
+                    else
+                    {
+                        query = query.Where(i => i.SalesBill.SourceMonth == selectedMonth);
+                    }
                 }
             }
 
@@ -1081,13 +1146,16 @@ namespace RoyalD.Web.Services
 
         public async Task<CustomerPurchaseSummaryViewModel> GetCustomerPurchaseSummaryAsync(
             string? selectedRep = null, 
-            string? selectedMonth = null,
+            DateTime? startDate = null,
+            DateTime? endDate = null,
+            int? credit = null,
             string? userSalesRepCode = null,
             string? userFullName = null,
             string? username = null,
             string? searchCustomerCode = null,
             string? searchCustomerName = null,
-            string? searchProductCode = null)
+            string? searchProductCode = null,
+            string? selectedMonth = null)
         {
             var allDbReps = await _db.SalesBills
                 .Where(b => b.SalesRep != null && b.SalesRep != "")
@@ -1100,7 +1168,10 @@ namespace RoyalD.Web.Services
             {
                 MonthKeys = StandardMonthsMap.Keys.ToList(),
                 Months = StandardMonthsMap.Values.ToList(),
-                SelectedMonth = selectedMonth
+                SelectedMonth = selectedMonth ?? "",
+                StartDate = startDate,
+                EndDate = endDate,
+                Credit = credit
             };
 
             // Query SalesBillItems directly (Price > 0 excludes free/bonus items)
@@ -1144,7 +1215,21 @@ namespace RoyalD.Web.Services
                 }
             }
 
-            if (!string.IsNullOrEmpty(selectedMonth))
+            if (startDate.HasValue)
+            {
+                var sDate = startDate.Value.Date;
+                itemQuery = itemQuery.Where(i => i.SalesBill.BillDate >= sDate);
+            }
+            if (endDate.HasValue)
+            {
+                var eDate = endDate.Value.Date.AddDays(1).AddTicks(-1);
+                itemQuery = itemQuery.Where(i => i.SalesBill.BillDate <= eDate);
+            }
+            if (credit.HasValue)
+            {
+                itemQuery = itemQuery.Where(i => i.SalesBill.Credit == credit.Value);
+            }
+            if (!startDate.HasValue && !endDate.HasValue && !string.IsNullOrEmpty(selectedMonth))
             {
                 if (DateTime.TryParse(selectedMonth + "-01", out var mDate))
                 {
@@ -1183,7 +1268,8 @@ namespace RoyalD.Web.Services
                 ProductName = i.ProductName ?? "",
                 Unit = i.Unit,
                 Price = i.Price,
-                Qty = i.Qty
+                Qty = i.Qty,
+                Credit = i.SalesBill.Credit
             }).ToListAsync();
             
             // All customers for autocomplete (from Customers table)
@@ -1199,7 +1285,7 @@ namespace RoyalD.Web.Services
             vm.SearchCustomerName = searchCustomerName ?? "";
             vm.SearchProductCode = searchProductCode ?? "";
 
-            // Group by Customer + Product + UnitPrice (price split logic - separate rows per price)
+            // Group by Customer + Product + UnitPrice + Credit (price and credit split logic)
             vm.Rows = allItems
                 .GroupBy(x => new {
                     CustomerId = x.CustomerId,
@@ -1207,13 +1293,15 @@ namespace RoyalD.Web.Services
                     ProductCode = x.ProductCode,
                     ProductName = x.ProductName,
                     Unit = ProductCatalogService.GetUnit(x.ProductCode, x.ProductName, x.Unit),
-                    UnitPrice = x.Price
+                    UnitPrice = x.Price,
+                    Credit = x.Credit
                 })
                 .Select(g => new CustomerPurchaseSummaryRow {
                     CustomerId = g.Key.CustomerId,
                     CustomerName = g.Key.CustomerName,
                     ProductCode = g.Key.ProductCode,
                     ProductName = g.Key.ProductName,
+                    Credit = g.Key.Credit,
                     Unit = g.Key.Unit,
                     UnitPrice = g.Key.UnitPrice,
                     Quantity = g.Sum(x => x.Qty),
@@ -1232,6 +1320,9 @@ namespace RoyalD.Web.Services
         public string? SelectedRep { get; set; }
         public string? SelectedMonth { get; set; }
         public DateTime? SelectedDate { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public int? Credit { get; set; }
         public List<string> AllReps { get; set; } = new();
         public Dictionary<string, string> AllMonths { get; set; } = new();
         public List<CustomerProductItem> Items { get; set; } = new();
@@ -1257,6 +1348,7 @@ namespace RoyalD.Web.Services
         public string CustomerName { get; set; } = "";
         public string ProductCode { get; set; } = "";
         public string ProductName { get; set; } = "";
+        public int Credit { get; set; }
         public decimal Quantity { get; set; }
         public string Unit { get; set; } = "";
         public decimal UnitPrice { get; set; }
@@ -1270,6 +1362,9 @@ namespace RoyalD.Web.Services
         public List<string> SalesReps { get; set; } = new();
         public string SelectedMonth { get; set; } = "";
         public string SelectedSalesRep { get; set; } = "";
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public int? Credit { get; set; }
         public List<CustomerPurchaseSummaryRow> Rows { get; set; } = new();
         
         // New search filters
