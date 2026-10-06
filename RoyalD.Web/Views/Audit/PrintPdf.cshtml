@@ -1,0 +1,153 @@
+@model List<RoyalD.Web.Models.AuditLog>
+@using RoyalD.Web.Models
+@using RoyalD.Web.Services
+@{
+    Layout = null;
+    var userDict = ViewBag.UserDict as Dictionary<string, AppUser> ?? new();
+    string dateRangeText = (ViewBag.StartDate != null ? $"ตั้งแต่วันที่ {ViewBag.StartDate} " : "") + (ViewBag.EndDate != null ? $"ถึงวันที่ {ViewBag.EndDate}" : "");
+    if (string.IsNullOrEmpty(dateRangeText)) dateRangeText = "ทั้งหมด";
+    string repText = !string.IsNullOrEmpty(ViewBag.SelectedSalesRep) ? ViewBag.SelectedSalesRep : "ทั้งหมด";
+}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>รายงานประวัติการใช้งานระบบ (Audit Logs) — บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" />
+    <style>
+        body {
+            font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, Arial, sans-serif;
+            background: #ffffff;
+            color: #0f172a;
+            font-size: 0.80rem;
+            padding: 20px;
+        }
+        .header-box {
+            border-bottom: 2px solid #0f766e;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+        .table-pdf th {
+            background-color: #0f766e !important;
+            color: #ffffff !important;
+            font-weight: 700;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 0.78rem;
+            padding: 6px 4px;
+        }
+        .table-pdf td {
+            vertical-align: middle;
+            padding: 5px 4px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        @@media print {
+            body { padding: 0; }
+            .no-print { display: none !important; }
+            .table-pdf th { background-color: #0f766e !important; -webkit-print-color-adjust: exact; }
+        }
+        .table-pdf td, .table-pdf th, table td, table th {
+            white-space: normal !important;
+            word-break: break-word !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Actions (No print) -->
+    <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+        <a href="javascript:window.history.back()" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> ย้อนกลับ
+        </a>
+        <div class="d-flex gap-2">
+            <button onclick="window.print()" class="btn btn-danger btn-sm fw-bold">
+                <i class="bi bi-printer-fill me-1"></i> พิมพ์เอกสาร / บันทึกเป็น PDF
+            </button>
+            <button onclick="window.close()" class="btn btn-secondary btn-sm">
+                <i class="bi bi-x-lg me-1"></i> ปิดหน้านี้
+            </button>
+        </div>
+    </div>
+
+    <!-- Official Report Header -->
+    <div class="header-box">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h4 class="fw-bold mb-1" style="color:#0f766e;">บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด</h4>
+                <h6 class="fw-bold text-dark mb-1">รายงานประวัติการใช้งานระบบ (System Audit Logs)</h6>
+                <div class="small text-muted">
+                    <span><strong>ช่วงวันที่:</strong> @dateRangeText</span> | 
+                    <span><strong>ผู้แทน/ผู้ใช้งาน:</strong> @repText</span> | 
+                    <span><strong>คำค้นหา:</strong> @(string.IsNullOrEmpty(ViewBag.SearchTerm) ? "ทั้งหมด" : ViewBag.SearchTerm)</span>
+                </div>
+            </div>
+            <div class="text-end small text-muted">
+                <div>พิมพ์วันที่: <strong>@DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")</strong></div>
+                <div>ผู้พิมพ์: <strong>@ViewBag.PrintedBy</strong></div>
+                <div>จำนวนรายการ: <strong>@Model.Count.ToString("N0")</strong> รายการ</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <table class="table table-bordered table-sm table-pdf mb-3">
+        <thead>
+            <tr>
+                <th style="width: 35px;">#</th>
+                <th style="width: 120px;">วัน-เวลา</th>
+                <th style="width: 140px;">ชื่อ-นามสกุล / บัญชี</th>
+                <th style="width: 90px;">ตำแหน่ง</th>
+                <th style="width: 100px;">กิจกรรม</th>
+                <th style="width: 70px;">เวลาใช้งาน</th>
+                <th style="width: 160px;">📍 พิกัด / พื้นที่</th>
+                <th>รายละเอียด</th>
+                <th style="width: 95px;">IP Address</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-4">ไม่พบข้อมูลประวัติการใช้งานตามเงื่อนไขที่เลือก</td>
+                </tr>
+            }
+            @{ int index = 1; }
+            @foreach (var log in Model)
+            {
+                userDict.TryGetValue(log.Username, out var usr);
+                string fullName = usr != null && !string.IsNullOrEmpty(usr.FullName) ? usr.FullName : (log.Username == "admin" ? "ผู้ดูแลระบบ (Admin)" : "-");
+                string pos = usr != null && !string.IsNullOrEmpty(usr.Position) ? usr.Position : (log.Username == "admin" ? "ผู้ดูแลระบบ" : "-");
+                string loc = GeoLocationHelper.ReverseGeocode(log.Latitude, log.Longitude, log.Area);
+                if ((string.IsNullOrEmpty(loc) || loc == "ไม่ระบุตำแหน่ง" || loc == "-") && !string.IsNullOrEmpty(log.Area)) loc = log.Area;
+
+                <tr>
+                    <td class="text-center">@index</td>
+                    <td class="text-center text-nowrap">@log.CreatedAtThai.ToString("dd/MM/yy HH:mm")</td>
+                    <td>
+                        <div class="fw-bold">@fullName</div>
+                        <small class="text-muted">@log.Username</small>
+                    </td>
+                    <td class="text-center"><small>@pos</small></td>
+                    <td class="text-center"><span class="badge bg-light text-dark border">@log.Action</span></td>
+                    <td class="text-center">@(log.DurationMinutes.HasValue && log.DurationMinutes > 0 ? $"{log.DurationMinutes} น." : "-")</td>
+                    <td><small>@loc</small></td>
+                    <td><small>@log.Detail</small></td>
+                    <td class="text-center"><small class="text-muted">@log.IPAddress</small></td>
+                </tr>
+                index++;
+            }
+        </tbody>
+    </table>
+
+    <div class="d-flex justify-content-between small text-muted mt-3">
+        <span>เอกสารตรวจสอบความปลอดภัยระบบสารสนเทศ บจก.รอแยล-ดี (ไทยแลนด์)</span>
+        <span>หน้า 1 / 1</span>
+    </div>
+
+</body>
+</html>
