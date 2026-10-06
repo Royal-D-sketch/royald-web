@@ -210,9 +210,9 @@
 
         <div class="d-flex gap-2 align-items-center flex-wrap">
             <div class="btn-group shadow-sm">
-                <a href="?status=outstanding" class="btn btn-sm btn-outline-danger @(ViewBag.SelectedStatus == "outstanding" ? "active fw-bold" : "")">ค้างชำระ</a>
-                <a href="?status=paid" class="btn btn-sm btn-outline-success @(ViewBag.SelectedStatus == "paid" ? "active fw-bold" : "")">ชำระแล้ว</a>
-                <a href="?status=all" class="btn btn-sm btn-outline-secondary @(ViewBag.SelectedStatus == "all" ? "active fw-bold" : "")">ทั้งหมด</a>
+                <a href="@Url.Action("Index", new { status = "outstanding", search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, district = ViewBag.SelectedDistrict, credit = ViewBag.SelectedCredit, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate })" class="btn btn-sm btn-outline-danger @(ViewBag.SelectedStatus == "outstanding" ? "active fw-bold" : "")">ค้างชำระ</a>
+                <a href="@Url.Action("Index", new { status = "paid", search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, district = ViewBag.SelectedDistrict, credit = ViewBag.SelectedCredit, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate })" class="btn btn-sm btn-outline-success @(ViewBag.SelectedStatus == "paid" ? "active fw-bold" : "")">ชำระแล้ว</a>
+                <a href="@Url.Action("Index", new { status = "all", search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, district = ViewBag.SelectedDistrict, credit = ViewBag.SelectedCredit, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate })" class="btn btn-sm btn-outline-secondary @(ViewBag.SelectedStatus == "all" ? "active fw-bold" : "")">ทั้งหมด</a>
             </div>
             
             <div class="badge-soft badge-soft-danger fs-6 px-3 py-2 ms-2">
@@ -235,19 +235,19 @@
                 <div class="ms-auto d-flex gap-2">
                     @if (ViewBag.SelectedStatus == "paid")
                     {
-                        <a href="@Url.Action("ExportPaidExcel", new { search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, district = ViewBag.SelectedDistrict, credit = ViewBag.SelectedCredit })" 
+                        <a href="@Url.Action("ExportPaidExcel", new { search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, district = ViewBag.SelectedDistrict, credit = ViewBag.SelectedCredit, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate })" 
                            class="btn btn-sm btn-success fw-bold shadow-sm px-3" style="background:#15803d; border-color:#15803d;">
                             <i class="bi bi-file-earmark-excel-fill me-1"></i> ดาวน์โหลด Excel (ชำระแล้ว)
                         </a>
                     }
                     else
                     {
-                        <a href="@Url.Action("ExportExcel", new { search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, status = ViewBag.SelectedStatus, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, district = ViewBag.SelectedDistrict, credit = ViewBag.SelectedCredit })" 
+                        <a href="@Url.Action("ExportExcel", new { search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, status = ViewBag.SelectedStatus, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, district = ViewBag.SelectedDistrict, credit = ViewBag.SelectedCredit, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate })" 
                            class="btn btn-sm btn-success fw-bold shadow-sm px-3" style="background:#15803d; border-color:#15803d;">
                             <i class="bi bi-file-earmark-excel-fill me-1"></i> ดาวน์โหลด Excel
                         </a>
                     }
-                    <a href="@Url.Action("ExportPdf", new { search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, status = ViewBag.SelectedStatus, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, district = ViewBag.SelectedDistrict, credit = ViewBag.SelectedCredit })" 
+                    <a href="@Url.Action("ExportPdf", new { search = ViewBag.SearchTerm, poSearch = ViewBag.PoSearch, salesRep = ViewBag.SelectedSalesRep, status = ViewBag.SelectedStatus, region = ViewBag.SelectedRegion, province = ViewBag.SelectedProvince, district = ViewBag.SelectedDistrict, credit = ViewBag.SelectedCredit, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate })" 
                        target="_blank" class="btn btn-sm btn-danger fw-bold shadow-sm px-3" style="background:#b91c1c; border-color:#b91c1c;">
                         <i class="bi bi-file-earmark-pdf-fill me-1"></i> ดาวน์โหลด PDF
                     </a>
@@ -379,12 +379,22 @@
                         </optgroup>
                     </select>
                 </div>
-                <div class="col-md-2 mt-2">
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold mb-1" style="color:#475569;">📅 ตั้งแต่วันที่</label>
+                    <input type="date" name="startDate" class="form-control form-control-sm"
+                           value="@ViewBag.StartDate" style="border-color:#cbd5e1;" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold mb-1" style="color:#475569;">📅 ถึงวันที่</label>
+                    <input type="date" name="endDate" class="form-control form-control-sm"
+                           value="@ViewBag.EndDate" style="border-color:#cbd5e1;" />
+                </div>
+                <div class="col-md-2">
                     <button type="submit" class="btn btn-sm btn-primary w-100 fw-bold shadow-sm" style="background:#0d9488; border-color:#0d9488;">
                         <i class="bi bi-search me-1"></i> ค้นหาข้อมูล
                     </button>
                 </div>
-                <div class="col-md-2 mt-2">
+                <div class="col-md-2">
                     <a href="/Debtor" class="btn btn-sm btn-outline-secondary w-100 fw-semibold">
                         <i class="bi bi-arrow-counterclockwise me-1"></i> ล้างตัวกรอง
                     </a>
