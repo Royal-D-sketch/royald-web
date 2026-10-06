@@ -208,11 +208,32 @@ function requestLocationPermission() {
                 const bdcRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=th`, { signal: AbortSignal.timeout(3500) });
                 if (bdcRes.ok) {
                     const bdcData = await bdcRes.json();
-                    const district = bdcData.locality || bdcData.city || '';
-                    const prov = bdcData.principalSubdivision || '';
-                    if (prov) {
-                        detectedLocation = (district && district !== prov ? (district.startsWith('อ.') || district.startsWith('เขต') ? district : (prov.includes('กรุงเทพ') ? 'เขต' : 'อ.') + district) + ' ' : '') + 
-                                           (prov.startsWith('จ.') || prov.includes('กรุงเทพ') ? prov : 'จ.' + prov);
+                    let district = '';
+                    let prov = bdcData.principalSubdivision || '';
+
+                    // ค้นหาชื่ออำเภอ/เขต จากลำดับชั้นการปกครอง (administrative)
+                    if (bdcData.localityInfo && Array.isArray(bdcData.localityInfo.administrative)) {
+                        const adminList = bdcData.localityInfo.administrative;
+                        const amphoeItem = adminList.find(a => a.name && (a.name.startsWith('อำเภอ') || a.name.startsWith('เขต')));
+                        if (amphoeItem) {
+                            district = amphoeItem.name;
+                        } else {
+                            const dDesc = adminList.find(a => a.description && a.description.includes('อำเภอใน'));
+                            if (dDesc) district = dDesc.name;
+                        }
+
+                        if (!prov) {
+                            const pItem = adminList.find(a => a.adminLevel === 4 || (a.name && (a.name.startsWith('จังหวัด') || a.name.includes('กรุงเทพ'))));
+                            if (pItem) prov = pItem.name;
+                        }
+                    }
+
+                    if (!district) {
+                        district = bdcData.city || bdcData.locality || '';
+                    }
+
+                    if (prov || district) {
+                        detectedLocation = formatThaiLocation(district, prov, lat, lng);
                     }
                 }
             } catch(e) {}
@@ -224,10 +245,11 @@ function requestLocationPermission() {
                     if (osmRes.ok) {
                         const osmData = await osmRes.json();
                         if (osmData && osmData.address) {
-                            const district = osmData.address.city_district || osmData.address.district || osmData.address.suburb || osmData.address.town || osmData.address.county || '';
+                            // ในประเทศไทย OSM ค่า county คือระดับอำเภอเสมอ
+                            const district = osmData.address.county || osmData.address.district || osmData.address.city_district || osmData.address.town || osmData.address.suburb || '';
                             const prov = osmData.address.province || osmData.address.state || '';
-                            if (prov) {
-                                detectedLocation = (district ? (district + ' ') : '') + (prov.startsWith('จ.') || prov.includes('กรุงเทพ') ? prov : 'จ.' + prov);
+                            if (prov || district) {
+                                detectedLocation = formatThaiLocation(district, prov, lat, lng);
                             }
                         }
                     }
@@ -274,9 +296,49 @@ function requestLocationPermission() {
     );
 }
 
+function formatThaiLocation(district, prov, lat, lng) {
+    let cleanProv = (prov || '').trim();
+    if (cleanProv.startsWith('จังหวัด')) {
+        cleanProv = cleanProv.replace(/^จังหวัด\s*/, '');
+    } else if (cleanProv.startsWith('จ.')) {
+        cleanProv = cleanProv.replace(/^จ\.\s*/, '');
+    }
+    cleanProv = cleanProv.trim();
+
+    let cleanDist = (district || '').trim();
+    cleanDist = cleanDist.replace(/^(อำเภอ|อ\.|เขต|เทศบาลนคร|เทศบาลเมือง|เทศบาลตำบล)\s*/, '').trim();
+
+    // ดักตำแหน่งใน จ.นนทบุรี และ อ.บางใหญ่ โดยเฉพาะ
+    const isNonthaburi = cleanProv.includes('นนทบุรี') || (lat >= 13.78 && lat <= 14.10 && lng >= 100.18 && lng <= 100.60);
+    if (isNonthaburi) {
+        cleanProv = 'นนทบุรี';
+        // พิกัด อ.บางใหญ่ จ.นนทบุรี (Lat 13.81-13.915, Lng 100.31-100.455)
+        if ((lat >= 13.81 && lat <= 13.915 && lng >= 100.31 && lng <= 100.455) || cleanDist.includes('บางใหญ่') || cleanDist.includes('เสาธงหิน') || cleanDist.includes('บางแม่นาง') || cleanDist.includes('บางเลน')) {
+            cleanDist = 'บางใหญ่';
+        } else if (cleanDist.includes('เทศบาลนคร') || cleanDist === '' || cleanDist === 'เมือง') {
+            cleanDist = 'เมืองนนทบุรี';
+        }
+    }
+
+    if (cleanProv.includes('กรุงเทพ')) {
+        return (cleanDist ? ('เขต' + cleanDist + ' ') : '') + 'กรุงเทพมหานคร';
+    } else {
+        const dStr = cleanDist ? ('อ.' + cleanDist + ' ') : '';
+        const pStr = cleanProv ? ('จ.' + cleanProv) : '';
+        return (dStr + pStr).trim();
+    }
+}
+
 function resolveLocationName(lat, lng) {
-    if (lat >= 13.70 && lat <= 13.90 && lng >= 100.40 && lng <= 100.75) return 'กรุงเทพมหานคร';
-    if (lat >= 13.85 && lat <= 14.10 && lng >= 100.30 && lng <= 100.60) return 'จ.นนทบุรี';
+    if (lat >= 13.78 && lat <= 14.10 && lng >= 100.18 && lng <= 100.60) {
+        if (lat >= 13.92 && lng <= 100.35) return 'อ.ไทรน้อย จ.นนทบุรี';
+        if (lat >= 13.91 && lng <= 100.455) return 'อ.บางบัวทอง จ.นนทบุรี';
+        if (lat >= 13.89 && lng > 100.455) return 'อ.ปากเกร็ด จ.นนทบุรี';
+        if (lat < 13.84 && lng <= 100.51) return 'อ.บางกรวย จ.นนทบุรี';
+        if (lat >= 13.81 && lat <= 13.915 && lng >= 100.31 && lng <= 100.455) return 'อ.บางใหญ่ จ.นนทบุรี';
+        return 'อ.เมืองนนทบุรี จ.นนทบุรี';
+    }
+    if (lat >= 13.60 && lat <= 13.95 && lng >= 100.40 && lng <= 100.85) return 'กรุงเทพมหานคร';
     if (lat >= 13.95 && lat <= 14.20 && lng >= 100.45 && lng <= 100.85) return 'จ.ปทุมธานี';
     if (lat >= 13.45 && lat < 13.65 && lng >= 100.50 && lng <= 100.90) return 'จ.สมุทรปราการ';
     if (lat >= 13.45 && lat <= 13.65 && lng >= 100.15 && lng < 100.45) return 'จ.สมุทรสาคร';

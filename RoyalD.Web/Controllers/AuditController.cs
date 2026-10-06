@@ -41,14 +41,15 @@ namespace RoyalD.Web.Controllers
                 var allUsers = await _db.Users.AsNoTracking().ToListAsync();
                 var matchedUsernames = allUsers
                     .Where(u => u.Username.Equals(rep, StringComparison.OrdinalIgnoreCase)
-                             || u.FullName.Equals(rep, StringComparison.OrdinalIgnoreCase)
-                             || (!string.IsNullOrEmpty(u.SalesRepCode) && u.SalesRepCode.Equals(rep, StringComparison.OrdinalIgnoreCase)))
+                             || (!string.IsNullOrEmpty(u.FullName) && (u.FullName.Equals(rep, StringComparison.OrdinalIgnoreCase) || u.FullName.IndexOf(rep, StringComparison.OrdinalIgnoreCase) >= 0))
+                             || (!string.IsNullOrEmpty(u.SalesRepCode) && u.SalesRepCode.Equals(rep, StringComparison.OrdinalIgnoreCase))
+                             || u.Username.IndexOf(rep, StringComparison.OrdinalIgnoreCase) >= 0)
                     .Select(u => u.Username)
                     .ToList();
 
                 if (matchedUsernames.Any())
                 {
-                    q = q.Where(a => matchedUsernames.Contains(a.Username));
+                    q = q.Where(a => matchedUsernames.Contains(a.Username) || a.Username.Contains(rep) || a.Detail.Contains(rep));
                 }
                 else
                 {

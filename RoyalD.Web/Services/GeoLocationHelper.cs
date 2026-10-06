@@ -7,46 +7,124 @@ namespace RoyalD.Web.Services
     {
         public static string ReverseGeocode(string? latStr, string? lngStr, string? existingArea = null)
         {
-            if (!string.IsNullOrEmpty(existingArea) && (existingArea.Contains("จ.") || existingArea.Contains("กรุงเทพ") || existingArea.Contains("อ.") || existingArea.Contains("เขต")))
+            double lat = 0, lng = 0;
+            bool hasCoords = !string.IsNullOrEmpty(latStr) && !string.IsNullOrEmpty(lngStr) &&
+                             double.TryParse(latStr, NumberStyles.Any, CultureInfo.InvariantCulture, out lat) &&
+                             double.TryParse(lngStr, NumberStyles.Any, CultureInfo.InvariantCulture, out lng);
+
+            // 1. ตรวจสอบและทำความสะอาดชื่อพื้นที่เดิม (existingArea)
+            if (!string.IsNullOrEmpty(existingArea) && existingArea != "-" && existingArea != "ไม่ระบุตำแหน่ง" && existingArea != "ไม่สามารถระบุพิกัด")
             {
-                if (existingArea.StartsWith("["))
+                string cleaned = CleanLocationString(existingArea, hasCoords ? lat : null, hasCoords ? lng : null);
+                if (!string.IsNullOrEmpty(cleaned))
                 {
-                    var closeIdx = existingArea.IndexOf(']');
-                    if (closeIdx >= 0 && closeIdx + 1 < existingArea.Length)
-                    {
-                        return existingArea.Substring(closeIdx + 1).Trim();
-                    }
+                    return cleaned;
                 }
-                return existingArea.Trim();
             }
 
-            if (string.IsNullOrEmpty(latStr) || string.IsNullOrEmpty(lngStr))
+            // 2. หากมีพิกัด GPS ใช้ระบบระบุตำแหน่งตามพิกัดที่มีความแม่นยำสูง
+            if (hasCoords)
             {
-                return existingArea ?? "ไม่ระบุตำแหน่ง";
+                return ApproximateThaiLocation(lat, lng);
             }
 
-            if (!double.TryParse(latStr, NumberStyles.Any, CultureInfo.InvariantCulture, out double lat) ||
-                !double.TryParse(lngStr, NumberStyles.Any, CultureInfo.InvariantCulture, out double lng))
+            if (!string.IsNullOrEmpty(existingArea))
             {
-                return existingArea ?? "ไม่สามารถระบุพิกัด";
+                return CleanLocationString(existingArea, null, null);
             }
 
-            // High-precision Thai Geo-bounding box reverse geocoding
-            string placeName = ApproximateThaiLocation(lat, lng);
-            return placeName;
+            return "ไม่ระบุตำแหน่ง";
         }
 
-        private static string ApproximateThaiLocation(double lat, double lng)
+        public static string CleanLocationString(string input, double? lat = null, double? lng = null)
         {
-            // Nonthaburi area (Bang Bua Thong / Muang)
-            if (lat >= 13.85 && lat <= 14.05 && lng >= 100.30 && lng <= 100.50)
+            if (string.IsNullOrWhiteSpace(input)) return "";
+            string s = input.Trim();
+
+            // ตัดส่วน [พิกัด] ออกหากมีติดมาข้างหน้า เช่น [13.9230, 100.3480]
+            if (s.StartsWith("["))
             {
-                if (lat >= 13.90 && lng <= 100.45) return "อ.บางบัวทอง จ.นนทบุรี";
-                if (lat >= 13.88 && lng <= 100.40) return "อ.ไทรน้อย จ.นนทบุรี";
-                if (lat >= 13.90 && lng > 100.45) return "อ.ปากเกร็ด จ.นนทบุรี";
+                var closeIdx = s.IndexOf(']');
+                if (closeIdx >= 0 && closeIdx + 1 < s.Length)
+                {
+                    s = s.Substring(closeIdx + 1).Trim();
+                }
+            }
+
+            // ถ้ามีพิกัดอยู่ในอำเภอบางใหญ่ จ.นนทบุรี โดยตรง (Lat 13.81-13.915, Lng 100.31-100.455)
+            if (lat.HasValue && lng.HasValue)
+            {
+                if (lat.Value >= 13.81 && lat.Value <= 13.915 && lng.Value >= 100.31 && lng.Value <= 100.455)
+                {
+                    return "อ.บางใหญ่ จ.นนทบุรี";
+                }
+            }
+
+            // ดักคำที่เป็นตำบลหรือพื้นที่ใน อ.บางใหญ่
+            if (s.Contains("บางใหญ่") || s.Contains("เสาธงหิน") || s.Contains("บางแม่นาง") || s.Contains("บางเลน") || s.Contains("บ้านใหม่"))
+            {
+                return "อ.บางใหญ่ จ.นนทบุรี";
+            }
+
+            // กรณี API ภายนอกคืนค่าชื่อเทศบาลนครนนทบุรีแทนที่จะเป็นอำเภอ
+            if (s.Contains("เทศบาลนครนนทบุรี"))
+            {
+                if (lat.HasValue && lng.HasValue && lat.Value >= 13.81 && lat.Value <= 13.92 && lng.Value >= 100.30 && lng.Value <= 100.455)
+                {
+                    return "อ.บางใหญ่ จ.นนทบุรี";
+                }
                 return "อ.เมืองนนทบุรี จ.นนทบุรี";
             }
-            // Bangkok inner / outer
+
+            // แก้ไขคำนำหน้าซ้ำซ้อน เช่น จ.จังหวัด, อ.อำเภอ, อ.เทศบาล
+            s = s.Replace("จ.จังหวัด", "จ.")
+                 .Replace("จ.จ.", "จ.")
+                 .Replace("อ.อำเภอ", "อ.")
+                 .Replace("อ.อ.", "อ.")
+                 .Replace("อ.เทศบาลนคร", "อ.")
+                 .Replace("อ.เทศบาลเมือง", "อ.")
+                 .Replace("อ.เทศบาลตำบล", "อ.")
+                 .Replace("เทศบาลนครนนทบุรี", "เมืองนนทบุรี")
+                 .Replace("เทศบาลเมืองบางกรวย", "บางกรวย")
+                 .Replace("เทศบาลเมืองบางบัวทอง", "บางบัวทอง")
+                 .Replace("เทศบาลตำบลเสาธงหิน", "บางใหญ่");
+
+            // แก้ไขกรณีขึ้นต้นด้วย จังหวัด แทน จ.
+            if (s.StartsWith("จังหวัด") && !s.Contains("จ."))
+            {
+                s = "จ." + s.Substring(7).Trim();
+            }
+
+            // จัดรูปแบบกรณีมี นนทบุรี
+            if (s.Contains("นนทบุรี"))
+            {
+                if (s.Contains("จังหวัดนนทบุรี"))
+                {
+                    s = s.Replace("จังหวัดนนทบุรี", "จ.นนทบุรี");
+                }
+                if (!s.Contains("จ.นนทบุรี") && s.Contains("นนทบุรี"))
+                {
+                    s = s.Replace("นนทบุรี", "จ.นนทบุรี");
+                }
+            }
+
+            return s.Trim();
+        }
+
+        public static string ApproximateThaiLocation(double lat, double lng)
+        {
+            // นนทบุรี (ทุกอำเภออย่างแม่นยำ)
+            if (lat >= 13.78 && lat <= 14.10 && lng >= 100.18 && lng <= 100.60)
+            {
+                if (lat >= 13.92 && lng <= 100.35) return "อ.ไทรน้อย จ.นนทบุรี";
+                if (lat >= 13.91 && lng <= 100.455) return "อ.บางบัวทอง จ.นนทบุรี";
+                if (lat >= 13.89 && lng > 100.455) return "อ.ปากเกร็ด จ.นนทบุรี";
+                if (lat < 13.84 && lng <= 100.51) return "อ.บางกรวย จ.นนทบุรี";
+                if (lat >= 13.81 && lat <= 13.915 && lng >= 100.31 && lng <= 100.455) return "อ.บางใหญ่ จ.นนทบุรี";
+                return "อ.เมืองนนทบุรี จ.นนทบุรี";
+            }
+
+            // กรุงเทพมหานคร
             if (lat >= 13.60 && lat <= 13.95 && lng >= 100.40 && lng <= 100.85)
             {
                 if (lat >= 13.78 && lng >= 100.55) return "เขตจตุจักร กรุงเทพมหานคร";
@@ -55,62 +133,73 @@ namespace RoyalD.Web.Services
                 if (lng < 100.50) return "เขตธนบุรี กรุงเทพมหานคร";
                 return "เขตพระนคร กรุงเทพมหานคร";
             }
-            // Pathum Thani
+
+            // ปทุมธานี
             if (lat >= 13.95 && lat <= 14.20 && lng >= 100.45 && lng <= 100.85)
             {
                 if (lng >= 100.60) return "อ.คลองหลวง จ.ปทุมธานี";
                 return "อ.เมืองปทุมธานี จ.ปทุมธานี";
             }
-            // Samut Prakan
+
+            // สมุทรปราการ
             if (lat >= 13.45 && lat < 13.65 && lng >= 100.50 && lng <= 100.90)
             {
                 if (lng >= 100.70) return "อ.บางพลี จ.สมุทรปราการ";
                 return "อ.เมืองสมุทรปราการ จ.สมุทรปราการ";
             }
-            // Samut Sakhon
+
+            // สมุทรสาคร
             if (lat >= 13.45 && lat <= 13.65 && lng >= 100.15 && lng < 100.45)
             {
                 if (lat >= 13.60) return "อ.กระทุ่มแบน จ.สมุทรสาคร";
                 return "อ.เมืองสมุทรสาคร จ.สมุทรสาคร";
             }
-            // Nakhon Pathom
+
+            // นครปฐม
             if (lat >= 13.70 && lat <= 14.10 && lng >= 99.90 && lng < 100.35)
             {
                 if (lng >= 100.25) return "อ.พุทธมณฑล จ.นครปฐม";
                 return "อ.เมืองนครปฐม จ.นครปฐม";
             }
-            // Chonburi
+
+            // ชลบุรี
             if (lat >= 12.50 && lat <= 13.50 && lng >= 100.80 && lng <= 101.50)
             {
                 if (lat <= 12.95) return "อ.บางละมุง (พัทยา) จ.ชลบุรี";
                 return "อ.เมืองชลบุรี จ.ชลบุรี";
             }
-            // Chiang Mai
+
+            // เชียงใหม่
             if (lat >= 18.50 && lat <= 19.50 && lng >= 98.50 && lng <= 99.50)
             {
                 return "อ.เมืองเชียงใหม่ จ.เชียงใหม่";
             }
-            // Khon Kaen
+
+            // ขอนแก่น
             if (lat >= 16.00 && lat <= 17.00 && lng >= 102.50 && lng <= 103.20)
             {
                 return "อ.เมืองขอนแก่น จ.ขอนแก่น";
             }
-            // Nakhon Ratchasima
+
+            // นครราชสีมา
             if (lat >= 14.50 && lat <= 15.50 && lng >= 101.50 && lng <= 102.50)
             {
                 return "อ.เมืองนครราชสีมา จ.นครราชสีมา";
             }
-            // Songkhla / Hat Yai
+
+            // สงขลา
             if (lat >= 6.80 && lat <= 7.30 && lng >= 100.40 && lng <= 100.80)
             {
                 return "อ.หาดใหญ่ จ.สงขลา";
             }
-            // Phuket
+
+            // ภูเก็ต
             if (lat >= 7.75 && lat <= 8.20 && lng >= 98.25 && lng <= 98.45)
             {
                 return "อ.เมืองภูเก็ต จ.ภูเก็ต";
             }
-            // General Central Thailand
+
+            // ภาคกลางทั่วไป
             if (lat >= 13.0 && lat <= 16.0 && lng >= 99.5 && lng <= 101.5)
             {
                 return "อ.เมือง จ.นนทบุรี";

@@ -192,8 +192,7 @@ namespace RoyalD.Web.Controllers
                     Action = "LOGIN_FAILED",
                     Detail = $"Attempted login with incorrect credentials (Input: '{cleanUsername}')",
                     Latitude = lat ?? "",
-                    Longitude = lng ?? "",
-                    Area = !string.IsNullOrEmpty(locationName) ? locationName : GeoLocationHelper.ReverseGeocode(lat, lng),
+                    Area = GeoLocationHelper.ReverseGeocode(lat, lng, locationName),
                     IPAddress = GetRealIpAddress(),
                     CreatedAt = DateTime.UtcNow
                 });
@@ -275,9 +274,7 @@ namespace RoyalD.Web.Controllers
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal,
                 new AuthenticationProperties { IsPersistent = false, ExpiresUtc = DateTimeOffset.UtcNow.Add(expireSpan) });
 
-            string resolvedArea = !string.IsNullOrEmpty(locationName) 
-                ? locationName 
-                : GeoLocationHelper.ReverseGeocode(lat, lng);
+            string resolvedArea = GeoLocationHelper.ReverseGeocode(lat, lng, locationName);
 
             _db.AuditLogs.Add(new AuditLog
             {

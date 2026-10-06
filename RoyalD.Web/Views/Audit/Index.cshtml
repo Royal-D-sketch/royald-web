@@ -45,15 +45,36 @@
 
             <div class="col-12 col-md-3">
                 <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-person-badge"></i> 2. ผู้แทนขาย / พนักงาน</label>
-                <select name="salesRep" class="form-select form-select-sm">
-                    <option value="">-- พนักงาน/ผู้แทนทั้งหมด --</option>
+                <div class="input-group input-group-sm">
+                    <input type="text" name="salesRep" id="auditSalesRepInput" list="auditSalesRepList" class="form-control"
+                           placeholder="พิมพ์ชื่อหรือคลิกเลือก..." value="@ViewBag.SelectedSalesRep" autocomplete="off" />
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="เลือกจากรายชื่อ">
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow" style="max-height: 280px; overflow-y: auto;">
+                        <li><a class="dropdown-item py-1" href="javascript:void(0)" onclick="selectAuditRep('')"><span class="text-muted">-- พนักงาน/ผู้แทนทั้งหมด --</span></a></li>
+                        <li><hr class="dropdown-divider my-1"></li>
+                        @foreach (var u in usersList)
+                        {
+                            string displayName = !string.IsNullOrEmpty(u.FullName) ? u.FullName : u.Username;
+                            <li>
+                                <a class="dropdown-item py-1 text-truncate" href="javascript:void(0)" onclick="selectAuditRep('@displayName')">
+                                    <strong>@displayName</strong> <small class="text-muted">(@u.Username @(!string.IsNullOrEmpty(u.Position) ? "- " + u.Position : ""))</small>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+                <datalist id="auditSalesRepList">
                     @foreach (var u in usersList)
                     {
-                        string label = !string.IsNullOrEmpty(u.FullName) ? $"{u.FullName} ({u.Username})" : u.Username;
-                        if (!string.IsNullOrEmpty(u.Position)) { label += $" - {u.Position}"; }
-                        <option value="@u.Username" selected="@(ViewBag.SelectedSalesRep == u.Username)">@label</option>
+                        string displayName = !string.IsNullOrEmpty(u.FullName) ? u.FullName : u.Username;
+                        <option value="@displayName">@u.Username @(!string.IsNullOrEmpty(u.Position) ? $"({u.Position})" : "")</option>
+                        @if (!string.IsNullOrEmpty(u.Username) && u.Username != displayName)
+                        {
+                            <option value="@u.Username">@displayName</option>
+                        }
                     }
-                </select>
+                </datalist>
             </div>
 
             <div class="col-12 col-md-2">
@@ -258,6 +279,14 @@
 
 @section Scripts {
 <script>
+    function selectAuditRep(name) {
+        var inp = document.getElementById('auditSalesRepInput');
+        if (inp) {
+            inp.value = name;
+            document.getElementById('audit-filter-form').submit();
+        }
+    }
+
     function changeAuditPageSize(size) {
         const url = new URL(window.location.href);
         url.searchParams.set('pageSize', size);
