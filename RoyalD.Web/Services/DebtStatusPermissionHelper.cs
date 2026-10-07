@@ -11,7 +11,7 @@ namespace RoyalD.Web.Services
     {
         /// <summary>
         /// ตรวจสอบว่าผู้ใช้ปัจจุบันมีสิทธิ์ในการเปลี่ยนสถานะหนี้หรือไม่ (เฉพาะคุณธัญชนก, ตำแหน่งผู้บริหาร, และ Admin)
-        /// หมายเหตุ: คุณณรงค์เดช (ART) ตำแหน่งเป็น "พนักงาน" แต่มีบทบาท (Role) เป็น "admin" จึงมีสิทธิ์เข้าถึงในฐานะ admin (ไม่ใช่ตำแหน่งผู้บริหาร)
+        /// หมายเหตุ: คุณปภาวดี อินจันทร์ (ART) ตำแหน่งเป็น "พนักงาน" แต่มีบทบาท (Role) เป็น "admin" จึงมีสิทธิ์เข้าถึงในฐานะ admin (ไม่ใช่ตำแหน่งผู้บริหาร)
         /// </summary>
         public static bool CanChangeDebtStatus(AppUser? user, ClaimsPrincipal? principal = null)
         {
@@ -26,8 +26,10 @@ namespace RoyalD.Web.Services
             if (username.Equals("admin", StringComparison.OrdinalIgnoreCase) || fullName.Contains("ธัญชนก"))
                 return true;
 
-            // 2. ผู้ดูแลระบบ (Admin) เช่น ART (ตำแหน่งพนักงาน แต่บทบาทเป็น admin)
-            if (role == "admin" || role == "administrator" || username.Equals("ART", StringComparison.OrdinalIgnoreCase))
+            // 2. ผู้ดูแลระบบ (Admin) เช่น คุณปภาวดี อินจันทร์ (ART) (ตำแหน่งพนักงาน แต่บทบาทเป็น admin)
+            if (role == "admin" || role == "administrator" || 
+                username.Equals("ART", StringComparison.OrdinalIgnoreCase) || 
+                fullName.Contains("ปภาวดี"))
                 return true;
 
             // 3. ตำแหน่งผู้บริหาร (Position มีคำว่า "ผู้บริหาร", Username "Kullaya")
@@ -41,7 +43,7 @@ namespace RoyalD.Web.Services
         /// <summary>
         /// ตรวจสอบว่าผู้ใช้มีสิทธิ์เข้าถึง/เปลี่ยนสถานะ "บิลส่งคืนกลับมาบัญชี" (ReturnedToAccount) หรือไม่
         /// (เฉพาะคุณธัญชนก, ตำแหน่งผู้บริหาร, คุณวนิดา, admin เท่านั้น)
-        /// หมายเหตุ: คุณณรงค์เดช (ART) ตำแหน่งพนักงาน มีสิทธิ์ผ่านบทบาท admin
+        /// หมายเหตุ: คุณปภาวดี อินจันทร์ (ART) ตำแหน่งพนักงาน มีสิทธิ์ผ่านบทบาท admin
         /// </summary>
         public static bool CanManageReturnedBills(AppUser? user, ClaimsPrincipal? principal = null)
         {
@@ -52,10 +54,11 @@ namespace RoyalD.Web.Services
             string position = (user?.Position ?? principal?.FindFirst("Position")?.Value ?? "").Trim();
             string role = (user?.Role ?? principal?.FindFirst(ClaimTypes.Role)?.Value ?? principal?.FindFirst("Role")?.Value ?? "").Trim().ToLower();
 
-            // 1. admin (Role "admin" รวมถึง Username "admin", "ART")
+            // 1. admin (Role "admin" รวมถึง Username "admin", "ART", คุณปภาวดี อินจันทร์)
             if (role == "admin" || role == "administrator" || 
                 username.Equals("admin", StringComparison.OrdinalIgnoreCase) || 
-                username.Equals("ART", StringComparison.OrdinalIgnoreCase))
+                username.Equals("ART", StringComparison.OrdinalIgnoreCase) ||
+                fullName.Contains("ปภาวดี"))
                 return true;
 
             // 2. คุณธัญชนก (Username "admin" หรือ ชื่อ-นามสกุล มีคำว่า "ธัญชนก")
@@ -103,7 +106,7 @@ namespace RoyalD.Web.Services
 
         /// <summary>
         /// ตรวจสอบรหัสผ่านของผู้อนุมัติ:
-        /// ผู้ใช้ที่มีสิทธิ์เข้าถึง (คุณธัญชนก, ตำแหน่งผู้บริหาร, คุณวนิดา, Admin เช่น ART) 
+        /// ผู้ใช้ที่มีสิทธิ์เข้าถึง (คุณธัญชนก, ตำแหน่งผู้บริหาร, คุณวนิดา, Admin เช่น คุณปภาวดี ART) 
         /// สามารถใช้รหัสผ่านเข้าสู่ระบบของผู้ใช้เอง หรือใส่รหัสผ่าน 029030445Rd* ได้
         /// </summary>
         public static async Task<(bool IsValid, string ApproverName)> VerifyApproverPasswordAsync(AppDbContext db, string? password)
@@ -118,7 +121,7 @@ namespace RoyalD.Web.Services
             }
 
             // 2. ดึงบัญชีผู้ใช้ที่มีสิทธิ์เข้าถึงจากฐานข้อมูล:
-            // - admin (Role == admin, Username == "admin", Username == "ART" ซึ่งตำแหน่งเป็นพนักงานแต่บทบาทเป็น admin)
+            // - admin (Role == admin, Username == "admin", Username == "ART" คุณปภาวดี อินจันทร์)
             // - คุณธัญชนก
             // - ตำแหน่งผู้บริหาร (Username == "Kullaya", Position มีคำว่า "ผู้บริหาร")
             // - คุณวนิดา (Username == "nid", FullName มีคำว่า "วนิดา")
@@ -131,7 +134,7 @@ namespace RoyalD.Web.Services
                     u.Username == "Kullaya" ||
                     u.Username == "nid" ||
                     (u.Position != null && u.Position.Contains("ผู้บริหาร")) ||
-                    (u.FullName != null && (u.FullName.Contains("ธัญชนก") || u.FullName.Contains("วนิดา"))) ||
+                    (u.FullName != null && (u.FullName.Contains("ธัญชนก") || u.FullName.Contains("วนิดา") || u.FullName.Contains("ปภาวดี"))) ||
                     u.CanManageReturnedBills
                 ))
                 .ToListAsync();
@@ -163,7 +166,8 @@ namespace RoyalD.Web.Services
                     string lowerRole = (u.Role ?? "").Trim().ToLower();
                     if (lowerRole == "admin" || lowerRole == "administrator" || 
                         u.Username.Equals("admin", StringComparison.OrdinalIgnoreCase) || 
-                        u.Username.Equals("ART", StringComparison.OrdinalIgnoreCase))
+                        u.Username.Equals("ART", StringComparison.OrdinalIgnoreCase) ||
+                        (u.FullName != null && u.FullName.Contains("ปภาวดี")))
                     {
                         roleDesc = (u.FullName != null && u.FullName.Contains("ธัญชนก")) 
                             ? "คุณธัญชนก / ผู้ดูแลระบบ" 
