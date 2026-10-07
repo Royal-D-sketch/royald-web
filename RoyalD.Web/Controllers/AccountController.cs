@@ -716,7 +716,7 @@ namespace RoyalD.Web.Controllers
             {
                 return Json(new { success = true, approver = approverName });
             }
-            return Json(new { success = false, message = "รหัสผ่านไม่ถูกต้อง! ต้องเป็นรหัสผ่านของผู้ใช้คุณธัญชนก หรือผู้บริหาร เท่านั้น" });
+            return Json(new { success = false, message = "รหัสผ่านไม่ถูกต้อง! ต้องเป็นรหัสผ่านของผู้ใช้ที่มีสิทธิ์ หรือรหัสผ่านส่วนกลาง 029030445Rd*" });
         }
 
         [HttpGet, AllowAnonymous]

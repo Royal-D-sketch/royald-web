@@ -1149,7 +1149,7 @@ namespace RoyalD.Web.Controllers
                 var (isApproverOk, approverName) = await DebtStatusPermissionHelper.VerifyApproverPasswordAsync(_db, adminPassword);
                 if (!isApproverOk)
                 {
-                    TempData["Error"] = "บิลนี้ชำระเงินครบถ้วนแล้ว การบันทึกรับเงินต้องใส่รหัสผ่านของคุณธัญชนก หรือผู้บริหาร เท่านั้น";
+                    TempData["Error"] = "บิลนี้ชำระเงินครบถ้วนแล้ว การบันทึกรับเงินต้องใส่รหัสผ่านของผู้มีสิทธิ์ หรือใส่รหัสผ่าน 029030445Rd*";
                     return !string.IsNullOrEmpty(Request.Headers["Referer"]) ? Redirect(Request.Headers["Referer"].ToString()) : RedirectToAction("Detail", new { id = billNo });
                 }
             }
@@ -1249,7 +1249,7 @@ namespace RoyalD.Web.Controllers
                 var (isApproverOk, approverName) = await DebtStatusPermissionHelper.VerifyApproverPasswordAsync(_db, adminPassword);
                 if (!isApproverOk)
                 {
-                    TempData["Error"] = "บิลนี้ชำระเงินครบถ้วนแล้ว การเปลี่ยนสถานะต้องใส่รหัสผ่านของคุณธัญชนก หรือผู้บริหาร เท่านั้น";
+                    TempData["Error"] = "บิลนี้ชำระเงินครบถ้วนแล้ว การเปลี่ยนสถานะต้องใส่รหัสผ่านของผู้มีสิทธิ์ หรือใส่รหัสผ่าน 029030445Rd*";
                     return !string.IsNullOrEmpty(Request.Headers["Referer"]) ? Redirect(Request.Headers["Referer"].ToString()) : RedirectToAction("Detail", new { id = billNo });
                 }
 

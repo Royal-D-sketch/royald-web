@@ -479,9 +479,9 @@ else if (overdue120)
             <i class="bi bi-shield-lock-fill fs-2 text-warning"></i>
             <h5 class="mb-0 fw-bold">🔒 บิลนี้บันทึกชำระเงินครบถ้วนแล้ว (Fully Paid)</h5>
         </div>
-        <p class="text-muted small mb-3">หากต้องการเปลี่ยนสถานะหนี้หรือแก้ไข ต้องได้รับการอนุมัติโดยใส่รหัสผ่านของ <strong>คุณธัญชนก</strong> หรือ <strong>ผู้บริหาร</strong> เท่านั้น</p>
+        <p class="text-muted small mb-3">หากต้องการเปลี่ยนสถานะหนี้หรือแก้ไข ต้องได้รับการอนุมัติโดยใส่รหัสผ่านของผู้ใช้ที่มีสิทธิ์ (คุณธัญชนก, ผู้บริหาร, Admin) หรือใส่รหัสผ่าน <code>029030445Rd*</code></p>
         <div class="input-group input-group-sm w-auto mx-auto justify-content-center" style="max-width:400px;">
-            <input type="password" id="admin-password" class="form-control" placeholder="ใส่รหัสผ่านคุณธัญชนก หรือผู้บริหาร..." />
+            <input type="password" id="admin-password" class="form-control" placeholder="รหัสผ่านผู้มีสิทธิ์ หรือ 029030445Rd*..." />
             <button class="btn btn-warning fw-bold px-3" type="button" onclick="unlockForms()">
                 <i class="bi bi-unlock-fill me-1"></i> ปลดล็อค
             </button>
@@ -984,7 +984,7 @@ async function unlockForms() {
     var pwdInput = document.getElementById('admin-password');
     var pwd = pwdInput ? pwdInput.value.trim() : '';
     if (!pwd) {
-        alert('กรุณากรอกรหัสผ่านของคุณธัญชนก หรือผู้บริหาร');
+        alert('กรุณากรอกรหัสผ่านของผู้มีสิทธิ์ หรือรหัสผ่าน 029030445Rd*');
         if (pwdInput) pwdInput.focus();
         return;
     }
@@ -1012,7 +1012,7 @@ async function unlockForms() {
             }
             alert('ยืนยันรหัสผ่านสำเร็จ (' + (data.approver || 'อนุมัติเรียบร้อย') + ') สามารถจัดการสถานะได้แล้ว');
         } else {
-            alert(data.message || 'รหัสผ่านไม่ถูกต้อง! ต้องเป็นรหัสผ่านของคุณธัญชนก หรือผู้บริหาร เท่านั้น');
+            alert(data.message || 'รหัสผ่านไม่ถูกต้อง! ต้องเป็นรหัสผ่านของผู้ใช้ที่มีสิทธิ์ หรือรหัสผ่าน 029030445Rd*');
             if (pwdInput) { pwdInput.value = ''; pwdInput.focus(); }
         }
     } catch (e) {
