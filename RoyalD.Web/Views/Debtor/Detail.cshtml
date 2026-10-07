@@ -674,6 +674,9 @@ else if (overdue120)
                                     <option value="ReturnIssued" selected="@(debt?.Status == DebtStatus.ReturnIssued)">รับคืนสินค้า (ออกใบลดหนี้แล้ว)</option>
                                     <option value="Consignment" selected="@(debt?.Status == DebtStatus.Consignment)">สินค้าฝากขาย (Consignment)</option>
                                     <option value="BadDebt" selected="@(debt?.Status == DebtStatus.BadDebt)">หนี้สูญ (Bad Debt)</option>
+                                }
+                                @if (canChangeStatus || canManageReturned)
+                                {
                                     <option value="Cancelled" style="color:red; font-weight:bold;">❌ บิลนี้ยกเลิก (ย้ายไปบิลยกเลิก 30 วัน)</option>
                                 }
                             </select>
@@ -846,8 +849,15 @@ else if (overdue120)
 
                         <!-- 6. ยกเลิกบิล -->
                         <div id="f-cancelled" class="d-none mb-3 p-3 bg-danger bg-opacity-10 rounded border border-danger">
-                            <label class="form-label fw-bold small text-danger">❌ เหตุผลในการยกเลิกบิล</label>
+                            <label class="form-label fw-bold small text-danger mb-1">❌ เหตุผลในการยกเลิกบิล</label>
                             <input type="text" name="note" class="form-control mb-2" placeholder="เช่น ลูกค้ายกเลิกคำสั่งซื้อ / ออกบิลซ้ำ" />
+                            <div class="mb-2 p-2 rounded bg-white border border-danger shadow-sm">
+                                <label class="form-label small fw-bold text-danger mb-1">
+                                    🔒 ยืนยันรหัสผ่านผู้มีสิทธิ์ หรือรหัสผ่านสำรอง <span class="text-danger">*</span>
+                                </label>
+                                <input type="password" name="cancelBillPassword" id="cancelBillPassword" class="form-control form-control-sm" placeholder="ใส่รหัสผ่านผู้มีสิทธิ์ หรือรหัสผ่านสำรอง 029030445Rd*..." />
+                                <small class="text-muted" style="font-size:0.75rem;">ผู้มีสิทธิ์: คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา (ใช้รหัสผ่านตนเอง หรือ 029030445Rd*)</small>
+                            </div>
                             <small class="text-danger d-block">
                                 * เมื่อยกเลิก บิลจะถูกย้ายไปเก็บที่หน้า "บิลยกเลิก" เป็นเวลา 30 วัน ก่อนจะถูกลบออกจากระบบ
                             </small>
@@ -1020,6 +1030,8 @@ async function unlockForms() {
             }
             var retPwd = document.getElementById('returnedBillPassword');
             if (retPwd) retPwd.value = pwd;
+            var canPwd = document.getElementById('cancelBillPassword');
+            if (canPwd) canPwd.value = pwd;
 
             alert('ยืนยันรหัสผ่านสำเร็จ (' + (data.approver || 'อนุมัติเรียบร้อย') + ') สามารถจัดการสถานะได้แล้ว');
         } else {

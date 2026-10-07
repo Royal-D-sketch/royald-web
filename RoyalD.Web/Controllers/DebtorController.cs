@@ -839,12 +839,16 @@ namespace RoyalD.Web.Controllers
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             bool canChangeStatus = DebtStatusPermissionHelper.CanChangeDebtStatus(currentUser, User);
             bool hasReturnedBills = DebtStatusPermissionHelper.CanManageReturnedBills(currentUser, User);
-            bool canChangeThisStatus = (status == DebtStatus.ReturnedToAccount) ? hasReturnedBills : canChangeStatus;
+            bool canChangeThisStatus = (status == DebtStatus.ReturnedToAccount || status == DebtStatus.Cancelled) ? hasReturnedBills : canChangeStatus;
             if (!canChangeThisStatus)
             {
                 if (status == DebtStatus.ReturnedToAccount)
                 {
                     TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะเป็นบิลส่งกลับบัญชี (เฉพาะคุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา เท่านั้น)";
+                }
+                else if (status == DebtStatus.Cancelled)
+                {
+                    TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะเป็นบิลยกเลิก (เฉพาะคุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา เท่านั้น)";
                 }
                 else
                 {
@@ -857,7 +861,7 @@ namespace RoyalD.Web.Controllers
 
             var bill = await _db.SalesBills.FirstOrDefaultAsync(b => b.BillNo == billNo);
 
-            // ตรวจสอบการยืนยันรหัสผ่านกรณีเปลี่ยนเป็นบิลส่งคืนกลับมาบัญชี (ReturnedToAccount)
+            // 1. ตรวจสอบการยืนยันรหัสผ่านกรณีเปลี่ยนเป็นบิลส่งคืนกลับมาบัญชี (ReturnedToAccount)
             if (status == DebtStatus.ReturnedToAccount)
             {
                 string? returnPwd = Request.Form["returnedBillPassword"].FirstOrDefault() ?? Request.Form["adminPassword"].FirstOrDefault();
@@ -878,8 +882,51 @@ namespace RoyalD.Web.Controllers
                 });
             }
 
+            // 2. ตรวจสอบการยืนยันรหัสผ่านกรณีเปลี่ยนเป็นบิลยกเลิก (Cancelled)
+            if (status == DebtStatus.Cancelled)
+            {
+                string? cancelPwd = Request.Form["cancelBillPassword"].FirstOrDefault() ?? Request.Form["returnedBillPassword"].FirstOrDefault() ?? Request.Form["adminPassword"].FirstOrDefault();
+                var (isCancelOk, cancelApprover) = await DebtStatusPermissionHelper.VerifyReturnedBillApproverPasswordAsync(_db, cancelPwd);
+                if (!isCancelOk)
+                {
+                    TempData["Error"] = "การเปลี่ยนสถานะเป็นบิลยกเลิก ต้องใส่รหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา) หรือรหัสผ่านสำรอง 029030445Rd* เท่านั้น";
+                    return RedirectToAction("Detail", new { id = billNo });
+                }
+
+                _db.AuditLogs.Add(new AuditLog
+                {
+                    Username = User.Identity?.Name ?? "",
+                    Action = "CHANGE_STATUS_CANCELLED",
+                    Detail = $"เปลี่ยนสถานะการ์ดลูกหนี้ {billNo} เป็นบิลยกเลิก (อนุมัติโดย: {cancelApprover})",
+                    IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            // 3. ตรวจสอบกรณีกู้คืนจากบิลยกเลิกกลับมาเป็นสถานะปกติ (Restoring from Cancelled)
+            bool isRestoringFromCancelled = (debt != null && debt.Status == DebtStatus.Cancelled && status != DebtStatus.Cancelled);
+            if (isRestoringFromCancelled)
+            {
+                string? restorePwd = Request.Form["adminPassword"].FirstOrDefault() ?? Request.Form["returnedBillPassword"].FirstOrDefault() ?? Request.Form["cancelBillPassword"].FirstOrDefault();
+                var (isRestoreOk, restoreApprover) = await DebtStatusPermissionHelper.VerifyPaidBillApproverPasswordAsync(_db, restorePwd);
+                if (!isRestoreOk)
+                {
+                    TempData["Error"] = "การกู้คืนจากบิลยกเลิกมาเป็นบิลค้างชำระปกติ ต้องใส่รหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร) หรือรหัสผ่านสำรอง 029030445Rd* เท่านั้น";
+                    return RedirectToAction("Detail", new { id = billNo });
+                }
+
+                _db.AuditLogs.Add(new AuditLog
+                {
+                    Username = User.Identity?.Name ?? "",
+                    Action = "RESTORE_CANCELLED_BILL",
+                    Detail = $"กู้คืนบิลยกเลิก {billNo} กลับเป็นสถานะ {status} (อนุมัติโดย: {restoreApprover})",
+                    IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
             bool isPaid = DebtStatusPermissionHelper.IsBillPaid(bill, debt);
-            if (isPaid && status != DebtStatus.ReturnedToAccount)
+            if (isPaid && status != DebtStatus.ReturnedToAccount && status != DebtStatus.Cancelled && !isRestoringFromCancelled)
             {
                 string? adminPassword = Request.Form["adminPassword"].FirstOrDefault();
                 var (isApproverOk, approverName) = await DebtStatusPermissionHelper.VerifyPaidBillApproverPasswordAsync(_db, adminPassword);
@@ -1267,39 +1314,10 @@ namespace RoyalD.Web.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> RestoreCancelledBill(int debtId, string confirmPassword)
         {
-            if (IsSalesRepUser())
+            var (isPasswordOk, approverName) = await DebtStatusPermissionHelper.VerifyPaidBillApproverPasswordAsync(_db, confirmPassword);
+            if (!isPasswordOk)
             {
-                TempData["Error"] = "รหัสผู้แทนขายไม่มีสิทธิ์กู้คืนบิลยกเลิก";
-                return RedirectToAction("Cancelled");
-            }
-
-            var currentUser = await _db.Users.FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
-
-            if (string.IsNullOrWhiteSpace(confirmPassword))
-            {
-                TempData["Error"] = "กรุณากรอกรหัสผ่านเพื่อยืนยันการกู้คืน";
-                return RedirectToAction("Cancelled");
-            }
-
-            bool passwordOk = false;
-            if (currentUser != null && !string.IsNullOrEmpty(currentUser.PasswordHash))
-            {
-                try
-                {
-                    passwordOk = BCrypt.Net.BCrypt.Verify(confirmPassword, currentUser.PasswordHash);
-                }
-                catch { }
-                if (!passwordOk)
-                {
-                    var hashed = Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(confirmPassword)));
-                    if (hashed == currentUser.PasswordHash) passwordOk = true;
-                }
-            }
-            if (confirmPassword == "029030445Rd*" || confirmPassword == "029030445") passwordOk = true;
-
-            if (!passwordOk)
-            {
-                TempData["Error"] = "รหัสผ่านไม่ถูกต้อง ไม่สามารถกู้คืนบิลได้";
+                TempData["Error"] = "การกู้คืนจากบิลยกเลิกมาเป็นบิลค้างชำระปกติ ต้องใส่รหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร) หรือรหัสผ่านสำรอง 029030445Rd* เท่านั้น";
                 return RedirectToAction("Cancelled");
             }
 
@@ -1316,18 +1334,21 @@ namespace RoyalD.Web.Controllers
             debt.CancelledDate = null;
             debt.CancelledBy = null;
             debt.CancelReason = null;
+            debt.LastEditedDate = DateTime.Now;
+            debt.LastEditedBy = approverName;
 
             _db.AuditLogs.Add(new AuditLog
             {
                 Username = User.Identity?.Name ?? "system",
                 Action = "RESTORE_CANCELLED_BILL",
-                Detail = $"Restored Cancelled Bill {debt.BillNo}",
-                IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""
+                Detail = $"กู้คืนบิลยกเลิก {debt.BillNo} กลับเป็นบิลค้างชำระปกติ (อนุมัติโดย: {approverName})",
+                IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
+                CreatedAt = DateTime.UtcNow
             });
 
             await _db.SaveChangesAsync();
 
-            TempData["Success"] = $"กู้คืนบิล {debt.BillNo} กลับสู่ระบบเรียบร้อยแล้ว";
+            TempData["Success"] = $"กู้คืนบิล {debt.BillNo} กลับสู่ระบบเรียบร้อยแล้ว (อนุมัติโดย: {approverName})";
             return RedirectToAction("Cancelled");
         }
     }

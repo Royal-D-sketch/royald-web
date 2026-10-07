@@ -711,8 +711,9 @@ namespace RoyalD.Web.Controllers
         [HttpPost, Authorize]
         public async Task<IActionResult> VerifyApproverPassword([FromForm] string password, [FromForm] string? targetType = null)
         {
-            bool isReturned = string.Equals(targetType, "returned", StringComparison.OrdinalIgnoreCase);
-            var (isValid, approverName) = isReturned
+            bool isReturnedOrCancel = string.Equals(targetType, "returned", StringComparison.OrdinalIgnoreCase) || 
+                                     string.Equals(targetType, "cancel", StringComparison.OrdinalIgnoreCase);
+            var (isValid, approverName) = isReturnedOrCancel
                 ? await DebtStatusPermissionHelper.VerifyReturnedBillApproverPasswordAsync(_db, password)
                 : await DebtStatusPermissionHelper.VerifyPaidBillApproverPasswordAsync(_db, password);
 
@@ -721,7 +722,7 @@ namespace RoyalD.Web.Controllers
                 return Json(new { success = true, approver = approverName });
             }
 
-            string errMsg = isReturned
+            string errMsg = isReturnedOrCancel
                 ? "รหัสผ่านไม่ถูกต้อง! ต้องเป็นรหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา) หรือรหัสผ่านสำรอง 029030445Rd*"
                 : "รหัสผ่านไม่ถูกต้อง! ต้องเป็นรหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร) หรือรหัสผ่านสำรอง 029030445Rd*";
 

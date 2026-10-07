@@ -105,6 +105,24 @@ namespace RoyalD.Web.Services
         }
 
         /// <summary>
+        /// ตรวจสอบสิทธิ์เปลี่ยนสถานะเป็น "บิลยกเลิก" (Cancelled)
+        /// ผู้มีสิทธิ์: คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา
+        /// </summary>
+        public static bool CanCancelDebtStatus(AppUser? user, ClaimsPrincipal? principal = null)
+        {
+            return CanManageReturnedBills(user, principal);
+        }
+
+        /// <summary>
+        /// ตรวจสอบสิทธิ์กู้คืนจากบิลยกเลิกกลับเป็นบิลค้างชำระปกติ
+        /// ผู้มีสิทธิ์: คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร (คุณวนิดา ไม่มีสิทธิ์)
+        /// </summary>
+        public static bool CanRestoreCancelledBill(AppUser? user, ClaimsPrincipal? principal = null)
+        {
+            return CanChangeDebtStatus(user, principal);
+        }
+
+        /// <summary>
         /// ตรวจสอบว่าบิลนี้เป็นบิลที่ชำระเงินครบแล้วหรือไม่
         /// </summary>
         public static bool IsBillPaid(SalesBill? bill, OutstandingDebt? debt)
