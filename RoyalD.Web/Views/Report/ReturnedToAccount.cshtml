@@ -282,6 +282,13 @@
                         <label class="form-label fw-semibold small mb-1">หมายเหตุเพิ่มเติม</label>
                         <input type="text" name="returnNote" id="modalReturnNote" class="form-control form-control-sm" placeholder="เช่น พร้อมส่งมอบรอบใหม่, นัดส่งรอบถัดไป" />
                     </div>
+                    <div class="mb-2 p-2 rounded bg-light border border-warning">
+                        <label class="form-label fw-bold small text-danger mb-1">
+                            🔒 รหัสผ่านผู้มีสิทธิ์ หรือรหัสผ่านสำรอง <span class="text-danger">*</span>
+                        </label>
+                        <input type="password" name="returnPassword" id="modalReturnPassword" required class="form-control form-control-sm" placeholder="ใส่รหัสผ่านผู้มีสิทธิ์ หรือ 029030445Rd*..." />
+                        <small class="text-muted" style="font-size:0.75rem;">ผู้มีสิทธิ์: คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา (ใช้รหัสผ่านของตนเอง หรือรหัสผ่านสำรอง 029030445Rd*)</small>
+                    </div>
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-sm btn-outline-secondary px-3" data-bs-dismiss="modal">ยกเลิก</button>
@@ -294,40 +301,9 @@
     </div>
 </div>
 
-<!-- Modal: แจ้งเตือนไม่มีสิทธิ์ดำเนินการ -->
-<div class="modal fade" id="unauthorizedAlertModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title fw-bold"><i class="bi bi-shield-x me-2"></i>การแจ้งเตือนความปลอดภัย</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4 text-center">
-                <div class="mb-3 text-danger fs-1">
-                    <i class="bi bi-exclamation-octagon-fill"></i>
-                </div>
-                <h6 class="fw-bold text-danger mb-2">ข้อผิดพลาด: สิทธิ์การเข้าถึงไม่เพียงพอ</h6>
-                <p class="text-secondary mb-0">
-                    ข้อผิดพลาด: บัญชีผู้ใช้ของคุณไม่มีสิทธิ์ในการดำเนินการส่งคืนบิลไปจัดส่ง กรุณาติดต่อหัวหน้าแผนกบัญชี
-                </p>
-            </div>
-            <div class="modal-footer bg-light justify-content-center">
-                <button type="button" class="btn btn-sm btn-secondary px-4 fw-bold" data-bs-dismiss="modal">รับทราบ / ปิด</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 @section Scripts {
 <script>
-    const isUserAuthorized = @(isAuthorized ? "true" : "false");
-
     function handleReturnToDeliveryClick(debtId, billNo, customerName, defaultDate, defaultNote) {
-        if (!isUserAuthorized) {
-            var alertModal = new bootstrap.Modal(document.getElementById('unauthorizedAlertModal'));
-            alertModal.show();
-            return;
-        }
         openReturnToDeliveryModal(debtId, billNo, customerName, defaultDate, defaultNote);
     }
 

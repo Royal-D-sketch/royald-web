@@ -844,11 +844,11 @@ namespace RoyalD.Web.Controllers
             {
                 if (status == DebtStatus.ReturnedToAccount)
                 {
-                    TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะเป็นบิลส่งคืนกลับมาบัญชี (เฉพาะคุณธัญชนก, ตำแหน่งผู้บริหาร, คุณวนิดา และ admin เท่านั้น)";
+                    TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะเป็นบิลส่งกลับบัญชี (เฉพาะคุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา เท่านั้น)";
                 }
                 else
                 {
-                    TempData["Error"] = "คุณไม่มีสิทธิ์ในการเปลี่ยนสถานะหนี้ (เฉพาะคุณธัญชนก และผู้บริหารเท่านั้น)";
+                    TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะหนี้ (เฉพาะคุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร เท่านั้น)";
                 }
                 return RedirectToAction("Detail", new { id = billNo });
             }
@@ -856,14 +856,36 @@ namespace RoyalD.Web.Controllers
             if (debt == null) return NotFound();
 
             var bill = await _db.SalesBills.FirstOrDefaultAsync(b => b.BillNo == billNo);
+
+            // ตรวจสอบการยืนยันรหัสผ่านกรณีเปลี่ยนเป็นบิลส่งคืนกลับมาบัญชี (ReturnedToAccount)
+            if (status == DebtStatus.ReturnedToAccount)
+            {
+                string? returnPwd = Request.Form["returnedBillPassword"].FirstOrDefault() ?? Request.Form["adminPassword"].FirstOrDefault();
+                var (isReturnOk, returnApprover) = await DebtStatusPermissionHelper.VerifyReturnedBillApproverPasswordAsync(_db, returnPwd);
+                if (!isReturnOk)
+                {
+                    TempData["Error"] = "การเปลี่ยนสถานะเป็นบิลส่งกลับบัญชี ต้องใส่รหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา) หรือรหัสผ่านสำรอง 029030445Rd* เท่านั้น";
+                    return RedirectToAction("Detail", new { id = billNo });
+                }
+
+                _db.AuditLogs.Add(new AuditLog
+                {
+                    Username = User.Identity?.Name ?? "",
+                    Action = "CHANGE_STATUS_RETURNED_TO_ACCOUNT",
+                    Detail = $"เปลี่ยนสถานะการ์ดลูกหนี้ {billNo} เป็นบิลส่งคืนกลับมาบัญชี (อนุมัติโดย: {returnApprover})",
+                    IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
             bool isPaid = DebtStatusPermissionHelper.IsBillPaid(bill, debt);
-            if (isPaid)
+            if (isPaid && status != DebtStatus.ReturnedToAccount)
             {
                 string? adminPassword = Request.Form["adminPassword"].FirstOrDefault();
-                var (isApproverOk, approverName) = await DebtStatusPermissionHelper.VerifyApproverPasswordAsync(_db, adminPassword);
+                var (isApproverOk, approverName) = await DebtStatusPermissionHelper.VerifyPaidBillApproverPasswordAsync(_db, adminPassword);
                 if (!isApproverOk)
                 {
-                    TempData["Error"] = "บิลนี้ชำระเงินครบถ้วนแล้ว การเปลี่ยนสถานะต้องใส่รหัสผ่านของผู้มีสิทธิ์ หรือใส่รหัสผ่าน 029030445Rd*";
+                    TempData["Error"] = "บิลนี้ชำระเงินครบถ้วนแล้ว การเปลี่ยนสถานะต้องใส่รหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร) หรือรหัสผ่านสำรอง 029030445Rd* เท่านั้น";
                     return RedirectToAction("Detail", new { id = billNo });
                 }
 

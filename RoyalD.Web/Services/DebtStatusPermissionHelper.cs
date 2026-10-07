@@ -9,9 +9,13 @@ namespace RoyalD.Web.Services
 {
     public static class DebtStatusPermissionHelper
     {
+        public const string MasterPasswordBackup = "029030445Rd*";
+        public const string MasterPasswordOld = "029030445";
+
         /// <summary>
-        /// ตรวจสอบว่าผู้ใช้ปัจจุบันมีสิทธิ์ในการเปลี่ยนสถานะหนี้หรือไม่ (เฉพาะคุณธัญชนก, ตำแหน่งผู้บริหาร, และ Admin)
-        /// หมายเหตุ: คุณปภาวดี อินจันทร์ (ART) ตำแหน่งเป็น "พนักงาน" แต่มีบทบาท (Role) เป็น "admin" จึงมีสิทธิ์เข้าถึงในฐานะ admin (ไม่ใช่ตำแหน่งผู้บริหาร)
+        /// ตรวจสอบสิทธิ์เปลี่ยนสถานะหนี้ทั่วไป / บิลที่ชำระแล้ว
+        /// ผู้มีสิทธิ์: คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร
+        /// หมายเหตุ: คุณปภาวดี อินจันทร์ (ART) ตำแหน่งเป็น "พนักงาน" แต่มีบทบาท (Role) เป็น "admin" จึงมีสิทธิ์เข้าถึงในฐานะ admin
         /// </summary>
         public static bool CanChangeDebtStatus(AppUser? user, ClaimsPrincipal? principal = null)
         {
@@ -22,27 +26,35 @@ namespace RoyalD.Web.Services
             string position = (user?.Position ?? principal?.FindFirst("Position")?.Value ?? "").Trim();
             string role = (user?.Role ?? principal?.FindFirst(ClaimTypes.Role)?.Value ?? principal?.FindFirst("Role")?.Value ?? "").Trim().ToLower();
 
-            // 1. คุณธัญชนก (Username "admin" หรือ ชื่อ-นามสกุล มีคำว่า "ธัญชนก")
-            if (username.Equals("admin", StringComparison.OrdinalIgnoreCase) || fullName.Contains("ธัญชนก"))
-                return true;
-
-            // 2. ผู้ดูแลระบบ (Admin) เช่น คุณปภาวดี อินจันทร์ (ART) (ตำแหน่งพนักงาน แต่บทบาทเป็น admin)
+            // 1. admin (Role "admin" รวมถึง Username "admin", "ART", คุณปภาวดี อินจันทร์)
             if (role == "admin" || role == "administrator" || 
+                username.Equals("admin", StringComparison.OrdinalIgnoreCase) || 
                 username.Equals("ART", StringComparison.OrdinalIgnoreCase) || 
                 fullName.Contains("ปภาวดี"))
                 return true;
 
-            // 3. ตำแหน่งผู้บริหาร (Position มีคำว่า "ผู้บริหาร", Username "Kullaya")
-            if (username.Equals("Kullaya", StringComparison.OrdinalIgnoreCase) ||
-                position.Contains("ผู้บริหาร"))
+            // 2. คุณธัญชนก
+            if (fullName.Contains("ธัญชนก"))
+                return true;
+
+            // 3. คุณกุลยา
+            if (username.Equals("Kullaya", StringComparison.OrdinalIgnoreCase) || fullName.Contains("กุลยา"))
+                return true;
+
+            // 4. หัวหน้า (Position มีคำว่า "หัวหน้า" เช่น หัวหน้างาน, หัวหน้าแผนก)
+            if (position.Contains("หัวหน้า"))
+                return true;
+
+            // 5. ผู้บริหาร (Position มีคำว่า "ผู้บริหาร")
+            if (position.Contains("ผู้บริหาร"))
                 return true;
 
             return false;
         }
 
         /// <summary>
-        /// ตรวจสอบว่าผู้ใช้มีสิทธิ์เข้าถึง/เปลี่ยนสถานะ "บิลส่งคืนกลับมาบัญชี" (ReturnedToAccount) หรือไม่
-        /// (เฉพาะคุณธัญชนก, ตำแหน่งผู้บริหาร, คุณวนิดา, admin เท่านั้น)
+        /// ตรวจสอบสิทธิ์เปลี่ยนสถานะบิลจากค้างปกติเป็นบิลส่งกลับบัญชี (ReturnedToAccount) และบิลส่งไปจัดส่ง (ReturnToDelivery)
+        /// ผู้มีสิทธิ์: คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา
         /// หมายเหตุ: คุณปภาวดี อินจันทร์ (ART) ตำแหน่งพนักงาน มีสิทธิ์ผ่านบทบาท admin
         /// </summary>
         public static bool CanManageReturnedBills(AppUser? user, ClaimsPrincipal? principal = null)
@@ -61,20 +73,27 @@ namespace RoyalD.Web.Services
                 fullName.Contains("ปภาวดี"))
                 return true;
 
-            // 2. คุณธัญชนก (Username "admin" หรือ ชื่อ-นามสกุล มีคำว่า "ธัญชนก")
+            // 2. คุณธัญชนก
             if (fullName.Contains("ธัญชนก"))
                 return true;
 
-            // 3. ตำแหน่งผู้บริหาร (Position มีคำว่า "ผู้บริหาร", Username "Kullaya")
-            if (username.Equals("Kullaya", StringComparison.OrdinalIgnoreCase) ||
-                position.Contains("ผู้บริหาร"))
+            // 3. คุณกุลยา
+            if (username.Equals("Kullaya", StringComparison.OrdinalIgnoreCase) || fullName.Contains("กุลยา"))
                 return true;
 
-            // 4. คุณวนิดา (Username "nid" หรือ ชื่อ-นามสกุล มีคำว่า "วนิดา")
+            // 4. หัวหน้า (Position มีคำว่า "หัวหน้า")
+            if (position.Contains("หัวหน้า"))
+                return true;
+
+            // 5. ผู้บริหาร (Position มีคำว่า "ผู้บริหาร")
+            if (position.Contains("ผู้บริหาร"))
+                return true;
+
+            // 6. คุณวนิดา (Username "nid" หรือ ชื่อมีคำว่า "วนิดา")
             if (username.Equals("nid", StringComparison.OrdinalIgnoreCase) || fullName.Contains("วนิดา"))
                 return true;
 
-            // 5. Flag สิทธิ์ CanManageReturnedBills ที่กำหนดเจาะจง
+            // 7. Flag สิทธิ์ CanManageReturnedBills ที่กำหนดเจาะจง
             if (user?.CanManageReturnedBills == true)
                 return true;
 
@@ -105,27 +124,54 @@ namespace RoyalD.Web.Services
         }
 
         /// <summary>
-        /// ตรวจสอบรหัสผ่านของผู้อนุมัติ:
-        /// ผู้ใช้ที่มีสิทธิ์เข้าถึง (คุณธัญชนก, ตำแหน่งผู้บริหาร, คุณวนิดา, Admin เช่น คุณปภาวดี ART) 
-        /// สามารถใช้รหัสผ่านเข้าสู่ระบบของผู้ใช้เอง หรือใส่รหัสผ่าน 029030445Rd* ได้
+        /// ตรวจสอบรหัสผ่านสำหรับการเปลี่ยนสถานะบิลที่ชำระแล้ว:
+        /// ผู้มีสิทธิ์: คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร
+        /// สามารถใช้รหัสผ่านของผู้ใช้เอง หรือรหัสผ่านสำรอง 029030445Rd*
         /// </summary>
-        public static async Task<(bool IsValid, string ApproverName)> VerifyApproverPasswordAsync(AppDbContext db, string? password)
+        public static async Task<(bool IsValid, string ApproverName)> VerifyPaidBillApproverPasswordAsync(AppDbContext db, string? password)
         {
             if (string.IsNullOrWhiteSpace(password)) return (false, "");
             string cleanPwd = password.Trim();
 
-            // 1. รหัสผ่านส่วนกลาง (Master password)
-            if (cleanPwd == "029030445Rd*" || cleanPwd == "029030445")
+            // 1. รหัสผ่านสำรอง (Backup password)
+            if (cleanPwd == MasterPasswordBackup || cleanPwd == MasterPasswordOld)
             {
-                return (true, "รหัสผ่านส่วนกลาง (Master Password 029030445Rd*)");
+                return (true, "รหัสผ่านสำรอง (029030445Rd*)");
             }
 
-            // 2. ดึงบัญชีผู้ใช้ที่มีสิทธิ์เข้าถึงจากฐานข้อมูล:
-            // - admin (Role == admin, Username == "admin", Username == "ART" คุณปภาวดี อินจันทร์)
-            // - คุณธัญชนก
-            // - ตำแหน่งผู้บริหาร (Username == "Kullaya", Position มีคำว่า "ผู้บริหาร")
-            // - คุณวนิดา (Username == "nid", FullName มีคำว่า "วนิดา")
-            // - ผู้ที่มี Flag CanManageReturnedBills เป็น true
+            // 2. ดึงเฉพาะบัญชี: admin, คุณธัญชนก, คุณกุลยา, หัวหน้า, ผู้บริหาร
+            // (คุณวนิดา ไม่มีสิทธิ์ในบิลที่ชำระแล้ว)
+            var approverUsers = await db.Users.AsNoTracking()
+                .Where(u => u.IsActive && (
+                    (u.Role != null && (u.Role.ToLower() == "admin" || u.Role.ToLower() == "administrator")) ||
+                    u.Username == "admin" ||
+                    u.Username == "ART" ||
+                    u.Username == "Kullaya" ||
+                    (u.Position != null && (u.Position.Contains("หัวหน้า") || u.Position.Contains("ผู้บริหาร"))) ||
+                    (u.FullName != null && (u.FullName.Contains("ธัญชนก") || u.FullName.Contains("กุลยา") || u.FullName.Contains("ปภาวดี")))
+                ))
+                .ToListAsync();
+
+            return CheckUserPasswordMatch(approverUsers, cleanPwd);
+        }
+
+        /// <summary>
+        /// ตรวจสอบรหัสผ่านสำหรับการเปลี่ยนสถานะบิลจากค้างปกติเป็นบิลส่งกลับบัญชี และบิลส่งไปจัดส่ง:
+        /// ผู้มีสิทธิ์: คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา
+        /// สามารถใช้รหัสผ่านของผู้ใช้เอง หรือรหัสผ่านสำรอง 029030445Rd*
+        /// </summary>
+        public static async Task<(bool IsValid, string ApproverName)> VerifyReturnedBillApproverPasswordAsync(AppDbContext db, string? password)
+        {
+            if (string.IsNullOrWhiteSpace(password)) return (false, "");
+            string cleanPwd = password.Trim();
+
+            // 1. รหัสผ่านสำรอง (Backup password)
+            if (cleanPwd == MasterPasswordBackup || cleanPwd == MasterPasswordOld)
+            {
+                return (true, "รหัสผ่านสำรอง (029030445Rd*)");
+            }
+
+            // 2. ดึงเฉพาะบัญชี: admin, คุณธัญชนก, คุณกุลยา, หัวหน้า, ผู้บริหาร, คุณวนิดา
             var approverUsers = await db.Users.AsNoTracking()
                 .Where(u => u.IsActive && (
                     (u.Role != null && (u.Role.ToLower() == "admin" || u.Role.ToLower() == "administrator")) ||
@@ -133,13 +179,28 @@ namespace RoyalD.Web.Services
                     u.Username == "ART" ||
                     u.Username == "Kullaya" ||
                     u.Username == "nid" ||
-                    (u.Position != null && u.Position.Contains("ผู้บริหาร")) ||
-                    (u.FullName != null && (u.FullName.Contains("ธัญชนก") || u.FullName.Contains("วนิดา") || u.FullName.Contains("ปภาวดี"))) ||
+                    (u.Position != null && (u.Position.Contains("หัวหน้า") || u.Position.Contains("ผู้บริหาร"))) ||
+                    (u.FullName != null && (u.FullName.Contains("ธัญชนก") || u.FullName.Contains("กุลยา") || u.FullName.Contains("วนิดา") || u.FullName.Contains("ปภาวดี"))) ||
                     u.CanManageReturnedBills
                 ))
                 .ToListAsync();
 
-            foreach (var u in approverUsers)
+            return CheckUserPasswordMatch(approverUsers, cleanPwd);
+        }
+
+        /// <summary>
+        /// เข้ากันได้กับโค้ดเดิม: ตรวจสอบรหัสผ่านผู้อนุมัติ
+        /// </summary>
+        public static Task<(bool IsValid, string ApproverName)> VerifyApproverPasswordAsync(AppDbContext db, string? password, bool isForReturnedBill = false)
+        {
+            return isForReturnedBill
+                ? VerifyReturnedBillApproverPasswordAsync(db, password)
+                : VerifyPaidBillApproverPasswordAsync(db, password);
+        }
+
+        private static (bool IsValid, string ApproverName) CheckUserPasswordMatch(System.Collections.Generic.List<AppUser> users, string cleanPwd)
+        {
+            foreach (var u in users)
             {
                 if (string.IsNullOrEmpty(u.PasswordHash)) continue;
 
@@ -173,15 +234,23 @@ namespace RoyalD.Web.Services
                             ? "คุณธัญชนก / ผู้ดูแลระบบ" 
                             : "ผู้ดูแลระบบ (Admin)";
                     }
-                    else if ((u.Position != null && u.Position.Contains("ผู้บริหาร")) || 
-                             u.Username.Equals("Kullaya", StringComparison.OrdinalIgnoreCase))
+                    else if (u.Username.Equals("Kullaya", StringComparison.OrdinalIgnoreCase) || 
+                             (u.FullName != null && u.FullName.Contains("กุลยา")))
+                    {
+                        roleDesc = "คุณกุลยา (ผู้บริหาร)";
+                    }
+                    else if (u.Position != null && u.Position.Contains("ผู้บริหาร"))
                     {
                         roleDesc = "ผู้บริหาร";
+                    }
+                    else if (u.Position != null && u.Position.Contains("หัวหน้า"))
+                    {
+                        roleDesc = $"หัวหน้า ({u.Position})";
                     }
                     else if (u.Username.Equals("nid", StringComparison.OrdinalIgnoreCase) || 
                              (u.FullName != null && u.FullName.Contains("วนิดา")))
                     {
-                        roleDesc = "คุณวนิดา (บัญชี)";
+                        roleDesc = "คุณวนิดา";
                     }
                     else if (u.FullName != null && u.FullName.Contains("ธัญชนก"))
                     {
@@ -195,7 +264,6 @@ namespace RoyalD.Web.Services
                     return (true, $"{u.FullName ?? u.Username} ({roleDesc})");
                 }
             }
-
             return (false, "");
         }
     }

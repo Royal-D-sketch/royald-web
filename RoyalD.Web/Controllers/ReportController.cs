@@ -383,14 +383,15 @@ namespace RoyalD.Web.Controllers
 
         // ==============================================================
         // 2. ฟังก์ชัน "ส่งคืนไปจัดส่ง" (คืนสถานะเป็นลูกหนี้ค้างชำระปกติ & ซิงค์ยอดกลับ AR Card)
+        // ผู้มีสิทธิ์: คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา (ใส่รหัสผ่านตนเอง หรือรหัสสำรอง 029030445Rd*)
         // ==============================================================
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> ReturnToDelivery([FromServices] AppDbContext db, int debtId, DateTime? deliveryDate, string? returnNote)
+        public async Task<IActionResult> ReturnToDelivery([FromServices] AppDbContext db, int debtId, DateTime? deliveryDate, string? returnNote, string? returnPassword)
         {
-            // ตรวจสอบสิทธิ์ผู้ใช้งานเฉพาะ: ['nid', 'admin', 'หัวหน้า', 'ผู้บริหาร']
-            if (!IsAuthorizedUserForReturn(User))
+            var (isPasswordOk, approverName) = await DebtStatusPermissionHelper.VerifyReturnedBillApproverPasswordAsync(db, returnPassword);
+            if (!isPasswordOk)
             {
-                TempData["Error"] = "ข้อผิดพลาด: บัญชีผู้ใช้ของคุณไม่มีสิทธิ์ในการดำเนินการส่งคืนบิลไปจัดส่ง กรุณาติดต่อหัวหน้าแผนกบัญชี";
+                TempData["Error"] = "การส่งคืนบิลไปจัดส่ง ต้องใส่รหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา) หรือรหัสผ่านสำรอง 029030445Rd* เท่านั้น";
                 return RedirectToAction("ReturnedToAccount");
             }
 
@@ -405,12 +406,19 @@ namespace RoyalD.Web.Controllers
             string noteDetail = !string.IsNullOrWhiteSpace(returnNote) ? $" (หมายเหตุ: {returnNote.Trim()})" : "";
             debt.Note = $"ส่งคืนไปจัดส่งเมื่อ {dDate:dd/MM/yyyy}{noteDetail}";
             debt.LastEditedDate = DateTime.Now;
-            debt.LastEditedBy = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "Admin";
+            debt.LastEditedBy = approverName;
 
+            db.AuditLogs.Add(new AuditLog
+            {
+                Username = User.Identity?.Name ?? "",
+                Action = "RETURN_BILL_TO_DELIVERY",
+                Detail = $"ส่งคืนบิลเลขที่ {debt.BillNo} ไปจัดส่ง (อนุมัติโดย: {approverName})",
+                CreatedAt = DateTime.UtcNow
+            });
 
             await db.SaveChangesAsync();
 
-            TempData["Success"] = $"ส่งคืนบิลเลขที่ {debt.BillNo} ไปจัดส่งเรียบร้อยแล้ว (สถานะกลับเป็นลูกหนี้ค้างชำระปกติและคงประวัติในตาราง)";
+            TempData["Success"] = $"ส่งคืนบิลเลขที่ {debt.BillNo} ไปจัดส่งเรียบร้อยแล้ว (อนุมัติโดย: {approverName})";
             return RedirectToAction("ReturnedToAccount");
         }
 

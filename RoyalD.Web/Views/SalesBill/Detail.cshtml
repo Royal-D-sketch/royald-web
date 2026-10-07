@@ -309,7 +309,7 @@
             <i class="bi bi-shield-lock-fill fs-2 text-warning"></i>
             <h5 class="mb-0 fw-bold">🔒 บิลนี้บันทึกชำระเงินครบถ้วนแล้ว (Fully Paid)</h5>
         </div>
-        <p class="text-muted small mb-3">หากต้องการเปลี่ยนสถานะหนี้หรือแก้ไข ต้องได้รับการอนุมัติโดยใส่รหัสผ่านของผู้ใช้ที่มีสิทธิ์ (คุณธัญชนก, ผู้บริหาร, Admin) หรือใส่รหัสผ่าน <code>029030445Rd*</code></p>
+        <p class="text-muted small mb-3">หากต้องการเปลี่ยนสถานะหนี้หรือแก้ไข ต้องได้รับการอนุมัติโดยใส่รหัสผ่านของผู้ใช้ที่มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร) หรือใส่รหัสผ่านสำรอง <code>029030445Rd*</code></p>
         <div class="input-group input-group-sm w-auto mx-auto justify-content-center" style="max-width:400px;">
             <input type="password" id="admin-password" class="form-control" placeholder="รหัสผ่านผู้มีสิทธิ์ หรือ 029030445Rd*..." />
             <button class="btn btn-warning fw-bold px-3" type="button" onclick="unlockForms()">
@@ -639,6 +639,13 @@
                                 <label class="form-label small fw-bold text-dark mb-1">📝 ระบุรายละเอียดเหตุผลเพิ่มเติม:</label>
                                 <textarea name="returnedToAccountReason" id="txtReturnReason" rows="2" class="form-control" placeholder="คลิกเลือกปุ่มด้านบน หรือพิมพ์ระบุรายละเอียดเหตุผลเพิ่มเติมเองได้อิสระ...">@(debt?.ReturnedToAccountReason ?? debt?.Note ?? "")</textarea>
                             </div>
+                            <div class="mb-3 p-2 rounded bg-white border border-warning shadow-sm">
+                                <label class="form-label small fw-bold text-danger mb-1">
+                                    🔒 ยืนยันรหัสผ่านผู้มีสิทธิ์ หรือรหัสผ่านสำรอง <span class="text-danger">*</span>
+                                </label>
+                                <input type="password" name="returnedBillPassword" id="returnedBillPassword" class="form-control form-control-sm" placeholder="ใส่รหัสผ่านผู้มีสิทธิ์ หรือรหัสผ่านสำรอง 029030445Rd*..." />
+                                <small class="text-muted" style="font-size:0.75rem;">ผู้มีสิทธิ์: คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา (ใช้รหัสผ่านตนเอง หรือ 029030445Rd*)</small>
+                            </div>
                             <small class="text-muted d-block mt-2">
                                 <i class="bi bi-info-circle me-1"></i> เมื่อบันทึก ข้อมูลบิลนี้จะถูกนำไปแสดงในหน้า "รายงานบิลส่งคืนกลับมาบัญชี" ทันที เพื่อรอส่งคืนไปจัดส่งในรอบถัดไป
                             </small>
@@ -816,7 +823,7 @@ async function unlockForms() {
     var pwdInput = document.getElementById('admin-password');
     var pwd = pwdInput ? pwdInput.value.trim() : '';
     if (!pwd) {
-        alert('กรุณากรอกรหัสผ่านของผู้มีสิทธิ์ หรือรหัสผ่าน 029030445Rd*');
+        alert('กรุณากรอกรหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร) หรือรหัสผ่านสำรอง 029030445Rd*');
         if (pwdInput) pwdInput.focus();
         return;
     }
@@ -824,6 +831,7 @@ async function unlockForms() {
     try {
         var formData = new FormData();
         formData.append('password', pwd);
+        formData.append('targetType', 'paid');
         var tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
         if (tokenInput) {
             formData.append('__RequestVerificationToken', tokenInput.value);
@@ -842,9 +850,12 @@ async function unlockForms() {
             for (var i = 0; i < pwds.length; i++) {
                 pwds[i].value = pwd;
             }
+            var retPwd = document.getElementById('returnedBillPassword');
+            if (retPwd) retPwd.value = pwd;
+
             alert('ยืนยันรหัสผ่านสำเร็จ (' + (data.approver || 'อนุมัติเรียบร้อย') + ') สามารถจัดการสถานะได้แล้ว');
         } else {
-            alert(data.message || 'รหัสผ่านไม่ถูกต้อง! ต้องเป็นรหัสผ่านของผู้ใช้ที่มีสิทธิ์ หรือรหัสผ่าน 029030445Rd*');
+            alert(data.message || 'รหัสผ่านไม่ถูกต้อง! ต้องเป็นรหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร) หรือรหัสผ่านสำรอง 029030445Rd*');
             if (pwdInput) { pwdInput.value = ''; pwdInput.focus(); }
         }
     } catch (e) {
