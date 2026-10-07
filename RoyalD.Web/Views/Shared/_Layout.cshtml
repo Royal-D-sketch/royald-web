@@ -27,7 +27,7 @@
     bool hasCustSum = isAdmin || allowedPagesList.Contains("customerpurchasesummary");
     bool hasDebt = isAdmin || allowedPagesList.Contains("debtor");
     bool hasHist = isAdmin || allowedPagesList.Contains("debtorhistory") || allowedPagesList.Contains("history");
-    bool hasCancel = isAdmin || allowedPagesList.Contains("cancelled") || allowedPagesList.Contains("debtorcancelled");
+    bool hasCancel = !isSalesRep && (isAdmin || allowedPagesList.Contains("cancelled") || allowedPagesList.Contains("debtorcancelled"));
     bool hasWaiting = isAdmin || allowedPagesList.Contains("waitinggoods") || allowedPagesList.Contains("waitinggoodsreport");
     bool hasRep = isAdmin || allowedPagesList.Contains("salesreport");
     bool hasRepSection = hasRep || hasCustSum || hasWaiting;

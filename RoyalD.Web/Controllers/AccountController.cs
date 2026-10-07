@@ -254,13 +254,14 @@ namespace RoyalD.Web.Controllers
                 new Claim("CanChangeDebtStatus", (isMasterAdmin || user.CanChangeDebtStatus || DebtStatusPermissionHelper.CanChangeDebtStatus(user)) ? "true" : "false"),
                 new Claim("CanChangePaidBillStatus", (isMasterAdmin || user.CanChangePaidBillStatus || DebtStatusPermissionHelper.CanChangePaidBillStatus(user)) ? "true" : "false"),
                 new Claim("CanCancelBill", (isMasterAdmin || user.CanCancelBill || DebtStatusPermissionHelper.CanCancelBill(user)) ? "true" : "false"),
+                new Claim("CanRestoreCancelledBill", (!isSalesRep && (isMasterAdmin || user.CanRestoreCancelledBill || DebtStatusPermissionHelper.CanRestoreCancelledBill(user))) ? "true" : "false"),
                 new Claim("CanManageReturnedBills", (isMasterAdmin || user.CanManageReturnedBills || DebtStatusPermissionHelper.CanManageReturnedBills(user)) ? "true" : "false"),
                 new Claim("CanDeleteSalesBill", (isMasterAdmin || user.CanDeleteSalesBill) ? "true" : "false"),
                 new Claim("CanDeleteDebtor", (isMasterAdmin || user.CanDeleteDebtor) ? "true" : "false"),
                 new Claim("SessionTimeout", (user.SessionTimeoutMinutes.HasValue && user.SessionTimeoutMinutes > 0 ? user.SessionTimeoutMinutes.Value : (isSalesRep ? 10 : 0)).ToString()),
                 new Claim("CanDownload", canDownloadFinal ? "true" : "false"),
                 new Claim("CanScreenCapture", canCaptureFinal ? "true" : "false"),
-                new Claim("AllowedPages", isMasterAdmin ? "Dashboard,SalesBill,Debtor,DebtorHistory,Cancelled,WaitingGoods,SalesReport,Audit,Users,Upload,UploadSalesBill,UploadDebtor,UploadReceipt,PaymentDetails" : (user.AllowedPages ?? "")),
+                new Claim("AllowedPages", isMasterAdmin ? "Dashboard,SalesBill,Debtor,DebtorHistory,Cancelled,WaitingGoods,SalesReport,Audit,Users,Upload,UploadSalesBill,UploadDebtor,UploadReceipt,PaymentDetails" : (isSalesRep ? string.Join(",", (user.AllowedPages ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).Where(p => !p.Trim().Equals("Cancelled", StringComparison.OrdinalIgnoreCase) && !p.Trim().Equals("DebtorCancelled", StringComparison.OrdinalIgnoreCase))) : (user.AllowedPages ?? ""))),
                 new Claim("AllowedRegion", user.AllowedRegion ?? ""),
                 new Claim("AllowedProvinces", user.AllowedProvinces ?? ""),
                 new Claim("AllowedDistricts", user.AllowedDistricts ?? "")
@@ -439,7 +440,7 @@ namespace RoyalD.Web.Controllers
         }
 
         [Authorize, HttpGet]
-        public async Task<IActionResult> Users(string? search)
+        public async Task<IActionResult> Users(string? search, string? position, string? role, string? region, string? status, string? permission)
         {
             if (!await CanManageUsersAsync())
             {
@@ -456,7 +457,56 @@ namespace RoyalD.Web.Controllers
                                  (u.Position != null && u.Position.Contains(s)) ||
                                  (u.SalesRepCode != null && u.SalesRepCode.Contains(s)));
             }
+
+            if (!string.IsNullOrWhiteSpace(position))
+            {
+                var pos = position.Trim();
+                q = q.Where(u => u.Position != null && u.Position.Contains(pos));
+            }
+
+            if (!string.IsNullOrWhiteSpace(role))
+            {
+                var r = role.Trim().ToLower();
+                q = q.Where(u => u.Role != null && u.Role.ToLower() == r);
+            }
+
+            if (!string.IsNullOrWhiteSpace(region))
+            {
+                var reg = region.Trim();
+                q = q.Where(u => (u.AllowedRegion != null && u.AllowedRegion.Contains(reg)) || (u.AllowedProvinces != null && u.AllowedProvinces.Contains(reg)));
+            }
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                if (status == "active") q = q.Where(u => u.IsActive);
+                else if (status == "inactive") q = q.Where(u => !u.IsActive);
+            }
+
+            if (!string.IsNullOrWhiteSpace(permission))
+            {
+                if (permission == "restore") q = q.Where(u => u.CanRestoreCancelledBill || u.Role == "admin");
+                else if (permission == "cancel_view") q = q.Where(u => u.Role == "admin" || (u.AllowedPages != null && u.AllowedPages.Contains("Cancelled")));
+                else if (permission == "salesrep") q = q.Where(u => u.Position != null && (u.Position.Contains("ผู้แทน") || u.Position.Contains("พนักงานขาย")));
+            }
+
+            var allPositions = await _db.Users.AsNoTracking()
+                .Select(u => u.Position)
+                .Where(p => !string.IsNullOrEmpty(p))
+                .Distinct()
+                .OrderBy(p => p)
+                .ToListAsync();
+
+            var allRegions = RegionHelper.GetRegions();
+
             ViewBag.Search = search;
+            ViewBag.Position = position;
+            ViewBag.Role = role;
+            ViewBag.Region = region;
+            ViewBag.Status = status;
+            ViewBag.Permission = permission;
+            ViewBag.AllPositions = allPositions;
+            ViewBag.AllRegions = allRegions;
+
             var userList = await q.OrderBy(u => u.Username).ToListAsync();
             return View(userList);
         }
@@ -495,7 +545,7 @@ namespace RoyalD.Web.Controllers
         public async Task<IActionResult> CreateUser(string username, string fullName, string password,
             string role, string position, string? salesRepCode, int? sessionTimeoutMinutes, 
             string? allowedRegion, string? allowedProvinces, string? allowedDistricts, 
-            string[]? pages, bool canViewPaymentDetails, bool canChangeDebtStatus, bool canChangePaidBillStatus, bool canCancelBill, bool canManageReturnedBills, bool canDeleteSalesBill, bool canDeleteDebtor, 
+            string[]? pages, bool canViewPaymentDetails, bool canChangeDebtStatus, bool canChangePaidBillStatus, bool canCancelBill, bool canRestoreCancelledBill, bool canManageReturnedBills, bool canDeleteSalesBill, bool canDeleteDebtor, 
             bool canDownload, bool canScreenCapture)
         {
             if (!await CanManageUsersAsync())
@@ -520,6 +570,16 @@ namespace RoyalD.Web.Controllers
                 return RedirectToAction("CreateUser");
             }
 
+            bool isTargetSalesRep = (position == "ผู้แทนขาย" || (position != null && (position.Contains("ผู้แทน") || position.Contains("พนักงานขาย")))) && role != "admin";
+            if (isTargetSalesRep)
+            {
+                canRestoreCancelledBill = false;
+                if (pages != null)
+                {
+                    pages = pages.Where(p => !p.Equals("Cancelled", StringComparison.OrdinalIgnoreCase) && !p.Equals("DebtorCancelled", StringComparison.OrdinalIgnoreCase)).ToArray();
+                }
+            }
+
             var allowedPagesStr = pages != null && pages.Length > 0 ? string.Join(",", pages) : "";
 
             _db.Users.Add(new AppUser
@@ -539,6 +599,7 @@ namespace RoyalD.Web.Controllers
                 CanChangeDebtStatus = canChangeDebtStatus,
                 CanChangePaidBillStatus = canChangePaidBillStatus,
                 CanCancelBill = canCancelBill,
+                CanRestoreCancelledBill = canRestoreCancelledBill,
                 CanManageReturnedBills = canManageReturnedBills,
                 CanDeleteSalesBill = canDeleteSalesBill,
                 CanDeleteDebtor = canDeleteDebtor,
@@ -579,7 +640,7 @@ namespace RoyalD.Web.Controllers
         public async Task<IActionResult> EditUser(int id, string fullName, string role, string position,
             string? salesRepCode, int? sessionTimeoutMinutes, bool isActive, string? newPassword,
             string? allowedRegion, string? allowedProvinces, string? allowedDistricts, 
-            string[]? pages, bool canViewPaymentDetails, bool canChangeDebtStatus, bool canChangePaidBillStatus, bool canCancelBill, bool canManageReturnedBills, bool canDeleteSalesBill, bool canDeleteDebtor, 
+            string[]? pages, bool canViewPaymentDetails, bool canChangeDebtStatus, bool canChangePaidBillStatus, bool canCancelBill, bool canRestoreCancelledBill, bool canManageReturnedBills, bool canDeleteSalesBill, bool canDeleteDebtor, 
             bool canDownload, bool canScreenCapture)
         {
             if (!await CanManageUsersAsync())
@@ -598,11 +659,22 @@ namespace RoyalD.Web.Controllers
             user.AllowedRegion = (allowedRegion ?? "").Trim();
             user.AllowedProvinces = (allowedProvinces ?? "").Trim();
             user.AllowedDistricts = (allowedDistricts ?? "").Trim();
+            bool isTargetSalesRep = (position == "ผู้แทนขาย" || (position != null && (position.Contains("ผู้แทน") || position.Contains("พนักงานขาย")))) && role != "admin";
+            if (isTargetSalesRep)
+            {
+                canRestoreCancelledBill = false;
+                if (pages != null)
+                {
+                    pages = pages.Where(p => !p.Equals("Cancelled", StringComparison.OrdinalIgnoreCase) && !p.Equals("DebtorCancelled", StringComparison.OrdinalIgnoreCase)).ToArray();
+                }
+            }
+
             user.AllowedPages = pages != null && pages.Length > 0 ? string.Join(",", pages) : "";
             user.CanViewPaymentDetails = canViewPaymentDetails;
             user.CanChangeDebtStatus = canChangeDebtStatus;
             user.CanChangePaidBillStatus = canChangePaidBillStatus;
             user.CanCancelBill = canCancelBill;
+            user.CanRestoreCancelledBill = canRestoreCancelledBill;
             user.CanManageReturnedBills = canManageReturnedBills;
             user.CanDeleteSalesBill = canDeleteSalesBill;
             user.CanDeleteDebtor = canDeleteDebtor;
@@ -728,9 +800,7 @@ namespace RoyalD.Web.Controllers
                 return Json(new { success = true, approver = approverName });
             }
 
-            string errMsg = isReturnedOrCancel
-                ? "รหัสผ่านไม่ถูกต้อง! ต้องเป็นรหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา) หรือรหัสผ่านสำรอง 029030445Rd*"
-                : "รหัสผ่านไม่ถูกต้อง! ต้องเป็นรหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร) หรือรหัสผ่านสำรอง 029030445Rd*";
+            string errMsg = "รหัสผ่านไม่ถูกต้อง หรือท่านไม่มีสิทธิ์ในการดำเนินการนี้";
 
             return Json(new { success = false, message = errMsg });
         }

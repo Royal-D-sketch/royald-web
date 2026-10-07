@@ -130,7 +130,7 @@
                         </div>
                         <div class="col-md-3">
                             <label class="form-label fw-bold small text-muted">ตำแหน่งงาน (Position) <span class="text-danger">*</span></label>
-                            <select name="position" class="form-select fw-bold" id="positionSelect">
+                            <select name="position" class="form-select fw-bold" id="positionSelect" onchange="onRoleChange()">
                                 <option value="ผู้แทนขาย" selected>👔 ผู้แทนขาย</option>
                                 <option value="พนักงาน">💼 พนักงาน</option>
                                 <option value="หัวหน้างาน">🎖️ หัวหน้างาน</option>
@@ -199,11 +199,24 @@
                             <div class="p-3 perm-card">
                                 <div class="form-check">
                                     <input class="form-check-input page-check" type="checkbox" name="pages" value="Cancelled" id="p_cancel">
-                                    <label class="form-check-label fw-bold text-danger" for="p_cancel">
-                                        <i class="bi bi-trash3-fill text-danger me-1"></i> บิลยกเลิก (30 วัน)
+                                    <label class="form-check-label fw-bold text-dark" for="p_cancel">
+                                        <i class="bi bi-trash3 text-danger me-1"></i> ดูบิลยกเลิก
                                     </label>
                                 </div>
-                                <small class="text-muted d-block ms-4" style="font-size:0.78rem;">สิทธิ์ดูและกู้คืนบิลยกเลิก</small>
+                                <small class="text-muted d-block ms-4" style="font-size:0.78rem;">สิทธิ์ดูรายงานบิลยกเลิก (30 วัน)</small>
+                                <small class="text-danger d-none ms-4 salesrep-cancel-warn" style="font-size:0.72rem; font-weight:600;">⚠️ ผู้แทนขายไม่มีสิทธิ์ดูบิลยกเลิก</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 perm-card" style="border:1.5px solid #86efac; background:#f0fdf4;">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="canRestoreCancelledBill" id="canRestoreCancelledBill" value="true">
+                                    <label class="form-check-label fw-bold text-success" for="canRestoreCancelledBill">
+                                        <i class="bi bi-arrow-counterclockwise text-success me-1"></i> กู้บิลยกเลิก
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block ms-4" style="font-size:0.78rem;">สิทธิ์กู้คืนบิลกลับเป็นบิลปกติ</small>
+                                <small class="text-danger d-none ms-4 salesrep-cancel-warn" style="font-size:0.72rem; font-weight:600;">⚠️ ผู้แทนขายไม่มีสิทธิ์กู้บิลยกเลิก</small>
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -711,16 +724,36 @@
 
     function onRoleChange() {
         const role = document.getElementById('roleSelect').value;
+        const position = (document.getElementById('positionSelect')?.value || '').trim();
         const pageChecks = document.querySelectorAll('.page-check');
+        const pCancel = document.getElementById('p_cancel');
+        const pRestore = document.getElementById('canRestoreCancelledBill');
+        const cancelWarns = document.querySelectorAll('.salesrep-cancel-warn');
+
         if (role === 'admin') {
             pageChecks.forEach(c => { c.checked = true; c.disabled = true; });
+            if (pRestore) { pRestore.checked = true; pRestore.disabled = true; }
             document.getElementById('canViewPaymentDetails').checked = true;
             document.getElementById('canDeleteSalesBill').checked = true;
             document.getElementById('canDeleteDebtor').checked = true;
             document.getElementById('canDownload').checked = true;
             document.getElementById('canScreenCapture').checked = true;
+            cancelWarns.forEach(w => w.classList.add('d-none'));
         } else {
             pageChecks.forEach(c => { c.disabled = false; });
+            if (pRestore) pRestore.disabled = false;
+
+            // ตรวจสอบตำแหน่งผู้แทนขาย: ผู้แทนขายไม่มีสิทธิ์ดูหรือกู้บิลยกเลิก
+            const isSalesRep = position === 'ผู้แทนขาย' || position.includes('ผู้แทน') || position.includes('พนักงานขาย');
+            if (isSalesRep) {
+                if (pCancel) { pCancel.checked = false; pCancel.disabled = true; }
+                if (pRestore) { pRestore.checked = false; pRestore.disabled = true; }
+                cancelWarns.forEach(w => w.classList.remove('d-none'));
+            } else {
+                if (pCancel) pCancel.disabled = false;
+                if (pRestore) pRestore.disabled = false;
+                cancelWarns.forEach(w => w.classList.add('d-none'));
+            }
         }
     }
 
@@ -1131,6 +1164,7 @@
         renderDistrictChips();
         renderDistrictTags();
         renderSalesRepChips();
+        onRoleChange();
     });
 </script>
 

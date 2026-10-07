@@ -493,9 +493,9 @@ else if (overdue120)
                 <i class="bi bi-shield-lock-fill fs-2 text-warning"></i>
                 <h5 class="mb-0 fw-bold">🔒 บิลนี้บันทึกชำระเงินครบถ้วนแล้ว (Fully Paid)</h5>
             </div>
-            <p class="text-muted small mb-3">หากต้องการเปลี่ยนสถานะหนี้หรือแก้ไข ต้องได้รับการอนุมัติโดยใส่รหัสผ่านของคุณเอง หรือใส่รหัสผ่านสำรอง <code>029030445Rd*</code></p>
+            <p class="text-muted small mb-3">หากต้องการเปลี่ยนสถานะหนี้หรือแก้ไข ต้องยืนยันรหัสผ่านอนุมัติของผู้มีสิทธิ์</p>
             <div class="input-group input-group-sm w-auto mx-auto justify-content-center" style="max-width:400px;">
-                <input type="password" id="admin-password" class="form-control" placeholder="รหัสผ่านของคุณ หรือ 029030445Rd*..." />
+                <input type="password" id="admin-password" class="form-control" placeholder="กรอกรหัสผ่าน..." autocomplete="new-password" />
                 <button class="btn btn-warning fw-bold px-3" type="button" onclick="unlockForms()">
                     <i class="bi bi-unlock-fill me-1"></i> ปลดล็อค
                 </button>
@@ -817,10 +817,9 @@ else if (overdue120)
                             </div>
                             <div class="mb-3 p-2 rounded bg-white border border-warning shadow-sm">
                                 <label class="form-label small fw-bold text-danger mb-1">
-                                    🔒 ยืนยันรหัสผ่านผู้มีสิทธิ์ หรือรหัสผ่านสำรอง <span class="text-danger">*</span>
+                                    🔒 ยืนยันรหัสผ่านอนุมัติ <span class="text-danger">*</span>
                                 </label>
-                                <input type="password" name="returnedBillPassword" id="returnedBillPassword" class="form-control form-control-sm" placeholder="ใส่รหัสผ่านผู้มีสิทธิ์ หรือรหัสผ่านสำรอง 029030445Rd*..." />
-                                <small class="text-muted" style="font-size:0.75rem;">ผู้มีสิทธิ์: คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา (ใช้รหัสผ่านตนเอง หรือ 029030445Rd*)</small>
+                                <input type="password" name="returnedBillPassword" id="returnedBillPassword" class="form-control form-control-sm" placeholder="กรอกรหัสผ่าน..." autocomplete="new-password" />
                             </div>
                             <small class="text-muted d-block mt-2">
                                 <i class="bi bi-info-circle me-1"></i> เมื่อบันทึก ข้อมูลบิลนี้จะถูกนำไปแสดงในหน้า "รายงานบิลส่งคืนกลับมาบัญชี" ทันที เพื่อรอส่งคืนไปจัดส่งในรอบถัดไป
@@ -856,10 +855,9 @@ else if (overdue120)
                             <input type="text" name="note" class="form-control mb-2" placeholder="เช่น ลูกค้ายกเลิกคำสั่งซื้อ / ออกบิลซ้ำ" />
                             <div class="mb-2 p-2 rounded bg-white border border-danger shadow-sm">
                                 <label class="form-label small fw-bold text-danger mb-1">
-                                    🔒 ยืนยันรหัสผ่านผู้มีสิทธิ์ หรือรหัสผ่านสำรอง <span class="text-danger">*</span>
+                                    🔒 ยืนยันรหัสผ่านอนุมัติ <span class="text-danger">*</span>
                                 </label>
-                                <input type="password" name="cancelBillPassword" id="cancelBillPassword" class="form-control form-control-sm" placeholder="ใส่รหัสผ่านผู้มีสิทธิ์ หรือรหัสผ่านสำรอง 029030445Rd*..." />
-                                <small class="text-muted" style="font-size:0.75rem;">ผู้มีสิทธิ์: คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา (ใช้รหัสผ่านตนเอง หรือ 029030445Rd*)</small>
+                                <input type="password" name="cancelBillPassword" id="cancelBillPassword" class="form-control form-control-sm" placeholder="กรอกรหัสผ่าน..." autocomplete="new-password" />
                             </div>
                             <small class="text-danger d-block">
                                 * เมื่อยกเลิก บิลจะถูกย้ายไปเก็บที่หน้า "บิลยกเลิก" เป็นเวลา 30 วัน ก่อนจะถูกลบออกจากระบบ
@@ -1004,7 +1002,7 @@ async function unlockForms() {
     var pwdInput = document.getElementById('admin-password');
     var pwd = pwdInput ? pwdInput.value.trim() : '';
     if (!pwd) {
-        alert('กรุณากรอกรหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร) หรือรหัสผ่านสำรอง 029030445Rd*');
+        alert('กรุณากรอกรหัสผ่านเพื่อยืนยัน');
         if (pwdInput) pwdInput.focus();
         return;
     }
@@ -1038,20 +1036,11 @@ async function unlockForms() {
 
             alert('ยืนยันรหัสผ่านสำเร็จ (' + (data.approver || 'อนุมัติเรียบร้อย') + ') สามารถจัดการสถานะได้แล้ว');
         } else {
-            alert(data.message || 'รหัสผ่านไม่ถูกต้อง! ต้องเป็นรหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร) หรือรหัสผ่านสำรอง 029030445Rd*');
+            alert(data.message || 'รหัสผ่านไม่ถูกต้อง หรือท่านไม่มีสิทธิ์ในการดำเนินการนี้');
             if (pwdInput) { pwdInput.value = ''; pwdInput.focus(); }
         }
     } catch (e) {
-        if (pwd === '029030445Rd*' || pwd === '029030445') {
-            document.getElementById('unlock-form').style.display = 'none';
-            document.getElementById('management-forms').style.display = 'block';
-            var pwds = document.getElementsByClassName('hidden-admin-pwd');
-            for (var i = 0; i < pwds.length; i++) {
-                pwds[i].value = pwd;
-            }
-        } else {
-            alert('เกิดข้อผิดพลาดในการตรวจสอบรหัสผ่าน กรุณาลองใหม่อีกครั้ง');
-        }
+        alert('เกิดข้อผิดพลาดในการตรวจสอบรหัสผ่าน กรุณาลองใหม่อีกครั้ง');
     }
 }
 

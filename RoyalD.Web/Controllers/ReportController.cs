@@ -391,7 +391,7 @@ namespace RoyalD.Web.Controllers
             var (isPasswordOk, approverName) = await DebtStatusPermissionHelper.VerifyReturnedBillApproverPasswordAsync(db, returnPassword);
             if (!isPasswordOk)
             {
-                TempData["Error"] = "การส่งคืนบิลไปจัดส่ง ต้องใส่รหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา) หรือรหัสผ่านสำรอง 029030445Rd* เท่านั้น";
+                TempData["Error"] = "การส่งคืนบิลไปจัดส่ง ต้องใส่รหัสผ่านอนุมัติของผู้มีสิทธิ์ที่ถูกต้อง";
                 return RedirectToAction("ReturnedToAccount");
             }
 

@@ -30,28 +30,123 @@
 }
 
 <div class="card shadow-sm border-0 mb-4" style="border-radius:12px; overflow:hidden;">
-    <div class="card-header bg-white py-3">
-        <form method="get" class="row g-2 align-items-center">
-            <div class="col-md-4">
-                <div class="input-group">
+    <div class="card-header bg-white py-3 border-bottom">
+        <form method="get" id="userFilterForm" class="row g-2 align-items-end">
+            <!-- 1. ค้นหาคำค้นทั่วไป (พิมพ์เองได้) -->
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-muted mb-1">
+                    <i class="bi bi-search me-1"></i> ค้นหาข้อความ (พิมพ์เองได้)
+                </label>
+                <div class="input-group input-group-sm">
                     <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
-                    <input type="text" name="search" class="form-control" placeholder="ค้นหาชื่อผู้ใช้, ชื่อ-นามสกุล, ตำแหน่ง..." value="@ViewBag.Search" />
+                    <input type="text" name="search" id="filterSearch" class="form-control" 
+                           placeholder="ชื่อผู้ใช้, ชื่อ-สกุล, รหัสผู้แทน..." value="@ViewBag.Search" />
                 </div>
             </div>
+
+            <!-- 2. ตำแหน่งงาน (มีให้เลือกจาก Dropdown หรือพิมพ์เองได้อิสระ) -->
             <div class="col-md-2">
-                <button type="submit" class="btn btn-outline-primary w-100">ค้นหา</button>
-            </div>
-            @if (!string.IsNullOrEmpty(ViewBag.Search))
-            {
-                <div class="col-md-2">
-                    <a href="/Account/Users" class="btn btn-outline-secondary w-100">ล้างค้นหา</a>
+                <label class="form-label small fw-bold text-muted mb-1">
+                    <i class="bi bi-person-badge me-1"></i> ตำแหน่ง (เลือก/พิมพ์เอง)
+                </label>
+                <div class="input-group input-group-sm">
+                    <input type="text" name="position" id="filterPosition" list="positionOptions" class="form-control" 
+                           placeholder="-- เลือกหรือพิมพ์ --" value="@ViewBag.Position" />
+                    <datalist id="positionOptions">
+                        <option value="ผู้แทนขาย">👔 ผู้แทนขาย</option>
+                        <option value="พนักงาน">💼 พนักงาน</option>
+                        <option value="หัวหน้างาน">🎖️ หัวหน้างาน</option>
+                        <option value="ผู้บริหาร">👑 ผู้บริหาร</option>
+                        @if (ViewBag.AllPositions != null)
+                        {
+                            foreach (var pos in (List<string>)ViewBag.AllPositions)
+                            {
+                                if (pos != "ผู้แทนขาย" && pos != "พนักงาน" && pos != "หัวหน้างาน" && pos != "ผู้บริหาร")
+                                {
+                                    <option value="@pos">@pos</option>
+                                }
+                            }
+                        }
+                    </datalist>
                 </div>
-            }
+            </div>
+
+            <!-- 3. บทบาท (Role) -->
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-muted mb-1">
+                    <i class="bi bi-shield-check me-1"></i> บทบาทระบบ
+                </label>
+                <select name="role" id="filterRole" class="form-select form-select-sm">
+                    <option value="">-- ทั้งหมด --</option>
+                    <option value="admin" selected="@(ViewBag.Role == "admin")">Admin (ผู้ดูแลระบบ)</option>
+                    <option value="user" selected="@(ViewBag.Role == "user")">User (ผู้ใช้ทั่วไป)</option>
+                </select>
+            </div>
+
+            <!-- 4. พื้นที่/ภาค (มีให้เลือกหรือพิมพ์เองได้) -->
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-muted mb-1">
+                    <i class="bi bi-geo-alt me-1"></i> พื้นที่/ภาค (เลือก/พิมพ์เอง)
+                </label>
+                <input type="text" name="region" id="filterRegion" list="regionOptions" class="form-control form-control-sm" 
+                       placeholder="-- เลือกหรือพิมพ์ --" value="@ViewBag.Region" />
+                <datalist id="regionOptions">
+                    @if (ViewBag.AllRegions != null)
+                    {
+                        foreach (var reg in (List<string>)ViewBag.AllRegions)
+                        {
+                            <option value="@reg">@reg</option>
+                        }
+                    }
+                    <option value="กรุงเทพมหานคร">กรุงเทพมหานคร</option>
+                    <option value="ปริมณฑล">ปริมณฑล</option>
+                </datalist>
+            </div>
+
+            <!-- 5. สิทธิ์และกลุ่มผู้ใช้ -->
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-muted mb-1">
+                    <i class="bi bi-sliders me-1"></i> สิทธิ์และกลุ่มผู้ใช้
+                </label>
+                <select name="permission" id="filterPermission" class="form-select form-select-sm">
+                    <option value="">-- สิทธิ์ทั้งหมด --</option>
+                    <option value="restore" selected="@(ViewBag.Permission == "restore")">♻️ มีสิทธิ์กู้บิลยกเลิก</option>
+                    <option value="cancel_view" selected="@(ViewBag.Permission == "cancel_view")">👁️ มีสิทธิ์ดูบิลยกเลิก</option>
+                    <option value="salesrep" selected="@(ViewBag.Permission == "salesrep")">👔 เฉพาะผู้แทนขาย (ไม่มีสิทธิ์ดูบิล)</option>
+                </select>
+            </div>
+
+            <!-- 6. สถานะบัญชี & ปุ่มกดค้นหา/ล้างตัวกรอง -->
+            <div class="col-md-2 mt-2">
+                <label class="form-label small fw-bold text-muted mb-1">
+                    <i class="bi bi-toggle-on me-1"></i> สถานะบัญชี
+                </label>
+                <select name="status" id="filterStatus" class="form-select form-select-sm">
+                    <option value="">-- ทุกสถานะ --</option>
+                    <option value="active" selected="@(ViewBag.Status == "active")">🟢 ใช้งานปกติ</option>
+                    <option value="inactive" selected="@(ViewBag.Status == "inactive")">🔴 ระงับการใช้งาน</option>
+                </select>
+            </div>
+
+            <div class="col-md-4 mt-2 d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-primary flex-fill fw-bold" style="background:#0d9488; border-color:#0d9488;">
+                    <i class="bi bi-funnel-fill me-1"></i> กรองข้อมูล
+                </button>
+                <a href="/Account/Users" class="btn btn-sm btn-outline-secondary px-3" title="ล้างตัวกรองทั้งหมด">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> ล้างตัวกรอง
+                </a>
+            </div>
+
+            <div class="col-md-6 mt-2 text-md-end">
+                <span class="badge bg-light text-dark border px-3 py-2 fw-normal" style="font-size:0.85rem;">
+                    แสดงผู้ใช้งาน: <strong id="filterUserCount" class="text-primary">@Model.Count</strong> คน
+                </span>
+            </div>
         </form>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0" id="usersTable">
                 <thead class="table-light" style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
                     <tr>
                         <th style="width:40px;">#</th>
@@ -71,13 +166,26 @@
                 <tbody>
                     @if (!Model.Any())
                     {
-                        <tr><td colspan="12" class="text-center text-muted py-4">ไม่พบข้อมูลบัญชีผู้ใช้</td></tr>
+                        <tr id="emptyRow"><td colspan="12" class="text-center text-muted py-4">ไม่พบข้อมูลบัญชีผู้ใช้</td></tr>
                     }
                     @{int idx = 1;}
                     @foreach (var u in Model)
                     {
                         var pages = u.AllowedPages?.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim()).ToList() ?? new();
-                        <tr class="@(!u.IsActive ? "table-secondary" : "")">
+                        bool isSR = !string.IsNullOrEmpty(u.Position) && (u.Position.Contains("ผู้แทน") || u.Position.Contains("พนักงานขาย"));
+                        bool canRestoreVal = u.Role == "admin" || u.CanRestoreCancelledBill || DebtStatusPermissionHelper.CanRestoreCancelledBill(u);
+                        bool canViewCancelVal = u.Role == "admin" || pages.Any(p => p.Equals("Cancelled", StringComparison.OrdinalIgnoreCase) || p.Equals("DebtorCancelled", StringComparison.OrdinalIgnoreCase));
+                        <tr class="user-row @(!u.IsActive ? "table-secondary" : "")"
+                            data-username="@u.Username?.ToLower()"
+                            data-fullname="@u.FullName?.ToLower()"
+                            data-repcode="@u.SalesRepCode?.ToLower()"
+                            data-position="@(string.IsNullOrEmpty(u.Position) ? "ผู้แทนขาย" : u.Position.ToLower())"
+                            data-role="@u.Role?.ToLower()"
+                            data-region="@((u.AllowedRegion ?? "") + " " + (u.AllowedProvinces ?? "")).ToLower()"
+                            data-status="@(u.IsActive ? "active" : "inactive")"
+                            data-canrestore="@(canRestoreVal ? "true" : "false")"
+                            data-canviewcancel="@(canViewCancelVal ? "true" : "false")"
+                            data-issalesrep="@(isSR ? "true" : "false")">
                             <td>@idx++</td>
                             <td>
                                 <div class="fw-bold text-dark fs-6"><code>@u.Username</code></div>
@@ -163,6 +271,7 @@
                                     bool canNormal = u.Role == "admin" || u.CanChangeDebtStatus || DebtStatusPermissionHelper.CanChangeDebtStatus(u);
                                     bool canRet = u.Role == "admin" || u.CanManageReturnedBills || DebtStatusPermissionHelper.CanManageReturnedBills(u);
                                     bool canCanc = u.Role == "admin" || u.CanCancelBill || DebtStatusPermissionHelper.CanCancelBill(u);
+                                    bool canRestore = u.Role == "admin" || u.CanRestoreCancelledBill || DebtStatusPermissionHelper.CanRestoreCancelledBill(u);
                                 }
                                 <div class="d-flex flex-wrap gap-1" style="max-width:200px;">
                                     @if (canPaid)
@@ -177,11 +286,15 @@
                                     {
                                         <span class="badge bg-warning text-dark" style="font-size:0.72rem;" title="สิทธิ์บิลยกเลิก">❌ ยกเลิก</span>
                                     }
+                                    @if (canRestore)
+                                    {
+                                        <span class="badge bg-teal text-white" style="background:#0d9488; font-size:0.72rem;" title="สิทธิ์กู้คืนบิลยกเลิก">♻️ กู้คืนบิล</span>
+                                    }
                                     @if (canRet)
                                     {
                                         <span class="badge bg-primary" style="font-size:0.72rem;" title="สิทธิ์บิลส่งกลับบัญชี">📦 ส่งคืนบัญชี</span>
                                     }
-                                    @if (!canPaid && !canNormal && !canCanc && !canRet)
+                                    @if (!canPaid && !canNormal && !canCanc && !canRet && !canRestore)
                                     {
                                         <span class="text-muted small">-</span>
                                     }
@@ -331,5 +444,83 @@ function openResetPasswordModal(id, username, fullName) {
     var modal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
     modal.show();
 }
+
+// Instant Real-time Filter (พิมพ์หรือเลือกปุ๊บ กรองผลลัพธ์ทันที)
+function applyClientUserFilter() {
+    const qSearch = (document.getElementById('filterSearch')?.value || '').trim().toLowerCase();
+    const qPos = (document.getElementById('filterPosition')?.value || '').trim().toLowerCase();
+    const qRole = (document.getElementById('filterRole')?.value || '').trim().toLowerCase();
+    const qRegion = (document.getElementById('filterRegion')?.value || '').trim().toLowerCase();
+    const qStatus = (document.getElementById('filterStatus')?.value || '').trim().toLowerCase();
+    const qPerm = (document.getElementById('filterPermission')?.value || '').trim().toLowerCase();
+
+    const rows = document.querySelectorAll('.user-row');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const uName = row.getAttribute('data-username') || '';
+        const fName = row.getAttribute('data-fullname') || '';
+        const repCode = row.getAttribute('data-repcode') || '';
+        const pos = row.getAttribute('data-position') || '';
+        const role = row.getAttribute('data-role') || '';
+        const reg = row.getAttribute('data-region') || '';
+        const status = row.getAttribute('data-status') || '';
+        const canRestore = row.getAttribute('data-canrestore') === 'true';
+        const canViewCancel = row.getAttribute('data-canviewcancel') === 'true';
+        const isSR = row.getAttribute('data-issalesrep') === 'true';
+
+        let match = true;
+
+        if (qSearch) {
+            if (!uName.includes(qSearch) && !fName.includes(qSearch) && !repCode.includes(qSearch) && !pos.includes(qSearch)) {
+                match = false;
+            }
+        }
+        if (match && qPos) {
+            if (!pos.includes(qPos)) match = false;
+        }
+        if (match && qRole) {
+            if (role !== qRole) match = false;
+        }
+        if (match && qRegion) {
+            if (!reg.includes(qRegion)) match = false;
+        }
+        if (match && qStatus) {
+            if (status !== qStatus) match = false;
+        }
+        if (match && qPerm) {
+            if (qPerm === 'restore' && !canRestore) match = false;
+            else if (qPerm === 'cancel_view' && !canViewCancel) match = false;
+            else if (qPerm === 'salesrep' && !isSR) match = false;
+        }
+
+        if (match) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    const countElem = document.getElementById('filterUserCount');
+    if (countElem) countElem.innerText = visibleCount;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const inputs = ['filterSearch', 'filterPosition', 'filterRegion'];
+    inputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', applyClientUserFilter);
+            el.addEventListener('change', applyClientUserFilter);
+        }
+    });
+
+    const selects = ['filterRole', 'filterStatus', 'filterPermission'];
+    selects.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', applyClientUserFilter);
+    });
+});
 </script>
 

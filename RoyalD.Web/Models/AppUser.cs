@@ -41,6 +41,7 @@ namespace RoyalD.Web.Models
         public bool CanChangeDebtStatus { get; set; } = false; // สิทธิ์เปลี่ยนสถานะหนี้รายการอื่นๆ (บิลค้างชำระทั่วไป)
         public bool CanChangePaidBillStatus { get; set; } = false; // สิทธิ์เปลี่ยนสถานะบิลชำระครบแล้ว
         public bool CanCancelBill { get; set; } = false; // สิทธิ์เปลี่ยนเป็นบิลยกเลิก
+        public bool CanRestoreCancelledBill { get; set; } = false; // สิทธิ์กู้คืนบิลยกเลิก (เปลี่ยนสถานะบิลยกเลิกกลับเป็นบิลปกติ)
         public bool CanManageReturnedBills { get; set; } = false; // สิทธิ์เปลี่ยนสถานะบิลส่งกลับคืนบัญชี และบิลส่งคืนให้จัดส่ง
         public bool CanDeleteSalesBill { get; set; } = false; // สิทธิ์ลบบิลขาย
         public bool CanDeleteDebtor { get; set; } = false; // สิทธิ์ลบการ์ดลูกหนี้

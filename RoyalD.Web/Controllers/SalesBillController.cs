@@ -1157,7 +1157,7 @@ namespace RoyalD.Web.Controllers
                 var (isApproverOk, approverName) = await DebtStatusPermissionHelper.VerifyPaidBillApproverPasswordAsync(_db, adminPassword);
                 if (!isApproverOk)
                 {
-                    TempData["Error"] = "บิลนี้ชำระเงินครบถ้วนแล้ว การบันทึกรับเงินต้องใส่รหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร) หรือรหัสผ่านสำรอง 029030445Rd* เท่านั้น";
+                    TempData["Error"] = "บิลนี้ชำระเงินครบถ้วนแล้ว การบันทึกรับเงินต้องใส่รหัสผ่านอนุมัติของผู้มีสิทธิ์ที่ถูกต้อง";
                     return !string.IsNullOrEmpty(Request.Headers["Referer"]) ? Redirect(Request.Headers["Referer"].ToString()) : RedirectToAction("Detail", new { id = billNo });
                 }
             }
@@ -1268,7 +1268,7 @@ namespace RoyalD.Web.Controllers
                 var (isReturnOk, returnApprover) = await DebtStatusPermissionHelper.VerifyReturnedBillApproverPasswordAsync(_db, returnPwd);
                 if (!isReturnOk)
                 {
-                    TempData["Error"] = "การเปลี่ยนสถานะเป็นบิลส่งกลับบัญชี ต้องใส่รหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา) หรือรหัสผ่านสำรอง 029030445Rd* เท่านั้น";
+                    TempData["Error"] = "การเปลี่ยนสถานะเป็นบิลส่งกลับบัญชี ต้องใส่รหัสผ่านอนุมัติของผู้มีสิทธิ์ที่ถูกต้อง";
                     return RedirectToAction("Detail", new { id = billNo });
                 }
 
@@ -1289,7 +1289,7 @@ namespace RoyalD.Web.Controllers
                 var (isCancelOk, cancelApprover) = await DebtStatusPermissionHelper.VerifyReturnedBillApproverPasswordAsync(_db, cancelPwd);
                 if (!isCancelOk)
                 {
-                    TempData["Error"] = "การเปลี่ยนสถานะเป็นบิลยกเลิก ต้องใส่รหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา) หรือรหัสผ่านสำรอง 029030445Rd* เท่านั้น";
+                    TempData["Error"] = "การเปลี่ยนสถานะเป็นบิลยกเลิก ต้องใส่รหัสผ่านอนุมัติของผู้มีสิทธิ์ที่ถูกต้อง";
                     return RedirectToAction("Detail", new { id = billNo });
                 }
 
@@ -1307,11 +1307,17 @@ namespace RoyalD.Web.Controllers
             bool isRestoringFromCancelled = (existingDebt != null && existingDebt.Status == DebtStatus.Cancelled && newStatus != DebtStatus.Cancelled);
             if (isRestoringFromCancelled)
             {
+                if (!DebtStatusPermissionHelper.CanRestoreCancelledBill(currentUser, User))
+                {
+                    TempData["Error"] = "ท่านไม่มีสิทธิ์ในการกู้คืนบิลยกเลิกกลับเป็นบิลค้างชำระปกติ";
+                    return RedirectToAction("Detail", new { id = billNo });
+                }
+
                 string? restorePwd = adminPassword ?? Request.Form["returnedBillPassword"].FirstOrDefault() ?? Request.Form["cancelBillPassword"].FirstOrDefault();
                 var (isRestoreOk, restoreApprover) = await DebtStatusPermissionHelper.VerifyPaidBillApproverPasswordAsync(_db, restorePwd);
                 if (!isRestoreOk)
                 {
-                    TempData["Error"] = "การกู้คืนจากบิลยกเลิกมาเป็นบิลค้างชำระปกติ ต้องใส่รหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร) หรือรหัสผ่านสำรอง 029030445Rd* เท่านั้น";
+                    TempData["Error"] = "การกู้คืนจากบิลยกเลิกมาเป็นบิลค้างชำระปกติ ต้องใส่รหัสผ่านอนุมัติของผู้มีสิทธิ์ที่ถูกต้อง";
                     return RedirectToAction("Detail", new { id = billNo });
                 }
 
@@ -1331,7 +1337,7 @@ namespace RoyalD.Web.Controllers
                 var (isApproverOk, approverName) = await DebtStatusPermissionHelper.VerifyPaidBillApproverPasswordAsync(_db, adminPassword);
                 if (!isApproverOk)
                 {
-                    TempData["Error"] = "บิลนี้ชำระเงินครบถ้วนแล้ว การเปลี่ยนสถานะต้องใส่รหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร) หรือรหัสผ่านสำรอง 029030445Rd* เท่านั้น";
+                    TempData["Error"] = "บิลนี้ชำระเงินครบถ้วนแล้ว การเปลี่ยนสถานะต้องใส่รหัสผ่านอนุมัติของผู้มีสิทธิ์ที่ถูกต้อง";
                     return !string.IsNullOrEmpty(Request.Headers["Referer"]) ? Redirect(Request.Headers["Referer"].ToString()) : RedirectToAction("Detail", new { id = billNo });
                 }
 

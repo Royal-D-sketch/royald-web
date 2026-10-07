@@ -132,7 +132,7 @@
                     <th class="text-center" style="width: 100px;">ไฟล์/รูป</th>
                     <th class="text-end" style="width: 120px;">ยอดเงิน (บาท)</th>
                     <th class="text-center" style="width: 150px;">นับถอยหลัง 30 วัน</th>
-                    <th class="text-center" style="width: 120px;">การจัดการ</th>
+                    <th class="text-center" style="min-width: 195px;">การจัดการ</th>
                 </tr>
             </thead>
             <tbody>
@@ -213,11 +213,20 @@
                                     </span>
                                 }
                             </td>
-                            <td class="text-center">
-                                <button type="button" class="btn btn-sm btn-outline-success fw-bold" 
-                                        onclick="openRestoreModal(@item.Id, '@item.BillNo', '@Html.Raw(item.CustomerName.Replace("'", "\\'"))', '@item.OriginalAmount.ToString("N2")')">
-                                    <i class="bi bi-arrow-counterclockwise"></i> กู้คืนบิล
-                                </button>
+                            <td class="text-center text-nowrap">
+                                <div class="d-flex justify-content-center align-items-center gap-1">
+                                    <a href="/Debtor/Detail?id=@item.BillNo" class="btn btn-sm btn-outline-primary fw-bold px-2" title="คลิกเพื่อดูรายละเอียดบิลยกเลิก">
+                                        <i class="bi bi-eye"></i> ดูบิลยกเลิก
+                                    </a>
+                                    @if (ViewBag.CanRestoreCancelledBill == true)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-success fw-bold px-2" 
+                                                onclick="openRestoreModal(@item.Id, '@item.BillNo', '@Html.Raw(item.CustomerName.Replace("'", "\\'"))', '@item.OriginalAmount.ToString("N2")')"
+                                                title="คลิกเพื่อกู้คืนบิลยกเลิกกลับเป็นบิลปกติ">
+                                            <i class="bi bi-arrow-counterclockwise"></i> กู้บิลยกเลิก
+                                        </button>
+                                    }
+                                </div>
                             </td>
                         </tr>
                     }
@@ -324,12 +333,9 @@
 
                     <div class="mb-3">
                         <label class="form-label fw-bold text-dark">
-                            <i class="bi bi-shield-lock-fill text-danger me-1"></i> กรอกรหัสผ่านยืนยันความปลอดภัย <span class="text-danger">*</span>
+                            <i class="bi bi-shield-lock-fill text-danger me-1"></i> ยืนยันรหัสผ่านอนุมัติ <span class="text-danger">*</span>
                         </label>
-                        <input type="password" name="confirmPassword" class="form-control form-control-lg" placeholder="กรอกรหัสผ่านเพื่อยืนยัน..." required />
-                        <small class="text-muted d-block mt-1">
-                            (เฉพาะคุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร โดยใส่รหัสผ่านของตนเอง หรือรหัสผ่านสำรอง <code>029030445Rd*</code>)
-                        </small>
+                        <input type="password" name="confirmPassword" class="form-control form-control-lg" placeholder="กรอกรหัสผ่าน..." required autocomplete="new-password" />
                     </div>
                 </div>
                 <div class="modal-footer bg-light">

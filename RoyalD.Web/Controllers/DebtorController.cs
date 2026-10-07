@@ -678,8 +678,26 @@ namespace RoyalD.Web.Controllers
 
         public async Task<IActionResult> Cancelled(string? search, string? salesRep, int page = 1, int pageSize = 50)
         {
+            if (IsSalesRepUser())
+            {
+                TempData["Error"] = "ผู้แทนขายไม่มีสิทธิ์เข้าดูรายงานบิลยกเลิก";
+                return RedirectToAction("Index");
+            }
+
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             bool isRestricted = currentUser != null && currentUser.Role != "admin";
+
+            if (isRestricted)
+            {
+                var allowed = (currentUser?.AllowedPages ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                .Select(p => p.Trim().ToLower()).ToList();
+                if (!allowed.Contains("cancelled") && !allowed.Contains("debtorcancelled"))
+                {
+                    TempData["Error"] = "ท่านไม่มีสิทธิ์เข้าดูรายงานบิลยกเลิก";
+                    return RedirectToAction("Index");
+                }
+            }
+
             string? userAllowedRegion = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedRegion) ? currentUser.AllowedRegion : null;
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : null;
@@ -705,6 +723,7 @@ namespace RoyalD.Web.Controllers
             ViewBag.TotalAmount = debts.Sum(d => d.OriginalAmount);
             ViewBag.SalesReps = (isRestricted && assignedReps.Count > 0) ? assignedReps : allDbReps;
             ViewBag.IsRestricted = isRestricted;
+            ViewBag.CanRestoreCancelledBill = DebtStatusPermissionHelper.CanRestoreCancelledBill(currentUser, User);
 
             int totalRecords = debts.Count;
             int effectivePageSize = pageSize > 0 ? pageSize : 50;
@@ -882,7 +901,7 @@ namespace RoyalD.Web.Controllers
                 var (isReturnOk, returnApprover) = await DebtStatusPermissionHelper.VerifyReturnedBillApproverPasswordAsync(_db, returnPwd);
                 if (!isReturnOk)
                 {
-                    TempData["Error"] = "การเปลี่ยนสถานะเป็นบิลส่งกลับบัญชี ต้องใส่รหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา) หรือรหัสผ่านสำรอง 029030445Rd* เท่านั้น";
+                    TempData["Error"] = "การเปลี่ยนสถานะเป็นบิลส่งกลับบัญชี ต้องใส่รหัสผ่านอนุมัติของผู้มีสิทธิ์ที่ถูกต้อง";
                     return RedirectToAction("Detail", new { id = billNo });
                 }
 
@@ -903,7 +922,7 @@ namespace RoyalD.Web.Controllers
                 var (isCancelOk, cancelApprover) = await DebtStatusPermissionHelper.VerifyReturnedBillApproverPasswordAsync(_db, cancelPwd);
                 if (!isCancelOk)
                 {
-                    TempData["Error"] = "การเปลี่ยนสถานะเป็นบิลยกเลิก ต้องใส่รหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา) หรือรหัสผ่านสำรอง 029030445Rd* เท่านั้น";
+                    TempData["Error"] = "การเปลี่ยนสถานะเป็นบิลยกเลิก ต้องใส่รหัสผ่านอนุมัติของผู้มีสิทธิ์ที่ถูกต้อง";
                     return RedirectToAction("Detail", new { id = billNo });
                 }
 
@@ -921,11 +940,17 @@ namespace RoyalD.Web.Controllers
             bool isRestoringFromCancelled = (debt != null && debt.Status == DebtStatus.Cancelled && status != DebtStatus.Cancelled);
             if (isRestoringFromCancelled)
             {
+                if (!DebtStatusPermissionHelper.CanRestoreCancelledBill(currentUser, User))
+                {
+                    TempData["Error"] = "ท่านไม่มีสิทธิ์ในการกู้คืนบิลยกเลิกกลับเป็นบิลค้างชำระปกติ";
+                    return RedirectToAction("Detail", new { id = billNo });
+                }
+
                 string? restorePwd = Request.Form["adminPassword"].FirstOrDefault() ?? Request.Form["returnedBillPassword"].FirstOrDefault() ?? Request.Form["cancelBillPassword"].FirstOrDefault();
                 var (isRestoreOk, restoreApprover) = await DebtStatusPermissionHelper.VerifyPaidBillApproverPasswordAsync(_db, restorePwd);
                 if (!isRestoreOk)
                 {
-                    TempData["Error"] = "การกู้คืนจากบิลยกเลิกมาเป็นบิลค้างชำระปกติ ต้องใส่รหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร) หรือรหัสผ่านสำรอง 029030445Rd* เท่านั้น";
+                    TempData["Error"] = "การกู้คืนจากบิลยกเลิกมาเป็นบิลค้างชำระปกติ ต้องใส่รหัสผ่านอนุมัติของผู้มีสิทธิ์ที่ถูกต้อง";
                     return RedirectToAction("Detail", new { id = billNo });
                 }
 
@@ -946,7 +971,7 @@ namespace RoyalD.Web.Controllers
                 var (isApproverOk, approverName) = await DebtStatusPermissionHelper.VerifyPaidBillApproverPasswordAsync(_db, adminPassword);
                 if (!isApproverOk)
                 {
-                    TempData["Error"] = "บิลนี้ชำระเงินครบถ้วนแล้ว การเปลี่ยนสถานะต้องใส่รหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร) หรือรหัสผ่านสำรอง 029030445Rd* เท่านั้น";
+                    TempData["Error"] = "บิลนี้ชำระเงินครบถ้วนแล้ว การเปลี่ยนสถานะต้องใส่รหัสผ่านอนุมัติของผู้มีสิทธิ์ที่ถูกต้อง";
                     return RedirectToAction("Detail", new { id = billNo });
                 }
 
@@ -1274,6 +1299,7 @@ namespace RoyalD.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportCancelledExcel(string? search, string? salesRep)
         {
+            if (IsSalesRepUser()) return Forbid();
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             bool canDownload = currentUser?.Role == "admin" || currentUser?.CanDownload == true;
             if (!canDownload) return Forbid();
@@ -1300,6 +1326,7 @@ namespace RoyalD.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportCancelledPdf(string? search, string? salesRep)
         {
+            if (IsSalesRepUser()) return Forbid();
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             bool canDownload = currentUser?.Role == "admin" || currentUser?.CanDownload == true;
             if (!canDownload) return Forbid();
@@ -1328,10 +1355,22 @@ namespace RoyalD.Web.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> RestoreCancelledBill(int debtId, string confirmPassword)
         {
+            if (IsSalesRepUser())
+            {
+                TempData["Error"] = "ผู้แทนขายไม่มีสิทธิ์ในการกู้คืนบิลยกเลิก";
+                return RedirectToAction("Index");
+            }
+            var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            if (!DebtStatusPermissionHelper.CanRestoreCancelledBill(currentUser, User))
+            {
+                TempData["Error"] = "ท่านไม่มีสิทธิ์ในการกู้คืนบิลยกเลิกกลับเป็นบิลค้างชำระปกติ";
+                return RedirectToAction("Cancelled");
+            }
+
             var (isPasswordOk, approverName) = await DebtStatusPermissionHelper.VerifyPaidBillApproverPasswordAsync(_db, confirmPassword);
             if (!isPasswordOk)
             {
-                TempData["Error"] = "การกู้คืนจากบิลยกเลิกมาเป็นบิลค้างชำระปกติ ต้องใส่รหัสผ่านของผู้มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร) หรือรหัสผ่านสำรอง 029030445Rd* เท่านั้น";
+                TempData["Error"] = "การกู้คืนจากบิลยกเลิกมาเป็นบิลค้างชำระปกติ ต้องใส่รหัสผ่านอนุมัติของผู้มีสิทธิ์ที่ถูกต้อง";
                 return RedirectToAction("Cancelled");
             }
 

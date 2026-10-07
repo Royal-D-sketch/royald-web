@@ -5,18 +5,18 @@ class Program
 {
     static void Main()
     {
-        using var conn = new SqliteConnection(@"Data Source=..\royald.db");
-        conn.Open();
-        var cmd = conn.CreateCommand();
-        cmd.CommandText = @"
-            UPDATE OutstandingDebts 
-            SET Status = 6, 
-                BadDebtAmount = 11340, 
-                RemainingAmount = 0, 
-                BadDebtDate = '2026-04-17 00:00:00' 
-            WHERE BillNo IN ('R100150', 'R108995');
-        ";
-        cmd.ExecuteNonQuery();
-        Console.WriteLine("Updated R100150 and R108995 to Bad Debt (Status 5)");
+        try
+        {
+            using var conn = new SqliteConnection(@"Data Source=..\royald.db");
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "ALTER TABLE Users ADD COLUMN CanRestoreCancelledBill INTEGER NOT NULL DEFAULT 0;";
+            cmd.ExecuteNonQuery();
+            Console.WriteLine("Added CanRestoreCancelledBill to SQLite Users table.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("SQLite: " + ex.Message);
+        }
     }
 }
