@@ -13,13 +13,66 @@ namespace RoyalD.Web.Services
         public const string MasterPasswordOld = "029030445";
 
         /// <summary>
-        /// ตรวจสอบสิทธิ์เปลี่ยนสถานะหนี้ทั่วไป / บิลที่ชำระแล้ว
-        /// ผู้มีสิทธิ์: คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร
-        /// หมายเหตุ: คุณปภาวดี อินจันทร์ (ART) ตำแหน่งเป็น "พนักงาน" แต่มีบทบาท (Role) เป็น "admin" จึงมีสิทธิ์เข้าถึงในฐานะ admin
+        /// ตรวจสอบสิทธิ์เปลี่ยนสถานะหนี้รายการอื่นๆ ที่ไม่ใช่สถานะครบแล้ว (บิลค้างชำระทั่วไป: ผ่อนชำระ, เลื่อนนัด, รอสินค้า, จัดส่ง, เปลี่ยนสินค้า, รับคืน, ฝากขาย, หนี้สูญ)
+        /// ผู้มีสิทธิ์: ผู้ที่ได้รับสิทธิ์ CanChangeDebtStatus, admin, หรือกลุ่มผู้บริหาร/หัวหน้า/คุณธัญชนก/คุณกุลยา
         /// </summary>
         public static bool CanChangeDebtStatus(AppUser? user, ClaimsPrincipal? principal = null)
         {
             if (user == null && principal == null) return false;
+
+            if (user?.CanChangeDebtStatus == true)
+                return true;
+
+            var claimChange = principal?.FindFirst("CanChangeDebtStatus")?.Value;
+            if (claimChange != null && claimChange.Equals("true", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            string username = (user?.Username ?? principal?.Identity?.Name ?? "").Trim();
+            string fullName = (user?.FullName ?? principal?.FindFirst("FullName")?.Value ?? "").Trim();
+            string position = (user?.Position ?? principal?.FindFirst("Position")?.Value ?? "").Trim();
+            string role = (user?.Role ?? principal?.FindFirst(ClaimTypes.Role)?.Value ?? principal?.FindFirst("Role")?.Value ?? "").Trim().ToLower();
+
+            // 1. admin (Role "admin" รวมถึง Username "admin", "ART", คุณปภาวดี อินจันทร์)
+            if (role == "admin" || role == "administrator" || 
+                username.Equals("admin", StringComparison.OrdinalIgnoreCase) || 
+                username.Equals("ART", StringComparison.OrdinalIgnoreCase) || 
+                fullName.Contains("ปภาวดี"))
+                return true;
+
+            // 2. คุณธัญชนก
+            if (fullName.Contains("ธัญชนก"))
+                return true;
+
+            // 3. คุณกุลยา
+            if (username.Equals("Kullaya", StringComparison.OrdinalIgnoreCase) || fullName.Contains("กุลยา"))
+                return true;
+
+            // 4. หัวหน้า (Position มีคำว่า "หัวหน้า" เช่น หัวหน้างาน, หัวหน้าแผนก)
+            if (position.Contains("หัวหน้า"))
+                return true;
+
+            // 5. ผู้บริหาร (Position มีคำว่า "ผู้บริหาร")
+            if (position.Contains("ผู้บริหาร"))
+                return true;
+
+            return false;
+        }
+
+        /// <summary>
+        /// ตรวจสอบสิทธิ์เปลี่ยนสถานะบิลที่ชำระเงินครบแล้ว (Fully Paid Bills)
+        /// ผู้มีสิทธิ์: คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร หรือได้รับสิทธิ์ CanChangePaidBillStatus
+        /// หมายเหตุ: ผู้ใช้อื่นที่ไม่มีสิทธิ์ต้องไม่มีสิทธิ์กดเด็ดขาด
+        /// </summary>
+        public static bool CanChangePaidBillStatus(AppUser? user, ClaimsPrincipal? principal = null)
+        {
+            if (user == null && principal == null) return false;
+
+            if (user?.CanChangePaidBillStatus == true)
+                return true;
+
+            var claimPaid = principal?.FindFirst("CanChangePaidBillStatus")?.Value;
+            if (claimPaid != null && claimPaid.Equals("true", StringComparison.OrdinalIgnoreCase))
+                return true;
 
             string username = (user?.Username ?? principal?.Identity?.Name ?? "").Trim();
             string fullName = (user?.FullName ?? principal?.FindFirst("FullName")?.Value ?? "").Trim();
@@ -54,12 +107,19 @@ namespace RoyalD.Web.Services
 
         /// <summary>
         /// ตรวจสอบสิทธิ์เปลี่ยนสถานะบิลจากค้างปกติเป็นบิลส่งกลับบัญชี (ReturnedToAccount) และบิลส่งไปจัดส่ง (ReturnToDelivery)
-        /// ผู้มีสิทธิ์: คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา
+        /// ผู้มีสิทธิ์: คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา หรือได้รับสิทธิ์ CanManageReturnedBills
         /// หมายเหตุ: คุณปภาวดี อินจันทร์ (ART) ตำแหน่งพนักงาน มีสิทธิ์ผ่านบทบาท admin
         /// </summary>
         public static bool CanManageReturnedBills(AppUser? user, ClaimsPrincipal? principal = null)
         {
             if (user == null && principal == null) return false;
+
+            if (user?.CanManageReturnedBills == true)
+                return true;
+
+            var claimCanManage = principal?.FindFirst("CanManageReturnedBills")?.Value;
+            if (claimCanManage != null && claimCanManage.Equals("true", StringComparison.OrdinalIgnoreCase))
+                return true;
 
             string username = (user?.Username ?? principal?.Identity?.Name ?? "").Trim();
             string fullName = (user?.FullName ?? principal?.FindFirst("FullName")?.Value ?? "").Trim();
@@ -69,7 +129,7 @@ namespace RoyalD.Web.Services
             // 1. admin (Role "admin" รวมถึง Username "admin", "ART", คุณปภาวดี อินจันทร์)
             if (role == "admin" || role == "administrator" || 
                 username.Equals("admin", StringComparison.OrdinalIgnoreCase) || 
-                username.Equals("ART", StringComparison.OrdinalIgnoreCase) ||
+                username.Equals("ART", StringComparison.OrdinalIgnoreCase) || 
                 fullName.Contains("ปภาวดี"))
                 return true;
 
@@ -93,33 +153,43 @@ namespace RoyalD.Web.Services
             if (username.Equals("nid", StringComparison.OrdinalIgnoreCase) || fullName.Contains("วนิดา"))
                 return true;
 
-            // 7. Flag สิทธิ์ CanManageReturnedBills ที่กำหนดเจาะจง
-            if (user?.CanManageReturnedBills == true)
-                return true;
-
-            var claimCanManage = principal?.FindFirst("CanManageReturnedBills")?.Value;
-            if (claimCanManage != null && claimCanManage.Equals("true", StringComparison.OrdinalIgnoreCase))
-                return true;
-
             return false;
         }
 
         /// <summary>
         /// ตรวจสอบสิทธิ์เปลี่ยนสถานะเป็น "บิลยกเลิก" (Cancelled)
-        /// ผู้มีสิทธิ์: คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา
+        /// ผู้มีสิทธิ์: คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา หรือได้รับสิทธิ์ CanCancelBill
         /// </summary>
-        public static bool CanCancelDebtStatus(AppUser? user, ClaimsPrincipal? principal = null)
+        public static bool CanCancelBill(AppUser? user, ClaimsPrincipal? principal = null)
         {
+            if (user == null && principal == null) return false;
+
+            if (user?.CanCancelBill == true)
+                return true;
+
+            var claimCancel = principal?.FindFirst("CanCancelBill")?.Value;
+            if (claimCancel != null && claimCancel.Equals("true", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // ใช้สิทธิ์กลุ่มเดียวกับบิลส่งคืน (6 กลุ่ม)
             return CanManageReturnedBills(user, principal);
         }
 
         /// <summary>
+        /// สำหรับความเข้ากันได้กับโค้ดเดิม
+        /// </summary>
+        public static bool CanCancelDebtStatus(AppUser? user, ClaimsPrincipal? principal = null)
+        {
+            return CanCancelBill(user, principal);
+        }
+
+        /// <summary>
         /// ตรวจสอบสิทธิ์กู้คืนจากบิลยกเลิกกลับเป็นบิลค้างชำระปกติ
-        /// ผู้มีสิทธิ์: คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร (คุณวนิดา ไม่มีสิทธิ์)
+        /// ผู้มีสิทธิ์: คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร หรือได้รับสิทธิ์ CanChangePaidBillStatus (คุณวนิดา ไม่มีสิทธิ์)
         /// </summary>
         public static bool CanRestoreCancelledBill(AppUser? user, ClaimsPrincipal? principal = null)
         {
-            return CanChangeDebtStatus(user, principal);
+            return CanChangePaidBillStatus(user, principal);
         }
 
         /// <summary>
@@ -157,7 +227,7 @@ namespace RoyalD.Web.Services
                 return (true, "รหัสผ่านสำรอง (029030445Rd*)");
             }
 
-            // 2. ดึงเฉพาะบัญชี: admin, คุณธัญชนก, คุณกุลยา, หัวหน้า, ผู้บริหาร
+            // 2. ดึงเฉพาะบัญชี: admin, คุณธัญชนก, คุณกุลยา, หัวหน้า, ผู้บริหาร หรือผู้ได้รับสิทธิ์ CanChangePaidBillStatus
             // (คุณวนิดา ไม่มีสิทธิ์ในบิลที่ชำระแล้ว)
             var approverUsers = await db.Users.AsNoTracking()
                 .Where(u => u.IsActive && (
@@ -166,7 +236,8 @@ namespace RoyalD.Web.Services
                     u.Username == "ART" ||
                     u.Username == "Kullaya" ||
                     (u.Position != null && (u.Position.Contains("หัวหน้า") || u.Position.Contains("ผู้บริหาร"))) ||
-                    (u.FullName != null && (u.FullName.Contains("ธัญชนก") || u.FullName.Contains("กุลยา") || u.FullName.Contains("ปภาวดี")))
+                    (u.FullName != null && (u.FullName.Contains("ธัญชนก") || u.FullName.Contains("กุลยา") || u.FullName.Contains("ปภาวดี"))) ||
+                    u.CanChangePaidBillStatus
                 ))
                 .ToListAsync();
 
@@ -175,7 +246,7 @@ namespace RoyalD.Web.Services
 
         /// <summary>
         /// ตรวจสอบรหัสผ่านสำหรับการเปลี่ยนสถานะบิลจากค้างปกติเป็นบิลส่งกลับบัญชี และบิลส่งไปจัดส่ง:
-        /// ผู้มีสิทธิ์: คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา
+        /// ผู้มีสิทธิ์: คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา หรือได้รับสิทธิ์ CanManageReturnedBills / CanCancelBill
         /// สามารถใช้รหัสผ่านของผู้ใช้เอง หรือรหัสผ่านสำรอง 029030445Rd*
         /// </summary>
         public static async Task<(bool IsValid, string ApproverName)> VerifyReturnedBillApproverPasswordAsync(AppDbContext db, string? password)
@@ -199,7 +270,8 @@ namespace RoyalD.Web.Services
                     u.Username == "nid" ||
                     (u.Position != null && (u.Position.Contains("หัวหน้า") || u.Position.Contains("ผู้บริหาร"))) ||
                     (u.FullName != null && (u.FullName.Contains("ธัญชนก") || u.FullName.Contains("กุลยา") || u.FullName.Contains("วนิดา") || u.FullName.Contains("ปภาวดี"))) ||
-                    u.CanManageReturnedBills
+                    u.CanManageReturnedBills ||
+                    u.CanCancelBill
                 ))
                 .ToListAsync();
 

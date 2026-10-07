@@ -38,7 +38,9 @@ namespace RoyalD.Web.Models
         public string AllowedPages { get; set; } = "Dashboard,SalesBill,Debtor,DebtorHistory,SalesReport,WaitingGoods,PaymentDetails"; // สิทธิ์เข้าดูหน้าจอ (คั่นด้วย comma)
 
         public bool CanViewPaymentDetails { get; set; } = true; // สิทธิ์ดูรายละเอียดการรับชำระเงิน
-        public bool CanChangeDebtStatus { get; set; } = false; // สิทธิ์เปลี่ยนสถานะหนี้
+        public bool CanChangeDebtStatus { get; set; } = false; // สิทธิ์เปลี่ยนสถานะหนี้รายการอื่นๆ (บิลค้างชำระทั่วไป)
+        public bool CanChangePaidBillStatus { get; set; } = false; // สิทธิ์เปลี่ยนสถานะบิลชำระครบแล้ว
+        public bool CanCancelBill { get; set; } = false; // สิทธิ์เปลี่ยนเป็นบิลยกเลิก
         public bool CanManageReturnedBills { get; set; } = false; // สิทธิ์เปลี่ยนสถานะบิลส่งกลับคืนบัญชี และบิลส่งคืนให้จัดส่ง
         public bool CanDeleteSalesBill { get; set; } = false; // สิทธิ์ลบบิลขาย
         public bool CanDeleteDebtor { get; set; } = false; // สิทธิ์ลบการ์ดลูกหนี้

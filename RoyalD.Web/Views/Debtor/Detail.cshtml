@@ -12,6 +12,8 @@
     bool isSalesRep = !User.IsInRole("admin") && (userPos.Contains("ผู้แทน") || userPos.Contains("พนักงานขาย"));
     bool canViewPayment = ViewBag.CanViewPaymentDetails == true;
     bool canChangeStatus = ViewBag.CanChangeDebtStatus == true;
+    bool canChangePaidBillStatus = ViewBag.CanChangePaidBillStatus == true;
+    bool canCancelBill = ViewBag.CanCancelBill == true;
     bool canManageReturned = ViewBag.CanManageReturnedBills == true;
     bool canDelete = ViewBag.CanDeleteDebtor == true;
     var bill = ViewBag.SalesBill as SalesBill;
@@ -472,21 +474,34 @@ else if (overdue120)
     bool isFullyPaid = DebtStatusPermissionHelper.IsBillPaid(bill, debt);
 }
 
-@if (isFullyPaid && !isSalesRep)
+@if (isFullyPaid)
 {
-    <div id="unlock-form" class="alert alert-warning shadow-sm border border-warning p-4 mb-4 rounded-3 text-center" style="background:#fffbeb;">
-        <div class="d-flex align-items-center justify-content-center gap-2 mb-2 text-dark">
-            <i class="bi bi-shield-lock-fill fs-2 text-warning"></i>
-            <h5 class="mb-0 fw-bold">🔒 บิลนี้บันทึกชำระเงินครบถ้วนแล้ว (Fully Paid)</h5>
+    @if (!canChangePaidBillStatus)
+    {
+        <div class="alert alert-secondary shadow-sm p-4 mb-4 rounded-3 text-center border" style="background:#f8fafc; border-color:#e2e8f0;">
+            <div class="d-flex align-items-center justify-content-center gap-2 mb-2 text-secondary">
+                <i class="bi bi-shield-lock-fill fs-2"></i>
+                <h5 class="mb-0 fw-bold text-dark">🔒 บิลนี้บันทึกชำระเงินครบถ้วนแล้ว (Fully Paid)</h5>
+            </div>
+            <p class="text-muted small mb-0">คุณไม่มีสิทธิ์เปลี่ยนสถานะบิลที่ชำระแล้ว (เฉพาะผู้มีสิทธิ์เท่านั้นที่สามารถปลดล็อคและเปลี่ยนสถานะได้)</p>
         </div>
-        <p class="text-muted small mb-3">หากต้องการเปลี่ยนสถานะหนี้หรือแก้ไข ต้องได้รับการอนุมัติโดยใส่รหัสผ่านของผู้ใช้ที่มีสิทธิ์ (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร) หรือใส่รหัสผ่านสำรอง <code>029030445Rd*</code></p>
-        <div class="input-group input-group-sm w-auto mx-auto justify-content-center" style="max-width:400px;">
-            <input type="password" id="admin-password" class="form-control" placeholder="รหัสผ่านผู้มีสิทธิ์ หรือ 029030445Rd*..." />
-            <button class="btn btn-warning fw-bold px-3" type="button" onclick="unlockForms()">
-                <i class="bi bi-unlock-fill me-1"></i> ปลดล็อค
-            </button>
+    }
+    else
+    {
+        <div id="unlock-form" class="alert alert-warning shadow-sm border border-warning p-4 mb-4 rounded-3 text-center" style="background:#fffbeb;">
+            <div class="d-flex align-items-center justify-content-center gap-2 mb-2 text-dark">
+                <i class="bi bi-shield-lock-fill fs-2 text-warning"></i>
+                <h5 class="mb-0 fw-bold">🔒 บิลนี้บันทึกชำระเงินครบถ้วนแล้ว (Fully Paid)</h5>
+            </div>
+            <p class="text-muted small mb-3">หากต้องการเปลี่ยนสถานะหนี้หรือแก้ไข ต้องได้รับการอนุมัติโดยใส่รหัสผ่านของคุณเอง หรือใส่รหัสผ่านสำรอง <code>029030445Rd*</code></p>
+            <div class="input-group input-group-sm w-auto mx-auto justify-content-center" style="max-width:400px;">
+                <input type="password" id="admin-password" class="form-control" placeholder="รหัสผ่านของคุณ หรือ 029030445Rd*..." />
+                <button class="btn btn-warning fw-bold px-3" type="button" onclick="unlockForms()">
+                    <i class="bi bi-unlock-fill me-1"></i> ปลดล็อค
+                </button>
+            </div>
         </div>
-    </div>
+    }
 }
 
 <div id="management-forms" style="@(isFullyPaid ? "display:none;" : "")">
@@ -631,6 +646,16 @@ else if (overdue120)
                 <i class="bi bi-arrow-repeat me-1"></i> เปลี่ยนสถานะหนี้ / จัดการพิเศษ
             </div>
             <div class="card-body p-4">
+                @if (!isFullyPaid && !canChangeStatus)
+                {
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-shield-lock-fill fs-1 text-secondary d-block mb-2"></i>
+                        <h6 class="fw-bold">คุณไม่มีสิทธิ์เปลี่ยนสถานะหนี้</h6>
+                        <small>เฉพาะผู้ใช้ที่ได้รับสิทธิ์เปลี่ยนสถานะหนี้เท่านั้น</small>
+                    </div>
+                }
+                else
+                {
                 <form asp-controller="Debtor" asp-action="UpdateStatus" method="post" enctype="multipart/form-data">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="billNo" value="@Model.BillNo" />
@@ -653,7 +678,7 @@ else if (overdue120)
                             <option value="ReturnIssued" selected="@(debt?.Status == DebtStatus.ReturnIssued)">รับคืนสินค้า (ออกใบลดหนี้แล้ว)</option>
                             <option value="Consignment" selected="@(debt?.Status == DebtStatus.Consignment)">สินค้าฝากขาย (Consignment)</option>
                             <option value="BadDebt" selected="@(debt?.Status == DebtStatus.BadDebt)">หนี้สูญ (Bad Debt)</option>
-                            @if (canManageReturned)
+                            @if (canCancelBill)
                             {
                                 <option value="Cancelled" style="color:red; font-weight:bold;">❌ บิลนี้ยกเลิก (ย้ายไปบิลยกเลิก 30 วัน)</option>
                             }
@@ -852,6 +877,7 @@ else if (overdue120)
                             </button>
                         </div>
                     </form>
+                }
                 </div>
             </div>
         </div>

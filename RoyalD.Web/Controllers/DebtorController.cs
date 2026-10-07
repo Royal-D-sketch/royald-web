@@ -203,6 +203,8 @@ namespace RoyalD.Web.Controllers
             ViewBag.TotalAmount = debts.Sum(d => d.RemainingAmount);
             ViewBag.OverdueCount = debts.Count(d => d.DueDate < DateTime.Today && d.Status == DebtStatus.Outstanding);
             ViewBag.CanChangeDebtStatus = DebtStatusPermissionHelper.CanChangeDebtStatus(currentUser, User);
+            ViewBag.CanChangePaidBillStatus = DebtStatusPermissionHelper.CanChangePaidBillStatus(currentUser, User);
+            ViewBag.CanCancelBill = DebtStatusPermissionHelper.CanCancelBill(currentUser, User);
             ViewBag.CanManageReturnedBills = DebtStatusPermissionHelper.CanManageReturnedBills(currentUser, User);
             ViewBag.CanDeleteDebtor = currentUser != null && (currentUser.Role == "admin" || currentUser.CanDeleteDebtor);
             ViewBag.CanDownload = canDownload;
@@ -506,6 +508,8 @@ namespace RoyalD.Web.Controllers
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             ViewBag.CanViewPaymentDetails = currentUser != null && (currentUser.Role == "admin" || currentUser.CanViewPaymentDetails);
             ViewBag.CanChangeDebtStatus = DebtStatusPermissionHelper.CanChangeDebtStatus(currentUser, User);
+            ViewBag.CanChangePaidBillStatus = DebtStatusPermissionHelper.CanChangePaidBillStatus(currentUser, User);
+            ViewBag.CanCancelBill = DebtStatusPermissionHelper.CanCancelBill(currentUser, User);
             ViewBag.CanManageReturnedBills = DebtStatusPermissionHelper.CanManageReturnedBills(currentUser, User);
             ViewBag.CanDeleteDebtor = currentUser != null && (currentUser.Role == "admin" || currentUser.CanDeleteDebtor);
             ViewBag.CanScreenCapture = currentUser != null && (currentUser.Role == "admin" || currentUser.CanScreenCapture);
@@ -837,23 +841,39 @@ namespace RoyalD.Web.Controllers
             }
 
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
-            bool hasReturnedBills = DebtStatusPermissionHelper.CanManageReturnedBills(currentUser, User);
-
-            // บิลส่งคืนกลับบัญชี และ บิลยกเลิก จำกัดเฉพาะ 6 กลุ่ม (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา)
-            if (status == DebtStatus.ReturnedToAccount && !hasReturnedBills)
-            {
-                TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะเป็นบิลส่งกลับบัญชี (เฉพาะคุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา เท่านั้น)";
-                return RedirectToAction("Detail", new { id = billNo });
-            }
-            if (status == DebtStatus.Cancelled && !hasReturnedBills)
-            {
-                TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะเป็นบิลยกเลิก (เฉพาะคุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา เท่านั้น)";
-                return RedirectToAction("Detail", new { id = billNo });
-            }
             var debt = await _db.OutstandingDebts.FirstOrDefaultAsync(d => d.BillNo == billNo);
             if (debt == null) return NotFound();
 
             var bill = await _db.SalesBills.FirstOrDefaultAsync(b => b.BillNo == billNo);
+            bool isPaid = DebtStatusPermissionHelper.IsBillPaid(bill, debt);
+
+            // ตรวจสอบสิทธิ์กรณีบิลที่ชำระครบแล้ว
+            if (isPaid && !DebtStatusPermissionHelper.CanChangePaidBillStatus(currentUser, User))
+            {
+                TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะบิลที่ชำระเงินครบถ้วนแล้ว";
+                return RedirectToAction("Detail", new { id = debt.Id });
+            }
+
+            // ตรวจสอบสิทธิ์กรณีบิลที่ยังไม่ชำระครบ (หนี้ทั่วไป)
+            if (!isPaid && !DebtStatusPermissionHelper.CanChangeDebtStatus(currentUser, User))
+            {
+                TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะหนี้";
+                return RedirectToAction("Detail", new { id = debt.Id });
+            }
+
+            // บิลส่งคืนกลับบัญชี: จำกัดเฉพาะผู้มีสิทธิ์ CanManageReturnedBills
+            if (status == DebtStatus.ReturnedToAccount && !DebtStatusPermissionHelper.CanManageReturnedBills(currentUser, User))
+            {
+                TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะเป็นบิลส่งกลับบัญชี";
+                return RedirectToAction("Detail", new { id = debt.Id });
+            }
+
+            // บิลยกเลิก: จำกัดเฉพาะผู้มีสิทธิ์ CanCancelBill
+            if (status == DebtStatus.Cancelled && !DebtStatusPermissionHelper.CanCancelBill(currentUser, User))
+            {
+                TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะเป็นบิลยกเลิก";
+                return RedirectToAction("Detail", new { id = debt.Id });
+            }
 
             // 1. ตรวจสอบการยืนยันรหัสผ่านกรณีเปลี่ยนเป็นบิลส่งคืนกลับมาบัญชี (ReturnedToAccount)
             if (status == DebtStatus.ReturnedToAccount)
@@ -919,7 +939,7 @@ namespace RoyalD.Web.Controllers
                 });
             }
 
-            bool isPaid = DebtStatusPermissionHelper.IsBillPaid(bill, debt);
+            isPaid = DebtStatusPermissionHelper.IsBillPaid(bill, debt);
             if (isPaid && status != DebtStatus.ReturnedToAccount && status != DebtStatus.Cancelled && !isRestoringFromCancelled)
             {
                 string? adminPassword = Request.Form["adminPassword"].FirstOrDefault();

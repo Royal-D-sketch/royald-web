@@ -190,6 +190,12 @@ using (var scope = app.Services.CreateScope())
 
                 AddColumnIfMissing("Users", "Position", "TEXT NOT NULL DEFAULT 'เธเธนเนเนเธ—เธเธเธฒเธข'");
         AddColumnIfMissing("Users", "CanViewPaymentDetails", "INTEGER NOT NULL DEFAULT 1");
+        AddColumnIfMissing("Users", "CanChangeDebtStatus", "INTEGER NOT NULL DEFAULT 0");
+        AddColumnIfMissing("Users", "CanChangePaidBillStatus", "INTEGER NOT NULL DEFAULT 0");
+        AddColumnIfMissing("Users", "CanCancelBill", "INTEGER NOT NULL DEFAULT 0");
+        AddColumnIfMissing("Users", "CanManageReturnedBills", "INTEGER NOT NULL DEFAULT 0");
+        AddColumnIfMissing("Users", "CanDeleteSalesBill", "INTEGER NOT NULL DEFAULT 0");
+        AddColumnIfMissing("Users", "CanDeleteDebtor", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing("Users", "SalesRepCode", "TEXT NOT NULL DEFAULT ''");
         AddColumnIfMissing("Users", "SessionTimeoutMinutes", "INTEGER NULL DEFAULT 10");
         AddColumnIfMissing("Users", "AllowedPages", "TEXT NOT NULL DEFAULT 'Dashboard,SalesBill,Debtor,DebtorHistory,SalesReport'");
@@ -245,6 +251,12 @@ using (var scope = app.Services.CreateScope())
                 @"ALTER TABLE ""PendingProducts"" DROP CONSTRAINT IF EXISTS ""FK_PendingProducts_OutstandingDebts_OutstandingDebtId""",
                 @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""Position"" varchar(100) DEFAULT 'ผู้แทนขาย'",
                 @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""CanViewPaymentDetails"" boolean DEFAULT true",
+                @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""CanChangeDebtStatus"" boolean DEFAULT false",
+                @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""CanChangePaidBillStatus"" boolean DEFAULT false",
+                @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""CanCancelBill"" boolean DEFAULT false",
+                @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""CanManageReturnedBills"" boolean DEFAULT false",
+                @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""CanDeleteSalesBill"" boolean DEFAULT false",
+                @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""CanDeleteDebtor"" boolean DEFAULT false",
                 @"ALTER TABLE ""Users"" ALTER COLUMN ""Position"" TYPE varchar(100)",
                 @"ALTER TABLE ""Users"" ALTER COLUMN ""SalesRepCode"" TYPE varchar(2000)",
                 @"ALTER TABLE ""Users"" ALTER COLUMN ""AllowedRegion"" TYPE varchar(500)",
@@ -310,6 +322,12 @@ using (var scope = app.Services.CreateScope())
             SessionTimeoutMinutes = null,
             CanDownload = true,
             CanScreenCapture = true,
+            CanChangeDebtStatus = true,
+            CanChangePaidBillStatus = true,
+            CanCancelBill = true,
+            CanManageReturnedBills = true,
+            CanDeleteSalesBill = true,
+            CanDeleteDebtor = true,
             AllowedPages = "Dashboard,SalesBill,Debtor,DebtorCancelled,DebtorHistory,SalesReport,Audit,Users,Upload"
         });
         db.SaveChanges();
@@ -318,6 +336,12 @@ using (var scope = app.Services.CreateScope())
     {
         admin.CanDownload = true;
         admin.CanScreenCapture = true;
+        admin.CanChangeDebtStatus = true;
+        admin.CanChangePaidBillStatus = true;
+        admin.CanCancelBill = true;
+        admin.CanManageReturnedBills = true;
+        admin.CanDeleteSalesBill = true;
+        admin.CanDeleteDebtor = true;
         admin.AllowedPages = "Dashboard,SalesBill,Debtor,DebtorCancelled,DebtorHistory,SalesReport,Audit,Users,Upload";
         admin.SessionTimeoutMinutes = null;
         db.SaveChanges();

@@ -516,21 +516,49 @@
                                 <div class="form-check form-switch mb-2">
                                     <input class="form-check-input" type="checkbox" name="canChangeDebtStatus" id="canChangeDebtStatus" value="true">
                                     <label class="form-check-label fw-bold text-success" for="canChangeDebtStatus">
-                                        🔄 สิทธิ์เปลี่ยนสถานะหนี้
+                                        🔄 กำหนดสิทธิ์เปลี่ยนสถานะอื่นๆ (หนี้ทั่วไป)
                                     </label>
                                 </div>
                                 <small class="text-muted d-block" style="font-size:0.80rem;">
-                                    อนุญาตให้เปลี่ยนสถานะหนี้ (เลื่อนนัด, หนี้สูญ, รับคืน, ยกเลิก)
+                                    อนุญาตให้เปลี่ยนสถานะหนี้รายการอื่นๆ ที่ไม่ใช่สถานะครบแล้ว (ผ่อนชำระ, เลื่อนนัด, รอสินค้า, จัดส่ง, รับคืน ฯลฯ)
                                 </small>
                             </div>
                         </div>
 
-                                                <div class="col-md-4">
-                            <div class="p-3" style="background:#f0fdf4; border:1.5px solid #bbf7d0; border-radius:12px; height:100%;">
+                        <div class="col-md-4">
+                            <div class="p-3" style="background:#fef2f2; border:1.5px solid #fecaca; border-radius:12px; height:100%;">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" name="canChangePaidBillStatus" id="canChangePaidBillStatus" value="true">
+                                    <label class="form-check-label fw-bold text-danger" for="canChangePaidBillStatus">
+                                        🔒 กำหนดสิทธิ์เปลี่ยนสถานะบิลชำระครบแล้ว
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block" style="font-size:0.80rem;">
+                                    อนุญาตให้กดเปลี่ยนสถานะบิลที่ชำระเงินครบแล้วได้ (ต้องยืนยันรหัสผ่านตนเองหรือรหัสสำรอง)
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="p-3" style="background:#fffbeb; border:1.5px solid #fde68a; border-radius:12px; height:100%;">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" name="canCancelBill" id="canCancelBill" value="true">
+                                    <label class="form-check-label fw-bold text-warning" for="canCancelBill">
+                                        ❌ กำหนดสิทธิ์บิลยกเลิก
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block" style="font-size:0.80rem;">
+                                    อนุญาตให้เปลี่ยนสถานะเป็น 'บิลยกเลิก' ได้ (ย้ายไปหน้ารายการบิลยกเลิก 30 วัน)
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="p-3" style="background:#eff6ff; border:1.5px solid #bfdbfe; border-radius:12px; height:100%;">
                                 <div class="form-check form-switch mb-2">
                                     <input class="form-check-input" type="checkbox" name="canManageReturnedBills" id="canManageReturnedBills" value="true">
-                                    <label class="form-check-label fw-bold text-success" for="canManageReturnedBills">
-                                        📦 สิทธิ์เปลี่ยนสถานะบิลส่งคืนบัญชี / ส่งคืนจัดส่ง
+                                    <label class="form-check-label fw-bold text-primary" for="canManageReturnedBills">
+                                        📦 กำหนดสิทธิ์เปลี่ยนสถานะบิลส่งกลับบัญชี
                                     </label>
                                 </div>
                                 <small class="text-muted d-block" style="font-size:0.80rem;">

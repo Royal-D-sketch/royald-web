@@ -1,3 +1,4 @@
+@using RoyalD.Web.Services
 @model List<RoyalD.Web.Models.AppUser>
 @{
     ViewData["Title"] = "จัดการผู้ใช้งาน";
@@ -57,11 +58,12 @@
                         <th style="min-width:140px;">บัญชีผู้ใช้</th>
                         <th style="width:110px;">ตำแหน่งงาน</th>
                         <th class="text-center" style="width:80px;">บทบาท</th>
-                        <th style="min-width:200px;">สิทธิ์หน้าจอที่เข้าได้</th>
-                        <th style="min-width:140px;">พื้นที่รับผิดชอบ</th>
-                        <th class="text-center" style="width:95px;">ดูรับชำระ</th>
+                        <th style="min-width:180px;">สิทธิ์หน้าจอที่เข้าได้</th>
+                        <th style="min-width:130px;">พื้นที่รับผิดชอบ</th>
+                        <th style="min-width:180px;">สิทธิ์เปลี่ยนสถานะ</th>
+                        <th class="text-center" style="width:90px;">ดูรับชำระ</th>
                         <th class="text-center" style="width:75px;">โหลดไฟล์</th>
-                        <th class="text-center" style="width:80px;">แคปจอ</th>
+                        <th class="text-center" style="width:75px;">แคปจอ</th>
                         <th class="text-center" style="width:85px;">สถานะ</th>
                         <th class="text-center" style="width:180px;">การจัดการสิทธิ์</th>
                     </tr>
@@ -69,7 +71,7 @@
                 <tbody>
                     @if (!Model.Any())
                     {
-                        <tr><td colspan="11" class="text-center text-muted py-4">ไม่พบข้อมูลบัญชีผู้ใช้</td></tr>
+                        <tr><td colspan="12" class="text-center text-muted py-4">ไม่พบข้อมูลบัญชีผู้ใช้</td></tr>
                     }
                     @{int idx = 1;}
                     @foreach (var u in Model)
@@ -154,6 +156,37 @@
                                     </div>
                                 }
                             </td>
+                            <!-- สิทธิ์เปลี่ยนสถานะ (4 สิทธิ์) -->
+                            <td>
+                                @{
+                                    bool canPaid = u.Role == "admin" || u.CanChangePaidBillStatus || DebtStatusPermissionHelper.CanChangePaidBillStatus(u);
+                                    bool canNormal = u.Role == "admin" || u.CanChangeDebtStatus || DebtStatusPermissionHelper.CanChangeDebtStatus(u);
+                                    bool canRet = u.Role == "admin" || u.CanManageReturnedBills || DebtStatusPermissionHelper.CanManageReturnedBills(u);
+                                    bool canCanc = u.Role == "admin" || u.CanCancelBill || DebtStatusPermissionHelper.CanCancelBill(u);
+                                }
+                                <div class="d-flex flex-wrap gap-1" style="max-width:200px;">
+                                    @if (canPaid)
+                                    {
+                                        <span class="badge bg-danger" style="font-size:0.72rem;" title="สิทธิ์เปลี่ยนสถานะบิลชำระครบแล้ว">🔒 บิลชำระแล้ว</span>
+                                    }
+                                    @if (canNormal)
+                                    {
+                                        <span class="badge bg-success" style="font-size:0.72rem;" title="สิทธิ์เปลี่ยนสถานะหนี้ทั่วไป">🔄 หนี้ทั่วไป</span>
+                                    }
+                                    @if (canCanc)
+                                    {
+                                        <span class="badge bg-warning text-dark" style="font-size:0.72rem;" title="สิทธิ์บิลยกเลิก">❌ ยกเลิก</span>
+                                    }
+                                    @if (canRet)
+                                    {
+                                        <span class="badge bg-primary" style="font-size:0.72rem;" title="สิทธิ์บิลส่งกลับบัญชี">📦 ส่งคืนบัญชี</span>
+                                    }
+                                    @if (!canPaid && !canNormal && !canCanc && !canRet)
+                                    {
+                                        <span class="text-muted small">-</span>
+                                    }
+                                </div>
+                            </td>
                             <!-- สิทธิ์ดูรับชำระ -->
                             <td class="text-center">
                                 @if (u.Role == "admin" || u.CanViewPaymentDetails)
@@ -163,17 +196,6 @@
                                 else
                                 {
                                     <span class="badge bg-danger"><i class="bi bi-lock-fill"></i> ซ่อน</span>
-                                }
-                            </td>
-                                                        <!-- สิทธิ์บิลส่งคืน -->
-                            <td class="text-center">
-                                @if (u.Role == "admin" || u.CanManageReturnedBills)
-                                {
-                                    <span class="badge bg-success"><i class="bi bi-check-circle"></i> ได้</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary"><i class="bi bi-x-circle"></i> ปิด</span>
                                 }
                             </td>
                             <!-- โหลดไฟล์ -->
