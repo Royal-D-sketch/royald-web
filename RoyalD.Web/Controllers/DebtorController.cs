@@ -203,6 +203,7 @@ namespace RoyalD.Web.Controllers
             ViewBag.TotalAmount = debts.Sum(d => d.RemainingAmount);
             ViewBag.OverdueCount = debts.Count(d => d.DueDate < DateTime.Today && d.Status == DebtStatus.Outstanding);
             ViewBag.CanChangeDebtStatus = DebtStatusPermissionHelper.CanChangeDebtStatus(currentUser, User);
+            ViewBag.CanManageReturnedBills = DebtStatusPermissionHelper.CanManageReturnedBills(currentUser, User);
             ViewBag.CanDeleteDebtor = currentUser != null && (currentUser.Role == "admin" || currentUser.CanDeleteDebtor);
             ViewBag.CanDownload = canDownload;
 
@@ -505,7 +506,7 @@ namespace RoyalD.Web.Controllers
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             ViewBag.CanViewPaymentDetails = currentUser != null && (currentUser.Role == "admin" || currentUser.CanViewPaymentDetails);
             ViewBag.CanChangeDebtStatus = DebtStatusPermissionHelper.CanChangeDebtStatus(currentUser, User);
-            ViewBag.CanManageReturnedBills = currentUser != null && (currentUser.Role == "admin" || currentUser.CanManageReturnedBills);
+            ViewBag.CanManageReturnedBills = DebtStatusPermissionHelper.CanManageReturnedBills(currentUser, User);
             ViewBag.CanDeleteDebtor = currentUser != null && (currentUser.Role == "admin" || currentUser.CanDeleteDebtor);
             ViewBag.CanScreenCapture = currentUser != null && (currentUser.Role == "admin" || currentUser.CanScreenCapture);
 
@@ -837,11 +838,18 @@ namespace RoyalD.Web.Controllers
 
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             bool canChangeStatus = DebtStatusPermissionHelper.CanChangeDebtStatus(currentUser, User);
-            bool hasReturnedBills = currentUser != null && (currentUser.Role == "admin" || currentUser.CanManageReturnedBills);
-            bool canChangeThisStatus = canChangeStatus || (hasReturnedBills && status == DebtStatus.ReturnedToAccount);
+            bool hasReturnedBills = DebtStatusPermissionHelper.CanManageReturnedBills(currentUser, User);
+            bool canChangeThisStatus = (status == DebtStatus.ReturnedToAccount) ? hasReturnedBills : canChangeStatus;
             if (!canChangeThisStatus)
             {
-                TempData["Error"] = "คุณไม่มีสิทธิ์ในการเปลี่ยนสถานะหนี้ (เฉพาะคุณธัญชนก และผู้บริหารเท่านั้น)";
+                if (status == DebtStatus.ReturnedToAccount)
+                {
+                    TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะเป็นบิลส่งคืนกลับมาบัญชี (เฉพาะคุณธัญชนก, ตำแหน่งผู้บริหาร, คุณวนิดา และ admin เท่านั้น)";
+                }
+                else
+                {
+                    TempData["Error"] = "คุณไม่มีสิทธิ์ในการเปลี่ยนสถานะหนี้ (เฉพาะคุณธัญชนก และผู้บริหารเท่านั้น)";
+                }
                 return RedirectToAction("Detail", new { id = billNo });
             }
             var debt = await _db.OutstandingDebts.FirstOrDefaultAsync(d => d.BillNo == billNo);

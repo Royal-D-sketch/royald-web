@@ -635,8 +635,8 @@ else if (overdue120)
                 </div>
                 <div class="card-body p-4 text-center text-muted d-flex flex-column justify-content-center align-items-center" style="min-height:280px;">
                     <i class="bi bi-shield-lock-fill fs-1 text-secondary mb-2" style="opacity:0.4;"></i>
-                    <h6 class="fw-bold text-dark mb-1">เฉพาะผู้ใช้คุณธัญชนก และผู้บริหาร เท่านั้นที่มีสิทธิ์เปลี่ยนสถานะหนี้</h6>
-                    <p class="small text-muted mb-0">บัญชีของคุณไม่มีสิทธิ์ในการเปลี่ยนสถานะหนี้</p>
+                    <h6 class="fw-bold text-dark mb-1">คุณไม่มีสิทธิ์ในการเปลี่ยนสถานะหนี้</h6>
+                    <p class="small text-muted mb-0">เฉพาะผู้ใช้คุณธัญชนก, ตำแหน่งผู้บริหาร, คุณวนิดา และ admin เท่านั้น</p>
                 </div>
             </div>
         }
@@ -661,7 +661,10 @@ else if (overdue120)
                                     <option value="Installment" selected="@(debt?.Status == DebtStatus.Installment || (int?)debt?.Status == 100)">ผ่อนชำระ / จ่ายบางส่วน (Installment)</option>
                                     <option value="Postponed" selected="@(debt?.Status == DebtStatus.Postponed)">เลื่อนนัดชำระ (Postponed)</option>
                                 }
-                                <option value="ReturnedToAccount" selected="@(debt?.Status == DebtStatus.ReturnedToAccount)" style="color:#d97706; font-weight:bold;">📦 บิลส่งคืนกลับมาบัญชี (บิลไม่พร้อมส่ง/ลูกค้ายังไม่เอาของ)</option>
+                                @if (canManageReturned)
+                                {
+                                    <option value="ReturnedToAccount" selected="@(debt?.Status == DebtStatus.ReturnedToAccount)" style="color:#d97706; font-weight:bold;">📦 บิลส่งคืนกลับมาบัญชี (บิลไม่พร้อมส่ง/ลูกค้ายังไม่เอาของ)</option>
+                                }
                                 @if (canChangeStatus)
                                 {
                                     <option value="WaitingGoods" selected="@(debt?.Status == DebtStatus.WaitingGoods)">รอสินค้า / ของขาด (Waiting for Goods)</option>

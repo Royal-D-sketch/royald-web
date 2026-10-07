@@ -463,6 +463,7 @@ namespace RoyalD.Web.Controllers
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             ViewBag.CanDeleteSalesBill = currentUser != null && (currentUser.Role == "admin" || currentUser.CanDeleteSalesBill);
             ViewBag.CanChangeDebtStatus = DebtStatusPermissionHelper.CanChangeDebtStatus(currentUser, User);
+            ViewBag.CanManageReturnedBills = DebtStatusPermissionHelper.CanManageReturnedBills(currentUser, User);
 
             var debt = await _db.OutstandingDebts.AsNoTracking().Include(d => d.PaymentRecords).FirstOrDefaultAsync(d => d.BillNo == bill.BillNo);
             ViewBag.Debt = debt;
@@ -1218,9 +1219,23 @@ namespace RoyalD.Web.Controllers
             string? adminPassword = null)
         {
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
-            if (!DebtStatusPermissionHelper.CanChangeDebtStatus(currentUser, User))
+            bool canChangeStatus = DebtStatusPermissionHelper.CanChangeDebtStatus(currentUser, User);
+            bool hasReturnedBills = DebtStatusPermissionHelper.CanManageReturnedBills(currentUser, User);
+
+            bool canChangeThisStatus = (newStatus == DebtStatus.ReturnedToAccount)
+                ? hasReturnedBills
+                : canChangeStatus;
+
+            if (!canChangeThisStatus)
             {
-                TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะหนี้ (เฉพาะคุณธัญชนก และผู้บริหารเท่านั้น)";
+                if (newStatus == DebtStatus.ReturnedToAccount)
+                {
+                    TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะเป็นบิลส่งคืนกลับมาบัญชี (เฉพาะคุณธัญชนก, ตำแหน่งผู้บริหาร, คุณวนิดา และ admin เท่านั้น)";
+                }
+                else
+                {
+                    TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะหนี้ (เฉพาะคุณธัญชนก และผู้บริหารเท่านั้น)";
+                }
                 return RedirectToAction("Detail", new { id = billNo });
             }
 

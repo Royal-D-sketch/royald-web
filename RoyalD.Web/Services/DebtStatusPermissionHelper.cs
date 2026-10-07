@@ -36,6 +36,40 @@ namespace RoyalD.Web.Services
         }
 
         /// <summary>
+        /// ตรวจสอบว่าผู้ใช้มีสิทธิ์เข้าถึง/เปลี่ยนสถานะ "บิลส่งคืนกลับมาบัญชี" (ReturnedToAccount) หรือไม่
+        /// (เฉพาะคุณธัญชนก, ตำแหน่งผู้บริหาร, คุณวนิดา, admin เท่านั้น)
+        /// </summary>
+        public static bool CanManageReturnedBills(AppUser? user, ClaimsPrincipal? principal = null)
+        {
+            if (user == null && principal == null) return false;
+
+            string username = (user?.Username ?? principal?.Identity?.Name ?? "").Trim();
+            string fullName = (user?.FullName ?? principal?.FindFirst("FullName")?.Value ?? "").Trim();
+            string position = (user?.Position ?? principal?.FindFirst("Position")?.Value ?? "").Trim();
+            string role = (user?.Role ?? principal?.FindFirst(ClaimTypes.Role)?.Value ?? principal?.FindFirst("Role")?.Value ?? "").Trim().ToLower();
+
+            // 1. admin
+            if (role == "admin" || role == "administrator" || username.Equals("admin", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // 2. คุณธัญชนก (Username "admin" หรือ ชื่อ-นามสกุล มีคำว่า "ธัญชนก")
+            if (fullName.Contains("ธัญชนก"))
+                return true;
+
+            // 3. ตำแหน่งผู้บริหาร (Position มีคำว่า "ผู้บริหาร", Username "Kullaya", "ART")
+            if (username.Equals("Kullaya", StringComparison.OrdinalIgnoreCase) ||
+                username.Equals("ART", StringComparison.OrdinalIgnoreCase) ||
+                position.Contains("ผู้บริหาร"))
+                return true;
+
+            // 4. คุณวนิดา (Username "nid" หรือ ชื่อ-นามสกุล มีคำว่า "วนิดา")
+            if (username.Equals("nid", StringComparison.OrdinalIgnoreCase) || fullName.Contains("วนิดา"))
+                return true;
+
+            return false;
+        }
+
+        /// <summary>
         /// ตรวจสอบว่าบิลนี้เป็นบิลที่ชำระเงินครบแล้วหรือไม่
         /// </summary>
         public static bool IsBillPaid(SalesBill? bill, OutstandingDebt? debt)
