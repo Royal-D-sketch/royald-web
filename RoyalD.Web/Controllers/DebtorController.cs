@@ -202,7 +202,7 @@ namespace RoyalD.Web.Controllers
             ViewBag.CreditOptions = creditOptions;
             ViewBag.TotalAmount = debts.Sum(d => d.RemainingAmount);
             ViewBag.OverdueCount = debts.Count(d => d.DueDate < DateTime.Today && d.Status == DebtStatus.Outstanding);
-            ViewBag.CanChangeDebtStatus = currentUser != null && (currentUser.Role == "admin" || currentUser.CanChangeDebtStatus);
+            ViewBag.CanChangeDebtStatus = DebtStatusPermissionHelper.CanChangeDebtStatus(currentUser, User);
             ViewBag.CanDeleteDebtor = currentUser != null && (currentUser.Role == "admin" || currentUser.CanDeleteDebtor);
             ViewBag.CanDownload = canDownload;
 
@@ -504,13 +504,15 @@ namespace RoyalD.Web.Controllers
 
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             ViewBag.CanViewPaymentDetails = currentUser != null && (currentUser.Role == "admin" || currentUser.CanViewPaymentDetails);
-            ViewBag.CanChangeDebtStatus = currentUser != null && (currentUser.Role == "admin" || currentUser.CanChangeDebtStatus);
+            ViewBag.CanChangeDebtStatus = DebtStatusPermissionHelper.CanChangeDebtStatus(currentUser, User);
             ViewBag.CanManageReturnedBills = currentUser != null && (currentUser.Role == "admin" || currentUser.CanManageReturnedBills);
             ViewBag.CanDeleteDebtor = currentUser != null && (currentUser.Role == "admin" || currentUser.CanDeleteDebtor);
             ViewBag.CanScreenCapture = currentUser != null && (currentUser.Role == "admin" || currentUser.CanScreenCapture);
 
             var items = await _db.SalesBillItems.AsNoTracking().Where(i => i.BillNo == debt.BillNo).ToListAsync();
             ViewBag.Items = items;
+            var bill = await _db.SalesBills.AsNoTracking().FirstOrDefaultAsync(b => b.BillNo == debt.BillNo);
+            ViewBag.SalesBill = bill;
 
             return View(debt);
         }
@@ -834,17 +836,38 @@ namespace RoyalD.Web.Controllers
             }
 
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
-            bool isAdmin = currentUser != null && currentUser.Role == "admin";
-            bool hasChangeDebtStatus = currentUser != null && currentUser.CanChangeDebtStatus;
-            bool hasReturnedBills = currentUser != null && currentUser.CanManageReturnedBills;
-            bool canChangeThisStatus = isAdmin || hasChangeDebtStatus || (hasReturnedBills && status == DebtStatus.ReturnedToAccount);
+            bool canChangeStatus = DebtStatusPermissionHelper.CanChangeDebtStatus(currentUser, User);
+            bool hasReturnedBills = currentUser != null && (currentUser.Role == "admin" || currentUser.CanManageReturnedBills);
+            bool canChangeThisStatus = canChangeStatus || (hasReturnedBills && status == DebtStatus.ReturnedToAccount);
             if (!canChangeThisStatus)
             {
-                TempData["Error"] = "คุณไม่มีสิทธิ์ในการเปลี่ยนสถานะหนี้";
+                TempData["Error"] = "คุณไม่มีสิทธิ์ในการเปลี่ยนสถานะหนี้ (เฉพาะคุณธัญชนก และผู้บริหารเท่านั้น)";
                 return RedirectToAction("Detail", new { id = billNo });
             }
             var debt = await _db.OutstandingDebts.FirstOrDefaultAsync(d => d.BillNo == billNo);
             if (debt == null) return NotFound();
+
+            var bill = await _db.SalesBills.FirstOrDefaultAsync(b => b.BillNo == billNo);
+            bool isPaid = DebtStatusPermissionHelper.IsBillPaid(bill, debt);
+            if (isPaid)
+            {
+                string? adminPassword = Request.Form["adminPassword"].FirstOrDefault();
+                var (isApproverOk, approverName) = await DebtStatusPermissionHelper.VerifyApproverPasswordAsync(_db, adminPassword);
+                if (!isApproverOk)
+                {
+                    TempData["Error"] = "บิลนี้ชำระเงินครบถ้วนแล้ว การเปลี่ยนสถานะต้องใส่รหัสผ่านของคุณธัญชนก หรือผู้บริหาร เท่านั้น";
+                    return RedirectToAction("Detail", new { id = billNo });
+                }
+
+                _db.AuditLogs.Add(new AuditLog
+                {
+                    Username = User.Identity?.Name ?? "",
+                    Action = "CHANGE_STATUS_PAID_DEBT",
+                    Detail = $"เปลี่ยนสถานะการ์ดลูกหนี้บิลที่ชำระแล้ว {billNo} จาก {debt.Status} เป็น {status} (อนุมัติโดย: {approverName})",
+                    IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
 
             var oldStatus = debt.Status;
             if (status == DebtStatus.Installment || (int)status == 100)
@@ -865,7 +888,6 @@ namespace RoyalD.Web.Controllers
                     }
                 }
                 debt.FullyPaidDate = null;
-                var bill = await _db.SalesBills.FirstOrDefaultAsync(b => b.BillNo == billNo);
                 if (bill != null) bill.IsFullyPaid = false;
             }
             else
@@ -985,10 +1007,7 @@ namespace RoyalD.Web.Controllers
                 status == DebtStatus.Postponed ||
                 status == DebtStatus.ChangeProduct ||
                 status == DebtStatus.Consignment)
-            {
-                var bill = await _db.SalesBills.FirstOrDefaultAsync(b => b.BillNo == billNo);
                 if (bill != null) bill.IsFullyPaid = false;
-            }
 
             // เน€เธโ€“เน€เธยเน€เธเธ’เน€เธโฌเน€เธยเน€เธเธ…เน€เธเธ•เน€เธยเน€เธเธเน€เธยเน€เธโฌเน€เธยเน€เธยเน€เธยเน€เธเธเน€เธโ€“เน€เธเธ’เน€เธยเน€เธเธเน€เธเธเน€เธเธ—เน€เธยเน€เธยเน€เธโ€”เน€เธเธ•เน€เธยเน€เธยเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธย WaitingGoods เน€เธยเน€เธเธเน€เธยเน€เธโฌเน€เธยเน€เธเธ…เน€เธเธ•เน€เธเธเน€เธเธเน€เธย PendingProducts เน€เธยเน€เธเธ…เน€เธเธ WaitingGoodsDate
             if (status != DebtStatus.WaitingGoods)

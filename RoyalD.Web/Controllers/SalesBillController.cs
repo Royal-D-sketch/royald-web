@@ -462,6 +462,7 @@ namespace RoyalD.Web.Controllers
 
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             ViewBag.CanDeleteSalesBill = currentUser != null && (currentUser.Role == "admin" || currentUser.CanDeleteSalesBill);
+            ViewBag.CanChangeDebtStatus = DebtStatusPermissionHelper.CanChangeDebtStatus(currentUser, User);
 
             var debt = await _db.OutstandingDebts.AsNoTracking().Include(d => d.PaymentRecords).FirstOrDefaultAsync(d => d.BillNo == bill.BillNo);
             ViewBag.Debt = debt;
@@ -1141,11 +1142,15 @@ namespace RoyalD.Web.Controllers
                 await _db.SaveChangesAsync(); // save to get ID
             }
 
-            if (bill != null && bill.IsFullyPaid && adminPassword != "029030445Rd*")
+            bool isPaid = DebtStatusPermissionHelper.IsBillPaid(bill, existingDebt);
+            if (isPaid)
             {
-                // Let's allow it if we bypass or if we just show error
-                TempData["Error"] = "บิลชำระครบแล้ว แต่ไม่มีรหัสผ่านการปลดล็อคที่ถูกต้อง";
-                return !string.IsNullOrEmpty(Request.Headers["Referer"]) ? Redirect(Request.Headers["Referer"].ToString()) : RedirectToAction("Detail", new { id = billNo });
+                var (isApproverOk, approverName) = await DebtStatusPermissionHelper.VerifyApproverPasswordAsync(_db, adminPassword);
+                if (!isApproverOk)
+                {
+                    TempData["Error"] = "บิลนี้ชำระเงินครบถ้วนแล้ว การบันทึกรับเงินต้องใส่รหัสผ่านของคุณธัญชนก หรือผู้บริหาร เท่านั้น";
+                    return !string.IsNullOrEmpty(Request.Headers["Referer"]) ? Redirect(Request.Headers["Referer"].ToString()) : RedirectToAction("Detail", new { id = billNo });
+                }
             }
 
             if (amount <= 0 || amount > debt.RemainingAmount)
@@ -1212,9 +1217,10 @@ namespace RoyalD.Web.Controllers
             [FromServices] IWebHostEnvironment env,
             string? adminPassword = null)
         {
-            if (IsSalesRepUser())
+            var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            if (!DebtStatusPermissionHelper.CanChangeDebtStatus(currentUser, User))
             {
-                TempData["Error"] = "รหัสผู้แทนขายไม่มีสิทธิ์บันทึกเปลี่ยนแปลงสถานะ";
+                TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะหนี้ (เฉพาะคุณธัญชนก และผู้บริหารเท่านั้น)";
                 return RedirectToAction("Detail", new { id = billNo });
             }
 
@@ -1222,10 +1228,24 @@ namespace RoyalD.Web.Controllers
             var existingDebt = await _db.OutstandingDebts.Include(d => d.PaymentRecords).FirstOrDefaultAsync(d => d.BillNo == billNo);
             if (bill == null && existingDebt == null) return NotFound();
 
-            if (bill != null && bill.IsFullyPaid && adminPassword != "029030445Rd*")
+            bool isPaid = DebtStatusPermissionHelper.IsBillPaid(bill, existingDebt);
+            if (isPaid)
             {
-                TempData["Error"] = "บิลชำระครบแล้ว แต่ไม่มีรหัสผ่านการปลดล็อคที่ถูกต้อง";
-                return !string.IsNullOrEmpty(Request.Headers["Referer"]) ? Redirect(Request.Headers["Referer"].ToString()) : RedirectToAction("Detail", new { id = billNo });
+                var (isApproverOk, approverName) = await DebtStatusPermissionHelper.VerifyApproverPasswordAsync(_db, adminPassword);
+                if (!isApproverOk)
+                {
+                    TempData["Error"] = "บิลนี้ชำระเงินครบถ้วนแล้ว การเปลี่ยนสถานะต้องใส่รหัสผ่านของคุณธัญชนก หรือผู้บริหาร เท่านั้น";
+                    return !string.IsNullOrEmpty(Request.Headers["Referer"]) ? Redirect(Request.Headers["Referer"].ToString()) : RedirectToAction("Detail", new { id = billNo });
+                }
+
+                _db.AuditLogs.Add(new AuditLog
+                {
+                    Username = User.Identity?.Name ?? "",
+                    Action = "CHANGE_STATUS_PAID_BILL",
+                    Detail = $"เปลี่ยนสถานะบิลขายที่ชำระแล้ว {billNo} เป็น {newStatus} (อนุมัติโดย: {approverName})",
+                    IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
+                    CreatedAt = DateTime.UtcNow
+                });
             }
 
             var debt = await _db.OutstandingDebts.Include(d => d.PendingProducts).Include(d => d.Attachments).Include(d => d.PaymentRecords).FirstOrDefaultAsync(d => d.BillNo == billNo);

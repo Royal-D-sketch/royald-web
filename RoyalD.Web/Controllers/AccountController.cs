@@ -708,6 +708,17 @@ namespace RoyalD.Web.Controllers
 
             return HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
         }
+        [HttpPost, Authorize]
+        public async Task<IActionResult> VerifyApproverPassword([FromForm] string password)
+        {
+            var (isValid, approverName) = await DebtStatusPermissionHelper.VerifyApproverPasswordAsync(_db, password);
+            if (isValid)
+            {
+                return Json(new { success = true, approver = approverName });
+            }
+            return Json(new { success = false, message = "รหัสผ่านไม่ถูกต้อง! ต้องเป็นรหัสผ่านของผู้ใช้คุณธัญชนก หรือผู้บริหาร เท่านั้น" });
+        }
+
         [HttpGet, AllowAnonymous]
         public IActionResult Ping() => Ok(new { ok = true, t = DateTime.Now });
     }

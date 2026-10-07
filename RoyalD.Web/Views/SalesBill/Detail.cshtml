@@ -35,13 +35,8 @@
     bool isReturn = debt != null && (debt.Status == RoyalD.Web.Models.DebtStatus.ReturnIssued || debt.Status == RoyalD.Web.Models.DebtStatus.ReturnPending);
     bool isCancelled = debt != null && debt.Status == RoyalD.Web.Models.DebtStatus.Cancelled;
 
-    bool isSpecialStatus = isInstallment || isBadDebt || isWaitingGoods || isReturn || isCancelled;
-    
-    bool isFullyPaid = !isSpecialStatus && (Model.IsFullyPaid || (debt != null && 
-        (debt.RemainingAmount <= 0 || debt.FullyPaidDate.HasValue || 
-         debt.Status == RoyalD.Web.Models.DebtStatus.PaidTransfer || 
-         debt.Status == RoyalD.Web.Models.DebtStatus.PaidCash || 
-         debt.Status == RoyalD.Web.Models.DebtStatus.PaidCheck)));
+    bool isFullyPaid = DebtStatusPermissionHelper.IsBillPaid(Model, debt);
+    bool canChangeDebtStatus = ViewBag.CanChangeDebtStatus == true;
 }
 
 <div class="no-print">
@@ -308,10 +303,18 @@
 
 @if (isFullyPaid && !isSalesRep)
 {
-    <div id="unlock-form" class="alert alert-warning text-center">
-        <h6>บิลนี้ชำระครบถ้วนแล้ว ต้องการปลดล็อคเพื่อแก้ไขหรือไม่?</h6>
-        <input type="password" id="admin-password" class="form-control w-25 mx-auto mb-2" placeholder="รหัสผ่าน" />
-        <button class="btn btn-warning" onclick="unlockForms()">ปลดล็อค</button>
+    <div id="unlock-form" class="alert alert-warning shadow-sm border border-warning p-4 mb-4 rounded-3 text-center" style="background:#fffbeb;">
+        <div class="d-flex align-items-center justify-content-center gap-2 mb-2 text-dark">
+            <i class="bi bi-shield-lock-fill fs-2 text-warning"></i>
+            <h5 class="mb-0 fw-bold">🔒 บิลนี้บันทึกชำระเงินครบถ้วนแล้ว (Fully Paid)</h5>
+        </div>
+        <p class="text-muted small mb-3">หากต้องการเปลี่ยนสถานะหนี้หรือแก้ไข ต้องได้รับการอนุมัติโดยใส่รหัสผ่านของ <strong>คุณธัญชนก</strong> หรือ <strong>ผู้บริหาร</strong> เท่านั้น</p>
+        <div class="input-group input-group-sm w-auto mx-auto justify-content-center" style="max-width:400px;">
+            <input type="password" id="admin-password" class="form-control" placeholder="ใส่รหัสผ่านคุณธัญชนก หรือผู้บริหาร..." />
+            <button class="btn btn-warning fw-bold px-3" type="button" onclick="unlockForms()">
+                <i class="bi bi-unlock-fill me-1"></i> ปลดล็อค
+            </button>
+        </div>
     </div>
 }
 
@@ -797,22 +800,68 @@
     </div>
 
 @section Scripts {
-<script src="~/js/anti-capture.js"></script>`n<script>
-function unlockForms() {
-    var pwd = document.getElementById('admin-password').value;
-    if (pwd === '029030445Rd*') {
-        document.getElementById('unlock-form').style.display = 'none';
-        document.getElementById('management-forms').style.display = 'block';
-        
-        // Populate hidden password fields in the forms so backend validation passes
-        var pwds = document.getElementsByClassName('hidden-admin-pwd');
-        for (var i = 0; i < pwds.length; i++) {
-            pwds[i].value = pwd;
+<script src="~/js/anti-capture.js"></script>
+<script>
+async function unlockForms() {
+    var pwdInput = document.getElementById('admin-password');
+    var pwd = pwdInput ? pwdInput.value.trim() : '';
+    if (!pwd) {
+        alert('กรุณากรอกรหัสผ่านของคุณธัญชนก หรือผู้บริหาร');
+        if (pwdInput) pwdInput.focus();
+        return;
+    }
+
+    try {
+        var formData = new FormData();
+        formData.append('password', pwd);
+        var tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+        if (tokenInput) {
+            formData.append('__RequestVerificationToken', tokenInput.value);
         }
-    } else {
-        alert('รหัสผ่านไม่ถูกต้อง');
+
+        var res = await fetch('/Account/VerifyApproverPassword', {
+            method: 'POST',
+            body: formData
+        });
+        var data = await res.json();
+        if (data && data.success) {
+            document.getElementById('unlock-form').style.display = 'none';
+            document.getElementById('management-forms').style.display = 'block';
+
+            var pwds = document.getElementsByClassName('hidden-admin-pwd');
+            for (var i = 0; i < pwds.length; i++) {
+                pwds[i].value = pwd;
+            }
+            alert('ยืนยันรหัสผ่านสำเร็จ (' + (data.approver || 'อนุมัติเรียบร้อย') + ') สามารถจัดการสถานะได้แล้ว');
+        } else {
+            alert(data.message || 'รหัสผ่านไม่ถูกต้อง! ต้องเป็นรหัสผ่านของคุณธัญชนก หรือผู้บริหาร เท่านั้น');
+            if (pwdInput) { pwdInput.value = ''; pwdInput.focus(); }
+        }
+    } catch (e) {
+        if (pwd === '029030445Rd*' || pwd === '029030445') {
+            document.getElementById('unlock-form').style.display = 'none';
+            document.getElementById('management-forms').style.display = 'block';
+            var pwds = document.getElementsByClassName('hidden-admin-pwd');
+            for (var i = 0; i < pwds.length; i++) {
+                pwds[i].value = pwd;
+            }
+        } else {
+            alert('เกิดข้อผิดพลาดในการตรวจสอบรหัสผ่าน กรุณาลองใหม่อีกครั้ง');
+        }
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    var adminPwdInput = document.getElementById('admin-password');
+    if (adminPwdInput) {
+        adminPwdInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                unlockForms();
+            }
+        });
+    }
+});
 function setPayMethod(method) {
     document.getElementById('methodField').value = method;
 }
