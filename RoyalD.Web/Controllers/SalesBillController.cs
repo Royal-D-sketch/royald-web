@@ -1219,27 +1219,17 @@ namespace RoyalD.Web.Controllers
             string? adminPassword = null)
         {
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
-            bool canChangeStatus = DebtStatusPermissionHelper.CanChangeDebtStatus(currentUser, User);
             bool hasReturnedBills = DebtStatusPermissionHelper.CanManageReturnedBills(currentUser, User);
 
-            bool canChangeThisStatus = (newStatus == DebtStatus.ReturnedToAccount || newStatus == DebtStatus.Cancelled)
-                ? hasReturnedBills
-                : canChangeStatus;
-
-            if (!canChangeThisStatus)
+            // บิลส่งคืนกลับบัญชี และ บิลยกเลิก จำกัดเฉพาะ 6 กลุ่ม (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา)
+            if (newStatus == DebtStatus.ReturnedToAccount && !hasReturnedBills)
             {
-                if (newStatus == DebtStatus.ReturnedToAccount)
-                {
-                    TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะเป็นบิลส่งกลับบัญชี (เฉพาะคุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา เท่านั้น)";
-                }
-                else if (newStatus == DebtStatus.Cancelled)
-                {
-                    TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะเป็นบิลยกเลิก (เฉพาะคุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา เท่านั้น)";
-                }
-                else
-                {
-                    TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะหนี้ (เฉพาะคุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร เท่านั้น)";
-                }
+                TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะเป็นบิลส่งกลับบัญชี (เฉพาะคุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา เท่านั้น)";
+                return RedirectToAction("Detail", new { id = billNo });
+            }
+            if (newStatus == DebtStatus.Cancelled && !hasReturnedBills)
+            {
+                TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะเป็นบิลยกเลิก (เฉพาะคุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา เท่านั้น)";
                 return RedirectToAction("Detail", new { id = billNo });
             }
 

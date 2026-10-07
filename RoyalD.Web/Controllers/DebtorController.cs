@@ -837,23 +837,17 @@ namespace RoyalD.Web.Controllers
             }
 
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
-            bool canChangeStatus = DebtStatusPermissionHelper.CanChangeDebtStatus(currentUser, User);
             bool hasReturnedBills = DebtStatusPermissionHelper.CanManageReturnedBills(currentUser, User);
-            bool canChangeThisStatus = (status == DebtStatus.ReturnedToAccount || status == DebtStatus.Cancelled) ? hasReturnedBills : canChangeStatus;
-            if (!canChangeThisStatus)
+
+            // บิลส่งคืนกลับบัญชี และ บิลยกเลิก จำกัดเฉพาะ 6 กลุ่ม (คุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา)
+            if (status == DebtStatus.ReturnedToAccount && !hasReturnedBills)
             {
-                if (status == DebtStatus.ReturnedToAccount)
-                {
-                    TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะเป็นบิลส่งกลับบัญชี (เฉพาะคุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา เท่านั้น)";
-                }
-                else if (status == DebtStatus.Cancelled)
-                {
-                    TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะเป็นบิลยกเลิก (เฉพาะคุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา เท่านั้น)";
-                }
-                else
-                {
-                    TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะหนี้ (เฉพาะคุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร เท่านั้น)";
-                }
+                TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะเป็นบิลส่งกลับบัญชี (เฉพาะคุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา เท่านั้น)";
+                return RedirectToAction("Detail", new { id = billNo });
+            }
+            if (status == DebtStatus.Cancelled && !hasReturnedBills)
+            {
+                TempData["Error"] = "คุณไม่มีสิทธิ์เปลี่ยนสถานะเป็นบิลยกเลิก (เฉพาะคุณธัญชนก, คุณกุลยา, admin, หัวหน้า, ผู้บริหาร, คุณวนิดา เท่านั้น)";
                 return RedirectToAction("Detail", new { id = billNo });
             }
             var debt = await _db.OutstandingDebts.FirstOrDefaultAsync(d => d.BillNo == billNo);

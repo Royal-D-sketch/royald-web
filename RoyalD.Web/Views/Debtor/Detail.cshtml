@@ -626,61 +626,39 @@ else if (overdue120)
     </div>
 
     <!-- ฟอร์มเปลี่ยนสถานะหนี้ -->
-    <div class="col-lg-6">
-        @if (!canChangeStatus && !canManageReturned)
-        {
-            <div class="card detail-card h-100 bg-light border-0">
-                <div class="card-header bg-secondary text-white py-3 fw-bold">
-                    <i class="bi bi-lock-fill me-1"></i> เปลี่ยนสถานะหนี้ / จัดการพิเศษ (ไม่มีสิทธิ์)
-                </div>
-                <div class="card-body p-4 text-center text-muted d-flex flex-column justify-content-center align-items-center" style="min-height:280px;">
-                    <i class="bi bi-shield-lock-fill fs-1 text-secondary mb-2" style="opacity:0.4;"></i>
-                    <h6 class="fw-bold text-dark mb-1">คุณไม่มีสิทธิ์ในการเปลี่ยนสถานะหนี้</h6>
-                    <p class="small text-muted mb-0">เฉพาะผู้ใช้คุณธัญชนก, ตำแหน่งผู้บริหาร, คุณวนิดา และ admin เท่านั้น</p>
-                </div>
+        <div class="card detail-card h-100">
+            <div class="card-header bg-secondary text-white py-3 fw-bold">
+                <i class="bi bi-arrow-repeat me-1"></i> เปลี่ยนสถานะหนี้ / จัดการพิเศษ
             </div>
-        }
-        else
-        {
-            <div class="card detail-card h-100">
-                <div class="card-header bg-secondary text-white py-3 fw-bold">
-                    <i class="bi bi-arrow-repeat me-1"></i> เปลี่ยนสถานะหนี้ / จัดการพิเศษ
-                </div>
-                <div class="card-body p-4">
-                    <form asp-controller="Debtor" asp-action="UpdateStatus" method="post" enctype="multipart/form-data">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="billNo" value="@Model.BillNo" />
-                        <input type="hidden" name="adminPassword" class="hidden-admin-pwd" value="" />
+            <div class="card-body p-4">
+                <form asp-controller="Debtor" asp-action="UpdateStatus" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="billNo" value="@Model.BillNo" />
+                    <input type="hidden" name="adminPassword" class="hidden-admin-pwd" value="" />
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small text-muted">เลือกสถานะใหม่ <span class="text-danger">*</span></label>
-                            <select name="newStatus" class="form-select form-select-lg fw-bold" id="statusSelect" onchange="onStatusSelectChange()">
-                                @if (canChangeStatus)
-                                {
-                                    <option value="Outstanding" selected="@(debt?.Status == DebtStatus.Outstanding)">ค้างชำระปกติ (Outstanding)</option>
-                                    <option value="Installment" selected="@(debt?.Status == DebtStatus.Installment || (int?)debt?.Status == 100)">ผ่อนชำระ / จ่ายบางส่วน (Installment)</option>
-                                    <option value="Postponed" selected="@(debt?.Status == DebtStatus.Postponed)">เลื่อนนัดชำระ (Postponed)</option>
-                                }
-                                @if (canManageReturned)
-                                {
-                                    <option value="ReturnedToAccount" selected="@(debt?.Status == DebtStatus.ReturnedToAccount)" style="color:#d97706; font-weight:bold;">📦 บิลส่งคืนกลับมาบัญชี (บิลไม่พร้อมส่ง/ลูกค้ายังไม่เอาของ)</option>
-                                }
-                                @if (canChangeStatus)
-                                {
-                                    <option value="WaitingGoods" selected="@(debt?.Status == DebtStatus.WaitingGoods)">รอสินค้า / ของขาด (Waiting for Goods)</option>
-                                    <option value="Delivering" selected="@(debt?.Status == DebtStatus.Delivering)">บิลอยู่จัดส่ง (Delivering)</option>
-                                    <option value="ChangeProduct" selected="@(debt?.Status == DebtStatus.ChangeProduct)">เปลี่ยนสินค้า (Change Product)</option>
-                                    <option value="ReturnPending" selected="@(debt?.Status == DebtStatus.ReturnPending)">รับคืนสินค้า (รอออกใบลดหนี้)</option>
-                                    <option value="ReturnIssued" selected="@(debt?.Status == DebtStatus.ReturnIssued)">รับคืนสินค้า (ออกใบลดหนี้แล้ว)</option>
-                                    <option value="Consignment" selected="@(debt?.Status == DebtStatus.Consignment)">สินค้าฝากขาย (Consignment)</option>
-                                    <option value="BadDebt" selected="@(debt?.Status == DebtStatus.BadDebt)">หนี้สูญ (Bad Debt)</option>
-                                }
-                                @if (canChangeStatus || canManageReturned)
-                                {
-                                    <option value="Cancelled" style="color:red; font-weight:bold;">❌ บิลนี้ยกเลิก (ย้ายไปบิลยกเลิก 30 วัน)</option>
-                                }
-                            </select>
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">เลือกสถานะใหม่ <span class="text-danger">*</span></label>
+                        <select name="newStatus" class="form-select form-select-lg fw-bold" id="statusSelect" onchange="onStatusSelectChange()">
+                            <option value="Outstanding" selected="@(debt?.Status == DebtStatus.Outstanding)">ค้างชำระปกติ (Outstanding)</option>
+                            <option value="Installment" selected="@(debt?.Status == DebtStatus.Installment || (int?)debt?.Status == 100)">ผ่อนชำระ / จ่ายบางส่วน (Installment)</option>
+                            <option value="Postponed" selected="@(debt?.Status == DebtStatus.Postponed)">เลื่อนนัดชำระ (Postponed)</option>
+                            @if (canManageReturned)
+                            {
+                                <option value="ReturnedToAccount" selected="@(debt?.Status == DebtStatus.ReturnedToAccount)" style="color:#d97706; font-weight:bold;">📦 บิลส่งคืนกลับมาบัญชี (บิลไม่พร้อมส่ง/ลูกค้ายังไม่เอาของ)</option>
+                            }
+                            <option value="WaitingGoods" selected="@(debt?.Status == DebtStatus.WaitingGoods)">รอสินค้า / ของขาด (Waiting for Goods)</option>
+                            <option value="Delivering" selected="@(debt?.Status == DebtStatus.Delivering)">บิลอยู่จัดส่ง (Delivering)</option>
+                            <option value="ChangeProduct" selected="@(debt?.Status == DebtStatus.ChangeProduct)">เปลี่ยนสินค้า (Change Product)</option>
+                            <option value="ReturnPending" selected="@(debt?.Status == DebtStatus.ReturnPending)">รับคืนสินค้า (รอออกใบลดหนี้)</option>
+                            <option value="ReturnIssued" selected="@(debt?.Status == DebtStatus.ReturnIssued)">รับคืนสินค้า (ออกใบลดหนี้แล้ว)</option>
+                            <option value="Consignment" selected="@(debt?.Status == DebtStatus.Consignment)">สินค้าฝากขาย (Consignment)</option>
+                            <option value="BadDebt" selected="@(debt?.Status == DebtStatus.BadDebt)">หนี้สูญ (Bad Debt)</option>
+                            @if (canManageReturned)
+                            {
+                                <option value="Cancelled" style="color:red; font-weight:bold;">❌ บิลนี้ยกเลิก (ย้ายไปบิลยกเลิก 30 วัน)</option>
+                            }
+                        </select>
+                    </div>
 
                         <!-- รายละเอียดตามสถานะ -->
                         <!-- 0. ผ่อนชำระ -->
@@ -876,9 +854,8 @@ else if (overdue120)
                     </form>
                 </div>
             </div>
-        }
+        </div>
     </div>
-</div>
 </div> <!-- end management-forms -->
 
 <!-- ประวัติการรับชำระเงิน -->
