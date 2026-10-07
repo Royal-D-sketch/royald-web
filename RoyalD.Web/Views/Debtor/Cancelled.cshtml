@@ -132,7 +132,7 @@
                     <th class="text-center" style="width: 100px;">ไฟล์/รูป</th>
                     <th class="text-end" style="width: 120px;">ยอดเงิน (บาท)</th>
                     <th class="text-center" style="width: 150px;">นับถอยหลัง 30 วัน</th>
-                    <th class="text-center" style="min-width: 195px;">การจัดการ</th>
+                    <th class="text-center" style="width: 130px;">การจัดการ</th>
                 </tr>
             </thead>
             <tbody>
@@ -213,20 +213,21 @@
                                     </span>
                                 }
                             </td>
-                            <td class="text-center text-nowrap">
-                                <div class="d-flex justify-content-center align-items-center gap-1">
-                                    <a href="/Debtor/Detail?id=@item.BillNo" class="btn btn-sm btn-outline-primary fw-bold px-2" title="คลิกเพื่อดูรายละเอียดบิลยกเลิก">
-                                        <i class="bi bi-eye"></i> ดูบิลยกเลิก
-                                    </a>
-                                    @if (ViewBag.CanRestoreCancelledBill == true)
-                                    {
-                                        <button type="button" class="btn btn-sm btn-outline-success fw-bold px-2" 
-                                                onclick="openRestoreModal(@item.Id, '@item.BillNo', '@Html.Raw(item.CustomerName.Replace("'", "\\'"))', '@item.OriginalAmount.ToString("N2")')"
-                                                title="คลิกเพื่อกู้คืนบิลยกเลิกกลับเป็นบิลปกติ">
-                                            <i class="bi bi-arrow-counterclockwise"></i> กู้บิลยกเลิก
-                                        </button>
-                                    }
-                                </div>
+                            <td class="text-center">
+                                @if (ViewBag.CanRestoreCancelledBill == true)
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-success fw-bold px-2" 
+                                            onclick="openRestoreModal(@item.Id, '@item.BillNo', '@Html.Raw(item.CustomerName.Replace("'", "\\'"))', '@item.OriginalAmount.ToString("N2")')"
+                                            title="คลิกเพื่อกู้คืนบิลยกเลิกกลับเป็นบิลปกติ">
+                                        <i class="bi bi-arrow-counterclockwise"></i> กู้บิลยกเลิก
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-muted border py-1 px-2" title="สิทธิ์ดูรายงานเท่านั้น ไม่สามารถกู้คืนบิลได้">
+                                        <i class="bi bi-eye"></i> ดูรายงานเท่านั้น
+                                    </span>
+                                }
                             </td>
                         </tr>
                     }
