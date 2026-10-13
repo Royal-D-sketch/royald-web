@@ -18,25 +18,44 @@
 .sales-subnav .subnav-item:hover { background:rgba(255,255,255,0.9); color:#059669; transform:translateY(-1px); }
 .sales-subnav .subnav-item.active { background:#059669; color:white; box-shadow:0 4px 15px rgba(5,150,105,0.3); }
 
-/* KPI Cards */
-.kpi-card { background:#fff; border-radius:16px; padding:20px; box-shadow:0 4px 15px rgba(0,0,0,0.05); display:flex; flex-direction:column; border:1px solid #e2e8f0; position:relative; overflow:hidden; }
-.kpi-title { font-size:0.95rem; font-weight:700; color:#64748b; margin-bottom:8px; }
-.kpi-value { font-size:1.8rem; font-weight:800; margin-bottom:4px; letter-spacing:-0.5px; }
-.kpi-icon { position:absolute; top:20px; right:20px; font-size:2rem; opacity:0.15; }
-.kpi-sub { font-size:0.85rem; font-weight:600; }
-.kpi-sales { border-bottom:4px solid #0ea5e9; } .kpi-sales .kpi-value { color:#0284c7; } .kpi-sales .kpi-icon { color:#0ea5e9; }
-.kpi-collect { border-bottom:4px solid #10b981; } .kpi-collect .kpi-value { color:#059669; } .kpi-collect .kpi-icon { color:#10b981; }
-.kpi-debt { border-bottom:4px solid #f43f5e; } .kpi-debt .kpi-value { color:#e11d48; } .kpi-debt .kpi-icon { color:#f43f5e; }
-.kpi-rate { border-bottom:4px solid #f59e0b; } .kpi-rate .kpi-value { color:#d97706; } .kpi-rate .kpi-icon { color:#f59e0b; }
+/* Executive KPI Cards - Soft Pastel Luxury, Very Easy on the Eyes */
+.kpi-card { background:#fff; border-radius:16px; padding:22px; box-shadow:0 3px 12px rgba(15,23,42,0.04); display:flex; flex-direction:column; border:1px solid #e2e8f0; position:relative; overflow:hidden; transition:all 0.2s ease; }
+.kpi-card:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(15,23,42,0.08); }
+.kpi-title { font-size:0.92rem; font-weight:700; color:#475569; margin-bottom:6px; letter-spacing:-0.2px; }
+.kpi-value { font-size:1.95rem; font-weight:900; margin-bottom:4px; letter-spacing:-0.8px; }
+.kpi-icon { position:absolute; top:22px; right:20px; font-size:2.2rem; opacity:0.12; }
+.kpi-sub { font-size:0.82rem; font-weight:600; color:#64748b; }
+
+.kpi-sales { background:linear-gradient(180deg, #ffffff 0%, #f0f9ff 100%); border-top:3.5px solid #0284c7; } 
+.kpi-sales .kpi-value { color:#0369a1; } .kpi-sales .kpi-icon { color:#0284c7; }
+
+.kpi-collect { background:linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%); border-top:3.5px solid #059669; } 
+.kpi-collect .kpi-value { color:#047857; } .kpi-collect .kpi-icon { color:#059669; }
+
+.kpi-debt { background:linear-gradient(180deg, #ffffff 0%, #fff1f2 100%); border-top:3.5px solid #e11d48; } 
+.kpi-debt .kpi-value { color:#be123c; } .kpi-debt .kpi-icon { color:#e11d48; }
+
+.kpi-rate { background:linear-gradient(180deg, #ffffff 0%, #fffbeb 100%); border-top:3.5px solid #d97706; } 
+.kpi-rate .kpi-value { color:#b45309; } .kpi-rate .kpi-icon { color:#d97706; }
 
 /* Chart Containers */
-.chart-card { background:#fff; border-radius:16px; padding:22px; box-shadow:0 4px 15px rgba(0,0,0,0.05); border:1px solid #e2e8f0; margin-bottom:24px; }
-.chart-header { font-size:1.1rem; font-weight:800; color:#1e293b; margin-bottom:16px; display:flex; align-items:center; }
+.chart-card { background:#fff; border-radius:16px; padding:24px; box-shadow:0 3px 14px rgba(15,23,42,0.04); border:1px solid #e2e8f0; margin-bottom:24px; }
+.chart-header { font-size:1.05rem; font-weight:800; color:#1e293b; margin-bottom:16px; display:flex; align-items:center; }
 
-.insight-card { background:linear-gradient(135deg,#f0fdfa 0%,#f8fafc 100%); border:1px solid #ccfbf1; border-left:5px solid #0d9488; border-radius:12px; padding:18px; box-shadow:0 2px 10px rgba(15,118,110,0.06); line-height:1.65; }
+.insight-card { background:linear-gradient(135deg,#f0fdfa 0%,#f8fafc 100%); border:1px solid #ccfbf1; border-left:4px solid #0d9488; border-radius:12px; padding:18px; box-shadow:0 2px 8px rgba(15,118,110,0.04); line-height:1.65; }
 
-/* Filter Bar */
-.filter-box { background:linear-gradient(135deg,#f8fafc,#f1f5f9); border:1.5px solid #cbd5e1; border-radius:14px; padding:18px; margin-bottom:24px; box-shadow:0 2px 10px rgba(0,0,0,0.04); }
+/* Clean Crisp Filter Bar - Pure White with Soft Slate Border */
+.filter-box { background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:20px; margin-bottom:24px; box-shadow:0 4px 18px rgba(15,23,42,0.04); }
+
+/* Executive Team Pill Buttons */
+.team-pill { border-radius:8px !important; font-weight:700 !important; font-size:0.88rem !important; padding:6px 14px !important; transition:all 0.15s ease-in-out !important; }
+.team-pill-active { background:#065f46 !important; color:#ffffff !important; border-color:#065f46 !important; box-shadow:0 3px 10px rgba(6,95,70,0.25) !important; }
+.team-pill-inactive { background:#ffffff !important; color:#334155 !important; border-color:#cbd5e1 !important; }
+.team-pill-inactive:hover { background:#f8fafc !important; color:#065f46 !important; border-color:#94a3b8 !important; }
+
+/* Cycle Buttons */
+.cycle-btn-active { background:#0284c7 !important; color:#ffffff !important; border-color:#0284c7 !important; box-shadow:0 2px 8px rgba(2,132,199,0.2) !important; font-weight:700 !important; }
+.cycle-btn-inactive { background:#ffffff !important; color:#475569 !important; border-color:#cbd5e1 !important; font-weight:600 !important; }
 
 /* Rep Mini Card in Grid */
 .rep-summary-card { background:#fff; border-radius:12px; border:1px solid #e2e8f0; padding:14px; transition:all 0.2s ease-in-out; }
@@ -101,11 +120,11 @@
             <span class="fw-bold" style="color:#065f46; font-size:1rem;">
                 <i class="bi bi-people-fill text-success me-1"></i> เลือกกลุ่มทีมซุปเปอร์ไวเซอร์:
             </span>
-            <div class="btn-group shadow-sm" role="group" aria-label="Supervisor Teams">
-                <button type="button" class="btn btn-sm btn-outline-secondary fw-bold" id="team-btn-overall" onclick="selectTeam('overall')">🏢 ภาพรวมทั้งบริษัท</button>
-                <button type="button" class="btn btn-sm btn-outline-primary fw-bold" id="team-btn-sunya" onclick="selectTeam('sunya')">👥 ทีมคุณสัญญา</button>
-                <button type="button" class="btn btn-sm btn-outline-success fw-bold" id="team-btn-weeranut" onclick="selectTeam('weeranut')">👥 ทีมคุณวีรนุช</button>
-                <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-bold" id="team-btn-nampetch" onclick="selectTeam('nampetch')">👥 ทีมคุณน้ำเพชร</button>
+            <div class="btn-group" role="group" aria-label="Supervisor Teams">
+                <button type="button" class="btn btn-sm team-pill team-pill-inactive" id="team-btn-overall" onclick="selectTeam('overall')">🏢 ภาพรวมทั้งบริษัท</button>
+                <button type="button" class="btn btn-sm team-pill team-pill-inactive" id="team-btn-sunya" onclick="selectTeam('sunya')">👥 ทีมคุณสัญญา</button>
+                <button type="button" class="btn btn-sm team-pill team-pill-active" id="team-btn-weeranut" onclick="selectTeam('weeranut')">👥 ทีมคุณวีรนุช</button>
+                <button type="button" class="btn btn-sm team-pill team-pill-inactive" id="team-btn-nampetch" onclick="selectTeam('nampetch')">👥 ทีมคุณน้ำเพชร</button>
             </div>
         </div>
 
@@ -131,11 +150,11 @@
         </div>
         <div class="col-md-auto">
             <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="btn btn-outline-primary fw-bold active" id="btn-cycle-25" onclick="setCycleMode('sales25')">
-                    ⚡ รอบฝ่ายขาย (ตัดยอดวันที่ 25)
+                <button type="button" class="btn cycle-btn-active" id="btn-cycle-25" onclick="setCycleMode('sales25')">
+                    <i class="bi bi-lightning-charge-fill me-1"></i> รอบฝ่ายขาย (ตัดยอดวันที่ 25)
                 </button>
-                <button type="button" class="btn btn-outline-secondary fw-bold" id="btn-cycle-cal" onclick="setCycleMode('calendar')">
-                    📅 สิ้นเดือนปฏิทิน (1 - 30/31)
+                <button type="button" class="btn cycle-btn-inactive" id="btn-cycle-cal" onclick="setCycleMode('calendar')">
+                    <i class="bi bi-calendar-event me-1"></i> สิ้นเดือนปฏิทิน (1 - 30/31)
                 </button>
             </div>
         </div>
@@ -152,8 +171,8 @@
             </select>
         </div>
         <div class="col-md text-end">
-            <span class="badge shadow-sm" id="activeFilterBadge" style="background:#e0f2fe; color:#0369a1; font-size:0.85rem; padding:6px 12px; border-radius:8px; border:1px solid #bae6fd;">
-                <i class="bi bi-info-circle me-1"></i> กำลังแสดง: ทีมคุณวีรนุช | รอบฝ่ายขายวันที่ 25
+            <span class="badge" id="activeFilterBadge" style="background:#ecfdf5; color:#065f46; font-size:0.86rem; padding:8px 14px; border-radius:10px; border:1px solid #a7f3d0; font-weight:700;">
+                <i class="bi bi-check-circle-fill text-success me-1"></i> กำลังแสดง: ทีมคุณวีรนุช | รอบฝ่ายขายวันที่ 25
             </span>
         </div>
     </div>
@@ -322,11 +341,11 @@ function selectTeam(teamKey) {
     currentTeam = teamKey;
     selectedIndividualId = 'team-all';
     
-    // Update active button state
+    // Update active button state with soothing Executive Green/White
     ['overall', 'sunya', 'weeranut', 'nampetch'].forEach(k => {
         const btn = document.getElementById('team-btn-' + k);
         if (btn) {
-            btn.className = (k === teamKey) ? 'btn btn-sm btn-dark text-white fw-bold shadow-sm' : 'btn btn-sm btn-outline-secondary fw-bold';
+            btn.className = (k === teamKey) ? 'btn btn-sm team-pill team-pill-active' : 'btn btn-sm team-pill team-pill-inactive';
         }
     });
 
@@ -347,11 +366,11 @@ function setCycleMode(mode) {
     const b25 = document.getElementById('btn-cycle-25');
     const bCal = document.getElementById('btn-cycle-cal');
     if (mode === 'sales25') {
-        b25.className = 'btn btn-outline-primary fw-bold active';
-        bCal.className = 'btn btn-outline-secondary fw-bold';
+        b25.className = 'btn cycle-btn-active';
+        bCal.className = 'btn cycle-btn-inactive';
     } else {
-        bCal.className = 'btn btn-outline-primary fw-bold active';
-        b25.className = 'btn btn-outline-secondary fw-bold';
+        bCal.className = 'btn cycle-btn-active';
+        b25.className = 'btn cycle-btn-inactive';
     }
     updateDashboardView();
 }
