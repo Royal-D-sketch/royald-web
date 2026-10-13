@@ -91,9 +91,16 @@
                     </div>
                 }
             </div>
-            <div class="mt-2 text-end">
-                <button class="btn btn-sm btn-outline-secondary" onclick="document.querySelectorAll('.rep-checkbox').forEach(cb => cb.checked = false); updateCompareChart();">เคลียร์ทั้งหมด</button>
-                <button class="btn btn-sm btn-outline-primary" onclick="document.querySelectorAll('.rep-checkbox').forEach(cb => cb.checked = true); updateCompareChart();">เลือกทั้งหมด</button>
+            <div class="mt-2 d-flex flex-wrap gap-1 align-items-center justify-content-between">
+                <div class="btn-group btn-group-sm" role="group" aria-label="Supervisor Teams">
+                    <button type="button" class="btn btn-outline-secondary" onclick="filterByTeam('all')" title="เลือกทุกคน">ทุกคน</button>
+                    <button type="button" class="btn btn-outline-primary fw-bold" onclick="filterByTeam('sunya')" title="ทีมคุณสัญญา">👥 ทีมสัญญา</button>
+                    <button type="button" class="btn btn-outline-success fw-bold" onclick="filterByTeam('weeranut')" title="ทีมคุณวีรนุช">👥 ทีมวีรนุช</button>
+                    <button type="button" class="btn btn-outline-warning text-dark fw-bold" onclick="filterByTeam('nampetch')" title="ทีมคุณน้ำเพชร">👥 ทีมน้ำเพชร</button>
+                </div>
+                <div class="d-flex gap-1">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.querySelectorAll('.rep-checkbox').forEach(cb => cb.checked = false); updateCompareChart();">ล้าง</button>
+                </div>
             </div>
         </div>
         
@@ -102,7 +109,7 @@
                 <i class="bi bi-calendar-event text-success"></i> เลือกข้อมูลเดือนที่ต้องการ
             </label>
             <select class="form-select fw-bold shadow-sm" id="monthSelector" onchange="updateCompareChart()" style="border-radius:10px;">
-                <option value="-1">ทุกเดือน (รวมเฉลี่ยยอดรวม 8 เดือน)</option>
+                <option value="-1">ทุกเดือน (รวมสะสมตลอดปี YTD)</option>
                 @for(int i=0; i<Model.Months.Count; i++)
                 {
                     @if(i==0){<option value="@i" selected>@Model.Months[i]</option>}else{<option value="@i">@Model.Months[i]</option>}
@@ -151,6 +158,54 @@ const rawRepsData = [];
     });
     </text>
 }
+
+
+
+const supervisorTeams = {
+
+    sunya: ["สัญญา", "ธัญญ์ลักษณ์", "ธนาศักดิ์", "สัญญา LN", "สัญญา N", "อภิญญา", "ชาติวุฒิ N", "121.1"],
+
+    weeranut: ["วีรนุช", "วีรนุช T", "วีรนุช 8", "ชุลีวรรณ W", "ชุลีวรรณ", "สัญญา T", "124.0", "129.2"],
+
+    nampetch: ["ณัฐพันธ์", "ธนิตศักดิ์", "น้ำเพชร", "บุญเสริม", "วัชรี", "125.1"]
+
+};
+
+
+
+function filterByTeam(teamKey) {
+
+    const checkboxes = document.querySelectorAll('.rep-checkbox');
+
+    if (teamKey === 'all') {
+
+        checkboxes.forEach(cb => cb.checked = true);
+
+    } else {
+
+        const teamMembers = supervisorTeams[teamKey] || [];
+
+        checkboxes.forEach(cb => {
+
+            const repObj = rawRepsData[parseInt(cb.value)];
+
+            if (!repObj) return;
+
+            const rName = repObj.name.trim();
+
+            const isMatch = teamMembers.some(m => rName === m || rName.includes(m) || m.includes(rName));
+
+            cb.checked = isMatch;
+
+        });
+
+    }
+
+    updateCompareChart();
+
+}
+
+
 
 let compareChart;
 

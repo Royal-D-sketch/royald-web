@@ -286,17 +286,17 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
             <!-- กล่องที่ 3: หนี้กลุ่มตลาดทั่วไป 3 กลุ่ม (66.77M) -->
             <div class="col-12 col-md-4">
                 <div class="p-3 rounded-3 h-100 transition-all cursor-pointer border" id="btn-gen-out" onclick="setFilter('general', 'general')"
-                     style="background: #f0fdf4; border-color: #bbf7d0 !important; cursor: pointer; box-shadow: 0 2px 8px rgba(34, 197, 94, 0.08);"
+                     style="background: #f5f3ff; border-color: #ddd6fe !important; cursor: pointer; box-shadow: 0 2px 8px rgba(124, 58, 237, 0.08);"
                      title="คลิกเพื่อดูหนี้ตลาดทั่วไป 3 กลุ่ม (ร้านค้า/ยี่ปั๊ว/ซาปั๊ว/ตจว.)">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <div class="small fw-bold" style="color: #15803d;"><i class="bi bi-shop-window text-success me-1"></i> หนี้กลุ่มตลาดทั่วไป (3 กลุ่ม)</div>
-                            <div class="fs-4 fw-black my-1" style="color: #16a34a;" id="hdr-gen-amt">66,771,653.37</div>
-                            <div class="small fw-semibold" style="color: #14532d;"><span id="hdr-gen-cnt">3,686</span> บิล <span class="badge bg-success ms-1">75.74%</span></div>
+                            <div class="small fw-bold" style="color: #6d28d9;"><i class="bi bi-shop-window me-1" style="color: #7c3aed;"></i> หนี้กลุ่มตลาดทั่วไป (3 กลุ่ม)</div>
+                            <div class="fs-4 fw-black my-1" style="color: #7c3aed;" id="hdr-gen-amt">66,771,653.37</div>
+                            <div class="small fw-semibold" style="color: #5b21b6;"><span id="hdr-gen-cnt">3,686</span> บิล <span class="badge ms-1" style="background: #7c3aed; color: #fff;">75.74%</span></div>
                         </div>
-                        <i class="bi bi-arrow-right-circle fs-4 text-success opacity-75"></i>
+                        <i class="bi bi-arrow-right-circle fs-4 opacity-75" style="color: #7c3aed;"></i>
                     </div>
-                    <div class="mt-2 pt-2 border-top text-muted" style="font-size:0.75rem; border-color: #dcfce7 !important;">
+                    <div class="mt-2 pt-2 border-top text-muted" style="font-size:0.75rem; border-color: #ede9fe !important;">
                         หนี้ที่ฝ่ายขาย/หน่วยรถต้องติดตามจัดเก็บจริง
                     </div>
                 </div>
@@ -802,7 +802,7 @@ function setFilter(grp, sub, autoScroll = true) {
         if (el) el.style.boxShadow = '0 0 0 3px #38bdf8';
     } else if (sub === 'general' || grp === 'general') {
         const el = document.getElementById('btn-gen-out');
-        if (el) el.style.boxShadow = '0 0 0 3px #34d399';
+        if (el) el.style.boxShadow = '0 0 0 3px #8b5cf6';
     } else if (grp !== 'all' && sub !== 'all') {
         const targetBtn = document.getElementById(`btn-g${grp}-${sub}`);
         if (targetBtn) targetBtn.classList.add('active-filter');
