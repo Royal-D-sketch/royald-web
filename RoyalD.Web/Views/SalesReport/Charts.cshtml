@@ -1,7 +1,7 @@
-﻿@using RoyalD.Web.Services
+@using RoyalD.Web.Services
 @model RoyalD.Web.Services.AnnualPerformanceViewModel
 @{
-    ViewData["Title"] = "2. กราฟผลงานรายผู้แทน (Charts)";
+    ViewData["Title"] = "2. กราฟผลงานและเปรียบเทียบผู้แทนขาย (Charts)";
     var months = Model.Months;
     var allReps = Model.RepReports;
     var overall = Model.OverallCompany;
@@ -35,8 +35,15 @@
 
 .insight-card { background:linear-gradient(135deg,#f0fdfa 0%,#f8fafc 100%); border:1px solid #ccfbf1; border-left:5px solid #0d9488; border-radius:12px; padding:18px; box-shadow:0 2px 10px rgba(15,118,110,0.06); line-height:1.65; }
 
+/* Filter Bar */
+.filter-box { background:linear-gradient(135deg,#f8fafc,#f1f5f9); border:1.5px solid #cbd5e1; border-radius:14px; padding:18px; margin-bottom:24px; box-shadow:0 2px 10px rgba(0,0,0,0.04); }
+
+/* Rep Mini Card in Grid */
+.rep-summary-card { background:#fff; border-radius:12px; border:1px solid #e2e8f0; padding:14px; transition:all 0.2s ease-in-out; }
+.rep-summary-card:hover { transform:translateY(-2px); box-shadow:0 6px 15px rgba(0,0,0,0.08); border-color:#93c5fd; }
+
 @@media print {
-    .no-print, .sales-subnav, nav, .btn, .export-bar { display:none !important; }
+    .no-print, .sales-subnav, nav, .btn, .export-bar, .filter-box { display:none !important; }
     body { background:#fff; font-size:10pt; }
     .kpi-card, .chart-card { box-shadow:none !important; border:1px solid #ccc !important; }
 }
@@ -68,9 +75,9 @@
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 export-bar">
     <div>
         <h3 class="mb-1 fw-bold" style="color:#065f46;">
-            <i class="bi bi-graph-up" style="color:#059669;"></i> กราฟผลงานรายบุคคล
+            <i class="bi bi-graph-up" style="color:#059669;"></i> กราฟผลงานและเปรียบเทียบผู้แทนขาย (Sales & Credit Dashboard)
         </h3>
-        <span class="text-muted fw-semibold">แสดงผลแบบ Infographic Dashboard สำหรับภาพรวมและรายบุคคล</span>
+        <span class="text-muted fw-semibold">วิเคราะห์เปรียบเทียบยอดขาย หนี้คงค้าง และสุขภาพลูกหนี้ รายทีมและรายบุคคล รองรับรอบปิดยอดวันที่ 25</span>
     </div>
     
     @if (canDownload)
@@ -86,42 +93,80 @@
     }
 </div>
 
-<!-- Rep Selector -->
-<div class="card border-0 shadow-sm mb-4 no-print" style="background:#f0fdf4; border:1.5px solid #a7f3d0 !important; border-radius:14px;">
-    <div class="card-body py-2 px-3">
-        <div class="row align-items-center g-2">
-            <div class="col-md-auto">
-                <span class="fw-bold" style="color:#065f46; font-size:0.95rem;">
-                    <i class="bi bi-person-badge-fill me-1 text-success"></i> เลือกผู้แทนขาย:
-                </span>
+<!-- Super Filter Bar: เลือกทีมซุปเปอร์ไวเซอร์ + เลือกรอบวันที่ 25 / สิ้นเดือน -->
+<div class="filter-box no-print">
+    <!-- แถวที่ 1: เลือกทีมซุปเปอร์ไวเซอร์ -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-3 border-bottom mb-3">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="fw-bold" style="color:#065f46; font-size:1rem;">
+                <i class="bi bi-people-fill text-success me-1"></i> เลือกกลุ่มทีมซุปเปอร์ไวเซอร์:
+            </span>
+            <div class="btn-group shadow-sm" role="group" aria-label="Supervisor Teams">
+                <button type="button" class="btn btn-sm btn-outline-secondary fw-bold" id="team-btn-overall" onclick="selectTeam('overall')">🏢 ภาพรวมทั้งบริษัท</button>
+                <button type="button" class="btn btn-sm btn-outline-primary fw-bold" id="team-btn-sunya" onclick="selectTeam('sunya')">👥 ทีมคุณสัญญา</button>
+                <button type="button" class="btn btn-sm btn-outline-success fw-bold" id="team-btn-weeranut" onclick="selectTeam('weeranut')">👥 ทีมคุณวีรนุช</button>
+                <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-bold" id="team-btn-nampetch" onclick="selectTeam('nampetch')">👥 ทีมคุณน้ำเพชร</button>
             </div>
-            <div class="col-md-4 col-lg-3">
-                <select class="form-select form-select-sm fw-bold shadow-sm" id="repSelectDropdown" onchange="selectRep(this.value)" style="border:2px solid #10b981; border-radius:10px; color:#065f46;" @(isSalesRepRole ? "disabled" : "")>
-                    @if (!isSalesRepRole) { <option value="overall" selected>🏢 ภาพรวมทุกคน (รวมทั้งบริษัท)</option> }
-                    @for (int ri = 0; ri < allReps.Count; ri++)
-                    {
-                        var repName = allReps[ri].SalesRep;
-                        // For sales rep role, select only their own data
-                        var currentUserName = User.FindFirst("FullName")?.Value ?? User.Identity.Name;
-                        if (isSalesRepRole && repName == currentUserName) { <option value="@ri" selected>👤 @repName</option> }
-                        else if (!isSalesRepRole) { <option value="@ri">👤 @repName</option> }
-                    }
-                </select>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-muted fw-bold small">หรือเลือกเฉพาะบุคคล:</span>
+            <select class="form-select form-select-sm fw-bold shadow-sm" id="repSelectDropdown" onchange="selectIndividualRep(this.value)" style="border:1.5px solid #10b981; border-radius:8px; min-width:180px;" @(isSalesRepRole ? "disabled" : "")>
+                <option value="team-all" selected>👥 ทุกคนในทีมที่เลือก</option>
+                @for (int ri = 0; ri < allReps.Count; ri++)
+                {
+                    var repName = allReps[ri].SalesRep;
+                    <option value="@ri">👤 @repName</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <!-- แถวที่ 2: เลือกรอบการตัดยอด (รอบฝ่ายขายวันที่ 25 vs สิ้นเดือนปฏิทิน vs เลือกเดือน) -->
+    <div class="row align-items-center g-3">
+        <div class="col-md-auto">
+            <span class="fw-bold text-dark small">
+                <i class="bi bi-calendar-check text-primary me-1"></i> รอบการตัดยอด:
+            </span>
+        </div>
+        <div class="col-md-auto">
+            <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="btn btn-outline-primary fw-bold active" id="btn-cycle-25" onclick="setCycleMode('sales25')">
+                    ⚡ รอบฝ่ายขาย (ตัดยอดวันที่ 25)
+                </button>
+                <button type="button" class="btn btn-outline-secondary fw-bold" id="btn-cycle-cal" onclick="setCycleMode('calendar')">
+                    📅 สิ้นเดือนปฏิทิน (1 - 30/31)
+                </button>
             </div>
+        </div>
+        <div class="col-md-auto">
+            <span class="text-muted small fw-bold">ช่วงเดือน:</span>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select form-select-sm fw-bold shadow-sm" id="cycleMonthSelect" onchange="updateDashboardView()" style="border-radius:8px;">
+                <option value="all" selected>สะสมตลอดปี 2569 (YTD)</option>
+                @for(int i=0; i<Model.Months.Count; i++)
+                {
+                    <option value="@i">@Model.Months[i]</option>
+                }
+            </select>
+        </div>
+        <div class="col-md text-end">
+            <span class="badge shadow-sm" id="activeFilterBadge" style="background:#e0f2fe; color:#0369a1; font-size:0.85rem; padding:6px 12px; border-radius:8px; border:1px solid #bae6fd;">
+                <i class="bi bi-info-circle me-1"></i> กำลังแสดง: ทีมคุณวีรนุช | รอบฝ่ายขายวันที่ 25
+            </span>
         </div>
     </div>
 </div>
 
 <div id="chart-capture-area">
-    <!-- Dynamic Content Rendered via JS -->
-    
     <!-- 4 KPI Cards -->
     <div class="row g-3 mb-4">
         <div class="col-md-3 col-sm-6">
             <div class="kpi-card kpi-sales">
                 <div class="kpi-title">ยอดขายรวมทั้งหมด (บาท)</div>
                 <div class="kpi-value" id="kpi-sales-val">0</div>
-                <div class="kpi-sub text-muted">สะสมตลอดปี 2569 (YTD)</div>
+                <div class="kpi-sub text-muted" id="kpi-sales-sub">สะสมตลอดปี 2569 (YTD)</div>
                 <i class="bi bi-bag-fill kpi-icon"></i>
             </div>
         </div>
@@ -129,7 +174,7 @@
             <div class="kpi-card kpi-collect">
                 <div class="kpi-title">ยอดเก็บเงินรวม (บาท)</div>
                 <div class="kpi-value" id="kpi-collect-val">0</div>
-                <div class="kpi-sub text-muted">จากยอดขายทั้งหมด</div>
+                <div class="kpi-sub text-muted" id="kpi-collect-sub">จากยอดขายทั้งหมด</div>
                 <i class="bi bi-cash-coin kpi-icon"></i>
             </div>
         </div>
@@ -137,7 +182,7 @@
             <div class="kpi-card kpi-debt">
                 <div class="kpi-title">หนี้คงค้างรวม (บาท)</div>
                 <div class="kpi-value" id="kpi-debt-val">0</div>
-                <div class="kpi-sub text-muted">ที่ยังเรียกเก็บไม่ได้</div>
+                <div class="kpi-sub text-muted" id="kpi-debt-sub">ที่ยังเรียกเก็บไม่ได้</div>
                 <i class="bi bi-exclamation-octagon-fill kpi-icon"></i>
             </div>
         </div>
@@ -151,47 +196,68 @@
         </div>
     </div>
 
-    <!-- Charts Row -->
+    <!-- Charts Row 1: กราฟแท่งเปรียบเทียบผู้แทนทุกคนในทีมแต่ละเดือน + โดนัทความสำเร็จ -->
     <div class="row g-4 mb-4 align-items-stretch">
         <div class="col-lg-8">
             <div class="chart-card h-100 mb-0 d-flex flex-column">
-                <div class="chart-header">
-                    <i class="bi bi-bar-chart-fill text-primary me-2"></i> กราฟแท่งเปรียบเทียบยอดขาย vs เก็บเงิน vs หนี้คงค้าง
+                <div class="chart-header justify-content-between flex-wrap gap-2">
+                    <div>
+                        <i class="bi bi-bar-chart-fill text-primary me-2"></i> 
+                        <span id="mainChartTitle">กราฟแท่งเปรียบเทียบยอดขายรายคนในแต่ละเดือน (Monthly Team Breakdown)</span>
+                    </div>
+                    <span class="badge bg-light text-dark border px-2 py-1 small" id="chartCycleBadge">
+                        ตัดรอบยอดขายทุกวันที่ 25
+                    </span>
                 </div>
-                <div style="position:relative; flex-grow:1; min-height:280px;">
+                <div style="position:relative; flex-grow:1; min-height:300px;">
                     <canvas id="mainBarChart"></canvas>
                 </div>
-                <div class="insight-card mt-4" id="main-insight-box"></div>
+                <div class="insight-card mt-3" id="main-insight-box">
+                    <!-- Dynamic Insight -->
+                </div>
             </div>
         </div>
         <div class="col-lg-4">
             <div class="chart-card h-100 mb-0 d-flex flex-column">
                 <div class="chart-header">
-                    <i class="bi bi-speedometer text-success me-2"></i> สัดส่วนความสำเร็จ
+                    <i class="bi bi-pie-chart-fill text-success me-2"></i> สัดส่วนประสิทธิภาพการจัดเก็บ
                 </div>
                 <div style="position:relative; flex-grow:1; display:flex; justify-content:center; align-items:center; min-height:220px;">
                     <canvas id="doughnutChart"></canvas>
                 </div>
-                <div class="text-center mt-3 text-muted small fw-bold">
-                    * อัตราส่วน เปรียบเทียบยอดเก็บได้กับหนี้ค้าง
+                <div class="text-center mt-3 text-muted small fw-bold" id="doughnutSubtext">
+                    * เปรียบเทียบสัดส่วนยอดเก็บได้สำเร็จ vs หนี้คงค้าง
                 </div>
             </div>
         </div>
     </div>
-    
-    <div class="row g-4 mb-2">
+
+    <!-- Charts Row 2: เส้นแนวโน้ม % เก็บเงินรายเดือน -->
+    <div class="row g-4 mb-4">
         <div class="col-12">
-            <div class="chart-card">
+            <div class="chart-card mb-0">
                 <div class="chart-header">
-                    <i class="bi bi-graph-up-arrow text-warning me-2"></i> เส้นแนวโน้มประสิทธิภาพการเก็บเงิน (%) รายเดือน
+                    <i class="bi bi-graph-up-arrow text-warning me-2"></i> เส้นแนวโน้มประสิทธิภาพการเก็บเงิน (%) รายเดือน เทียบเป้าหมายบริษัท
                 </div>
-                <div style="position:relative; height:250px;">
+                <div style="position:relative; height:240px;">
                     <canvas id="trendLineChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Individual Sales Rep Performance & Credit Assessment Notes (คำอธิบายของผู้แทนขายแต่ละคน) -->
+    <div class="chart-card mb-4" id="repAssessmentSection">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-person-lines-fill text-primary me-2"></i>สรุปผลงานและคำอธิบายสถานะลูกหนี้ของผู้แทนขายแต่ละคน (Individual Assessment Notes)
+            </h5>
+            <span class="small text-muted">ประเมินผลตามยอดขาย รอบเก็บเงิน และความเสี่ยงหนี้ค้าง</span>
+        </div>
+        <div class="row g-3" id="repCardsGrid">
+            <!-- Dynamic Rendered Rep Cards with Assessment Notes -->
+        </div>
+    </div>
 </div>
 
 @section Scripts {
@@ -199,156 +265,407 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@@1.4.1/dist/html2canvas.min.js"></script>
 <script>
 const monthsLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Months));
-const repsDataStore = {
-    "overall": {
-        name: "ภาพรวมทั้งหมด",
-        sales: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OverallCompany.MonthlyData.Select(m => m.TotalSales).ToList())),
-        collected: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OverallCompany.MonthlyData.Select(m => m.TotalCollected).ToList())),
-        debt: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OverallCompany.MonthlyData.Select(m => m.Outstanding).ToList())),
-        rates: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OverallCompany.MonthlyData.Select(m => m.CollectionRate).ToList())),
-        totSales: @Model.OverallCompany.TotalSales,
-        totCol: @Model.OverallCompany.TotalCollected,
-        totDebt: @Model.OverallCompany.TotalOutstanding,
-        totRate: @Model.OverallCompany.OverallCollectionRate
-    }
-    @for (int ri = 0; ri < allReps.Count; ri++)
-    {
-        var rep = allReps[ri];
-        <text>, "@ri": {
-            name: "@rep.SalesRep",
-            sales: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.TotalSales).ToList())),
-            collected: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.TotalCollected).ToList())),
-            debt: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.Outstanding).ToList())),
-            rates: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.CollectionRate).ToList())),
-            totSales: @rep.TotalSales,
-            totCol: @rep.TotalCollected,
-            totDebt: @rep.TotalOutstanding,
-            totRate: @rep.OverallCollectionRate
-        }</text>
-    }
+const allRepsList = [];
+
+@for (int ri = 0; ri < allReps.Count; ri++)
+{
+    var rep = allReps[ri];
+    <text>
+    allRepsList.push({
+        id: @ri,
+        name: "@rep.SalesRep",
+        sales: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.TotalSales).ToList())),
+        collected: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.TotalCollected).ToList())),
+        debt: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.Outstanding).ToList())),
+        rates: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.CollectionRateOnBase).ToList())),
+        totSales: @rep.TotalSales,
+        totCol: @rep.TotalCollected,
+        totDebt: @rep.TotalOutstanding,
+        totRate: @rep.OverallCollectionRateOnBase,
+        overdue120: @rep.TotalOverdue120
+    });
+    </text>
+}
+
+// Supervisor Teams Definition
+const supervisorTeams = {
+    overall: allRepsList.map(r => r.name),
+    sunya: ["สัญญา", "ธัญญ์ลักษณ์", "ธนาศักดิ์", "สัญญา LN", "สัญญา N", "อภิญญา", "ชาติวุฒิ N", "121.1"],
+    weeranut: ["วีรนุช", "วีรนุช T", "วีรนุช 8", "ชุลีวรรณ W", "ชุลีวรรณ", "สัญญา T", "124.0", "129.2"],
+    nampetch: ["ณัฐพันธ์", "ธนิตศักดิ์", "น้ำเพชร", "บุญเสริม", "วัชรี", "125.1"]
 };
 
-let mainBarChart, doughnutChart, trendLineChart;
+let currentTeam = 'weeranut';
+let currentCycleMode = 'sales25'; // 'sales25' หรือ 'calendar'
+let selectedIndividualId = 'team-all';
+
+let mainBarChart = null;
+let doughnutChart = null;
+let trendLineChart = null;
+
+const repColors = [
+    '#0284c7', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', 
+    '#06b6d4', '#f97316', '#6366f1', '#14b8a6', '#84cc16'
+];
 
 function formatNum(num) {
     if (num >= 1000000) return (num/1000000).toFixed(2) + 'M';
     if (num >= 1000) return (num/1000).toFixed(1) + 'K';
-    return num.toLocaleString('th-TH');
+    return Number(num).toLocaleString('th-TH');
 }
 
-function updateDashboard(key) {
-    const d = repsDataStore[key];
-    if (!d) return;
+function formatMoney(num) {
+    return Number(num).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
-    // 1. Update KPIs
-    document.getElementById('kpi-sales-val').innerText = formatNum(d.totSales);
-    document.getElementById('kpi-collect-val').innerText = formatNum(d.totCol);
-    document.getElementById('kpi-debt-val').innerText = formatNum(d.totDebt);
+function selectTeam(teamKey) {
+    currentTeam = teamKey;
+    selectedIndividualId = 'team-all';
     
-    const rateEl = document.getElementById('kpi-rate-val');
-    const rateSub = document.getElementById('kpi-rate-sub');
-    rateEl.innerText = d.totRate + '%';
-    if(d.totRate >= 85) { rateEl.style.color = '#059669'; rateSub.innerHTML = '<span class="text-success">ประเมิน: ดีเยี่ยม ผ่านเกณฑ์</span>'; }
-    else if(d.totRate >= 50) { rateEl.style.color = '#d97706'; rateSub.innerHTML = '<span class="text-warning">ประเมิน: ปานกลาง (เฝ้าระวัง)</span>'; }
-    else { rateEl.style.color = '#e11d48'; rateSub.innerHTML = '<span class="text-danger fw-bold">ประเมิน: ต่ำกว่าเกณฑ์ ต้องเร่งด่วน!</span>'; }
+    // Update active button state
+    ['overall', 'sunya', 'weeranut', 'nampetch'].forEach(k => {
+        const btn = document.getElementById('team-btn-' + k);
+        if (btn) {
+            btn.className = (k === teamKey) ? 'btn btn-sm btn-dark text-white fw-bold shadow-sm' : 'btn btn-sm btn-outline-secondary fw-bold';
+        }
+    });
 
-    // 2. Auto Insight
-    const insightEl = document.getElementById('main-insight-box');
-    const maxSale = Math.max(...d.sales);
-    const maxIdx = d.sales.indexOf(maxSale);
-    let msg = `<b>สรุปยอดประจำตัวผู้แทน (${d.name}):</b> ยอดขายสูงสุดเกิดขึ้นในเดือน <b>${monthsLabels[maxIdx]}</b> (${maxSale.toLocaleString('th-TH')} บาท) <br>`;
-    msg += `ยอดเก็บรวม <b>${d.totCol.toLocaleString('th-TH')}</b> บาท คิดเป็น <b>${d.totRate}%</b> ของยอดขาย `;
-    if(d.totRate < 85) msg += `<span class="text-danger fw-bold">ซึ่งยังต่ำกว่าเป้าหมาย 85% มีหนี้ค้างอีก ${d.totDebt.toLocaleString('th-TH')} บาท ที่ต้องติดตาม</span>`;
-    else msg += `<span class="text-success fw-bold">อยู่ในเกณฑ์ดีเยี่ยม (≥ 85%)</span>`;
-    insightEl.innerHTML = `<i class="bi bi-megaphone-fill text-warning me-2"></i> ${msg}`;
+    // Reset individual dropdown
+    const dd = document.getElementById('repSelectDropdown');
+    if (dd) dd.value = 'team-all';
 
-    // 3. Update Bar Chart
-    if (mainBarChart) {
-        mainBarChart.data.datasets[0].data = d.sales;
-        mainBarChart.data.datasets[1].data = d.collected;
-        mainBarChart.data.datasets[2].data = d.debt;
-        mainBarChart.update();
-    } else {
-        const ctx1 = document.getElementById('mainBarChart');
-        mainBarChart = new Chart(ctx1, {
-            type: 'bar',
-            data: {
-                labels: monthsLabels,
-                datasets: [
-                    { label: 'ยอดขาย', data: d.sales, backgroundColor: '#38bdf8', borderRadius:4 },
-                    { label: 'เก็บเงินได้', data: d.collected, backgroundColor: '#34d399', borderRadius:4 },
-                    { label: 'หนี้ค้าง', data: d.debt, backgroundColor: '#fb7185', borderRadius:4 }
-                ]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: c => c.dataset.label + ': ' + c.parsed.y.toLocaleString('th-TH') } } },
-                scales: { y: { beginAtZero:true, ticks: { callback: v => formatNum(v) } } }
-            }
-        });
-    }
-
-    // 4. Update Doughnut Chart
-    if (doughnutChart) {
-        doughnutChart.data.datasets[0].data = [d.totCol, d.totDebt];
-        doughnutChart.update();
-    } else {
-        const ctx2 = document.getElementById('doughnutChart');
-        doughnutChart = new Chart(ctx2, {
-            type: 'doughnut',
-            data: {
-                labels: ['เก็บได้สำเร็จ', 'หนี้คงค้าง'],
-                datasets: [{ data: [d.totCol, d.totDebt], backgroundColor: ['#10b981', '#f43f5e'], borderWidth:2, borderColor:'#fff', hoverOffset:4 }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false, cutout: '65%',
-                plugins: { legend: { position:'bottom' } }
-            }
-        });
-    }
-
-    // 5. Update Line Chart
-    if (trendLineChart) {
-        trendLineChart.data.datasets[0].data = d.rates;
-        trendLineChart.update();
-    } else {
-        const ctx3 = document.getElementById('trendLineChart');
-        trendLineChart = new Chart(ctx3, {
-            type: 'line',
-            data: {
-                labels: monthsLabels,
-                datasets: [
-                    { label: '% เก็บเงิน', data: d.rates, borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,0.1)', borderWidth:3, pointBackgroundColor:'#f59e0b', pointRadius:5, fill:true, tension:0.4 },
-                    { label: 'เกณฑ์ (85%)', data: monthsLabels.map(()=>85), borderColor:'#ef4444', borderDash:[5,5], borderWidth:2, pointRadius:0, fill:false }
-                ]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { position: 'top' } },
-                scales: { y: { min:0, max:100, ticks: { callback: v => v + '%' } } }
-            }
-        });
-    }
+    updateDashboardView();
 }
 
-function selectRep(val) {
-    updateDashboard(val);
+function selectIndividualRep(repVal) {
+    selectedIndividualId = repVal;
+    updateDashboardView();
+}
+
+function setCycleMode(mode) {
+    currentCycleMode = mode;
+    const b25 = document.getElementById('btn-cycle-25');
+    const bCal = document.getElementById('btn-cycle-cal');
+    if (mode === 'sales25') {
+        b25.className = 'btn btn-outline-primary fw-bold active';
+        bCal.className = 'btn btn-outline-secondary fw-bold';
+    } else {
+        bCal.className = 'btn btn-outline-primary fw-bold active';
+        b25.className = 'btn btn-outline-secondary fw-bold';
+    }
+    updateDashboardView();
+}
+
+function getActiveReps() {
+    if (selectedIndividualId !== 'team-all') {
+        const rep = allRepsList.find(r => r.id === parseInt(selectedIndividualId));
+        return rep ? [rep] : allRepsList;
+    }
+    
+    const teamMembers = supervisorTeams[currentTeam] || [];
+    if (currentTeam === 'overall') return allRepsList;
+    
+    return allRepsList.filter(r => {
+        const rName = r.name.trim();
+        return teamMembers.some(m => rName === m || rName.includes(m) || m.includes(rName));
+    });
+}
+
+function updateDashboardView() {
+    const activeReps = getActiveReps();
+    const mSelect = document.getElementById('cycleMonthSelect');
+    const mVal = mSelect.value;
+    const mIdx = mVal === 'all' ? -1 : parseInt(mVal);
+
+    // Update active badge
+    const teamTitle = currentTeam === 'weeranut' ? 'ทีมคุณวีรนุช' :
+                     (currentTeam === 'sunya' ? 'ทีมคุณสัญญา' :
+                     (currentTeam === 'nampetch' ? 'ทีมคุณน้ำเพชร' : 'ภาพรวมทั้งบริษัท'));
+    const cycleTitle = currentCycleMode === 'sales25' ? 'รอบฝ่ายขายตัดยอด 25' : 'รอบสิ้นเดือนปฏิทิน';
+    const monthTitle = mIdx === -1 ? 'สะสมทั้งปี (YTD)' : monthsLabels[mIdx];
+    document.getElementById('activeFilterBadge').innerHTML = `<i class="bi bi-info-circle me-1"></i> ${teamTitle} | ${cycleTitle} | ${monthTitle}`;
+    document.getElementById('chartCycleBadge').innerText = currentCycleMode === 'sales25' ? 'ตัดรอบยอดขายทุกวันที่ 25' : 'ตัดรอบสิ้นเดือนปฏิทิน';
+
+    // 1. Calculate Aggregates
+    let totalSales = 0, totalCol = 0, totalDebt = 0;
+    activeReps.forEach(r => {
+        totalSales += (mIdx === -1 ? r.totSales : (r.sales[mIdx] || 0));
+        totalCol += (mIdx === -1 ? r.totCol : (r.collected[mIdx] || 0));
+        totalDebt += (mIdx === -1 ? r.totDebt : (r.debt[mIdx] || 0));
+    });
+    const avgRate = totalSales > 0 ? Math.round(totalCol / totalSales * 100) : 0;
+
+    // 2. Render KPIs
+    document.getElementById('kpi-sales-val').innerText = formatNum(totalSales);
+    document.getElementById('kpi-collect-val').innerText = formatNum(totalCol);
+    document.getElementById('kpi-debt-val').innerText = formatNum(totalDebt);
+    
+    const rateValEl = document.getElementById('kpi-rate-val');
+    const rateSubEl = document.getElementById('kpi-rate-sub');
+    rateValEl.innerText = avgRate + '%';
+    if (avgRate >= 60) {
+        rateValEl.style.color = '#059669';
+        rateSubEl.innerHTML = '<span class="text-success fw-bold">ประเมิน: ผลงานดีเยี่ยม ผ่านเกณฑ์ ✓</span>';
+    } else if (avgRate >= 40) {
+        rateValEl.style.color = '#d97706';
+        rateSubEl.innerHTML = '<span class="text-warning fw-bold">ประเมิน: ปานกลาง (เฝ้าระวังบิลค้าง)</span>';
+    } else {
+        rateValEl.style.color = '#e11d48';
+        rateSubEl.innerHTML = '<span class="text-danger fw-bold">ประเมิน: ต่ำกว่าเกณฑ์ ต้องเร่งรัดด่วน! ⚠️</span>';
+    }
+
+    // 3. Render Main Bar Chart (Monthly breakdown per rep)
+    renderMainBarChart(activeReps, mIdx);
+
+    // 4. Render Doughnut Chart
+    renderDoughnutChart(totalCol, totalDebt);
+
+    // 5. Render Trend Line Chart
+    renderTrendLineChart(activeReps);
+
+    // 6. Render Individual Assessment Cards
+    renderIndividualAssessmentCards(activeReps, mIdx);
+
+    // 7. Auto Smart Insight
+    renderSmartInsight(activeReps, teamTitle, totalSales, totalDebt, avgRate);
+}
+
+function renderMainBarChart(activeReps, mIdx) {
+    const ctx = document.getElementById('mainBarChart');
+    if (mainBarChart) mainBarChart.destroy();
+
+    let chartLabels = [];
+    let datasets = [];
+
+    if (mIdx === -1) {
+        // Show all months on X-axis, with bars for each active rep
+        chartLabels = monthsLabels;
+        datasets = activeReps.map((r, idx) => ({
+            label: r.name,
+            data: monthsLabels.map((m, mi) => r.sales[mi] || 0),
+            backgroundColor: repColors[idx % repColors.length],
+            borderRadius: 4
+        }));
+    } else {
+        // Single selected month: show active reps on X-axis with Sales vs Debt bars
+        chartLabels = activeReps.map(r => r.name);
+        datasets = [
+            {
+                label: 'ยอดขาย (' + monthsLabels[mIdx] + ')',
+                data: activeReps.map(r => r.sales[mIdx] || 0),
+                backgroundColor: '#0284c7',
+                borderRadius: 4
+            },
+            {
+                label: 'หนี้คงค้าง',
+                data: activeReps.map(r => r.debt[mIdx] || 0),
+                backgroundColor: '#f43f5e',
+                borderRadius: 4
+            }
+        ];
+    }
+
+    mainBarChart = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: chartLabels, datasets: datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 12 } } },
+                tooltip: {
+                    callbacks: {
+                        label: c => `${c.dataset.label}: ${Number(c.parsed.y).toLocaleString('th-TH')} บาท`
+                    }
+                }
+            },
+            scales: {
+                x: { ticks: { font: { weight: 'bold' } } },
+                y: { beginAtZero: true, ticks: { callback: v => formatNum(v) } }
+            }
+        }
+    });
+}
+
+function renderDoughnutChart(collected, debt) {
+    const ctx = document.getElementById('doughnutChart');
+    if (doughnutChart) doughnutChart.destroy();
+
+    doughnutChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['เก็บเงินสำเร็จ', 'หนี้คงค้าง'],
+            datasets: [{
+                data: [collected, debt],
+                backgroundColor: ['#10b981', '#f43f5e'],
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '68%',
+            plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 12, font: { weight: 'bold' } } },
+                tooltip: {
+                    callbacks: {
+                        label: c => `${c.label}: ${Number(c.parsed).toLocaleString('th-TH')} บาท`
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderTrendLineChart(activeReps) {
+    const ctx = document.getElementById('trendLineChart');
+    if (trendLineChart) trendLineChart.destroy();
+
+    // Average collection rate per month across active reps
+    const avgMonthlyRates = monthsLabels.map((m, mi) => {
+        let sumS = 0, sumC = 0;
+        activeReps.forEach(r => {
+            sumS += (r.sales[mi] || 0);
+            sumC += (r.collected[mi] || 0);
+        });
+        return sumS > 0 ? Math.round(sumC / sumS * 100) : 0;
+    });
+
+    trendLineChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: monthsLabels,
+            datasets: [
+                {
+                    label: '% ประสิทธิภาพจัดเก็บจริง (ทีม)',
+                    data: avgMonthlyRates,
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245,158,11,0.12)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#f59e0b',
+                    pointRadius: 5,
+                    fill: true,
+                    tension: 0.35
+                },
+                {
+                    label: 'เกณฑ์มาตรฐาน (60%)',
+                    data: monthsLabels.map(() => 60),
+                    borderColor: '#10b981',
+                    borderDash: [5, 4],
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'top', labels: { font: { weight: 'bold' } } } },
+            scales: {
+                y: { min: 0, max: 100, ticks: { callback: v => v + '%' } }
+            }
+        }
+    });
+}
+
+function renderIndividualAssessmentCards(activeReps, mIdx) {
+    const grid = document.getElementById('repCardsGrid');
+    let html = '';
+
+    activeReps.forEach(r => {
+        const s = mIdx === -1 ? r.totSales : (r.sales[mIdx] || 0);
+        const c = mIdx === -1 ? r.totCol : (r.collected[mIdx] || 0);
+        const d = mIdx === -1 ? r.totDebt : (r.debt[mIdx] || 0);
+        const rate = s > 0 ? Math.round(c / s * 100) : 0;
+
+        let statusBadge = '';
+        let commentText = '';
+        if (d === 0 && s > 0) {
+            statusBadge = '<span class="badge bg-success">ชำระครบ 100%</span>';
+            commentText = '• ยอดจัดเก็บดีเยี่ยม ไม่มีหนี้ค้างสะสมในรอบ';
+        } else if (rate >= 60) {
+            statusBadge = '<span class="badge bg-success">สุขภาพหนี้ดี (เก็บได้ ' + rate + '%)</span>';
+            commentText = '• ผลการจัดเก็บผ่านเกณฑ์มาตรฐาน หนี้ค้างอยู่ในรอบวางบิลปกติ';
+        } else if (rate >= 30) {
+            statusBadge = '<span class="badge bg-warning text-dark">เฝ้าระวัง (เก็บได้ ' + rate + '%)</span>';
+            commentText = '• มีหนี้คงค้าง ' + formatNum(d) + ' บาท แนะนำให้ติดตามใบวางบิลก่อนรอบปิดยอด 25 ถัดไป';
+        } else {
+            statusBadge = '<span class="badge bg-danger">ต้องเร่งรัดหนี้ด่วน ⚠️</span>';
+            commentText = '• หนี้คงค้างสูง (' + formatMoney(d) + ' บาท) เกินเกณฑ์เฉลี่ยทีม ต้องเร่งรัดเก็บเงินทันที';
+        }
+
+        html += `
+        <div class="col-md-6 col-lg-4">
+            <div class="rep-summary-card h-100 d-flex flex-column justify-content-between shadow-sm">
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold text-dark fs-6"><i class="bi bi-person-circle text-primary me-1"></i> ${r.name}</span>
+                        ${statusBadge}
+                    </div>
+                    <div class="row g-1 text-center py-2 bg-light rounded-3 mb-2">
+                        <div class="col-4 border-end">
+                            <div class="text-muted" style="font-size:0.75rem;">ยอดขาย</div>
+                            <div class="fw-bold text-primary small">${formatNum(s)}</div>
+                        </div>
+                        <div class="col-4 border-end">
+                            <div class="text-muted" style="font-size:0.75rem;">ยอดเก็บ</div>
+                            <div class="fw-bold text-success small">${formatNum(c)}</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-muted" style="font-size:0.75rem;">หนี้คงค้าง</div>
+                            <div class="fw-bold text-danger small">${formatNum(d)}</div>
+                        </div>
+                    </div>
+                    <div class="small text-muted" style="line-height:1.5;">
+                        <b>ความเห็นสินเชื่อ:</b><br>${commentText}
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
+    });
+
+    grid.innerHTML = html;
+}
+
+function renderSmartInsight(activeReps, teamTitle, totalSales, totalDebt, avgRate) {
+    const box = document.getElementById('main-insight-box');
+    
+    // Find Top Sales
+    let topSeller = null, maxSale = -1;
+    let topDebt = null, maxDebt = -1;
+    activeReps.forEach(r => {
+        if (r.totSales > maxSale) { maxSale = r.totSales; topSeller = r; }
+        if (r.totDebt > maxDebt) { maxDebt = r.totDebt; topDebt = r; }
+    });
+
+    let msg = `<b><i class="bi bi-cpu-fill text-primary me-1"></i> วิเคราะห์ผลงานทีม (${teamTitle}):</b> `;
+    msg += `ยอดขายรวมทั้งสิ้น <b>${formatMoney(totalSales)}</b> บาท ยอดหนี้คงค้างที่ต้องบริหารจัดเก็บ <b>${formatMoney(totalDebt)}</b> บาท `;
+    if (topSeller) {
+        msg += `<br>• 🏆 <b>Top Sales ของทีม:</b> คุณ <b>${topSeller.name}</b> ยอดขายสะสม ${formatMoney(maxSale)} บาท`;
+    }
+    if (topDebt && topDebt.totDebt > 0) {
+        msg += `<br>• ⚠️ <b>จุดที่ต้องติดตามสินเชื่อ (Credit Risk):</b> คุณ <b>${topDebt.name}</b> มีหนี้คงค้าง ${formatMoney(maxDebt)} บาท แนะนำหัวหน้าทีมร่วมวางแผนการเข้าเก็บเงิน`;
+    }
+
+    box.innerHTML = msg;
 }
 
 function downloadScreenCapture(id) {
     const el = document.getElementById(id);
     if (!el) return;
-    html2canvas(el, { scale:2, useCORS:true, backgroundColor: '#ffffff' }).then(canvas => {
+    html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
         const a = document.createElement('a');
-        a.download = 'Dashboard_Charts_' + new Date().toISOString().slice(0,10) + '.png';
+        a.download = 'Sales_Charts_Dashboard_' + new Date().toISOString().slice(0, 10) + '.png';
         a.href = canvas.toDataURL('image/png', 1.0);
         a.click();
     });
 }
 
-window.addEventListener('DOMContentLoaded', () => { 
-    const dd = document.getElementById('repSelectDropdown');
-    updateDashboard(dd ? dd.value : 'overall'); 
+window.addEventListener('DOMContentLoaded', () => {
+    selectTeam('weeranut');
 });
 </script>
 }

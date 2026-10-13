@@ -268,24 +268,48 @@
             </table>
         </div>
 
-        <!-- Charts -->
+        <!-- Financial Health & Audit Summary Cards (แทนที่กราฟเดิมที่ไม่จำเป็นในหน้าตาราง) -->
         <div class="row g-3 mb-4">
-            <div class="col-md-7">
-                <div class="chart-card">
-                    <div class="fw-bold mb-2" style="color:#1a1a2e; font-size:1.02rem;">
-                        <i class="bi bi-bar-chart-fill text-primary"></i> กราฟแท่ง ยอดขาย vs ยอดเก็บ vs หนี้ค้าง
-                    </div>
-                    <canvas id="barChart-@key" height="130"></canvas>
-                    <div class="insight-card mt-3" id="insight-@key"></div>
+            <div class="col-md-3 col-sm-6">
+                <div class="p-3 bg-white rounded-3 border shadow-sm h-100" style="border-left: 4px solid #0891b2 !important;">
+                    <div class="text-muted small fw-bold">1. ลูกหนี้ยกมาต้นปี 2569</div>
+                    <div class="fs-4 fw-black my-1" style="color:#0891b2;">@data.InitialBroughtForward.ToString("N0")</div>
+                    <div class="text-muted small">หนี้ค้างเก่าก่อน 01/01/2569</div>
                 </div>
             </div>
-            <div class="col-md-5">
-                <div class="chart-card">
-                    <div class="fw-bold mb-2" style="color:#1a1a2e; font-size:1.02rem;">
-                        <i class="bi bi-graph-up-arrow text-success"></i> เส้นแนวโน้ม % ประสิทธิภาพจัดเก็บจริง (KPI)
-                    </div>
-                    <canvas id="lineChart-@key" height="130"></canvas>
+            <div class="col-md-3 col-sm-6">
+                <div class="p-3 bg-white rounded-3 border shadow-sm h-100" style="border-left: 4px solid #0284c7 !important;">
+                    <div class="text-muted small fw-bold">2. ยอดขายสะสมปี 2569 (YTD)</div>
+                    <div class="fs-4 fw-black my-1" style="color:#0284c7;">@data.TotalSales.ToString("N0")</div>
+                    <div class="text-muted small">บิลขายใหม่ระหว่างงวด</div>
                 </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="p-3 bg-white rounded-3 border shadow-sm h-100" style="border-left: 4px solid #059669 !important;">
+                    <div class="text-muted small fw-bold">3. ยอดเก็บเงินได้สำเร็จ</div>
+                    <div class="fs-4 fw-black my-1" style="color:#059669;">@data.TotalCollected.ToString("N0")</div>
+                    <div class="text-muted small">ประสิทธิภาพเก็บจริง: <span class="fw-bold text-success">@data.OverallCollectionRateOnBase%</span></div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="p-3 bg-white rounded-3 border shadow-sm h-100" style="border-left: 4px solid #e11d48 !important;">
+                    <div class="text-muted small fw-bold">4. หนี้คงค้างสะสมล่าสุด</div>
+                    <div class="fs-4 fw-black my-1" style="color:#e11d48;">@data.TotalOutstanding.ToString("N0")</div>
+                    <div class="text-muted small">หนี้ค้างเกิน 120 วัน: <span class="fw-bold @(data.TotalOverdue120 > 0 ? "text-danger" : "text-success")">@data.TotalOverdue120 บิล</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- กล่องบันทึกการตรวจสอบบัญชีลูกหนี้ (Audit Summary Note) -->
+        <div class="p-3 rounded-3 mb-4 border shadow-sm" style="background:linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border-color:#a7f3d0 !important;">
+            <div class="d-flex align-items-center mb-1">
+                <i class="bi bi-shield-check text-success fs-5 me-2"></i>
+                <span class="fw-bold" style="color:#065f46; font-size:0.95rem;">บันทึกการตรวจสอบและการติดตามลูกหนี้ — @data.SalesRep</span>
+            </div>
+            <div class="small" style="color:#047857; line-height:1.6;">
+                • รวมฐานหนี้ทั้งหมดที่ต้องรับผิดชอบ: <b>@data.TotalResponsible.ToString("N0")</b> บาท (ยกมา @data.InitialBroughtForward.ToString("N0") + ขายใหม่ @data.TotalSales.ToString("N0"))<br>
+                • ยอดจัดเก็บเงินสดเข้าบัญชีเรียบร้อย: <b>@data.TotalCollected.ToString("N0")</b> บาท (@data.OverallCollectionRateOnBase% ของฐานหนี้) | คงเหลือหนี้ค้างยกไป: <b>@data.TotalOutstanding.ToString("N0")</b> บาท<br>
+                • คำแนะนำฝ่ายบัญชี: @(data.TotalOutstanding > 0 ? "ให้ผู้แทนขายเร่งรัดติดตามการชำระเงินตามรอบบิลขาย และส่งใบเสร็จ/สลิปโอนให้ฝ่ายบัญชีตัดยอดทันที" : "สถานะหนี้เรียบร้อย ไม่มีหนี้ค้างสะสม")
             </div>
         </div>
     }
@@ -420,7 +444,6 @@ function selectRep(val) {
     document.querySelectorAll('.rep-panel').forEach(p => p.style.display = 'none');
     const show = document.getElementById(val === 'overall' ? 'panel-overall' : 'panel-' + val);
     if (show) show.style.display = 'block';
-    setTimeout(() => initChartsForKey(val), 100);
 }
 
 function selectPrevRep() {
@@ -467,6 +490,6 @@ function toggleSignatures() {
     el.style.display = document.getElementById('toggle-sig').checked ? 'block' : 'none';
 }
 
-window.addEventListener('DOMContentLoaded', () => { initChartsForKey('overall'); });
+window.addEventListener('DOMContentLoaded', () => { selectRep('overall'); });
 </script>
 }
