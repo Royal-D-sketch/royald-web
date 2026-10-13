@@ -35,6 +35,10 @@
     transform: translateY(-2px);
     box-shadow: 0 6px 18px rgba(15,23,42,0.07);
 }
+.kpi-card.kpi-bf {
+    background: linear-gradient(180deg, #f0fdfa 0%, #ffffff 100%);
+    border-top: 3.5px solid #0891b2;
+}
 .kpi-card.kpi-sales {
     background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 100%);
     border-top: 3.5px solid #0284c7;
@@ -46,10 +50,6 @@
 .kpi-card.kpi-debt {
     background: linear-gradient(180deg, #fff1f2 0%, #ffffff 100%);
     border-top: 3.5px solid #e11d48;
-}
-.kpi-card.kpi-rate {
-    background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
-    border-top: 3.5px solid #d97706;
 }
 
 .kpi-title { font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 6px; }
@@ -194,38 +194,38 @@
 </div>
 
 <div id="chart-capture-area">
-    <!-- 4 KPI Cards -->
+    <!-- 4 Financial Accounting KPI Cards (สัมพันธ์ตรงกับหน้า Summary แบบ 100%: ยกมา + ขาย - เก็บ = หนี้คงค้าง) -->
     <div class="row g-3 mb-4">
         <div class="col-md-3 col-sm-6">
+            <div class="kpi-card kpi-bf">
+                <div class="kpi-title">1. ลูกหนี้ยกมาต้นงวด (บาท)</div>
+                <div class="kpi-value" id="kpi-bf-val" style="color:#0891b2;">0</div>
+                <div class="kpi-sub text-muted" id="kpi-bf-sub">หนี้ค้างยกมาจากงวดก่อนหน้า</div>
+                <i class="bi bi-clock-history kpi-icon"></i>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
             <div class="kpi-card kpi-sales">
-                <div class="kpi-title">ยอดขายรวมทั้งหมด (บาท)</div>
+                <div class="kpi-title">2. ยอดขายระหว่างงวด (บาท)</div>
                 <div class="kpi-value" id="kpi-sales-val">0</div>
-                <div class="kpi-sub text-muted" id="kpi-sales-sub">สะสมตลอดปี 2569 (YTD)</div>
+                <div class="kpi-sub text-muted" id="kpi-sales-sub">บิลขายใหม่ตามรอบที่เลือก</div>
                 <i class="bi bi-bag-fill kpi-icon"></i>
             </div>
         </div>
         <div class="col-md-3 col-sm-6">
             <div class="kpi-card kpi-collect">
-                <div class="kpi-title">ยอดเก็บเงินรวม (บาท)</div>
+                <div class="kpi-title">3. ยอดเก็บเงินได้สำเร็จ (บาท)</div>
                 <div class="kpi-value" id="kpi-collect-val">0</div>
-                <div class="kpi-sub text-muted" id="kpi-collect-sub">จากยอดขายทั้งหมด</div>
+                <div class="kpi-sub text-muted">ประสิทธิภาพเก็บจริง: <span class="fw-bold" id="kpi-rate-val">0%</span></div>
                 <i class="bi bi-cash-coin kpi-icon"></i>
             </div>
         </div>
         <div class="col-md-3 col-sm-6">
             <div class="kpi-card kpi-debt">
-                <div class="kpi-title">หนี้คงค้างรวม (บาท)</div>
+                <div class="kpi-title">4. หนี้คงค้างปลายงวด (1+2-3)</div>
                 <div class="kpi-value" id="kpi-debt-val">0</div>
-                <div class="kpi-sub text-muted" id="kpi-debt-sub">ที่ยังเรียกเก็บไม่ได้</div>
+                <div class="kpi-sub text-muted" id="kpi-debt-sub">ประเมินผล: -</div>
                 <i class="bi bi-exclamation-octagon-fill kpi-icon"></i>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6">
-            <div class="kpi-card kpi-rate">
-                <div class="kpi-title">ประสิทธิภาพการเก็บเงิน (%)</div>
-                <div class="kpi-value" id="kpi-rate-val">0%</div>
-                <div class="kpi-sub text-muted" id="kpi-rate-sub">ประเมินผล: -</div>
-                <i class="bi bi-speedometer2 kpi-icon"></i>
             </div>
         </div>
     </div>
@@ -289,7 +289,7 @@
                     </div>
                 </div>
                 <div class="mt-3 text-muted small p-2 bg-light rounded-3">
-                    <i class="bi bi-info-circle me-1"></i> <b>คำแนะนำทางสินเชื่อ:</b> ข้อมูลวิเคราะห์จากยอดขาย ยอดเก็บ และอัตราหมุนเวียนลูกหนี้ของทีม เพื่อใช้กำกับติดตามและวางแผนการประชุมฝ่ายขาย
+                    <i class="bi bi-info-circle me-1"></i> <b>คำแนะนำทางสินเชื่อ:</b> ข้อมูลวิเคราะห์สัมพันธ์ตรงกับตารางบัญชีลูกหนี้หน้า Summary เพื่อให้ผู้บริหารใช้กำกับติดตามและวางแผนประชุมทีมได้ทันที
                 </div>
             </div>
         </div>
@@ -301,7 +301,7 @@
             <h5 class="fw-bold mb-0 text-dark">
                 <i class="bi bi-person-lines-fill text-primary me-2"></i>สรุปผลงานและคำอธิบายสถานะลูกหนี้ของผู้แทนขายแต่ละคน (Individual Assessment Notes)
             </h5>
-            <span class="small text-muted">ประเมินผลตามยอดขาย รอบเก็บเงิน และความเสี่ยงหนี้ค้าง</span>
+            <span class="small text-muted">แสดงครบ 4 องค์ประกอบ: ยกมา + ขาย - เก็บ = หนี้ค้าง พร้อมเกณฑ์ประเมินสินเชื่อมาตรฐานเดียวกัน</span>
         </div>
         <div class="row g-3" id="repCardsGrid">
             <!-- Dynamic Rendered Rep Cards with Assessment Notes -->
@@ -325,23 +325,31 @@ const allRepsList = [];
         name: "@rep.SalesRep",
         
         // 1. Calendar Cycle Data (1st - 30/31st)
+        bfCal: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.BroughtForward).ToList())),
+        initBfCal: @rep.InitialBroughtForward,
         salesCal: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.TotalSales).ToList())),
-        collectedCal: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.TotalCollected).ToList())),
-        debtCal: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.Outstanding).ToList())),
-        ratesCal: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.CollectionRateOnBase).ToList())),
+        respCal: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.TotalResponsible).ToList())),
         totSalesCal: @rep.TotalSales,
+        totRespCal: @rep.TotalResponsible,
+        collectedCal: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.TotalCollected).ToList())),
         totColCal: @rep.TotalCollected,
+        debtCal: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.Outstanding).ToList())),
         totDebtCal: @rep.TotalOutstanding,
+        ratesCal: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.CollectionRateOnBase).ToList())),
         totRateCal: @rep.OverallCollectionRateOnBase,
 
         // 2. Sales 25th Cut-off Cycle Data (26th prev month - 25th curr month)
+        bf25: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData25.Select(m => m.BroughtForward).ToList())),
+        initBf25: @rep.InitialBroughtForward25,
         sales25: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData25.Select(m => m.TotalSales).ToList())),
-        collected25: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData25.Select(m => m.TotalCollected).ToList())),
-        debt25: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData25.Select(m => m.Outstanding).ToList())),
-        rates25: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData25.Select(m => m.CollectionRateOnBase).ToList())),
+        resp25: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData25.Select(m => m.TotalResponsible).ToList())),
         totSales25: @rep.TotalSales25,
+        totResp25: @rep.TotalResponsible25,
+        collected25: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData25.Select(m => m.TotalCollected).ToList())),
         totCol25: @rep.TotalCollected25,
+        debt25: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData25.Select(m => m.Outstanding).ToList())),
         totDebt25: @rep.TotalOutstanding25,
+        rates25: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData25.Select(m => m.CollectionRateOnBase).ToList())),
         totRate25: @rep.OverallCollectionRateOnBase25,
 
         overdue120: @rep.TotalOverdue120
@@ -511,7 +519,9 @@ async function applyCustomDateRange() {
         if (data.items) {
             data.items.forEach(it => {
                 customRangeData[it.salesRep] = {
+                    bf: it.broughtForward,
                     sales: it.sales,
+                    resp: it.totalResponsible,
                     collected: it.collected,
                     debt: it.outstanding,
                     rate: it.collectionRate
@@ -554,7 +564,9 @@ function getRepValues(r, mIdx) {
     if (isCustomRange && customRangeData && customRangeData[r.name]) {
         const c = customRangeData[r.name];
         return {
+            bf: c.bf,
             sales: c.sales,
+            resp: c.resp,
             collected: c.collected,
             debt: c.debt,
             rate: c.rate
@@ -564,17 +576,27 @@ function getRepValues(r, mIdx) {
     const is25 = currentCycleMode === 'sales25';
     if (mIdx === -1) {
         return {
+            bf: is25 ? r.initBf25 : r.initBfCal,
             sales: is25 ? r.totSales25 : r.totSalesCal,
+            resp: is25 ? r.totResp25 : r.totRespCal,
             collected: is25 ? r.totCol25 : r.totColCal,
             debt: is25 ? r.totDebt25 : r.totDebtCal,
             rate: is25 ? r.totRate25 : r.totRateCal
         };
     } else {
+        const bfVal = is25 ? (r.bf25[mIdx] || 0) : (r.bfCal[mIdx] || 0);
+        const sVal = is25 ? (r.sales25[mIdx] || 0) : (r.salesCal[mIdx] || 0);
+        const respVal = is25 ? (r.resp25[mIdx] || 0) : (r.respCal[mIdx] || 0);
+        const cVal = is25 ? (r.collected25[mIdx] || 0) : (r.collectedCal[mIdx] || 0);
+        const dVal = is25 ? (r.debt25[mIdx] || 0) : (r.debtCal[mIdx] || 0);
+        const rtVal = is25 ? (r.rates25[mIdx] || 0) : (r.ratesCal[mIdx] || 0);
         return {
-            sales: is25 ? (r.sales25[mIdx] || 0) : (r.salesCal[mIdx] || 0),
-            collected: is25 ? (r.collected25[mIdx] || 0) : (r.collectedCal[mIdx] || 0),
-            debt: is25 ? (r.debt25[mIdx] || 0) : (r.debtCal[mIdx] || 0),
-            rate: is25 ? (r.rates25[mIdx] || 0) : (r.ratesCal[mIdx] || 0)
+            bf: bfVal,
+            sales: sVal,
+            resp: respVal,
+            collected: cVal,
+            debt: dVal,
+            rate: rtVal
         };
     }
 }
@@ -582,7 +604,9 @@ function getRepValues(r, mIdx) {
 function getRepMonthlySeries(r) {
     const is25 = currentCycleMode === 'sales25';
     return {
+        bf: is25 ? r.bf25 : r.bfCal,
         sales: is25 ? r.sales25 : r.salesCal,
+        resp: is25 ? r.resp25 : r.respCal,
         collected: is25 ? r.collected25 : r.collectedCal,
         debt: is25 ? r.debt25 : r.debtCal,
         rates: is25 ? r.rates25 : r.ratesCal
@@ -610,33 +634,43 @@ function updateDashboardView() {
     document.getElementById('activeFilterBadge').innerHTML = `<i class="bi bi-check-circle-fill text-success me-1"></i> ${teamTitle} | ${cycleTitle} (${sDate} ถึง ${eDate})`;
     document.getElementById('chartCycleBadge').innerText = isCustomRange ? `ช่วงวันที่: ${sDate} ถึง ${eDate}` : (currentCycleMode === 'sales25' ? 'ตัดรอบยอดขายทุกวันที่ 25' : 'ตัดรอบสิ้นเดือนปฏิทิน');
 
-    // 1. Calculate Aggregates
-    let totalSales = 0, totalCol = 0, totalDebt = 0;
+    // 1. Calculate Aggregates (Complete 4-component accounting)
+    let totalBf = 0, totalSales = 0, totalResp = 0, totalCol = 0, totalDebt = 0;
     activeReps.forEach(r => {
         const vals = getRepValues(r, mIdx);
+        totalBf += vals.bf;
         totalSales += vals.sales;
+        totalResp += vals.resp;
         totalCol += vals.collected;
         totalDebt += vals.debt;
     });
-    const avgRate = totalSales > 0 ? Math.round(totalCol / totalSales * 100) : 0;
+    const avgRate = totalResp > 0 ? Math.round(totalCol / totalResp * 100) : 0;
 
-    // 2. Render KPIs with dynamic values
+    // 2. Render KPIs with dynamic values: 1.ยกมา + 2.ขาย - 3.เก็บ = 4.หนี้คงค้าง
+    document.getElementById('kpi-bf-val').innerText = formatNum(totalBf);
     document.getElementById('kpi-sales-val').innerText = formatNum(totalSales);
     document.getElementById('kpi-collect-val').innerText = formatNum(totalCol);
     document.getElementById('kpi-debt-val').innerText = formatNum(totalDebt);
     
     const rateValEl = document.getElementById('kpi-rate-val');
-    const rateSubEl = document.getElementById('kpi-rate-sub');
     rateValEl.innerText = avgRate + '%';
     if (avgRate >= 60) {
-        rateValEl.style.color = '#059669';
-        rateSubEl.innerHTML = '<span class="text-success fw-bold">ประเมิน: ผลงานดีเยี่ยม ผ่านเกณฑ์ ✓</span>';
+        rateValEl.className = 'fw-bold text-success';
     } else if (avgRate >= 40) {
-        rateValEl.style.color = '#d97706';
-        rateSubEl.innerHTML = '<span class="text-warning fw-bold">ประเมิน: ปานกลาง (เฝ้าระวังบิลค้าง)</span>';
+        rateValEl.className = 'fw-bold text-warning';
     } else {
-        rateValEl.style.color = '#e11d48';
-        rateSubEl.innerHTML = '<span class="text-danger fw-bold">ประเมิน: ต่ำกว่าเกณฑ์ ต้องเร่งรัดด่วน! ⚠️</span>';
+        rateValEl.className = 'fw-bold text-danger';
+    }
+
+    const debtSubEl = document.getElementById('kpi-debt-sub');
+    if (totalDebt === 0) {
+        debtSubEl.innerHTML = '<span class="text-success fw-bold">สถานะ: ปลอดหนี้ครบ 100% ✓</span>';
+    } else if (totalDebt >= 5000000) {
+        debtSubEl.innerHTML = '<span class="text-danger fw-bold">ประเมิน: หนี้ค้างสะสมสูงมาก ⚠️</span>';
+    } else if (totalDebt >= 1000000) {
+        debtSubEl.innerHTML = '<span class="text-warning fw-bold">ประเมิน: เฝ้าระวังหนี้ก้อนใหญ่</span>';
+    } else {
+        debtSubEl.innerHTML = '<span class="text-success fw-bold">ประเมิน: อยู่ในเกณฑ์วางบิลปกติ</span>';
     }
 
     // 3. Render Main Bar Chart (Monthly breakdown per rep)
@@ -648,11 +682,11 @@ function updateDashboardView() {
     // 5. Render Trend Line Chart
     renderTrendLineChart(activeReps);
 
-    // 6. Render Individual Assessment Cards
+    // 6. Render Individual Assessment Cards (Harmonized with Summary)
     renderIndividualAssessmentCards(activeReps, mIdx);
 
     // 7. Auto Smart Insight
-    renderSmartInsight(activeReps, teamTitle, totalSales, totalDebt, avgRate, mIdx);
+    renderSmartInsight(activeReps, teamTitle, totalBf, totalSales, totalCol, totalDebt, avgRate, mIdx);
 }
 
 function renderMainBarChart(activeReps, mIdx) {
@@ -756,7 +790,7 @@ function renderTrendLineChart(activeReps) {
         let sumS = 0, sumC = 0;
         activeReps.forEach(r => {
             const series = getRepMonthlySeries(r);
-            sumS += (series.sales[mi] || 0);
+            sumS += (series.resp[mi] || series.sales[mi] || 0);
             sumC += (series.collected[mi] || 0);
         });
         return sumS > 0 ? Math.round(sumC / sumS * 100) : 0;
@@ -806,25 +840,50 @@ function renderIndividualAssessmentCards(activeReps, mIdx) {
 
     activeReps.forEach(r => {
         const vals = getRepValues(r, mIdx);
+        const bf = vals.bf;
         const s = vals.sales;
         const c = vals.collected;
         const d = vals.debt;
         const rate = vals.rate;
+        const resp = bf + s;
 
         let statusBadge = '';
         let commentText = '';
-        if (d === 0 && s > 0) {
-            statusBadge = '<span class="badge bg-success">ชำระครบ 100%</span>';
-            commentText = '• ยอดจัดเก็บดีเยี่ยม ไม่มีหนี้ค้างสะสมในรอบ';
-        } else if (rate >= 60) {
-            statusBadge = '<span class="badge bg-success">สุขภาพหนี้ดี (เก็บได้ ' + rate + '%)</span>';
-            commentText = '• ผลการจัดเก็บผ่านเกณฑ์มาตรฐาน หนี้ค้างอยู่ในรอบวางบิลปกติ';
-        } else if (rate >= 30) {
-            statusBadge = '<span class="badge bg-warning text-dark">เฝ้าระวัง (เก็บได้ ' + rate + '%)</span>';
-            commentText = '• มีหนี้คงค้าง ' + formatNum(d) + ' บาท แนะนำให้ติดตามใบวางบิลก่อนรอบปิดยอด 25 ถัดไป';
-        } else {
-            statusBadge = '<span class="badge bg-danger">ต้องเร่งรัดหนี้ด่วน ⚠️</span>';
-            commentText = '• หนี้คงค้างสูง (' + formatMoney(d) + ' บาท) เกินเกณฑ์เฉลี่ยทีม ต้องเร่งรัดเก็บเงินทันที';
+
+        // 1. สัญญา T หรือผู้แทนที่ไม่มีหนี้ค้างและไม่มียอดขาย
+        if (d === 0 && s === 0 && bf === 0) {
+            statusBadge = '<span class="badge bg-secondary">สถานะปกติ (ไม่มีหนี้ค้าง)</span>';
+            commentText = '• ไม่มียอดหนี้คงค้าง และไม่มีการเปิดบิลขายใหม่ในรอบนี้ (สถานะปกติ)';
+        }
+        // 2. ชำระครบถ้วน 100% ไม่มีหนี้ค้างเหลือ
+        else if (d === 0 && resp > 0) {
+            statusBadge = '<span class="badge bg-success">ชำระครบ 100% ✓</span>';
+            commentText = '• บริหารจัดเก็บยอดเยี่ยม เรียกเก็บเงินครบถ้วน ไม่มีหนี้ค้างสะสมในรอบ';
+        }
+        // 3. หนี้คงค้างสะสมสูงมาก (เกิน 1,000,000 บาท เช่น วีรนุช 8 มีหนี้ค้าง 1.92M)
+        else if (d >= 1000000) {
+            statusBadge = '<span class="badge bg-danger">หนี้ค้างสูง (' + formatNum(d) + ') ⚠️</span>';
+            commentText = `• มียอดหนี้คงค้างสะสม <b>${formatMoney(d)}</b> บาท (เก็บได้ ${rate}% จากฐานหนี้ ${formatNum(resp)}) ให้ผู้แทนขายเร่งรัดติดตามการชำระเงินตามรอบบิลขาย และส่งใบเสร็จ/สลิปโอนให้ฝ่ายบัญชีตัดยอดทันที`;
+        }
+        // 4. หนี้ค้างยกมาเก่าแต่ยังไม่มียอดขายใหม่
+        else if (s === 0 && bf > 0) {
+            statusBadge = '<span class="badge bg-danger">หนี้ค้างยกมา (' + formatNum(d) + ') ⚠️</span>';
+            commentText = `• มียอดหนี้คงค้างยกมาจากปีก่อนหน้า <b>${formatMoney(d)}</b> บาท (ยังไม่มียอดขายใหม่) ให้เร่งรัดติดตามการชำระหนี้ยกมาโดยด่วน`;
+        }
+        // 5. เฝ้าระวังหนี้คงค้างปานกลาง (300,000 - 999,999 บาท) หรือเก็บได้ต่ำกว่า 40%
+        else if (d >= 300000 || rate < 40) {
+            statusBadge = '<span class="badge bg-warning text-dark">เฝ้าระวังหนี้ค้าง (' + formatNum(d) + ')</span>';
+            commentText = `• มีหนี้คงค้าง <b>${formatMoney(d)}</b> บาท แนะนำให้ติดตามใบวางบิลและรอบนัดชำระเงินก่อนตัดยอดรอบถัดไป`;
+        }
+        // 6. สุขภาพหนี้ดีจริง (เก็บได้ >= 60% และหนี้คงค้างเหลือต่ำกว่า 300,000 บาท)
+        else if (rate >= 60 && d < 300000) {
+            statusBadge = '<span class="badge bg-success">สุขภาพหนี้ดี (เก็บได้ ' + rate + '%) ✓</span>';
+            commentText = '• ผลการจัดเก็บผ่านเกณฑ์มาตรฐาน หนี้คงค้างอยู่ในระดับต่ำตามรอบวางบิลปกติ';
+        }
+        // 7. ปกติทั่วไป
+        else {
+            statusBadge = '<span class="badge bg-info text-dark">ติดตามตามรอบบิลปกติ</span>';
+            commentText = `• หนี้คงค้าง <b>${formatMoney(d)}</b> บาท อยู่ในเกณฑ์วางบิลปกติ`;
         }
 
         html += `
@@ -835,18 +894,23 @@ function renderIndividualAssessmentCards(activeReps, mIdx) {
                         <span class="fw-bold text-dark fs-6"><i class="bi bi-person-circle text-primary me-1"></i> ${r.name}</span>
                         ${statusBadge}
                     </div>
-                    <div class="row g-1 text-center py-2 bg-light rounded-3 mb-2">
-                        <div class="col-4 border-end">
-                            <div class="text-muted" style="font-size:0.75rem;">ยอดขาย</div>
+                    <!-- ครบ 4 องค์ประกอบบัญชีลูกหนี้: ยกมา + ขาย - เก็บ = หนี้คงค้าง -->
+                    <div class="row g-1 text-center py-2 bg-light rounded-3 mb-2" style="font-size:0.8rem;">
+                        <div class="col-3 border-end">
+                            <div class="text-muted" style="font-size:0.73rem;">1. ยกมา</div>
+                            <div class="fw-bold small" style="color:#0891b2;">${formatNum(bf)}</div>
+                        </div>
+                        <div class="col-3 border-end">
+                            <div class="text-muted" style="font-size:0.73rem;">2. ยอดขาย</div>
                             <div class="fw-bold text-primary small">${formatNum(s)}</div>
                         </div>
-                        <div class="col-4 border-end">
-                            <div class="text-muted" style="font-size:0.75rem;">ยอดเก็บ</div>
+                        <div class="col-3 border-end">
+                            <div class="text-muted" style="font-size:0.73rem;">3. ยอดเก็บ</div>
                             <div class="fw-bold text-success small">${formatNum(c)}</div>
                         </div>
-                        <div class="col-4">
-                            <div class="text-muted" style="font-size:0.75rem;">หนี้คงค้าง</div>
-                            <div class="fw-bold text-danger small">${formatNum(d)}</div>
+                        <div class="col-3">
+                            <div class="text-muted" style="font-size:0.73rem;">4. หนี้ค้าง (1+2-3)</div>
+                            <div class="fw-bold ${d > 0 ? 'text-danger' : 'text-secondary'} small">${formatNum(d)}</div>
                         </div>
                     </div>
                     <div class="small text-muted" style="line-height:1.5;">
@@ -861,7 +925,7 @@ function renderIndividualAssessmentCards(activeReps, mIdx) {
     grid.innerHTML = html;
 }
 
-function renderSmartInsight(activeReps, teamTitle, totalSales, totalDebt, avgRate, mIdx) {
+function renderSmartInsight(activeReps, teamTitle, totalBf, totalSales, totalCol, totalDebt, avgRate, mIdx) {
     const box = document.getElementById('main-insight-box');
     
     // Find Top Sales & Top Debt in current view
@@ -873,8 +937,12 @@ function renderSmartInsight(activeReps, teamTitle, totalSales, totalDebt, avgRat
         if (vals.debt > maxDebt) { maxDebt = vals.debt; topDebt = r; }
     });
 
+    const totalResp = totalBf + totalSales;
     let msg = `<b><i class="bi bi-cpu-fill text-primary me-1"></i> วิเคราะห์ผลงานทีม (${teamTitle}):</b> `;
-    msg += `ยอดขายรวมทั้งสิ้น <b>${formatMoney(totalSales)}</b> บาท ยอดหนี้คงค้างที่ต้องบริหารจัดเก็บ <b>${formatMoney(totalDebt)}</b> บาท `;
+    msg += `ลูกหนี้ยกมา <b>${formatMoney(totalBf)}</b> บาท + ยอดขาย <b>${formatMoney(totalSales)}</b> บาท `;
+    msg += `(รวมฐานหนี้ที่ต้องติดตาม <b>${formatMoney(totalResp)}</b> บาท) | `;
+    msg += `จัดเก็บได้แล้ว <b>${formatMoney(totalCol)}</b> บาท (${avgRate}%) | `;
+    msg += `หนี้คงค้างปลายงวดที่ต้องบริหารจัดเก็บ <b>${formatMoney(totalDebt)}</b> บาท`;
     if (topSeller && maxSale > 0) {
         msg += `<br>• 🏆 <b>Top Sales ของทีม:</b> คุณ <b>${topSeller.name}</b> ยอดขาย ${formatMoney(maxSale)} บาท`;
     }

@@ -83,10 +83,12 @@ namespace RoyalD.Web.Services
     public class SalesRepCustomRangeItem
     {
         public string SalesRep { get; set; } = string.Empty;
+        public decimal BroughtForward { get; set; }
         public decimal Sales { get; set; }
+        public decimal TotalResponsible => BroughtForward + Sales;
         public decimal Collected { get; set; }
         public decimal Outstanding { get; set; }
-        public decimal CollectionRate => Sales > 0 ? Math.Round(Collected / Sales * 100m, 1) : 0m;
+        public decimal CollectionRate => TotalResponsible > 0 ? Math.Round(Collected / TotalResponsible * 100m, 1) : 0m;
     }
 
     public class AnnualPerformanceViewModel
@@ -519,6 +521,17 @@ namespace RoyalD.Web.Services
             DateTime start = startDate.Date;
             DateTime end = endDate.Date.AddDays(1).AddTicks(-1);
 
+            var initBills = await _db.SalesBills
+                .Where(b => !b.IsCancelled && b.BillDate < start)
+                .Select(b => new {
+                    b.BillNo,
+                    b.BillDate,
+                    SalesRep = string.IsNullOrEmpty(b.SalesRep) ? "ไม่ระบุ" : b.SalesRep,
+                    b.TotalAmount,
+                    b.IsFullyPaid,
+                    b.ReceiptDate
+                }).ToListAsync();
+
             var bills = await _db.SalesBills
                 .Where(b => !b.IsCancelled && b.BillDate >= start && b.BillDate <= end)
                 .Select(b => new {
@@ -550,6 +563,16 @@ namespace RoyalD.Web.Services
 
             foreach (var rep in allReps)
             {
+                var rInitBills = initBills.Where(b => b.SalesRep != null && b.SalesRep.Contains(rep.Trim())).ToList();
+                decimal bf = 0m;
+                foreach (var b in rInitBills)
+                {
+                    if (!b.IsFullyPaid || (b.ReceiptDate.HasValue && b.ReceiptDate.Value >= start))
+                    {
+                        bf += (decimal)b.TotalAmount;
+                    }
+                }
+
                 var rBills = bills.Where(b => b.SalesRep != null && b.SalesRep.Contains(rep.Trim())).ToList();
                 var rDebts = debts.Where(d => d.SalesRep != null && d.SalesRep.Contains(rep.Trim())).ToList();
 
@@ -579,11 +602,13 @@ namespace RoyalD.Web.Services
                     }
                 }
 
-                decimal debt = Math.Max(0m, sales - collected);
+                decimal totalResp = bf + sales;
+                decimal debt = Math.Max(0m, totalResp - collected);
 
                 result.Add(new SalesRepCustomRangeItem
                 {
                     SalesRep = rep,
+                    BroughtForward = bf,
                     Sales = sales,
                     Collected = collected,
                     Outstanding = debt
