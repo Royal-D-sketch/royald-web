@@ -1,4 +1,4 @@
-﻿@using RoyalD.Web.Services
+@using RoyalD.Web.Services
 @model RoyalD.Web.Services.AnnualPerformanceViewModel
 @{
     ViewData["Title"] = "4. กราฟเปรียบเทียบผู้แทนขาย (Compare)";
@@ -21,6 +21,12 @@
 .compare-filters { background:linear-gradient(135deg,#f8fafc,#f1f5f9); border:1px solid #e2e8f0; border-radius:14px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.04); margin-bottom:24px; }
 /* Insight */
 .insight-card { background:linear-gradient(135deg,#f0fdfa 0%,#f8fafc 100%); border:1px solid #ccfbf1; border-left:5px solid #0d9488; border-radius:12px; padding:18px; box-shadow:0 2px 10px rgba(15,118,110,0.06); line-height:1.65; }
+/* Mode toggle buttons */
+.btn-mode-toggle { border-radius: 8px; font-weight: 700; font-size: 0.9rem; padding: 6px 14px; }
+/* Table styling */
+.team-matrix-table th { background: #1e293b !important; color: white !important; font-size: 0.88rem; padding: 10px 8px; text-align: center; border: 1px solid #334155; }
+.team-matrix-table td { font-size: 0.88rem; padding: 8px; border: 1px solid #e2e8f0; }
+.team-matrix-table tr:hover { background-color: #f8fafc; }
 
 @@media print {
     .no-print, .sales-subnav, nav, .btn, .export-bar, .compare-filters { display:none !important; }
@@ -55,9 +61,9 @@
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 export-bar">
     <div>
         <h3 class="mb-1 fw-bold" style="color:#065f46;">
-            <i class="bi bi-graph-up-arrow" style="color:#059669;"></i> กราฟเปรียบเทียบผลงานผู้แทนขาย (Compare)
+            <i class="bi bi-graph-up-arrow" style="color:#059669;"></i> กราฟและบทวิเคราะห์เปรียบเทียบผู้แทนขาย (Team & Sales Comparison)
         </h3>
-        <span class="text-muted fw-semibold">เลือกผู้แทนขายหลายคนเพื่อเปรียบเทียบยอดขายและการเก็บเงินรายเดือน</span>
+        <span class="text-muted fw-semibold">เปรียบเทียบยอดขาย หนี้คงค้าง และยอดเก็บเงิน รายทีมหัวหน้า และรายเดือนตลอดทั้งปี</span>
     </div>
     
     @if (canDownload)
@@ -73,66 +79,138 @@
     }
 </div>
 
-<!-- Compare Filters (Multi-Select & Month) -->
+<!-- Compare Filters (Supervisor Team & Mode & Month) -->
 <div class="compare-filters no-print">
+    <!-- แถวบน: เลือกทีมด่วน 1-คลิก -->
+    <div class="p-3 bg-white rounded-3 border mb-3 shadow-sm">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <span class="fw-bold" style="color:#065f46; font-size:1rem;">
+                    <i class="bi bi-people-fill text-success me-1"></i> เลือกกลุ่มทีมซุปเปอร์ไวเซอร์:
+                </span>
+                <div class="btn-group" role="group" aria-label="Supervisor Teams">
+                    <button type="button" class="btn btn-sm btn-outline-secondary fw-bold" id="btn-team-all" onclick="filterByTeam('all')">ทุกคน</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary fw-bold" id="btn-team-sunya" onclick="filterByTeam('sunya')">👥 ทีมคุณสัญญา</button>
+                    <button type="button" class="btn btn-sm btn-outline-success fw-bold" id="btn-team-weeranut" onclick="filterByTeam('weeranut')">👥 ทีมคุณวีรนุช</button>
+                    <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-bold" id="btn-team-nampetch" onclick="filterByTeam('nampetch')">👥 ทีมคุณน้ำเพชร</button>
+                </div>
+            </div>
+
+            <!-- สลับโหมดมุมมอง -->
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-muted fw-bold small">มุมมองกราฟ:</span>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-mode-toggle btn-success text-white" id="modeMonthlyBtn" onclick="switchViewMode('monthly')">
+                        <i class="bi bi-calendar3 me-1"></i> รายเดือน (เปรียบเทียบในแต่ละเดือน)
+                    </button>
+                    <button type="button" class="btn btn-sm btn-mode-toggle btn-outline-success" id="modeIndividualBtn" onclick="switchViewMode('individual')">
+                        <i class="bi bi-bar-chart-steps me-1"></i> รายบุคคล (ยอดขาย vs หนี้ค้าง)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- แถวล่าง: เลือกรายบุคคล & เลือกเดือน -->
     <div class="row align-items-end g-3">
         <div class="col-md-5">
-            <label class="form-label fw-bold text-dark mb-1">
-                <i class="bi bi-check2-square text-primary"></i> เลือกผู้แทนขาย (เลือกได้หลายคน)
-            </label>
-            <div class="border bg-white rounded px-3 py-2" style="max-height:160px; overflow-y:auto;">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label fw-bold text-dark mb-0 small">
+                    <i class="bi bi-check2-square text-primary"></i> รายชื่อผู้แทนขายที่เลือก (<span id="selectedCountDisplay" class="text-primary fw-bolder">0</span> ท่าน)
+                </label>
+                <div class="d-flex gap-1">
+                    <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2" style="font-size:0.75rem;" onclick="document.querySelectorAll('.rep-checkbox').forEach(cb => cb.checked = true); updateCompareChart();">เลือกทั้งหมด</button>
+                    <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2" style="font-size:0.75rem;" onclick="document.querySelectorAll('.rep-checkbox').forEach(cb => cb.checked = false); updateCompareChart();">ล้าง</button>
+                </div>
+            </div>
+            <div class="border bg-white rounded px-3 py-2" style="max-height:140px; overflow-y:auto;">
                 @for(int i=0; i<Model.RepReports.Count; i++)
                 {
                     <div class="form-check mb-1">
                         <input class="form-check-input rep-checkbox" type="checkbox" value="@i" id="repCheck-@i" onchange="updateCompareChart()" @(i < 5 ? "checked" : "")>
-                        <label class="form-check-label fw-semibold" for="repCheck-@i" style="cursor:pointer;">
+                        <label class="form-check-label fw-semibold small" for="repCheck-@i" style="cursor:pointer;">
                             @Model.RepReports[i].SalesRep
                         </label>
                     </div>
                 }
             </div>
-            <div class="mt-2 d-flex flex-wrap gap-1 align-items-center justify-content-between">
-                <div class="btn-group btn-group-sm" role="group" aria-label="Supervisor Teams">
-                    <button type="button" class="btn btn-outline-secondary" onclick="filterByTeam('all')" title="เลือกทุกคน">ทุกคน</button>
-                    <button type="button" class="btn btn-outline-primary fw-bold" onclick="filterByTeam('sunya')" title="ทีมคุณสัญญา">👥 ทีมสัญญา</button>
-                    <button type="button" class="btn btn-outline-success fw-bold" onclick="filterByTeam('weeranut')" title="ทีมคุณวีรนุช">👥 ทีมวีรนุช</button>
-                    <button type="button" class="btn btn-outline-warning text-dark fw-bold" onclick="filterByTeam('nampetch')" title="ทีมคุณน้ำเพชร">👥 ทีมน้ำเพชร</button>
-                </div>
-                <div class="d-flex gap-1">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.querySelectorAll('.rep-checkbox').forEach(cb => cb.checked = false); updateCompareChart();">ล้าง</button>
-                </div>
-            </div>
         </div>
         
-        <div class="col-md-4">
-            <label class="form-label fw-bold text-dark mb-1">
-                <i class="bi bi-calendar-event text-success"></i> เลือกข้อมูลเดือนที่ต้องการ
+        <div class="col-md-4" id="monthFilterContainer">
+            <label class="form-label fw-bold text-dark mb-1 small">
+                <i class="bi bi-calendar-event text-success"></i> กรองช่วงเวลา (สำหรับมุมมองรายบุคคล)
             </label>
-            <select class="form-select fw-bold shadow-sm" id="monthSelector" onchange="updateCompareChart()" style="border-radius:10px;">
+            <select class="form-select form-select-sm fw-bold shadow-sm" id="monthSelector" onchange="updateCompareChart()" style="border-radius:8px;">
                 <option value="-1">ทุกเดือน (รวมสะสมตลอดปี YTD)</option>
                 @for(int i=0; i<Model.Months.Count; i++)
                 {
-                    @if(i==0){<option value="@i" selected>@Model.Months[i]</option>}else{<option value="@i">@Model.Months[i]</option>}
+                    <option value="@i">@Model.Months[i]</option>
                 }
             </select>
+            <div class="form-text text-muted small mt-1">
+                * ในมุมมอง "รายเดือน" กราฟจะแสดงเปรียบเทียบทุกเดือนตลอดช่วงให้อัตโนมัติ
+            </div>
         </div>
         
         <div class="col-md-3">
-            <div class="p-3 bg-white border rounded text-center h-100 d-flex flex-column justify-content-center shadow-sm">
-                <h6 class="text-muted fw-bold mb-1">จำนวนที่เลือก</h6>
-                <h2 class="mb-0 text-primary fw-bolder" id="selectedCountDisplay">0</h2>
+            <div class="p-2 bg-white border rounded text-center h-100 d-flex flex-column justify-content-center shadow-sm">
+                <div class="text-muted small fw-bold">ยอดขายรวมกลุ่มที่เลือก</div>
+                <div class="fs-5 text-success fw-black my-0" id="summaryTotalSales">0.00</div>
+                <div class="small text-danger fw-bold">หนี้คงค้าง: <span id="summaryTotalDebt">0.00</span></div>
             </div>
         </div>
     </div>
 </div>
 
 <div id="chart-capture-area">
+    <!-- Chart Card -->
     <div class="chart-card mb-4">
-        <h5 class="fw-bold mb-4 text-dark text-center" id="chartTitleDisplay">เปรียบเทียบยอดขายและหนี้คงค้าง</h5>
-        <div style="position:relative; height:450px;">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h5 class="fw-bold text-dark mb-0" id="chartTitleDisplay">
+                <i class="bi bi-bar-chart-fill text-primary me-2"></i>เปรียบเทียบยอดขายและหนี้คงค้าง
+            </h5>
+            <span class="badge bg-light text-dark border px-3 py-2 fw-semibold" id="chartSubtitleDisplay">
+                กำลังแสดงผล
+            </span>
+        </div>
+
+        <div style="position:relative; height:460px;">
             <canvas id="compareBarChart"></canvas>
         </div>
-        <div class="insight-card mt-4" id="compare-insight-box"></div>
+
+        <!-- Smart Insight Card -->
+        <div class="insight-card mt-4" id="compare-insight-box">
+            <!-- Dynamic smart insights -->
+        </div>
+    </div>
+
+    <!-- Team Monthly Breakdown Matrix Table -->
+    <div class="chart-card mb-4" id="teamMatrixCard">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-table text-success me-2"></i>ตารางแจกแจงยอดขายและหนี้คงค้างรายคนในแต่ละเดือน (Team Monthly Breakdown)
+            </h6>
+            <span class="small text-muted">หน่วย: บาท</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm team-matrix-table align-middle mb-0" id="teamBreakdownTable">
+                <thead>
+                    <tr>
+                        <th style="min-width:140px; text-align:left;">ผู้แทนขาย</th>
+                        @foreach(var m in Model.Months)
+                        {
+                            <th style="min-width:90px;">@m</th>
+                        }
+                        <th style="min-width:110px; background:#0f766e !important;">รวมยอดขาย (YTD)</th>
+                        <th style="min-width:105px; background:#e11d48 !important;">หนี้คงค้าง</th>
+                        <th style="min-width:80px; background:#059669 !important;">เก็บได้ (%)</th>
+                    </tr>
+                </thead>
+                <tbody id="teamBreakdownTbody">
+                    <!-- Dynamic Rows Rendered by JS -->
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -154,163 +232,315 @@ const rawRepsData = [];
         collected: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.TotalCollected).ToList())),
         debt: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.Outstanding).ToList())),
         totSales: @rep.TotalSales,
-        totDebt: @rep.TotalOutstanding
+        totDebt: @rep.TotalOutstanding,
+        totCollected: @rep.TotalCollected
     });
     </text>
 }
 
-
-
+// Supervisor Teams Definition
 const supervisorTeams = {
-
     sunya: ["สัญญา", "ธัญญ์ลักษณ์", "ธนาศักดิ์", "สัญญา LN", "สัญญา N", "อภิญญา", "ชาติวุฒิ N", "121.1"],
-
     weeranut: ["วีรนุช", "วีรนุช T", "วีรนุช 8", "ชุลีวรรณ W", "ชุลีวรรณ", "สัญญา T", "124.0", "129.2"],
-
     nampetch: ["ณัฐพันธ์", "ธนิตศักดิ์", "น้ำเพชร", "บุญเสริม", "วัชรี", "125.1"]
-
 };
 
+let currentViewMode = 'monthly'; // 'monthly' หรือ 'individual'
+let currentTeamKey = 'weeranut'; // default focus to Weeranut or all
+let compareChart = null;
 
-
-function filterByTeam(teamKey) {
-
-    const checkboxes = document.querySelectorAll('.rep-checkbox');
-
-    if (teamKey === 'all') {
-
-        checkboxes.forEach(cb => cb.checked = true);
-
-    } else {
-
-        const teamMembers = supervisorTeams[teamKey] || [];
-
-        checkboxes.forEach(cb => {
-
-            const repObj = rawRepsData[parseInt(cb.value)];
-
-            if (!repObj) return;
-
-            const rName = repObj.name.trim();
-
-            const isMatch = teamMembers.some(m => rName === m || rName.includes(m) || m.includes(rName));
-
-            cb.checked = isMatch;
-
-        });
-
-    }
-
-    updateCompareChart();
-
-}
-
-
-
-let compareChart;
+const repPalette = [
+    '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', 
+    '#06b6d4', '#f97316', '#6366f1', '#14b8a6', '#84cc16'
+];
 
 function formatNum(num) {
     if (num >= 1000000) return (num/1000000).toFixed(2) + 'M';
     if (num >= 1000) return (num/1000).toFixed(1) + 'K';
-    return num.toLocaleString('th-TH');
+    return Number(num).toLocaleString('th-TH');
 }
 
-function getPredefinedColor(index) {
-    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#0ea5e9'];
-    return colors[index % colors.length];
+function formatMoney(num) {
+    return Number(num).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function switchViewMode(mode) {
+    currentViewMode = mode;
+    const mBtn = document.getElementById('modeMonthlyBtn');
+    const iBtn = document.getElementById('modeIndividualBtn');
+    
+    if (mode === 'monthly') {
+        mBtn.className = 'btn btn-sm btn-mode-toggle btn-success text-white';
+        iBtn.className = 'btn btn-sm btn-mode-toggle btn-outline-success';
+    } else {
+        iBtn.className = 'btn btn-sm btn-mode-toggle btn-success text-white';
+        mBtn.className = 'btn btn-sm btn-mode-toggle btn-outline-success';
+    }
+    updateCompareChart();
+}
+
+function filterByTeam(teamKey) {
+    currentTeamKey = teamKey;
+    const checkboxes = document.querySelectorAll('.rep-checkbox');
+
+    // Update team button active state
+    ['all', 'sunya', 'weeranut', 'nampetch'].forEach(k => {
+        const btn = document.getElementById('btn-team-' + k);
+        if (btn) {
+            if (k === teamKey) {
+                btn.className = 'btn btn-sm btn-dark text-white fw-bold shadow-sm';
+            } else {
+                btn.className = 'btn btn-sm btn-outline-secondary fw-bold';
+            }
+        }
+    });
+
+    if (teamKey === 'all') {
+        checkboxes.forEach(cb => cb.checked = true);
+    } else {
+        const teamMembers = supervisorTeams[teamKey] || [];
+        checkboxes.forEach(cb => {
+            const repObj = rawRepsData[parseInt(cb.value)];
+            if (!repObj) return;
+            const rName = repObj.name.trim();
+            const isMatch = teamMembers.some(m => rName === m || rName.includes(m) || m.includes(rName));
+            cb.checked = isMatch;
+        });
+    }
+    updateCompareChart();
 }
 
 function updateCompareChart() {
-    // 1. Get selected reps
     const selectedIds = Array.from(document.querySelectorAll('.rep-checkbox:checked')).map(cb => parseInt(cb.value));
     document.getElementById('selectedCountDisplay').innerText = selectedIds.length;
     
-    // 2. Get selected month
     const mSelect = document.getElementById('monthSelector');
     const mIdx = parseInt(mSelect.value);
     const mName = mSelect.options[mSelect.selectedIndex].text;
     
-    document.getElementById('chartTitleDisplay').innerText = `เปรียบเทียบยอดขายและยอดหนี้ — ${mName}`;
+    const selectedReps = selectedIds.map(id => rawRepsData.find(r => r.id === id)).filter(Boolean);
     
-    if(selectedIds.length === 0) {
-        if(compareChart) compareChart.destroy(); compareChart = null;
-        document.getElementById('compare-insight-box').innerHTML = 'กรุณาเลือกผู้แทนขายอย่างน้อย 1 คน';
+    // คำนวณสรุปรวมข้างบน
+    let grandSales = selectedReps.reduce((acc, r) => acc + (mIdx === -1 ? r.totSales : (r.sales[mIdx] || 0)), 0);
+    let grandDebt = selectedReps.reduce((acc, r) => acc + (mIdx === -1 ? r.totDebt : (r.debt[mIdx] || 0)), 0);
+    document.getElementById('summaryTotalSales').innerText = formatMoney(grandSales);
+    document.getElementById('summaryTotalDebt').innerText = formatMoney(grandDebt);
+
+    if (selectedReps.length === 0) {
+        if (compareChart) { compareChart.destroy(); compareChart = null; }
+        document.getElementById('compare-insight-box').innerHTML = '<div class="text-danger fw-bold"><i class="bi bi-exclamation-circle me-1"></i> กรุณาเลือกผู้แทนขายหรือเลือกทีมอย่างน้อย 1 คน</div>';
+        document.getElementById('teamBreakdownTbody').innerHTML = '<tr><td colspan="' + (months.length + 4) + '" class="text-center text-muted py-3">ไม่มีข้อมูลผู้แทนที่เลือก</td></tr>';
         return;
     }
 
-    const labels = [];
-    const salesData = [];
-    const debtData = [];
-    let topSeller = null;
-    let maxSale = -1;
-    
-    selectedIds.forEach(id => {
-        const rep = rawRepsData.find(r => r.id === id);
-        if(rep) {
-            labels.push(rep.name);
-            let s = 0, d = 0;
-            if (mIdx === -1) {
-                s = rep.totSales;
-                d = rep.totDebt;
-            } else {
-                s = rep.sales[mIdx] || 0;
-                d = rep.debt[mIdx] || 0;
-            }
-            salesData.push(s);
-            debtData.push(d);
-            
-            if(s > maxSale) { maxSale = s; topSeller = rep.name; }
-        }
+    if (currentViewMode === 'monthly') {
+        renderMonthlyTimelineChart(selectedReps);
+    } else {
+        renderIndividualBarChart(selectedReps, mIdx, mName);
+    }
+
+    renderTeamBreakdownTable(selectedReps);
+    generateSmartFinancialInsight(selectedReps, mIdx, mName);
+}
+
+// โหมดที่ 1: แกน X เป็นเดือน มีแท่งรายคนในแต่ละเดือน
+function renderMonthlyTimelineChart(selectedReps) {
+    document.getElementById('chartTitleDisplay').innerHTML = '<i class="bi bi-calendar3 text-primary me-2"></i>เปรียบเทียบยอดขายรายคนในแต่ละเดือน (Monthly Timeline Breakdown)';
+    document.getElementById('chartSubtitleDisplay').innerText = `แสดงผลเปรียบเทียบผู้แทน ${selectedReps.length} ท่าน ตลอดทุกเดือน`;
+
+    const datasets = selectedReps.map((rep, idx) => {
+        const color = repPalette[idx % repPalette.length];
+        return {
+            label: rep.name,
+            data: months.map((m, mIndex) => rep.sales[mIndex] || 0),
+            backgroundColor: color,
+            borderColor: color,
+            borderRadius: 4,
+            maxBarThickness: 32
+        };
     });
 
-    // Auto insight
-    const insightEl = document.getElementById('compare-insight-box');
-    if(topSeller) {
-        insightEl.innerHTML = `<i class="bi bi-trophy-fill text-warning me-2"></i> <b>วิเคราะห์ข้อมูลเปรียบเทียบ:</b> ในช่วงเวลา <b>${mName}</b> ผู้ที่มียอดขายสูงสุดในกลุ่มที่เลือกคือ <b>${topSeller}</b> (${maxSale.toLocaleString('th-TH')} บาท)`;
-    }
-
-    if (compareChart) {
-        compareChart.data.labels = labels;
-        compareChart.data.datasets[0].data = salesData;
-        compareChart.data.datasets[1].data = debtData;
-        compareChart.update();
-    } else {
-        const ctx = document.getElementById('compareBarChart');
-        compareChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    { label: 'ยอดขาย', data: salesData, backgroundColor: '#38bdf8', borderRadius:4 },
-                    { label: 'หนี้ค้าง', data: debtData, backgroundColor: '#fb7185', borderRadius:4 }
-                ]
+    if (compareChart) compareChart.destroy();
+    const ctx = document.getElementById('compareBarChart');
+    compareChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: months,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top', labels: { boxWidth: 14, font: { size: 12, weight: 'bold' } } },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            return `${ctx.dataset.label}: ${Number(ctx.parsed.y).toLocaleString('th-TH')} บาท`;
+                        }
+                    }
+                }
             },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'top', labels: { font: { size:14, weight:'bold' } } },
-                    tooltip: { callbacks: { label: c => c.dataset.label + ': ' + c.parsed.y.toLocaleString('th-TH') + ' บาท' } }
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 12, weight: 'bold' } }
                 },
-                scales: {
-                    x: { ticks: { font: { size: 12, weight:'bold' } } },
-                    y: { beginAtZero:true, ticks: { callback: v => formatNum(v) } }
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: v => formatNum(v) }
                 }
             }
-        });
-    }
+        }
+    });
+}
+
+// โหมดที่ 2: แกน X เป็นรายคน แสดง ยอดขาย vs หนี้ค้าง
+function renderIndividualBarChart(selectedReps, mIdx, mName) {
+    document.getElementById('chartTitleDisplay').innerHTML = `<i class="bi bi-bar-chart-steps text-primary me-2"></i>เปรียบเทียบยอดขาย vs หนี้คงค้าง — ${mName}`;
+    document.getElementById('chartSubtitleDisplay').innerText = `ช่วงเวลา: ${mName}`;
+
+    const labels = selectedReps.map(r => r.name);
+    const salesData = selectedReps.map(r => mIdx === -1 ? r.totSales : (r.sales[mIdx] || 0));
+    const debtData = selectedReps.map(r => mIdx === -1 ? r.totDebt : (r.debt[mIdx] || 0));
+
+    if (compareChart) compareChart.destroy();
+    const ctx = document.getElementById('compareBarChart');
+    compareChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                { label: 'ยอดขาย', data: salesData, backgroundColor: '#0284c7', borderRadius: 4 },
+                { label: 'หนี้คงค้าง', data: debtData, backgroundColor: '#f43f5e', borderRadius: 4 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top', labels: { boxWidth: 14, font: { size: 12, weight: 'bold' } } },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            return `${ctx.dataset.label}: ${Number(ctx.parsed.y).toLocaleString('th-TH')} บาท`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { ticks: { font: { size: 12, weight: 'bold' } } },
+                y: { beginAtZero: true, ticks: { callback: v => formatNum(v) } }
+            }
+        }
+    });
+}
+
+// เรนเดอร์ตาราง Matrix รายคน × รายเดือน
+function renderTeamBreakdownTable(selectedReps) {
+    const tbody = document.getElementById('teamBreakdownTbody');
+    let html = '';
+
+    selectedReps.forEach(rep => {
+        const collectRate = rep.totSales > 0 ? ((rep.totCollected / rep.totSales) * 100).toFixed(1) : '0.0';
+        let badgeClass = collectRate >= 80 ? 'bg-success' : (collectRate >= 50 ? 'bg-warning text-dark' : 'bg-danger');
+
+        html += `<tr>
+            <td class="fw-bold text-dark"><i class="bi bi-person me-1 text-primary"></i>${rep.name}</td>`;
+        
+        for (let mi = 0; mi < months.length; mi++) {
+            const s = rep.sales[mi] || 0;
+            html += `<td class="text-end ${s > 0 ? 'text-primary fw-semibold' : 'text-muted'}">${s > 0 ? formatMoney(s) : '-'}</td>`;
+        }
+
+        html += `<td class="text-end fw-black" style="color:#0f766e; background:#f0fdfa;">${formatMoney(rep.totSales)}</td>
+                 <td class="text-end fw-black" style="color:#e11d48; background:#fff1f2;">${formatMoney(rep.totDebt)}</td>
+                 <td class="text-center"><span class="badge ${badgeClass} p-1" style="font-size:0.8rem;">${collectRate}%</span></td>
+        </tr>`;
+    });
+
+    tbody.innerHTML = html;
+}
+
+// สร้างบทวิเคราะห์อัจฉริยะ (Smart Financial Insight)
+function generateSmartFinancialInsight(selectedReps, mIdx, mName) {
+    const box = document.getElementById('compare-insight-box');
+    
+    // 1. ค้นหา Top Sales
+    let topRep = null;
+    let maxSale = -1;
+    selectedReps.forEach(r => {
+        const s = mIdx === -1 ? r.totSales : (r.sales[mIdx] || 0);
+        if (s > maxSale) { maxSale = s; topRep = r; }
+    });
+
+    // 2. ค้นหาผู้ที่มีหนี้ค้างสูงสุด (Credit Risk)
+    let topDebtRep = null;
+    let maxDebt = -1;
+    selectedReps.forEach(r => {
+        const d = mIdx === -1 ? r.totDebt : (r.debt[mIdx] || 0);
+        if (d > maxDebt) { maxDebt = d; topDebtRep = r; }
+    });
+
+    // 3. เดือนที่ทีมทำยอดขายได้สูงสุด
+    let bestMonthIdx = 0;
+    let bestMonthTotal = -1;
+    months.forEach((m, idx) => {
+        let sum = selectedReps.reduce((acc, r) => acc + (r.sales[idx] || 0), 0);
+        if (sum > bestMonthTotal) { bestMonthTotal = sum; bestMonthIdx = idx; }
+    });
+
+    let teamNameLabel = currentTeamKey === 'weeranut' ? 'ทีมคุณวีรนุช' :
+                        (currentTeamKey === 'sunya' ? 'ทีมคุณสัญญา' :
+                        (currentTeamKey === 'nampetch' ? 'ทีมคุณน้ำเพชร' : 'กลุ่มผู้แทนที่เลือก'));
+
+    let insightHtml = `
+        <div class="d-flex align-items-center mb-2">
+            <span class="badge bg-teal text-white p-2 me-2" style="background:#0d9488;"><i class="bi bi-cpu-fill me-1"></i> Smart Financial Insight</span>
+            <span class="fw-bold text-dark">บทวิเคราะห์ประสิทธิภาพและสุขภาพลูกหนี้ — ${teamNameLabel}</span>
+        </div>
+        <div class="row g-2 mt-1 small">
+            <div class="col-md-4">
+                <div class="p-2 rounded bg-white border">
+                    <div class="text-muted"><i class="bi bi-trophy-fill text-warning me-1"></i> <b>Top Performer (ยอดขายสูงสุด):</b></div>
+                    <div class="fw-bold fs-6 text-primary mt-1">${topRep ? topRep.name : '-'}</div>
+                    <div class="text-muted">ยอดขาย: <b>${formatMoney(maxSale)}</b> บาท</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-2 rounded bg-white border">
+                    <div class="text-muted"><i class="bi bi-shield-exclamation text-danger me-1"></i> <b>Credit Risk Alert (หนี้ค้างสูงสุด):</b></div>
+                    <div class="fw-bold fs-6 text-danger mt-1">${topDebtRep ? topDebtRep.name : '-'}</div>
+                    <div class="text-muted">หนี้คงค้างที่ต้องเร่งรัด: <b>${formatMoney(maxDebt)}</b> บาท</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-2 rounded bg-white border">
+                    <div class="text-muted"><i class="bi bi-graph-up text-success me-1"></i> <b>Peak Sales Month (เดือนยอดขายพีคสุด):</b></div>
+                    <div class="fw-bold fs-6 text-success mt-1">${months[bestMonthIdx]}</div>
+                    <div class="text-muted">ยอดขายทั้งกลุ่มในเดือนนี้: <b>${formatMoney(bestMonthTotal)}</b> บาท</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    box.innerHTML = insightHtml;
 }
 
 function downloadScreenCapture(id) {
     const el = document.getElementById(id);
     if (!el) return;
-    html2canvas(el, { scale:2, useCORS:true, backgroundColor: '#ffffff' }).then(canvas => {
+    html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
         const a = document.createElement('a');
-        a.download = 'Compare_Chart_' + new Date().toISOString().slice(0,10) + '.png';
+        a.download = 'Compare_Team_Report_' + new Date().toISOString().slice(0, 10) + '.png';
         a.href = canvas.toDataURL('image/png', 1.0);
         a.click();
     });
 }
 
-window.addEventListener('DOMContentLoaded', updateCompareChart);
+window.addEventListener('DOMContentLoaded', () => {
+    // Initial load: select Weeranut team by default or all
+    filterByTeam('weeranut');
+});
 </script>
 }
