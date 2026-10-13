@@ -241,14 +241,14 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
 <div class="row g-3 mb-4">
     <!-- Card 1: 7 วัน กทม. ธีมสีฟ้าพาสเทลนุ่มนวล (Soft Ice Blue) -->
     <div class="col-6 col-lg-3">
-        <div class="exec-card theme-iceblue" id="card-cash7" onclick="selectCategory('cash7')" title="คลิกเพื่อดูรายละเอียดบิล เก็บสด 7 วัน">
+        <div class="exec-card theme-iceblue" id="card-cash7" onclick="selectCategory('cash7')" title="คลิกเพื่อดูรายละเอียดบิลเงินสด 7 วัน กทม., ปริมณฑล เริ่ม 14/09/69">
             <div class="exec-card-label">
-                <span><i class="bi bi-buildings-fill me-1"></i> 7 วัน กทม.&ปริมณฑล</span>
+                <span><i class="bi bi-buildings-fill me-1"></i> บิลเงินสด 7 วัน กทม., ปริมณฑล</span>
                 <span class="badge bg-white fw-bold" style="color:#0284c7;" id="badgeCount-cash7">@summary.Cash7Days.BillCount.ToString("N0") บิล</span>
             </div>
             <div class="exec-card-value" id="cardAmount-cash7">@summary.Cash7Days.TotalAmount.ToString("N0")</div>
             <div class="exec-card-sub">
-                กทม.&ปริมณฑล ณ 14/09+ <i class="bi bi-arrow-down-circle ms-1"></i>
+                เริ่ม 14/09/69 (เครดิต 7 วัน) <i class="bi bi-arrow-down-circle ms-1"></i>
             </div>
             <div class="collection-rate-tag">
                 สัดส่วนหนี้: <strong id="tagPct-cash7">@pctCash7.ToString("0.0")%</strong>
@@ -256,16 +256,16 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
         </div>
     </div>
 
-    <!-- Card 2: นโยบายรวมสายเวลาเงินสด กทม. ธีมสีชาไทยพาสเทล / ครีมอุ่น (Warm Sand) -->
+    <!-- Card 2: บิลเงินสด 10 วัน (ไม่จ่ายสด) กทม.ปริมณฑล ธีมสีชาไทยพาสเทล / ครีมอุ่น (Warm Sand) -->
     <div class="col-6 col-lg-3">
-        <div class="exec-card theme-warmsand" id="card-cash10" onclick="selectCategory('cash10')" title="คลิกเพื่อดูรายละเอียดบิล เงินสดรวมสายเวลา">
+        <div class="exec-card theme-warmsand" id="card-cash10" onclick="selectCategory('cash10')" title="คลิกเพื่อดูรายละเอียดบิลเงินสด 10 วัน (ไม่จ่ายสด) กทม., ปริมณฑล">
             <div class="exec-card-label">
-                <span><i class="bi bi-hourglass-split me-1"></i> รวมสายเวลาเงินสด กทม.</span>
+                <span><i class="bi bi-hourglass-split me-1"></i> บิลเงินสด 10 วัน (ไม่จ่ายสด) กทม.</span>
                 <span class="badge bg-white fw-bold" style="color:#b45309;" id="badgeCount-cash10">@summary.Cash10Days.BillCount.ToString("N0") บิล</span>
             </div>
             <div class="exec-card-value" id="cardAmount-cash10">@summary.Cash10Days.TotalAmount.ToString("N0")</div>
             <div class="exec-card-sub">
-                กทม. ก่อน 14/09 (7 วัน) + หลัง 14/09 (10 วัน) <i class="bi bi-arrow-down-circle ms-1"></i>
+                ก่อน 14/09 (7 วัน) + หลัง 14/09 (10 วัน) <i class="bi bi-arrow-down-circle ms-1"></i>
             </div>
             <div class="collection-rate-tag">
                 สัดส่วนหนี้: <strong id="tagPct-cash10">@pctCashTimeline.ToString("0.0")%</strong>
@@ -338,7 +338,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
             <div class="p-3 mb-2 rounded-3 border" style="background:#f0f9ff; border-color:#bae6fd !important;">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <span class="fw-bold" style="color:#0369a1;">
-                        <i class="bi bi-square-fill me-1" style="color:#0284c7;"></i> 1. บิลเก็บสด 7 วัน (กทม. & ปริมณฑล)
+                        <i class="bi bi-square-fill me-1" style="color:#0284c7;"></i> 1. บิลเงินสด 7 วัน กทม., ปริมณฑล (เริ่ม 14/09/69)
                     </span>
                     <span class="badge px-2 py-1" style="background:#0284c7; color:#fff;" id="pctText-cash7">@pctCash7.ToString("0.0")%</span>
                 </div>
@@ -351,11 +351,11 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
                 </div>
             </div>
 
-            <!-- Group 2: รวมสายเวลา กทม. (Warm Sand / Terracotta) -->
+            <!-- Group 2: บิลเงินสด 10 วัน (ไม่จ่ายสด) กทม.ปริมณฑล (Warm Sand / Terracotta) -->
             <div class="p-3 mb-2 rounded-3 border" style="background:#fffbeb; border-color:#fde68a !important;">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <span class="fw-bold" style="color:#b45309;">
-                        <i class="bi bi-square-fill me-1" style="color:#d97706;"></i> 2. บิลเงินสดรวมสายเวลาต่อเนื่อง (กทม. & ปริมณฑล)
+                        <i class="bi bi-square-fill me-1" style="color:#d97706;"></i> 2. บิลเงินสด 10 วัน (ไม่จ่ายสด) กทม., ปริมณฑล
                     </span>
                     <span class="badge px-2 py-1" style="background:#d97706; color:#fff;" id="pctText-cash10">@pctCashTimeline.ToString("0.0")%</span>
                 </div>
@@ -426,10 +426,10 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
             ทั้งหมด (@drilldownBills.Count.ToString("N0"))
         </button>
         <button type="button" class="btn category-btn" style="color:#0284c7; border-color:#0284c7;" id="pill-cash7" onclick="selectCategory('cash7')">
-            🏢 เก็บสด 7 วัน กทม. (@summary.Cash7Days.BillCount.ToString("N0"))
+            🏢 บิลเงินสด 7 วัน กทม., ปริมณฑล (เริ่ม 14/09/69) (@summary.Cash7Days.BillCount.ToString("N0"))
         </button>
         <button type="button" class="btn category-btn" style="color:#b45309; border-color:#d97706;" id="pill-cash10" onclick="selectCategory('cash10')">
-            ⏳ รวมสายเวลาเงินสด กทม. (@summary.Cash10Days.BillCount.ToString("N0"))
+            ⏳ บิลเงินสด 10 วัน (ไม่จ่ายสด) กทม., ปริมณฑล (@summary.Cash10Days.BillCount.ToString("N0"))
         </button>
         <button type="button" class="btn category-btn" style="color:#7c3aed; border-color:#7c3aed;" id="pill-upcountry" onclick="selectCategory('upcountry')">
             🚚 ต่างจังหวัดทั้งหมด (@summary.UpcountryDebts.BillCount.ToString("N0"))
@@ -607,8 +607,8 @@ let searchDebounceTimer = null;
 
 const categoryTitles = {
     'all': 'ภาพรวมทั้งหมด',
-    'cash7': 'เก็บสด 7 วัน (กทม.&ปริมณฑล)',
-    'cash10': 'รวมสายเวลาเงินสด (กทม.&ปริมณฑล)',
+    'cash7': 'บิลเงินสด 7 วัน กทม., ปริมณฑล (เริ่ม 14/09/69)',
+    'cash10': 'บิลเงินสด 10 วัน (ไม่จ่ายสด) กทม., ปริมณฑล',
     'upcountry': 'บิลค้างชำระต่างจังหวัดทั้งหมด',
     'over120': 'ค้างชำระ > 120 วัน',
     'collected': 'ยอดเก็บสำเร็จ'
@@ -625,8 +625,8 @@ function initPieChart() {
         type: 'pie',
         data: {
             labels: [
-                '1. เก็บสด 7 วัน (กทม.&ปริมณฑล)',
-                '2. รวมสายเวลาเงินสด (กทม.&ปริมณฑล)',
+                '1. บิลเงินสด 7 วัน กทม., ปริมณฑล (เริ่ม 14/09/69)',
+                '2. บิลเงินสด 10 วัน (ไม่จ่ายสด) กทม., ปริมณฑล',
                 '3. ค้างชำระต่างจังหวัดทั้งหมด'
             ],
             datasets: [{
