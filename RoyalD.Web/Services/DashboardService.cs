@@ -100,17 +100,28 @@ namespace RoyalD.Web.Services
                 .OrderByDescending(d => d.BillDate)
                 .ToListAsync();
 
+            // Fetch paid sales bills of Year 2569 (>= 2026-01-01) for YTD Collection KPI
             var paidSalesBills = await _db.SalesBills
                 .AsNoTracking()
-                .Where(b => !b.IsCancelled && (b.IsFullyPaid || (!string.IsNullOrEmpty(b.ReceiptNo) && b.ReceiptDate != null)))
+                .Where(b => !b.IsCancelled && b.BillDate >= new DateTime(2026, 1, 1) && (b.IsFullyPaid || (!string.IsNullOrEmpty(b.ReceiptNo) && b.ReceiptDate != null)))
                 .OrderByDescending(b => b.ReceiptDate ?? b.BillDate)
                 .ToListAsync();
+
+            // Total sales bills of Year 2569
+            var sales2569Stats = await _db.SalesBills
+                .AsNoTracking()
+                .Where(b => !b.IsCancelled && b.BillDate >= new DateTime(2026, 1, 1))
+                .GroupBy(b => 1)
+                .Select(g => new { Count = g.Count(), Total = g.Sum(x => x.TotalAmount) })
+                .FirstOrDefaultAsync();
 
             var summary = new DashboardSummary
             {
                 TotalDebtors = allDebts.Where(d => d.RemainingAmount > 0 && !string.IsNullOrEmpty(d.CustomerCode)).Select(d => d.CustomerCode).Distinct().Count(),
                 TotalSalesAmount = allDebts.Sum(d => d.OriginalAmount),
-                TotalAmount = allDebts.Sum(d => d.OriginalAmount)
+                TotalAmount = allDebts.Sum(d => d.OriginalAmount),
+                Sales2569Amount = sales2569Stats?.Total ?? 0,
+                Sales2569BillCount = sales2569Stats?.Count ?? 0
             };
 
             var drilldownBills = new List<DashboardBillItem>();
@@ -155,12 +166,16 @@ namespace RoyalD.Web.Services
                 if (isPaid)
                 {
                     cat = "collected";
-                    catName = "ยอดเก็บเงินสำเร็จ";
+                    catName = "ยอดเก็บเงินสำเร็จ (ปี 2569)";
                     decimal paidAmt = (d.OriginalAmount - d.RemainingAmount > 0) ? (d.OriginalAmount - d.RemainingAmount) : d.OriginalAmount;
                     if (paidAmt <= 0) paidAmt = d.OriginalAmount;
 
-                    summary.Collected.BillCount++;
-                    summary.Collected.TotalAmount += paidAmt;
+                    // เฉพาะบิลปี 2569 จึงนับเข้า Collected
+                    if (bDateNorm >= new DateTime(2026, 1, 1))
+                    {
+                        summary.Collected.BillCount++;
+                        summary.Collected.TotalAmount += paidAmt;
+                    }
                     seenPaidBillNos.Add(d.BillNo);
                 }
                 else
@@ -276,7 +291,7 @@ namespace RoyalD.Web.Services
                         District = sb.District ?? "",
                         Amount = sb.TotalAmount,
                         Category = "collected",
-                        CategoryName = "ยอดเก็บเงินสำเร็จ",
+                        CategoryName = "ยอดเก็บเงินสำเร็จ (ปี 2569)",
                         GroupCode = groupCode,
                         Credit = sb.Credit,
                         DueDate = sb.BillDate.AddDays(sb.Credit),
@@ -290,6 +305,8 @@ namespace RoyalD.Web.Services
                 }
             }
 
+            summary.Collected2569Amount = summary.Collected.TotalAmount;
+            summary.Collected2569BillCount = summary.Collected.BillCount;
             summary.TotalCollectedAmount = summary.Collected.TotalAmount;
             summary.AllDrilldownBills = drilldownBills;
             comparisonBoard.Summary = summary;

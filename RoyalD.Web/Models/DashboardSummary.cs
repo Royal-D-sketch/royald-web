@@ -18,7 +18,14 @@ namespace RoyalD.Web.Models
         public DebtCategory CashTimelineBkk => Cash10Days;        // Alias for clarity
         public DebtCategory UpcountryDebts { get; set; } = new(); // หนี้ค้างชำระต่างจังหวัดทั้งหมด
         public DebtCategory Overdue120Days { get; set; } = new(); // ค้างชำระ > 120 วัน
-        public DebtCategory Collected { get; set; } = new();      // ยอดเก็บเงินสำเร็จ
+        public DebtCategory Collected { get; set; } = new();      // ยอดเก็บเงินสำเร็จ (ปี 2569)
+
+        // KPI ประจำปี 2569 (YTD 2569)
+        public decimal Sales2569Amount { get; set; }
+        public int Sales2569BillCount { get; set; }
+        public decimal Collected2569Amount { get; set; }
+        public int Collected2569BillCount { get; set; }
+        public double CollectionRate2569 => (Sales2569Amount > 0) ? (double)Math.Round((Collected2569Amount / Sales2569Amount) * 100, 2) : 0;
 
         public List<DashboardBillItem> AllDrilldownBills { get; set; } = new();
     }

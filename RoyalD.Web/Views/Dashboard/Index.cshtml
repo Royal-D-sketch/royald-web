@@ -290,19 +290,19 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
         </div>
     </div>
 
-    <!-- Card 4: ยอดเก็บสำเร็จประจำเดือน ธีมสีเขียวมินต์พาสเทล / ใบไม้ (Mint Green) -->
+    <!-- Card 4: ยอดเก็บสำเร็จ ปี 2569 ธีมสีเขียวมินต์พาสเทล / ใบไม้ (Mint Green) -->
     <div class="col-6 col-lg-3">
-        <div class="exec-card theme-mint" id="card-collected" onclick="selectCategory('collected')" title="คลิกเพื่อดูรายละเอียดบิล ยอดเก็บเงินสำเร็จ">
+        <div class="exec-card theme-mint" id="card-collected" onclick="selectCategory('collected')" title="คลิกเพื่อดูรายละเอียดบิล ยอดเก็บเงินสำเร็จ ปี 2569">
             <div class="exec-card-label">
-                <span><i class="bi bi-check-circle-fill me-1"></i> ยอดเก็บสำเร็จ</span>
-                <span class="badge bg-white fw-bold" style="color:#047857;" id="badgeCount-collected">@summary.Collected.BillCount.ToString("N0") บิล</span>
+                <span><i class="bi bi-check-circle-fill me-1"></i> ยอดเก็บสำเร็จ (ปี 2569)</span>
+                <span class="badge bg-white fw-bold" style="color:#047857;" id="badgeCount-collected">@summary.Collected2569BillCount.ToString("N0") บิล</span>
             </div>
-            <div class="exec-card-value" id="cardAmount-collected">@summary.Collected.TotalAmount.ToString("N0")</div>
+            <div class="exec-card-value" id="cardAmount-collected">@summary.Collected2569Amount.ToString("N0")</div>
             <div class="exec-card-sub">
-                ชำระเงินเรียบร้อยแล้ว <i class="bi bi-arrow-down-circle ms-1"></i>
+                ยอดขายปี 69: @((summary.Sales2569Amount / 1000000m).ToString("N2"))M บ. <i class="bi bi-arrow-down-circle ms-1"></i>
             </div>
             <div class="collection-rate-tag" style="background: rgba(255,255,255,0.32); border-color:#ffffff;">
-                % Collection Rate = <strong style="font-size:0.92rem;" id="tagCollectionRate">@summary.CollectionRate.ToString("0.00")%</strong>
+                % Collection (ปี 69) = <strong style="font-size:0.92rem;" id="tagCollectionRate">@summary.CollectionRate2569.ToString("0.00")%</strong>
             </div>
         </div>
     </div>

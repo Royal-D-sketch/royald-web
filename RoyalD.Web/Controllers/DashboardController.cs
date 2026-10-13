@@ -170,18 +170,28 @@ namespace RoyalD.Web.Controllers
                 .OrderByDescending(d => d.BillDate)
                 .ToListAsync();
 
-            // Fetch any paid sales bills to include in collected
+            // Fetch paid sales bills of Year 2569 (>= 2026-01-01) for YTD Collection KPI
             var paidSalesBills = await _db.SalesBills
                 .AsNoTracking()
-                .Where(b => b.IsFullyPaid || (!string.IsNullOrEmpty(b.ReceiptNo) && b.ReceiptDate != null))
+                .Where(b => !b.IsCancelled && b.BillDate >= new DateTime(2026, 1, 1) && (b.IsFullyPaid || (!string.IsNullOrEmpty(b.ReceiptNo) && b.ReceiptDate != null)))
                 .OrderByDescending(b => b.ReceiptDate ?? b.BillDate)
                 .ToListAsync();
+
+            // Total sales bills of Year 2569
+            var sales2569Stats = await _db.SalesBills
+                .AsNoTracking()
+                .Where(b => !b.IsCancelled && b.BillDate >= new DateTime(2026, 1, 1))
+                .GroupBy(b => 1)
+                .Select(g => new { Count = g.Count(), Total = g.Sum(x => x.TotalAmount) })
+                .FirstOrDefaultAsync();
 
             var summary = new DashboardSummary
             {
                 TotalDebtors = allDebts.Where(d => d.RemainingAmount > 0 && !string.IsNullOrEmpty(d.CustomerCode)).Select(d => d.CustomerCode).Distinct().Count(),
                 TotalSalesAmount = allDebts.Sum(d => d.OriginalAmount),
-                TotalAmount = allDebts.Sum(d => d.OriginalAmount)
+                TotalAmount = allDebts.Sum(d => d.OriginalAmount),
+                Sales2569Amount = sales2569Stats?.Total ?? 0,
+                Sales2569BillCount = sales2569Stats?.Count ?? 0
             };
 
             var drilldownBills = new List<DashboardBillItem>();
@@ -226,12 +236,15 @@ namespace RoyalD.Web.Controllers
                 if (isPaid)
                 {
                     cat = "collected";
-                    catName = "ยอดเก็บเงินสำเร็จ";
+                    catName = "ยอดเก็บเงินสำเร็จ (ปี 2569)";
                     decimal paidAmt = (d.OriginalAmount - d.RemainingAmount > 0) ? (d.OriginalAmount - d.RemainingAmount) : d.OriginalAmount;
                     if (paidAmt <= 0) paidAmt = d.OriginalAmount;
 
-                    summary.Collected.BillCount++;
-                    summary.Collected.TotalAmount += paidAmt;
+                    if (bDateNorm >= new DateTime(2026, 1, 1))
+                    {
+                        summary.Collected.BillCount++;
+                        summary.Collected.TotalAmount += paidAmt;
+                    }
                     seenPaidBillNos.Add(d.BillNo);
                 }
                                 else
@@ -358,7 +371,7 @@ namespace RoyalD.Web.Controllers
                         Province = sb.Province ?? "",
                         Amount = sb.TotalAmount,
                         Category = "collected",
-                        CategoryName = "ยอดเก็บเงินสำเร็จ",
+                        CategoryName = "ยอดเก็บเงินสำเร็จ (ปี 2569)",
                         GroupCode = groupCode,
                         Credit = sb.Credit,
                         DueDate = sb.BillDate.AddDays(sb.Credit),
@@ -372,6 +385,8 @@ namespace RoyalD.Web.Controllers
                 }
             }
 
+            summary.Collected2569Amount = summary.Collected.TotalAmount;
+            summary.Collected2569BillCount = summary.Collected.BillCount;
             summary.TotalCollectedAmount = summary.Collected.TotalAmount;
             summary.AllDrilldownBills = drilldownBills;
             comparisonBoard.Summary = summary;
@@ -709,9 +724,11 @@ namespace RoyalD.Web.Controllers
             else if (grp == "3") allBills = allBills.Where(b => b.GroupCode == "3");
 
             // กรองตาม SubFilter
-            if (sub == "outstanding") allBills = allBills.Where(b => !b.IsPaid);
-            else if (sub == "under120") allBills = allBills.Where(b => !b.IsPaid && b.AgingDays <= 120);
-            else if (sub == "over120") allBills = allBills.Where(b => !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade);
+            if (sub == "sales") allBills = allBills; // แสดงบิลทั้งหมดของกลุ่มนั้น (ยอดขายรวม)
+            else if (sub == "outstanding") allBills = allBills.Where(b => !b.IsPaid);
+            else if (sub == "current") allBills = allBills.Where(b => !b.IsPaid && b.AgingDays <= 0); // ภายในกำหนด (ยังไม่ถึงดิว)
+            else if (sub == "under120") allBills = allBills.Where(b => !b.IsPaid && b.AgingDays > 0 && b.AgingDays <= 120); // เกินกำหนด 1-120 วัน
+            else if (sub == "over120") allBills = allBills.Where(b => !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade); // วิกฤตเกิน 120 วัน
             else if (sub == "collected") allBills = allBills.Where(b => b.IsPaid);
 
             // กรองตาม Search
@@ -778,9 +795,48 @@ namespace RoyalD.Web.Controllers
             var filteredList = allFiltered.ToList();
             var metrics = new
             {
-                g1 = new { outAmt = filteredList.Where(b => b.GroupCode == "1" && !b.IsPaid).Sum(b => b.Amount), outCnt = filteredList.Count(b => b.GroupCode == "1" && !b.IsPaid), under120Amt = filteredList.Where(b => b.GroupCode == "1" && !b.IsPaid && b.AgingDays <= 120).Sum(b => b.Amount), under120Cnt = filteredList.Count(b => b.GroupCode == "1" && !b.IsPaid && b.AgingDays <= 120), over120Amt = filteredList.Where(b => b.GroupCode == "1" && !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade).Sum(b => b.Amount), over120Cnt = filteredList.Count(b => b.GroupCode == "1" && !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade), colAmt = filteredList.Where(b => b.GroupCode == "1" && b.IsPaid).Sum(b => b.Amount), colCnt = filteredList.Count(b => b.GroupCode == "1" && b.IsPaid) },
-                g2 = new { outAmt = filteredList.Where(b => b.GroupCode == "2" && !b.IsPaid).Sum(b => b.Amount), outCnt = filteredList.Count(b => b.GroupCode == "2" && !b.IsPaid), under120Amt = filteredList.Where(b => b.GroupCode == "2" && !b.IsPaid && b.AgingDays <= 120).Sum(b => b.Amount), under120Cnt = filteredList.Count(b => b.GroupCode == "2" && !b.IsPaid && b.AgingDays <= 120), over120Amt = filteredList.Where(b => b.GroupCode == "2" && !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade).Sum(b => b.Amount), over120Cnt = filteredList.Count(b => b.GroupCode == "2" && !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade), colAmt = filteredList.Where(b => b.GroupCode == "2" && b.IsPaid).Sum(b => b.Amount), colCnt = filteredList.Count(b => b.GroupCode == "2" && b.IsPaid) },
-                g3 = new { outAmt = filteredList.Where(b => b.GroupCode == "3" && !b.IsPaid).Sum(b => b.Amount), outCnt = filteredList.Count(b => b.GroupCode == "3" && !b.IsPaid), under120Amt = filteredList.Where(b => b.GroupCode == "3" && !b.IsPaid && b.AgingDays <= 120).Sum(b => b.Amount), under120Cnt = filteredList.Count(b => b.GroupCode == "3" && !b.IsPaid && b.AgingDays <= 120), over120Amt = filteredList.Where(b => b.GroupCode == "3" && !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade).Sum(b => b.Amount), over120Cnt = filteredList.Count(b => b.GroupCode == "3" && !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade), colAmt = filteredList.Where(b => b.GroupCode == "3" && b.IsPaid).Sum(b => b.Amount), colCnt = filteredList.Count(b => b.GroupCode == "3" && b.IsPaid) }
+                g1 = new {
+                    salesAmt = filteredList.Where(b => b.GroupCode == "1").Sum(b => b.Amount),
+                    salesCnt = filteredList.Count(b => b.GroupCode == "1"),
+                    colAmt = filteredList.Where(b => b.GroupCode == "1" && b.IsPaid).Sum(b => b.Amount),
+                    colCnt = filteredList.Count(b => b.GroupCode == "1" && b.IsPaid),
+                    outAmt = filteredList.Where(b => b.GroupCode == "1" && !b.IsPaid).Sum(b => b.Amount),
+                    outCnt = filteredList.Count(b => b.GroupCode == "1" && !b.IsPaid),
+                    currentAmt = filteredList.Where(b => b.GroupCode == "1" && !b.IsPaid && b.AgingDays <= 0).Sum(b => b.Amount),
+                    currentCnt = filteredList.Count(b => b.GroupCode == "1" && !b.IsPaid && b.AgingDays <= 0),
+                    under120Amt = filteredList.Where(b => b.GroupCode == "1" && !b.IsPaid && b.AgingDays > 0 && b.AgingDays <= 120).Sum(b => b.Amount),
+                    under120Cnt = filteredList.Count(b => b.GroupCode == "1" && !b.IsPaid && b.AgingDays > 0 && b.AgingDays <= 120),
+                    over120Amt = filteredList.Where(b => b.GroupCode == "1" && !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade).Sum(b => b.Amount),
+                    over120Cnt = filteredList.Count(b => b.GroupCode == "1" && !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade)
+                },
+                g2 = new {
+                    salesAmt = filteredList.Where(b => b.GroupCode == "2").Sum(b => b.Amount),
+                    salesCnt = filteredList.Count(b => b.GroupCode == "2"),
+                    colAmt = filteredList.Where(b => b.GroupCode == "2" && b.IsPaid).Sum(b => b.Amount),
+                    colCnt = filteredList.Count(b => b.GroupCode == "2" && b.IsPaid),
+                    outAmt = filteredList.Where(b => b.GroupCode == "2" && !b.IsPaid).Sum(b => b.Amount),
+                    outCnt = filteredList.Count(b => b.GroupCode == "2" && !b.IsPaid),
+                    currentAmt = filteredList.Where(b => b.GroupCode == "2" && !b.IsPaid && b.AgingDays <= 0).Sum(b => b.Amount),
+                    currentCnt = filteredList.Count(b => b.GroupCode == "2" && !b.IsPaid && b.AgingDays <= 0),
+                    under120Amt = filteredList.Where(b => b.GroupCode == "2" && !b.IsPaid && b.AgingDays > 0 && b.AgingDays <= 120).Sum(b => b.Amount),
+                    under120Cnt = filteredList.Count(b => b.GroupCode == "2" && !b.IsPaid && b.AgingDays > 0 && b.AgingDays <= 120),
+                    over120Amt = filteredList.Where(b => b.GroupCode == "2" && !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade).Sum(b => b.Amount),
+                    over120Cnt = filteredList.Count(b => b.GroupCode == "2" && !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade)
+                },
+                g3 = new {
+                    salesAmt = filteredList.Where(b => b.GroupCode == "3").Sum(b => b.Amount),
+                    salesCnt = filteredList.Count(b => b.GroupCode == "3"),
+                    colAmt = filteredList.Where(b => b.GroupCode == "3" && b.IsPaid).Sum(b => b.Amount),
+                    colCnt = filteredList.Count(b => b.GroupCode == "3" && b.IsPaid),
+                    outAmt = filteredList.Where(b => b.GroupCode == "3" && !b.IsPaid).Sum(b => b.Amount),
+                    outCnt = filteredList.Count(b => b.GroupCode == "3" && !b.IsPaid),
+                    currentAmt = filteredList.Where(b => b.GroupCode == "3" && !b.IsPaid && b.AgingDays <= 0).Sum(b => b.Amount),
+                    currentCnt = filteredList.Count(b => b.GroupCode == "3" && !b.IsPaid && b.AgingDays <= 0),
+                    under120Amt = filteredList.Where(b => b.GroupCode == "3" && !b.IsPaid && b.AgingDays > 0 && b.AgingDays <= 120).Sum(b => b.Amount),
+                    under120Cnt = filteredList.Count(b => b.GroupCode == "3" && !b.IsPaid && b.AgingDays > 0 && b.AgingDays <= 120),
+                    over120Amt = filteredList.Where(b => b.GroupCode == "3" && !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade).Sum(b => b.Amount),
+                    over120Cnt = filteredList.Count(b => b.GroupCode == "3" && !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade)
+                }
             };
 
             return Json(new { success = true, totalItems, totalPages, currentPage = page, pageSize, totalAmount, totalAmountFormatted = totalAmount.ToString("N2"), items, metrics });
