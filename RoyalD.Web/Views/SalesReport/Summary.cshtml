@@ -1,4 +1,4 @@
-﻿@using RoyalD.Web.Services
+@using RoyalD.Web.Services
 @model RoyalD.Web.Services.AnnualPerformanceViewModel
 @{
     ViewData["Title"] = "1. รายงานสรุปประสิทธิภาพยอดขายผู้แทน";
@@ -21,10 +21,11 @@
 .matrix-scroll-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:12px; box-shadow:0 4px 18px rgba(0,0,0,0.06); background:white; margin-bottom:24px; }
 .matrix-table { width:100%; border-collapse:collapse; font-size:0.93rem; }
 .matrix-table th { background:#1e293b !important; color:white !important; padding:12px 14px; border:1px solid #334155; white-space:nowrap; font-size:0.98rem; }
-.matrix-table td { padding:10px 14px; border:1px solid #e9ecef; vertical-align:middle; }
 .rep-row-header { background:linear-gradient(135deg,#f0fdf4,#ecfdf5); font-weight:800; color:#065f46; font-size:1.02rem; }
 /* KPI row colors */
+.val-bf { color:#0891b2; font-weight:700; }
 .val-sales { color:#0369a1; font-weight:700; }
+.val-resp { color:#6366f1; font-weight:800; background-color:#f8fafc; }
 .val-collected { color:#059669; font-weight:700; }
 .val-debt { color:#e11d48; font-weight:700; }
 /* Percentage badge */
@@ -72,9 +73,9 @@
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 export-bar">
     <div>
         <h3 class="mb-1 fw-bold" style="color:#065f46;">
-            <i class="bi bi-table" style="color:#059669;"></i> Pivot Matrix — ยอดขาย / ยอดเก็บ / หนี้ค้าง รายผู้แทน × รายเดือน
+            <i class="bi bi-table" style="color:#059669;"></i> Pivot Matrix — ยอดยกมา / ยอดขาย / รวมฐานหนี้ / ยอดเก็บ / หนี้ค้าง รายผู้แทน × รายเดือน
         </h3>
-        <span class="text-muted fw-semibold">กรองดูผู้แทนรายบุคคล หรือภาพรวมทั้งบริษัท พร้อมตัวชี้วัด % ประสิทธิภาพ</span>
+        <span class="text-muted fw-semibold">คำนวณตามมาตรฐานบัญชีลูกหนี้ (ยอดยกมา + ยอดขายใหม่ = ฐานหนี้ที่ต้องติดตาม) วัดผล KPI รายผู้แทนอย่างเป็นธรรม</span>
     </div>
     @if (canDownload)
     {
@@ -181,59 +182,77 @@
             <div class="fw-bold" style="font-size:1.15rem; opacity:.95; margin-bottom:4px;">
                 <i class="bi bi-journal-bookmark-fill me-2 text-warning"></i>@data.SalesRep
             </div>
-            <div class="small" style="opacity:.9;">สรุปยอดขายและการเก็บเงิน ไทม์ไลน์ @(Model.Months.Count) เดือน ปี 2569</div>
+            <div class="small" style="opacity:.9;">สรุปยอดขายและการเก็บเงิน ไทม์ไลน์ @(Model.Months.Count) เดือน ปี 2569 (รวมยอดยกมาจากปีก่อนหน้าและการยกยอดรายเดือน)</div>
         </div>
         
         <div class="matrix-scroll-wrap mb-4">
             <table class="matrix-table" id="tbl-@key">
                 <thead>
                     <tr>
-                        <th style="min-width:180px;">รายการ</th>
+                        <th style="min-width:210px;">รายการ</th>
                         @foreach (var m in Model.Months) { <th class="text-end" style="min-width:120px;">@m</th> }
-                        <th class="text-end" style="min-width:130px; background:#334155 !important;">รวมทั้งหมด</th>
+                        <th class="text-end" style="min-width:140px; background:#334155 !important;">รวมตลอดปี (YTD)</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Row 1: Sales -->
+                    <!-- Row 1: Brought Forward (ลูกหนี้ยกมา) -->
+                    <tr id="rowBF-@key">
+                        <td class="rep-row-header" style="background:#f0f9ff; color:#0369a1;"><i class="bi bi-clock-history text-info me-1"></i> 1. ลูกหนี้ยกมาต้นงวด (บาท)</td>
+                        @foreach (var m in data.MonthlyData)
+                        {
+                            <td class="text-end val-bf">@m.BroughtForward.ToString("N0")</td>
+                        }
+                        <td class="text-end val-bf bg-light" style="font-size:1.05rem;" title="ยอดยกมาเริ่มต้นปี 2569">@data.InitialBroughtForward.ToString("N0")</td>
+                    </tr>
+                    <!-- Row 2: Sales (ยอดขายระหว่างเดือน) -->
                     <tr id="rowSales-@key">
-                        <td class="rep-row-header"><i class="bi bi-bag-fill text-primary me-1"></i> ยอดขาย (บาท)</td>
+                        <td class="rep-row-header"><i class="bi bi-bag-fill text-primary me-1"></i> 2. ยอดขายระหว่างเดือน (บาท)</td>
                         @foreach (var m in data.MonthlyData)
                         {
                             <td class="text-end val-sales">@m.TotalSales.ToString("N0")</td>
                         }
                         <td class="text-end val-sales bg-light" style="font-size:1.15rem;">@data.TotalSales.ToString("N0")</td>
                     </tr>
-                    <!-- Row 2: Collected -->
+                    <!-- Row 3: Total Responsible (รวมฐานหนี้ที่ต้องรับผิดชอบ = ยกมา + ขายใหม่) -->
+                    <tr id="rowResp-@key" style="border-top:1.5px solid #cbd5e1; border-bottom:1.5px solid #cbd5e1;">
+                        <td class="rep-row-header" style="background:#f8fafc; color:#312e81; font-weight:800;"><i class="bi bi-stack text-indigo me-1"></i> 3. รวมฐานหนี้ที่ต้องติดตาม (1+2)</td>
+                        @foreach (var m in data.MonthlyData)
+                        {
+                            <td class="text-end val-resp">@m.TotalResponsible.ToString("N0")</td>
+                        }
+                        <td class="text-end val-resp" style="font-size:1.15rem; background:#ede9fe; color:#4338ca;">@data.TotalResponsible.ToString("N0")</td>
+                    </tr>
+                    <!-- Row 4: Collected (ยอดเก็บได้) -->
                     <tr id="rowCollected-@key">
-                        <td class="rep-row-header"><i class="bi bi-cash-coin text-success me-1"></i> ยอดเก็บได้ (บาท)</td>
+                        <td class="rep-row-header"><i class="bi bi-cash-coin text-success me-1"></i> 4. ยอดเก็บเงินได้ (บาท)</td>
                         @foreach (var m in data.MonthlyData)
                         {
                             <td class="text-end val-collected">@m.TotalCollected.ToString("N0")</td>
                         }
                         <td class="text-end val-collected bg-light" style="font-size:1.15rem;">@data.TotalCollected.ToString("N0")</td>
                     </tr>
-                    <!-- Row 3: Debt -->
+                    <!-- Row 5: Debt Outstanding (หนี้คงค้างปลายงวด) -->
                     <tr id="rowDebt-@key">
-                        <td class="rep-row-header"><i class="bi bi-exclamation-octagon text-danger me-1"></i> หนี้คงค้าง (บาท)</td>
+                        <td class="rep-row-header"><i class="bi bi-exclamation-octagon text-danger me-1"></i> 5. หนี้คงค้างปลายงวด (3-4)</td>
                         @foreach (var m in data.MonthlyData)
                         {
                             <td class="text-end val-debt">@m.Outstanding.ToString("N0")</td>
                         }
-                        <td class="text-end val-debt bg-light" style="font-size:1.15rem;">@data.TotalOutstanding.ToString("N0")</td>
+                        <td class="text-end val-debt bg-light" style="font-size:1.15rem;" title="หนี้คงค้างสะสมล่าสุด">@data.TotalOutstanding.ToString("N0")</td>
                     </tr>
-                    <!-- Row 4: Rate -->
+                    <!-- Row 6: KPI Rate on Responsible Base (% ประสิทธิภาพจัดเก็บจริง) -->
                     <tr id="rowRate-@key">
-                        <td class="rep-row-header"><i class="bi bi-percent text-warning me-1"></i> % ประสิทธิภาพ</td>
+                        <td class="rep-row-header"><i class="bi bi-trophy-fill text-warning me-1"></i> 6. % ประสิทธิภาพจัดเก็บ (KPI)</td>
                         @foreach (var m in data.MonthlyData)
                         {
-                            string bc = m.CollectionRate >= 85 ? "pct-good" : (m.CollectionRate >= 50 ? "pct-mid" : "pct-bad");
-                            <td class="text-center"><span class="pct-badge @bc">@m.CollectionRate%</span></td>
+                            string bc = m.CollectionRateOnBase >= 60 ? "pct-good" : (m.CollectionRateOnBase >= 40 ? "pct-mid" : "pct-bad");
+                            <td class="text-center" title="เก็บได้ @m.TotalCollected.ToString("N0") / ฐานหนี้ @m.TotalResponsible.ToString("N0")"><span class="pct-badge @bc">@m.CollectionRateOnBase%</span></td>
                         }
                         <td class="text-center bg-light">
                             @{
-                                string obc = data.OverallCollectionRate >= 85 ? "pct-good" : (data.OverallCollectionRate >= 50 ? "pct-mid" : "pct-bad");
+                                string obc = data.OverallCollectionRateOnBase >= 60 ? "pct-good" : (data.OverallCollectionRateOnBase >= 40 ? "pct-mid" : "pct-bad");
                             }
-                            <span class="pct-badge @obc" style="font-size:1.05rem; padding:6px 14px;">@data.OverallCollectionRate%</span>
+                            <span class="pct-badge @obc" style="font-size:1.05rem; padding:6px 14px;" title="รวมยอดเก็บ / รวมฐานหนี้ทั้งหมด">@data.OverallCollectionRateOnBase%</span>
                         </td>
                     </tr>
                 </tbody>
@@ -254,7 +273,7 @@
             <div class="col-md-5">
                 <div class="chart-card">
                     <div class="fw-bold mb-2" style="color:#1a1a2e; font-size:1.02rem;">
-                        <i class="bi bi-graph-up-arrow text-success"></i> เส้นแนวโน้ม % ประสิทธิภาพ
+                        <i class="bi bi-graph-up-arrow text-success"></i> เส้นแนวโน้ม % ประสิทธิภาพจัดเก็บจริง (KPI)
                     </div>
                     <canvas id="lineChart-@key" height="130"></canvas>
                 </div>
@@ -273,7 +292,7 @@ const repsDataStore = {
         sales: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OverallCompany.MonthlyData.Select(m => m.TotalSales).ToList())),
         collected: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OverallCompany.MonthlyData.Select(m => m.TotalCollected).ToList())),
         debt: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OverallCompany.MonthlyData.Select(m => m.Outstanding).ToList())),
-        rates: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OverallCompany.MonthlyData.Select(m => m.CollectionRate).ToList()))
+        rates: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OverallCompany.MonthlyData.Select(m => m.CollectionRateOnBase).ToList()))
     }
     @for (int ri = 0; ri < allReps.Count; ri++)
     {
@@ -282,7 +301,7 @@ const repsDataStore = {
             sales: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.TotalSales).ToList())),
             collected: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.TotalCollected).ToList())),
             debt: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.Outstanding).ToList())),
-            rates: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.CollectionRate).ToList()))
+            rates: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.CollectionRateOnBase).ToList()))
         }</text>
     }
 };
@@ -290,7 +309,7 @@ const repsDataStore = {
 const chartInstances = {};
 
 function getRateBadgeClass(r) {
-    return r >= 85 ? 'pct-good' : (r >= 50 ? 'pct-mid' : 'pct-bad');
+    return r >= 60 ? 'pct-good' : (r >= 40 ? 'pct-mid' : 'pct-bad');
 }
 
 function initChartsForKey(key) {
@@ -307,10 +326,10 @@ function initChartsForKey(key) {
         const validRates = d.rates.filter(r => r > 0);
         const avgRate = validRates.length ? (validRates.reduce((a,b) => a+b, 0) / validRates.length) : 0;
         let txt = `<b>สรุปผลงาน:</b> ยอดขายรวม <b>${totalSales.toLocaleString('th-TH')}</b> บาท | เดือนที่ดีที่สุดคือ <b>${monthsLabels[maxIdx] || ''}</b> (${maxSale.toLocaleString('th-TH')} บาท)<br>`;
-        txt += `• ประสิทธิภาพเฉลี่ย <b>${avgRate.toFixed(1)}%</b> `;
-        if (avgRate >= 85) txt += `<span class="text-success fw-bold">(ผ่านเกณฑ์ 85% ✓)</span>`;
-        else if (avgRate >= 50) txt += `<span class="text-warning fw-bold">(ปานกลาง — ควรเร่งติดตาม)</span>`;
-        else txt += `<span class="text-danger fw-bold">(ต่ำกว่าเกณฑ์ — ต้องเร่งด่วน ⚠️)</span>`;
+        txt += `• ประสิทธิภาพจัดเก็บจริงเทียบฐานหนี้เฉลี่ย <b>${avgRate.toFixed(1)}%</b> `;
+        if (avgRate >= 60) txt += `<span class="text-success fw-bold">(ผลงานดีเยี่ยม ✓)</span>`;
+        else if (avgRate >= 40) txt += `<span class="text-warning fw-bold">(ระดับปานกลาง — ควรเร่งติดตามบิลค้าง)</span>`;
+        else txt += `<span class="text-danger fw-bold">(ต่ำกว่าเป้าหมาย — ต้องเร่งรัดติดตาม ⚠️)</span>`;
         insightEl.innerHTML = `<i class="bi bi-lightbulb-fill text-warning me-1"></i> ${txt}`;
         insightEl.dataset.done = '1';
     }
@@ -347,8 +366,8 @@ function initChartsForKey(key) {
             data: {
                 labels: monthsLabels,
                 datasets: [
-                    { label: '% ประสิทธิภาพการเก็บเงิน', data: d.rates, borderColor: '#0d9488', backgroundColor: 'rgba(13,148,136,0.15)', borderWidth:3.5, pointBackgroundColor: d.rates.map(r => r>0 && r<85 ? '#ef4444' : '#0d9488'), pointRadius: d.rates.map(r => r>0 && r<85 ? 8 : 6), fill:true, tension:0.3 },
-                    { label: 'เป้าหมายมาตรฐาน (85%)', data: monthsLabels.map(() => 85), borderColor: '#ef4444', borderWidth:2, borderDash:[7,4], pointRadius:0, fill:false }
+                    { label: '% ประสิทธิภาพการเก็บเงิน (KPI)', data: d.rates, borderColor: '#0d9488', backgroundColor: 'rgba(13,148,136,0.15)', borderWidth:3.5, pointBackgroundColor: d.rates.map(r => r>0 && r<50 ? '#ef4444' : '#0d9488'), pointRadius: d.rates.map(r => r>0 && r<50 ? 8 : 6), fill:true, tension:0.3 },
+                    { label: 'เป้าหมายมาตรฐาน (50%)', data: monthsLabels.map(() => 50), borderColor: '#ef4444', borderWidth:2, borderDash:[7,4], pointRadius:0, fill:false }
                 ]
             },
             options: {

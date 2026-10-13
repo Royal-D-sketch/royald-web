@@ -222,22 +222,23 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
 </div>
 
 <!-- ============================================================== -->
+<!-- ============================================================== -->
 <!-- 0. ส่วนบนสุด: AR EXECUTIVE PORTFOLIO SUMMARY (ภาพรวมยอดหนี้ทั้งระบบ 88.16M) -->
 <!-- ============================================================== -->
-<div class="card border-0 shadow-sm rounded-4 mb-4" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color:#fff;">
+<div class="card border-0 shadow-sm rounded-4 mb-4" style="background: #ffffff; border: 1.5px solid #e2e8f0 !important; color: #1e293b; box-shadow: 0 4px 20px rgba(0,0,0,0.05) !important;">
     <div class="card-body p-4">
         <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-center gap-3">
             <div>
                 <div class="d-flex align-items-center gap-2 mb-1">
-                    <span class="badge bg-danger px-2 py-1"><i class="bi bi-shield-exclamation me-1"></i> AR Credit Control</span>
-                    <span class="text-light opacity-75 small">ภาพรวมสถานะลูกหนี้และพอร์ตสินเชื่อทั้งระบบ (Portfolio Overview)</span>
+                    <span class="badge bg-danger px-2.5 py-1 text-white fw-bold"><i class="bi bi-shield-exclamation me-1"></i> AR Credit Control</span>
+                    <span class="text-secondary small fw-medium">ภาพรวมสถานะลูกหนี้และพอร์ตสินเชื่อทั้งระบบ (Portfolio Overview)</span>
                 </div>
-                <h5 class="fw-bold mb-0 text-white">
+                <h5 class="fw-bold mb-0" style="color: #0f172a;">
                     <i class="bi bi-wallet2 text-warning me-2"></i>วิเคราะห์สถานะหนี้คงค้างรวมทั้งระบบ (Total Outstanding Breakdown)
                 </h5>
             </div>
             <div class="text-xl-end">
-                <span class="badge bg-light text-dark px-3 py-2 fw-semibold">
+                <span class="badge px-3 py-2 fw-semibold" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">
                     <i class="bi bi-cursor-fill text-primary me-1"></i> คลิกกล่องด้านล่างเพื่อกรองตารางดูรายละเอียดรายบิลทันที
                 </span>
             </div>
@@ -247,17 +248,17 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
             <!-- กล่องที่ 1: หนี้คงค้างรวมทั้งระบบ (88.16M) -->
             <div class="col-12 col-md-4">
                 <div class="p-3 rounded-3 h-100 transition-all cursor-pointer border" id="btn-total-out" onclick="setFilter('all', 'all_outstanding')"
-                     style="background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.15) !important; cursor: pointer;"
+                     style="background: #fffbeb; border-color: #fde68a !important; cursor: pointer; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.08);"
                      title="คลิกเพื่อดูบิลค้างชำระทั้งหมดทั้งระบบ (4,153 บิล)">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <div class="text-white-50 small fw-semibold"><i class="bi bi-pie-chart-fill text-warning me-1"></i> หนี้ค้างชำระรวมทั้งระบบ</div>
-                            <div class="fs-4 fw-black text-warning my-1" id="hdr-total-amt">88,167,905.10</div>
-                            <div class="text-light small opacity-90"><span id="hdr-total-cnt">4,153</span> บิล <span class="badge bg-warning text-dark ms-1">100% ของหนี้</span></div>
+                            <div class="small fw-bold" style="color: #92400e;"><i class="bi bi-pie-chart-fill text-warning me-1"></i> หนี้ค้างชำระรวมทั้งระบบ</div>
+                            <div class="fs-4 fw-black my-1" style="color: #b45309;" id="hdr-total-amt">88,167,905.10</div>
+                            <div class="small fw-semibold" style="color: #78350f;"><span id="hdr-total-cnt">4,153</span> บิล <span class="badge bg-warning text-dark ms-1">100% ของหนี้</span></div>
                         </div>
                         <i class="bi bi-arrow-right-circle fs-4 text-warning opacity-75"></i>
                     </div>
-                    <div class="mt-2 pt-2 border-top border-secondary text-white-50" style="font-size:0.75rem;">
+                    <div class="mt-2 pt-2 border-top text-muted" style="font-size:0.75rem; border-color: #fef3c7 !important;">
                         รวมหนี้กลุ่ม 1, 2, 3 + ห้าง Modern Trade
                     </div>
                 </div>
@@ -266,17 +267,17 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
             <!-- กล่องที่ 2: หนี้กลุ่มโมเดิร์นเทรด (21.40M) -->
             <div class="col-12 col-md-4">
                 <div class="p-3 rounded-3 h-100 transition-all cursor-pointer border" id="btn-mt-out" onclick="setFilter('moderntrade', 'moderntrade')"
-                     style="background: rgba(56, 189, 248, 0.1); border-color: rgba(56, 189, 248, 0.3) !important; cursor: pointer;"
+                     style="background: #f0f9ff; border-color: #bae6fd !important; cursor: pointer; box-shadow: 0 2px 8px rgba(14, 165, 233, 0.08);"
                      title="คลิกเพื่อดูบิลห้างโมเดิร์นเทรด (Big C, Lotus's, Makro, CP ALL ฯลฯ)">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <div class="text-info small fw-semibold"><i class="bi bi-buildings-fill me-1"></i> หนี้กลุ่ม Modern Trade (ห้าง)</div>
-                            <div class="fs-4 fw-black text-info my-1" id="hdr-mt-amt">21,396,251.73</div>
-                            <div class="text-light small opacity-90"><span id="hdr-mt-cnt">467</span> บิล <span class="badge bg-info text-dark ms-1">24.26%</span></div>
+                            <div class="small fw-bold" style="color: #0369a1;"><i class="bi bi-buildings-fill text-info me-1"></i> หนี้กลุ่ม Modern Trade (ห้าง)</div>
+                            <div class="fs-4 fw-black my-1" style="color: #0284c7;" id="hdr-mt-amt">21,396,251.73</div>
+                            <div class="small fw-semibold" style="color: #075985;"><span id="hdr-mt-cnt">467</span> บิล <span class="badge bg-info text-dark ms-1">24.26%</span></div>
                         </div>
                         <i class="bi bi-arrow-right-circle fs-4 text-info opacity-75"></i>
                     </div>
-                    <div class="mt-2 pt-2 border-top border-secondary text-info-emphasis" style="font-size:0.75rem; color:#7dd3fc !important;">
+                    <div class="mt-2 pt-2 border-top text-muted" style="font-size:0.75rem; border-color: #e0f2fe !important;">
                         ความเสี่ยงต่ำมาก ค้างตามรอบวางบิล-รับเช็ค
                     </div>
                 </div>
@@ -285,17 +286,17 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
             <!-- กล่องที่ 3: หนี้กลุ่มตลาดทั่วไป 3 กลุ่ม (66.77M) -->
             <div class="col-12 col-md-4">
                 <div class="p-3 rounded-3 h-100 transition-all cursor-pointer border" id="btn-gen-out" onclick="setFilter('general', 'general')"
-                     style="background: rgba(52, 211, 153, 0.1); border-color: rgba(52, 211, 153, 0.3) !important; cursor: pointer;"
+                     style="background: #f0fdf4; border-color: #bbf7d0 !important; cursor: pointer; box-shadow: 0 2px 8px rgba(34, 197, 94, 0.08);"
                      title="คลิกเพื่อดูหนี้ตลาดทั่วไป 3 กลุ่ม (ร้านค้า/ยี่ปั๊ว/ซาปั๊ว/ตจว.)">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <div class="text-success small fw-semibold" style="color:#6ee7b7 !important;"><i class="bi bi-shop-window me-1"></i> หนี้กลุ่มตลาดทั่วไป (3 กลุ่ม)</div>
-                            <div class="fs-4 fw-black my-1" style="color:#6ee7b7;" id="hdr-gen-amt">66,771,653.37</div>
-                            <div class="text-light small opacity-90"><span id="hdr-gen-cnt">3,686</span> บิล <span class="badge bg-success ms-1">75.74%</span></div>
+                            <div class="small fw-bold" style="color: #15803d;"><i class="bi bi-shop-window text-success me-1"></i> หนี้กลุ่มตลาดทั่วไป (3 กลุ่ม)</div>
+                            <div class="fs-4 fw-black my-1" style="color: #16a34a;" id="hdr-gen-amt">66,771,653.37</div>
+                            <div class="small fw-semibold" style="color: #14532d;"><span id="hdr-gen-cnt">3,686</span> บิล <span class="badge bg-success ms-1">75.74%</span></div>
                         </div>
                         <i class="bi bi-arrow-right-circle fs-4 text-success opacity-75"></i>
                     </div>
-                    <div class="mt-2 pt-2 border-top border-secondary text-white-50" style="font-size:0.75rem;">
+                    <div class="mt-2 pt-2 border-top text-muted" style="font-size:0.75rem; border-color: #dcfce7 !important;">
                         หนี้ที่ฝ่ายขาย/หน่วยรถต้องติดตามจัดเก็บจริง
                     </div>
                 </div>

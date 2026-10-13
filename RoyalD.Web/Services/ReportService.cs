@@ -20,21 +20,27 @@ namespace RoyalD.Web.Services
     {
         public string MonthKey { get; set; } = string.Empty; // e.g. "2026-01"
         public string MonthNameThai { get; set; } = string.Empty; // e.g. "ม.ค. 69"
-        public decimal TotalSales { get; set; }
-        public decimal TotalCollected { get; set; }
-        public decimal Outstanding { get; set; }
+        public decimal BroughtForward { get; set; } // ลูกหนี้ยกมา (ต้นงวด)
+        public decimal TotalSales { get; set; } // ยอดขายระหว่างเดือน
+        public decimal TotalResponsible => BroughtForward + TotalSales; // รวมฐานหนี้ที่ต้องรับผิดชอบ (ยกมา + ขายใหม่)
+        public decimal TotalCollected { get; set; } // ยอดเก็บได้
+        public decimal Outstanding { get; set; } // หนี้คงค้างปลายงวด
         public int Overdue120Count { get; set; }
         public decimal CollectionRate => TotalSales > 0 ? Math.Round(TotalCollected / TotalSales * 100m, 1) : 0m;
+        public decimal CollectionRateOnBase => TotalResponsible > 0 ? Math.Round(TotalCollected / TotalResponsible * 100m, 1) : 0m; // % ประสิทธิภาพจัดเก็บจริงเทียบฐานหนี้
     }
 
     public class SalesRepPivotRow
     {
         public string SalesRep { get; set; } = string.Empty;
         public List<MonthlySummaryItem> MonthlyData { get; set; } = new();
+        public decimal InitialBroughtForward => MonthlyData.FirstOrDefault()?.BroughtForward ?? 0m;
         public decimal TotalSales => MonthlyData.Sum(m => m.TotalSales);
+        public decimal TotalResponsible => InitialBroughtForward + TotalSales;
         public decimal TotalCollected => MonthlyData.Sum(m => m.TotalCollected);
-        public decimal TotalOutstanding => MonthlyData.Sum(m => m.Outstanding);
+        public decimal TotalOutstanding => MonthlyData.LastOrDefault()?.Outstanding ?? MonthlyData.Sum(m => m.Outstanding);
         public decimal OverallCollectionRate => TotalSales > 0 ? Math.Round(TotalCollected / TotalSales * 100m, 1) : 0m;
+        public decimal OverallCollectionRateOnBase => TotalResponsible > 0 ? Math.Round(TotalCollected / TotalResponsible * 100m, 1) : 0m;
         public int TotalOverdue120 => MonthlyData.Sum(m => m.Overdue120Count);
     }
 
@@ -51,10 +57,13 @@ namespace RoyalD.Web.Services
     {
         public string SalesRep { get; set; } = string.Empty;
         public List<MonthlySummaryItem> MonthlyData { get; set; } = new();
+        public decimal InitialBroughtForward => MonthlyData.FirstOrDefault()?.BroughtForward ?? 0m;
         public decimal TotalSales => MonthlyData.Sum(m => m.TotalSales);
+        public decimal TotalResponsible => InitialBroughtForward + TotalSales;
         public decimal TotalCollected => MonthlyData.Sum(m => m.TotalCollected);
-        public decimal TotalOutstanding => MonthlyData.Sum(m => m.Outstanding);
+        public decimal TotalOutstanding => MonthlyData.LastOrDefault()?.Outstanding ?? MonthlyData.Sum(m => m.Outstanding);
         public decimal OverallCollectionRate => TotalSales > 0 ? Math.Round(TotalCollected / TotalSales * 100m, 1) : 0m;
+        public decimal OverallCollectionRateOnBase => TotalResponsible > 0 ? Math.Round(TotalCollected / TotalResponsible * 100m, 1) : 0m;
         public int TotalOverdue120 => MonthlyData.Sum(m => m.Overdue120Count);
     }
 
@@ -165,75 +174,100 @@ namespace RoyalD.Web.Services
                 .OrderBy(r => r)
                 .ToList();
 
-            MonthlySummaryItem CalcMonth(List<dynamic> mBills, string mk, string repName, bool isOverall)
+            List<MonthlySummaryItem> BuildMonthlyRollForward(string repName, bool isOverall)
             {
-                decimal mSales = mBills.Sum(b => (decimal)b.TotalAmount);
-                decimal mOutstanding = 0m;
-                int mOverdue120 = 0;
-                foreach (var b in mBills)
-                {
-                    if (debtDict.TryGetValue((string)b.BillNo, out var d))
-                    {
-                        decimal billOutstanding = d.RemainingAmount;
-                        if (d.OriginalAmount > d.RemainingAmount && d.ReceiptDate.HasValue)
-                        {
-                            string receiptMonth = d.ReceiptDate.Value.ToString("yyyy-MM");
-                            if (string.Compare(receiptMonth, mk) > 0)
-                            {
-                                billOutstanding = d.OriginalAmount;
-                            }
-                        }
-                        mOutstanding += billOutstanding;
-                        if (d.RemainingAmount > 0 && (today - d.DueDate).TotalDays > 120)
-                            mOverdue120++;
-                    }
-                }
-                int mkYear = int.Parse(mk.Substring(0, 4));
-                int mkMonth = int.Parse(mk.Substring(5, 2));
+                var repBills = isOverall 
+                    ? bills 
+                    : bills.Where(x => x.SalesRep != null && x.SalesRep.Contains(repName.Trim())).ToList();
+                var repDebts = isOverall 
+                    ? debts 
+                    : debts.Where(x => x.SalesRep != null && x.SalesRep.Contains(repName.Trim())).ToList();
 
-                decimal mCollected = 0m;
-                var repDebts = isOverall ? debts : debts.Where(x => x.SalesRep != null && x.SalesRep.Contains(repName.Trim())).ToList();
-                var processedBillNos = new System.Collections.Generic.HashSet<string>();
-                foreach (var d in repDebts)
-                {
-                    processedBillNos.Add(d.BillNo);
-                    var dPayments = payments.Where(p => p.OutstandingDebtId == d.Id && 
-                        (p.PaidDate.Year > 2500 ? p.PaidDate.Year - 543 : p.PaidDate.Year) == mkYear && p.PaidDate.Month == mkMonth).ToList();
-                    
-                    if (dPayments.Any())
-                    {
-                        mCollected += dPayments.Sum(p => p.PaidAmount);
-                    }
-                    else if (d.ReceiptDate.HasValue && 
-                        (d.ReceiptDate.Value.Year > 2500 ? d.ReceiptDate.Value.Year - 543 : d.ReceiptDate.Value.Year) == mkYear && 
-                        d.ReceiptDate.Value.Month == mkMonth)
-                    {
-                        mCollected += (d.OriginalAmount - d.RemainingAmount);
-                    }
-                }
-
-                var repBills = isOverall ? bills : bills.Where(x => x.SalesRep != null && x.SalesRep.Contains(repName.Trim())).ToList();
+                // 1. ยอดยกมาเริ่มต้นปี 2569 (หนี้ค้างจากปีก่อนหน้า 2568 หรือเก่ากว่า ที่ยังไม่ได้ชำระก่อน 2026-01-01)
+                decimal initBroughtForward = 0m;
                 foreach (var b in repBills)
                 {
-                    if (!processedBillNos.Contains(b.BillNo) && b.IsFullyPaid && b.ReceiptDate.HasValue)
+                    if (b.BillDate < new DateTime(2026, 1, 1))
                     {
-                        int rYear = b.ReceiptDate.Value.Year > 2500 ? b.ReceiptDate.Value.Year - 543 : b.ReceiptDate.Value.Year;
-                        if (rYear == mkYear && b.ReceiptDate.Value.Month == mkMonth)
+                        if (!b.IsFullyPaid || (b.ReceiptDate.HasValue && b.ReceiptDate.Value >= new DateTime(2026, 1, 1)))
                         {
-                            mCollected += (decimal)b.TotalAmount;
+                            initBroughtForward += (decimal)b.TotalAmount;
                         }
                     }
                 }
 
-                return new MonthlySummaryItem
+                decimal currentBroughtForward = initBroughtForward;
+                var list = new List<MonthlySummaryItem>();
+
+                foreach (var mk in monthKeys)
                 {
-                    MonthKey = mk,
-                    MonthNameThai = StandardMonthsMap[mk],
-                    TotalSales = mSales,
-                    TotalCollected = mCollected,
-                    Outstanding = mOutstanding,
-                    Overdue120Count = mOverdue120
-                };
+                    var mBills = repBills.Where(b => (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) == mk)).ToList();
+                    decimal mSales = mBills.Sum(b => (decimal)b.TotalAmount);
+                    
+                    int mkYear = int.Parse(mk.Substring(0, 4));
+                    int mkMonth = int.Parse(mk.Substring(5, 2));
+
+                    decimal mCollected = 0m;
+                    var processedBillNos = new System.Collections.Generic.HashSet<string>();
+                    foreach (var d in repDebts)
+                    {
+                        processedBillNos.Add(d.BillNo);
+                        var dPayments = payments.Where(p => p.OutstandingDebtId == d.Id && 
+                            (p.PaidDate.Year > 2500 ? p.PaidDate.Year - 543 : p.PaidDate.Year) == mkYear && p.PaidDate.Month == mkMonth).ToList();
+                        
+                        if (dPayments.Any())
+                        {
+                            mCollected += dPayments.Sum(p => p.PaidAmount);
+                        }
+                        else if (d.ReceiptDate.HasValue && 
+                            (d.ReceiptDate.Value.Year > 2500 ? d.ReceiptDate.Value.Year - 543 : d.ReceiptDate.Value.Year) == mkYear && 
+                            d.ReceiptDate.Value.Month == mkMonth)
+                        {
+                            mCollected += (d.OriginalAmount - d.RemainingAmount);
+                        }
+                    }
+
+                    foreach (var b in repBills)
+                    {
+                        if (!processedBillNos.Contains(b.BillNo) && b.IsFullyPaid && b.ReceiptDate.HasValue)
+                        {
+                            int rYear = b.ReceiptDate.Value.Year > 2500 ? b.ReceiptDate.Value.Year - 543 : b.ReceiptDate.Value.Year;
+                            if (rYear == mkYear && b.ReceiptDate.Value.Month == mkMonth)
+                            {
+                                mCollected += (decimal)b.TotalAmount;
+                            }
+                        }
+                    }
+
+                    decimal totalResponsible = currentBroughtForward + mSales;
+                    decimal endingOutstanding = Math.Max(0m, totalResponsible - mCollected);
+
+                    int mOverdue120 = 0;
+                    foreach (var b in mBills)
+                    {
+                        if (debtDict.TryGetValue((string)b.BillNo, out var d))
+                        {
+                            if (d.RemainingAmount > 0 && (today - d.DueDate).TotalDays > 120)
+                                mOverdue120++;
+                        }
+                    }
+
+                    list.Add(new MonthlySummaryItem
+                    {
+                        MonthKey = mk,
+                        MonthNameThai = StandardMonthsMap[mk],
+                        BroughtForward = currentBroughtForward,
+                        TotalSales = mSales,
+                        TotalCollected = mCollected,
+                        Outstanding = endingOutstanding,
+                        Overdue120Count = mOverdue120
+                    });
+
+                    // ยกไปเป็นยอดยกมาของเดือนถัดไป
+                    currentBroughtForward = endingOutstanding;
+                }
+
+                return list;
             }
 
             var vm = new SalesSummaryMatrixViewModel
@@ -244,28 +278,26 @@ namespace RoyalD.Web.Services
 
             foreach (var rep in allReps)
             {
-                var row = new SalesRepPivotRow { SalesRep = rep };
-                foreach (var mk in monthKeys)
-                {
-                    var mBills = bills.Where(b => (b.SalesRep != null && b.SalesRep.Contains(rep.Trim())) && (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) == mk)).Cast<dynamic>().ToList();
-                    row.MonthlyData.Add(CalcMonth(mBills, mk, rep, false));
-                }
+                var row = new SalesRepPivotRow 
+                { 
+                    SalesRep = rep,
+                    MonthlyData = BuildMonthlyRollForward(rep, false)
+                };
                 vm.RepRows.Add(row);
             }
 
             // Total Company row
-            var totalRow = new SalesRepPivotRow { SalesRep = "รวมทั้งบริษัท (Total)" };
-            var overallRep = new SalesRepMonthlyReport { SalesRep = "ภาพรวมผู้แทนทุกคน" };
-
-            foreach (var mk in monthKeys)
-            {
-                var mBills = bills.Where(b => (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) == mk)).Cast<dynamic>().ToList();
-                var cMonth = CalcMonth(mBills, mk, "", true);
-                totalRow.MonthlyData.Add(cMonth);
-                overallRep.MonthlyData.Add(cMonth);
-            }
-            vm.TotalCompany = totalRow;
-            vm.OverallCompany = overallRep;
+            var totalMonthly = BuildMonthlyRollForward("", true);
+            vm.TotalCompany = new SalesRepPivotRow 
+            { 
+                SalesRep = "รวมทั้งบริษัท (Total)",
+                MonthlyData = totalMonthly
+            };
+            vm.OverallCompany = new SalesRepMonthlyReport 
+            { 
+                SalesRep = "ภาพรวมผู้แทนทุกคน",
+                MonthlyData = totalMonthly
+            };
 
             return vm;
         }
@@ -301,40 +333,37 @@ namespace RoyalD.Web.Services
             SalesRepMonthlyReport BuildReport(string repName, bool isOverall)
             {
                 var rep = new SalesRepMonthlyReport { SalesRep = repName };
-                foreach (var mk in monthKeys)
+                var repBills = isOverall 
+                    ? bills 
+                    : bills.Where(x => x.SalesRep != null && x.SalesRep.Contains(repName.Trim())).ToList();
+                var repDebts = isOverall 
+                    ? debts 
+                    : debts.Where(x => x.SalesRep != null && x.SalesRep.Contains(repName.Trim())).ToList();
+
+                // 1. ยอดยกมาเริ่มต้นปี 2569 (หนี้ค้างจากปีก่อนหน้า 2568 หรือเก่ากว่า ที่ยังไม่ได้ชำระก่อน 2026-01-01)
+                decimal initBroughtForward = 0m;
+                foreach (var b in repBills)
                 {
-                    var mBills = isOverall 
-                        ? bills.Where(b => (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) == mk)).ToList()
-                        : bills.Where(b => (b.SalesRep != null && b.SalesRep.Contains(repName.Trim())) && (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) == mk)).ToList();
-
-                    decimal mSales = mBills.Sum(b => b.TotalAmount);
-                    decimal mOutstanding = 0m;
-                    int mOverdue120 = 0;
-
-                    foreach (var b in mBills)
+                    if (b.BillDate < new DateTime(2026, 1, 1))
                     {
-                        if (debtDict.TryGetValue(b.BillNo, out var d))
+                        if (!b.IsFullyPaid || (b.ReceiptDate.HasValue && b.ReceiptDate.Value >= new DateTime(2026, 1, 1)))
                         {
-                            decimal billOutstanding = d.RemainingAmount;
-                            if (d.OriginalAmount > d.RemainingAmount && d.ReceiptDate.HasValue)
-                            {
-                                string receiptMonth = d.ReceiptDate.Value.ToString("yyyy-MM");
-                                if (string.Compare(receiptMonth, mk) > 0)
-                                {
-                                    billOutstanding = d.OriginalAmount;
-                                }
-                            }
-                            mOutstanding += billOutstanding;
-                            if (d.RemainingAmount > 0 && (today - d.DueDate).TotalDays > 120)
-                                mOverdue120++;
+                            initBroughtForward += (decimal)b.TotalAmount;
                         }
                     }
+                }
+
+                decimal currentBroughtForward = initBroughtForward;
+
+                foreach (var mk in monthKeys)
+                {
+                    var mBills = repBills.Where(b => (b.SourceMonth == mk || b.BillDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) == mk)).ToList();
+                    decimal mSales = mBills.Sum(b => (decimal)b.TotalAmount);
 
                     int mkYear = int.Parse(mk.Substring(0, 4));
                     int mkMonth = int.Parse(mk.Substring(5, 2));
 
                     decimal mCollected = 0m;
-                    var repDebts = isOverall ? debts : debts.Where(x => x.SalesRep != null && x.SalesRep.Contains(repName.Trim())).ToList();
                     var processedBillNos = new System.Collections.Generic.HashSet<string>();
                     foreach (var d in repDebts)
                     {
@@ -354,7 +383,6 @@ namespace RoyalD.Web.Services
                         }
                     }
 
-                    var repBills = isOverall ? bills : bills.Where(x => x.SalesRep != null && x.SalesRep.Contains(repName.Trim())).ToList();
                     foreach (var b in repBills)
                     {
                         if (!processedBillNos.Contains(b.BillNo) && b.IsFullyPaid && b.ReceiptDate.HasValue)
@@ -367,15 +395,31 @@ namespace RoyalD.Web.Services
                         }
                     }
 
+                    decimal totalResponsible = currentBroughtForward + mSales;
+                    decimal endingOutstanding = Math.Max(0m, totalResponsible - mCollected);
+
+                    int mOverdue120 = 0;
+                    foreach (var b in mBills)
+                    {
+                        if (debtDict.TryGetValue(b.BillNo, out var d))
+                        {
+                            if (d.RemainingAmount > 0 && (today - d.DueDate).TotalDays > 120)
+                                mOverdue120++;
+                        }
+                    }
+
                     rep.MonthlyData.Add(new MonthlySummaryItem
                     {
                         MonthKey = mk,
                         MonthNameThai = StandardMonthsMap[mk],
+                        BroughtForward = currentBroughtForward,
                         TotalSales = mSales,
                         TotalCollected = mCollected,
-                        Outstanding = mOutstanding,
+                        Outstanding = endingOutstanding,
                         Overdue120Count = mOverdue120
                     });
+
+                    currentBroughtForward = endingOutstanding;
                 }
                 return rep;
             }
@@ -617,10 +661,10 @@ namespace RoyalD.Web.Services
                 for (int mi = 0; mi < rep.MonthlyData.Count; mi++)
                 {
                     var m = rep.MonthlyData[mi];
-                    ws.Cells[row, mi + 2].Value = $"ขาย: {m.TotalSales:N0}\nเก็บ: {m.TotalCollected:N0}\nค้าง: {m.Outstanding:N0}\n({m.CollectionRate}%)";
+                    ws.Cells[row, mi + 2].Value = $"ยกมา: {m.BroughtForward:N0}\nขาย: {m.TotalSales:N0}\nฐานหนี้: {m.TotalResponsible:N0}\nเก็บ: {m.TotalCollected:N0}\nค้าง: {m.Outstanding:N0}\nKPI: {m.CollectionRateOnBase}%";
                     ws.Cells[row, mi + 2].Style.WrapText = true;
                 }
-                ws.Cells[row, rep.MonthlyData.Count + 2].Value = $"ขาย: {rep.TotalSales:N0}\nเก็บ: {rep.TotalCollected:N0}\nค้าง: {rep.TotalOutstanding:N0}\n({rep.OverallCollectionRate}%)";
+                ws.Cells[row, rep.MonthlyData.Count + 2].Value = $"ยกมาต้นปี: {rep.InitialBroughtForward:N0}\nขายรวม: {rep.TotalSales:N0}\nรวมฐานหนี้: {rep.TotalResponsible:N0}\nเก็บรวม: {rep.TotalCollected:N0}\nหนี้ค้าง: {rep.TotalOutstanding:N0}\nKPI: {rep.OverallCollectionRateOnBase}%";
                 ws.Cells[row, rep.MonthlyData.Count + 2].Style.WrapText = true;
                 ws.Cells[row, rep.MonthlyData.Count + 2].Style.Font.Bold = true;
             }
@@ -632,11 +676,11 @@ namespace RoyalD.Web.Services
             for (int mi = 0; mi < vm.TotalCompany.MonthlyData.Count; mi++)
             {
                 var m = vm.TotalCompany.MonthlyData[mi];
-                ws.Cells[row, mi + 2].Value = $"ขาย: {m.TotalSales:N0}\nเก็บ: {m.TotalCollected:N0}\nค้าง: {m.Outstanding:N0}\n({m.CollectionRate}%)";
+                ws.Cells[row, mi + 2].Value = $"ยกมา: {m.BroughtForward:N0}\nขาย: {m.TotalSales:N0}\nฐานหนี้: {m.TotalResponsible:N0}\nเก็บ: {m.TotalCollected:N0}\nค้าง: {m.Outstanding:N0}\nKPI: {m.CollectionRateOnBase}%";
                 ws.Cells[row, mi + 2].Style.WrapText = true;
                 ws.Cells[row, mi + 2].Style.Font.Bold = true;
             }
-            ws.Cells[row, vm.TotalCompany.MonthlyData.Count + 2].Value = $"ขาย: {vm.TotalCompany.TotalSales:N0}\nเก็บ: {vm.TotalCompany.TotalCollected:N0}\nค้าง: {vm.TotalCompany.TotalOutstanding:N0}\n({vm.TotalCompany.OverallCollectionRate}%)";
+            ws.Cells[row, vm.TotalCompany.MonthlyData.Count + 2].Value = $"ยกมาต้นปี: {vm.TotalCompany.InitialBroughtForward:N0}\nขายรวม: {vm.TotalCompany.TotalSales:N0}\nรวมฐานหนี้: {vm.TotalCompany.TotalResponsible:N0}\nเก็บรวม: {vm.TotalCompany.TotalCollected:N0}\nหนี้ค้าง: {vm.TotalCompany.TotalOutstanding:N0}\nKPI: {vm.TotalCompany.OverallCollectionRateOnBase}%";
             ws.Cells[row, vm.TotalCompany.MonthlyData.Count + 2].Style.WrapText = true;
             ws.Cells[row, vm.TotalCompany.MonthlyData.Count + 2].Style.Font.Bold = true;
 
