@@ -104,12 +104,18 @@
     
     @if (canDownload)
     {
-        <div class="d-flex gap-2 no-print">
-            <button onclick="window.print()" class="btn btn-outline-danger btn-sm fw-bold px-3 py-2 shadow-sm">
+        <div class="d-flex gap-2 no-print flex-wrap">
+            <button type="button" class="btn btn-sm fw-bold px-3 py-2 shadow-sm text-white" onclick="openAiPresentationModal()" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border:none; border-radius:10px;">
+                <i class="bi bi-robot me-1"></i> ข้อมูลสำหรับ AI ทำสไลด์
+            </button>
+            <button type="button" class="btn btn-sm fw-bold px-3 py-2 shadow-sm text-white" onclick="exportChartsToExcel()" style="background:#059669; border:none; border-radius:10px;">
+                <i class="bi bi-file-earmark-excel me-1"></i> Export Excel
+            </button>
+            <button type="button" class="btn btn-outline-danger btn-sm fw-bold px-3 py-2 shadow-sm bg-white" onclick="window.print()" style="border-radius:10px;">
                 <i class="bi bi-file-earmark-pdf me-1"></i> Export PDF
             </button>
-            <button onclick="downloadScreenCapture('chart-capture-area')" class="btn btn-outline-success btn-sm fw-bold px-3 py-2 shadow-sm">
-                <i class="bi bi-image me-1"></i> Download PNG
+            <button type="button" class="btn btn-outline-success btn-sm fw-bold px-3 py-2 shadow-sm bg-white" onclick="downloadScreenCapture('chart-capture-area')" style="border-radius:10px;">
+                <i class="bi bi-image me-1"></i> Download ภาพรวม (PNG)
             </button>
         </div>
     }
@@ -239,9 +245,14 @@
                         <i class="bi bi-bar-chart-fill text-primary me-2"></i> 
                         <span id="mainChartTitle">กราฟแท่งเปรียบเทียบยอดขายรายคนในแต่ละเดือน (Monthly Team Breakdown)</span>
                     </div>
-                    <span class="badge bg-light text-dark border px-2 py-1 small" id="chartCycleBadge">
-                        ตัดรอบยอดขายทุกวันที่ 25
-                    </span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-light text-dark border px-2 py-1 small" id="chartCycleBadge">
+                            ตัดรอบยอดขายทุกวันที่ 25
+                        </span>
+                        <button type="button" class="btn btn-outline-secondary btn-sm py-1 px-2 no-print" onclick="exportIndividualChart('mainBarChart', 'กราฟเปรียบเทียบยอดขายรายคน')" title="ดาวน์โหลดเฉพาะรูปกราฟนี้ (PNG)">
+                            <i class="bi bi-camera me-1"></i> บันทึกรูปกราฟ
+                        </button>
+                    </div>
                 </div>
                 <div class="flex-grow-1" style="min-height:330px; position:relative;">
                     <canvas id="mainBarChart"></canvas>
@@ -250,8 +261,13 @@
         </div>
         <div class="col-lg-4">
             <div class="chart-card h-100 mb-0 d-flex flex-column">
-                <div class="chart-header">
-                    <i class="bi bi-pie-chart-fill text-success me-2"></i> สัดส่วนเก็บเงิน vs หนี้ค้าง (ภาพรวม)
+                <div class="chart-header justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <i class="bi bi-pie-chart-fill text-success me-2"></i> สัดส่วนเก็บเงิน vs หนี้ค้าง (ภาพรวม)
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm py-1 px-2 no-print" onclick="exportIndividualChart('doughnutChart', 'กราฟสัดส่วนเก็บเงินvsหนี้ค้าง')" title="ดาวน์โหลดเฉพาะรูปกราฟนี้ (PNG)">
+                        <i class="bi bi-camera me-1"></i> บันทึกรูปกราฟ
+                    </button>
                 </div>
                 <div class="flex-grow-1 d-flex align-items-center justify-content-center" style="min-height:260px; position:relative;">
                     <canvas id="doughnutChart"></canvas>
@@ -267,11 +283,16 @@
     <div class="row g-4 mb-4">
         <div class="col-lg-8">
             <div class="chart-card mb-0">
-                <div class="chart-header justify-content-between">
+                <div class="chart-header justify-content-between flex-wrap gap-2">
                     <div>
                         <i class="bi bi-graph-up-arrow text-warning me-2"></i> แนวโน้มประสิทธิภาพการจัดเก็บรายเดือน (%)
                     </div>
-                    <span class="badge bg-warning text-dark px-2 py-1 small">เกณฑ์เป้าหมาย: >= 60%</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-warning text-dark px-2 py-1 small">เกณฑ์เป้าหมาย: >= 60%</span>
+                        <button type="button" class="btn btn-outline-secondary btn-sm py-1 px-2 no-print" onclick="exportIndividualChart('trendLineChart', 'กราฟแนวโน้มประสิทธิภาพจัดเก็บ')" title="ดาวน์โหลดเฉพาะรูปกราฟนี้ (PNG)">
+                            <i class="bi bi-camera me-1"></i> บันทึกรูปกราฟ
+                        </button>
+                    </div>
                 </div>
                 <div style="height:250px; position:relative;">
                     <canvas id="trendLineChart"></canvas>
@@ -305,6 +326,47 @@
         </div>
         <div class="row g-3" id="repCardsGrid">
             <!-- Dynamic Rendered Rep Cards with Assessment Notes -->
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal: AI Presentation Export -->
+<div class="modal fade no-print" id="aiPresentationModal" tabindex="-1" aria-labelledby="aiModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0" style="border-radius:18px;">
+            <div class="modal-header border-0 pb-0" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color:white; border-radius:18px 18px 0 0; padding:20px 24px;">
+                <div>
+                    <h5 class="modal-title fw-bold" id="aiModalLabel">
+                        <i class="bi bi-robot me-2"></i> ข้อมูลสรุปและ Prompt สำหรับ AI ทำสไลด์นำเสนอ (AI Presentation)
+                    </h5>
+                    <div class="small opacity-75">คัดลอกข้อมูลพร้อมคำสั่งไปวางใน Gamma.app, Beautiful.ai, ChatGPT หรือ Microsoft Copilot เพื่อสร้างสไลด์ได้ทันที</div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <div class="d-flex gap-2 mb-3 flex-wrap align-items-center">
+                    <span class="fw-bold small text-muted"><i class="bi bi-stars text-warning me-1"></i> แนะนำใช้กับ AI:</span>
+                    <a href="https://gamma.app" target="_blank" class="badge bg-dark text-white text-decoration-none py-2 px-3 rounded-pill">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> Gamma.app (สร้างสไลด์อัตโนมัติใน 10 วิ)
+                    </a>
+                    <a href="https://chatgpt.com" target="_blank" class="badge bg-success text-white text-decoration-none py-2 px-3 rounded-pill">
+                        <i class="bi bi-chat-text me-1"></i> ChatGPT (GPT-4o)
+                    </a>
+                    <a href="https://claude.ai" target="_blank" class="badge bg-warning text-dark text-decoration-none py-2 px-3 rounded-pill">
+                        <i class="bi bi-cpu me-1"></i> Claude 3.5 Sonnet
+                    </a>
+                </div>
+                <div class="position-relative">
+                    <textarea class="form-control font-monospace small bg-white border-2" id="aiPromptTextArea" rows="14" style="border-radius:12px; line-height:1.6; resize:vertical;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-white" style="border-radius:0 0 18px 18px; padding:16px 24px;">
+                <button type="button" class="btn btn-secondary btn-sm fw-bold px-3 py-2" data-bs-dismiss="modal">ปิด</button>
+                <button type="button" class="btn btn-primary btn-sm fw-bold px-4 py-2 shadow" id="btnCopyAiPrompt" onclick="copyAiPromptToClipboard()" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border:none;">
+                    <i class="bi bi-clipboard-check-fill me-1"></i> คัดลอกข้อมูลและคำสั่ง AI (Copy to Clipboard)
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -966,6 +1028,178 @@ function downloadScreenCapture(id) {
         a.download = 'Sales_Charts_Dashboard_' + new Date().toISOString().slice(0, 10) + '.png';
         a.href = canvas.toDataURL('image/png', 1.0);
         a.click();
+    });
+}
+
+
+function exportIndividualChart(canvasId, title) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    
+    // Create high-res canvas with pure white background
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    const ctx = tempCanvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+    ctx.drawImage(canvas, 0, 0);
+    
+    const a = document.createElement('a');
+    const safeTitle = (title || 'Chart').replace(/[^a-zA-Z0-9_\u0E00-\u0E7F]/g, '_');
+    a.download = safeTitle + '_' + new Date().toISOString().slice(0, 10) + '.png';
+    a.href = tempCanvas.toDataURL('image/png', 1.0);
+    a.click();
+}
+
+function exportChartsToExcel() {
+    const activeReps = getActiveReps();
+    const mIdx = parseInt(document.getElementById('monthFilterSelect')?.value ?? '-1');
+    const is25 = currentCycleMode === 'sales25';
+    const cycleText = isCustomRange ? 'ช่วงวันที่ระบุ' : (is25 ? 'รอบฝ่ายขาย (ตัดยอด25)' : 'รอบสิ้นเดือนปฏิทิน');
+    const monthText = mIdx === -1 ? 'สะสมตลอดปี 2569 (YTD)' : (monthsLabels[mIdx] || '');
+    const teamTitle = supervisorTeamTitles[currentTeam] || currentTeam;
+    
+    let csv = '\uFEFF'; // UTF-8 BOM for Thai Excel compatibility
+    csv += `รายงานวิเคราะห์ยอดขายและการติดตามหนี้สิน - Royal D\n`;
+    csv += `ทีม: ${teamTitle},รอบ: ${cycleText},งวด: ${monthText},วันที่ส่งออก: ${new Date().toLocaleDateString('th-TH')}\n\n`;
+    csv += 'ลำดับ,ชื่อผู้แทนขาย,1. ลูกหนี้ยกมาต้นงวด (บาท),2. ยอดขายระหว่างงวด (บาท),รวมฐานหนี้ที่ต้องรับผิดชอบ (บาท),3. ยอดเก็บเงินได้สำเร็จ (บาท),4. หนี้คงค้างปลายงวด (บาท),ประสิทธิภาพจัดเก็บจริง (%),สถานะความเสี่ยง,ข้อเสนอแนะฝ่ายสินเชื่อ\n';
+    
+    activeReps.forEach((r, idx) => {
+        const vals = getRepValues(r, mIdx);
+        const bf = vals.bf;
+        const s = vals.sales;
+        const resp = bf + s;
+        const c = vals.collected;
+        const d = vals.debt;
+        const rate = vals.rate;
+        
+        let status = 'ปกติ';
+        let action = 'ติดตามตามรอบบิลปกติ';
+        if (d === 0 && s === 0 && bf === 0) {
+            status = 'ไม่มีหนี้ค้าง';
+            action = 'ไม่มีการเปิดบิลขายใหม่และไม่มีหนี้ค้าง';
+        } else if (d === 0 && resp > 0) {
+            status = 'ชำระครบ 100%';
+            action = 'บริหารจัดเก็บยอดเยี่ยม เก็บเงินครบถ้วน';
+        } else if (d >= 1000000) {
+            status = 'หนี้ค้างสูงมาก (วิกฤต)';
+            action = 'เร่งรัดติดตามการชำระเงินตามรอบบิลขายโดยด่วนที่สุด';
+        } else if (d >= 300000 || rate < 40) {
+            status = 'ต้องเร่งรัดหนี้ด่วน';
+            action = 'หนี้ค้างสูงหรือจัดเก็บต่ำกว่า 40% ให้เข้าพบลูกค้าและเร่งรัดทันที';
+        } else if (s === 0 && bf > 0) {
+            status = 'เฝ้าระวังหนี้ยกมา';
+            action = 'ติดตามเคลียร์ยอดหนี้ค้างเดิมจากปีก่อนหน้า';
+        } else if (d >= 100000 || rate < 60) {
+            status = 'เฝ้าระวังติดตาม';
+            action = 'ติดตามใบวางบิลและรอบนัดชำระเงินตามกำหนด';
+        } else if (rate >= 60 && d < 100000) {
+            status = 'สุขภาพหนี้ดี';
+            action = 'ผลการจัดเก็บผ่านเกณฑ์ หนี้คงค้างต่ำ';
+        }
+        
+        csv += `${idx + 1},"${r.name}",${bf},${s},${resp},${c},${d},${rate}%,"${status}","${action}"\n`;
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Sales_Debt_Analysis_${currentTeam}_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+}
+
+function generateAiSlidePrompt() {
+    const activeReps = getActiveReps();
+    const mIdx = parseInt(document.getElementById('monthFilterSelect')?.value ?? '-1');
+    const is25 = currentCycleMode === 'sales25';
+    const cycleText = isCustomRange ? 'ช่วงวันที่ระบุ' : (is25 ? 'รอบฝ่ายขาย (ตัดยอดวันที่ 25)' : 'รอบสิ้นเดือนปฏิทิน');
+    const monthText = mIdx === -1 ? 'สะสมตลอดปี 2569 (YTD)' : (monthsLabels[mIdx] || '');
+    const teamTitle = supervisorTeamTitles[currentTeam] || 'ภาพรวม';
+
+    let totalBf = 0, totalSales = 0, totalCol = 0, totalDebt = 0;
+    let repRows = [];
+
+    activeReps.forEach(r => {
+        const vals = getRepValues(r, mIdx);
+        totalBf += vals.bf;
+        totalSales += vals.sales;
+        totalCol += vals.collected;
+        totalDebt += vals.debt;
+        repRows.push({
+            name: r.name,
+            bf: vals.bf,
+            sales: vals.sales,
+            resp: vals.bf + vals.sales,
+            col: vals.collected,
+            debt: vals.debt,
+            rate: vals.rate
+        });
+    });
+
+    const totalResp = totalBf + totalSales;
+    const avgRate = totalResp > 0 ? (totalCol / totalResp * 100).toFixed(1) : 0;
+
+    repRows.sort((a,b) => b.sales - a.sales);
+    const topSellers = repRows.filter(r => r.sales > 0).slice(0, 3);
+    const highDebts = [...repRows].sort((a,b) => b.debt - a.debt).filter(r => r.debt >= 300000);
+
+    let prompt = `คำสั่งสำหรับ AI (Prompt for Presentation Generation):\n`;
+    prompt += `--------------------------------------------------\n`;
+    prompt += `คุณคือผู้เชี่ยวชาญด้านการจัดทำสไลด์นำเสนอผลการดำเนินงานทางการเงินและยอดขายระดับผู้บริหาร (Executive Financial Presentation Specialist)\n`;
+    prompt += `กรุณานำข้อมูลผลการดำเนินงานยอดขายและการติดตามหนี้สินของ บริษัท รอยัล ดี (ไทยแลนด์) จำกัด ด้านล่างนี้ ไปสร้างเป็นโครงร่างสไลด์นำเสนอ (Slide Deck Outline & Content) จำนวน 5 สไลด์ สำหรับการประชุมผู้บริหารประจำเดือน\n\n`;
+    prompt += `บริบทข้อมูล:\n`;
+    prompt += `- กลุ่มทีม: ${teamTitle}\n`;
+    prompt += `- รอบการตัดยอด: ${cycleText}\n`;
+    prompt += `- ช่วงเวลา: ${monthText}\n\n`;
+    prompt += `สรุปตัวเลขสำคัญ (Executive Summary):\n`;
+    prompt += `- 1. ลูกหนี้ยกมาต้นงวด: ${totalBf.toLocaleString()} บาท\n`;
+    prompt += `- 2. ยอดขายระหว่างงวด: ${totalSales.toLocaleString()} บาท\n`;
+    prompt += `- รวมฐานหนี้ที่ต้องรับผิดชอบ: ${totalResp.toLocaleString()} บาท\n`;
+    prompt += `- 3. ยอดเก็บเงินได้สำเร็จ: ${totalCol.toLocaleString()} บาท (อัตราจัดเก็บ ${avgRate}%)\n`;
+    prompt += `- 4. ยอดหนี้คงค้างปลายงวด: ${totalDebt.toLocaleString()} บาท\n\n`;
+    prompt += `ผลงานผู้แทนขายเด่น (Top Sales Performers):\n`;
+    prompt += (topSellers.map((r, i) => `${i+1}. คุณ ${r.name}: ยอดขาย ${r.sales.toLocaleString()} บาท (เก็บได้ ${r.rate}%)`).join('\n') || '- ไม่มีข้อมูล') + `\n\n`;
+    prompt += `จุดที่ต้องติดตามสินเชื่อเร่งด่วน (Credit Risk Watchlist - หนี้ >= 300,000 บาท):\n`;
+    prompt += (highDebts.map((r, i) => `${i+1}. คุณ ${r.name}: หนี้คงค้าง ${r.debt.toLocaleString()} บาท (อัตราเก็บ ${r.rate}%)`).join('\n') || '- ไม่มีผู้แทนหนี้เกิน 300,000 บาท (สุขภาพหนี้อยู่ในเกณฑ์ดี)') + `\n\n`;
+    prompt += `โครงสร้างสไลด์ที่ต้องการ:\n`;
+    prompt += `สไลด์ที่ 1: ภาพรวมผลการดำเนินงานและสุขภาพทางการเงิน (Executive Financial Highlights)\n`;
+    prompt += `สไลด์ที่ 2: ผลงานยอดขายรายบุคคลและการจัดอันดับ Top Performers\n`;
+    prompt += `สไลด์ที่ 3: ประสิทธิภาพการจัดเก็บเงินสดและสภาพคล่อง (Cash Collection & Aging)\n`;
+    prompt += `สไลด์ที่ 4: การวิเคราะห์ความเสี่ยงสินเชื่อและหนี้ค้างสะสม (Credit Risk Exposure)\n`;
+    prompt += `สไลด์ที่ 5: แผนปฏิบัติการเร่งรัดหนี้และเป้าหมายในรอบถัดไป (Action Plan & Next Steps)\n\n`;
+    prompt += `รูปแบบผลลัพธ์:\n`;
+    prompt += `- โปรดเขียนหัวข้อสไลด์ (Slide Title), ประเด็นสำคัญ (Key Bullet Points), ตัวเลขไฮไลต์ (Callout Numbers), และบทพูดผู้นำเสนอ (Speaker Notes) ให้กระชับ สุภาพ ทรงพลัง และพร้อมนำไปใช้ใน Gamma.app, Beautiful.ai หรือ PowerPoint ได้ทันที\n`;
+    prompt += `--------------------------------------------------`;
+
+    return prompt;
+}
+
+function openAiPresentationModal() {
+    const promptText = generateAiSlidePrompt();
+    document.getElementById('aiPromptTextArea').value = promptText;
+    const modalEl = document.getElementById('aiPresentationModal');
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
+function copyAiPromptToClipboard() {
+    const area = document.getElementById('aiPromptTextArea');
+    area.select();
+    navigator.clipboard.writeText(area.value).then(() => {
+        const btn = document.getElementById('btnCopyAiPrompt');
+        const origText = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> คัดลอกสำเร็จแล้ว!';
+        btn.className = 'btn btn-success btn-sm fw-bold px-4 py-2 shadow';
+        setTimeout(() => {
+            btn.innerHTML = origText;
+            btn.className = 'btn btn-primary btn-sm fw-bold px-4 py-2 shadow';
+        }, 2500);
+    }).catch(err => {
+        document.execCommand('copy');
+        alert('คัดลอกข้อมูลเรียบร้อยแล้ว!');
     });
 }
 

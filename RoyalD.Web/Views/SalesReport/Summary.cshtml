@@ -85,14 +85,17 @@
     </div>
     @if (canDownload)
     {
-        <div class="d-flex gap-2 no-print">
-            <button onclick="window.print()" class="btn btn-outline-danger btn-sm fw-bold px-3 py-2 shadow-sm">
-                <i class="bi bi-file-earmark-pdf me-1"></i> Export PDF
+        <div class="d-flex gap-2 no-print flex-wrap">
+            <button type="button" class="btn btn-sm fw-bold px-3 py-2 shadow-sm text-white" onclick="openSummaryAiModal()" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border:none; border-radius:10px;">
+                <i class="bi bi-robot me-1"></i> ข้อมูลสำหรับ AI ทำสไลด์
             </button>
-            <a href="/SalesReport/ExportSummaryExcel" class="btn btn-sm fw-bold px-3 py-2 shadow-sm text-white" style="background:#059669;">
+            <a href="/SalesReport/ExportSummaryExcel" class="btn btn-sm fw-bold px-3 py-2 shadow-sm text-white" style="background:#059669; border-radius:10px;">
                 <i class="bi bi-file-earmark-excel me-1"></i> Export Excel
             </a>
-            <button onclick="downloadScreenCapture('capture-area')" class="btn btn-outline-success btn-sm fw-bold px-3 py-2 shadow-sm">
+            <button type="button" onclick="window.print()" class="btn btn-outline-danger btn-sm fw-bold px-3 py-2 shadow-sm bg-white" style="border-radius:10px;">
+                <i class="bi bi-file-earmark-pdf me-1"></i> Export PDF
+            </button>
+            <button type="button" onclick="downloadScreenCapture('capture-area')" class="btn btn-outline-success btn-sm fw-bold px-3 py-2 shadow-sm bg-white" style="border-radius:10px;">
                 <i class="bi bi-image me-1"></i> Download PNG
             </button>
         </div>
@@ -357,9 +360,154 @@
     }
 }
 
+
+<!-- Modal: AI Summary Presentation Export -->
+<div class="modal fade no-print" id="aiSummaryModal" tabindex="-1" aria-labelledby="aiSummaryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0" style="border-radius:18px;">
+            <div class="modal-header border-0 pb-0" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color:white; border-radius:18px 18px 0 0; padding:20px 24px;">
+                <div>
+                    <h5 class="modal-title fw-bold" id="aiSummaryModalLabel">
+                        <i class="bi bi-robot me-2"></i> ข้อมูลตารางบัญชีและ Prompt สำหรับ AI ทำสไลด์นำเสนอ
+                    </h5>
+                    <div class="small opacity-75">คัดลอกข้อมูล Pivot Matrix และบทวิเคราะห์หนี้สินไปสร้างสไลด์ผู้บริหารได้ทันที</div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <div class="d-flex gap-2 mb-3 flex-wrap align-items-center">
+                    <span class="fw-bold small text-muted"><i class="bi bi-stars text-warning me-1"></i> แนะนำใช้กับ AI:</span>
+                    <a href="https://gamma.app" target="_blank" class="badge bg-dark text-white text-decoration-none py-2 px-3 rounded-pill">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> Gamma.app (ทำสไลด์อัตโนมัติ)
+                    </a>
+                    <a href="https://chatgpt.com" target="_blank" class="badge bg-success text-white text-decoration-none py-2 px-3 rounded-pill">
+                        <i class="bi bi-chat-text me-1"></i> ChatGPT (GPT-4o)
+                    </a>
+                    <a href="https://claude.ai" target="_blank" class="badge bg-warning text-dark text-decoration-none py-2 px-3 rounded-pill">
+                        <i class="bi bi-cpu me-1"></i> Claude 3.5 Sonnet
+                    </a>
+                </div>
+                <div class="position-relative">
+                    <textarea class="form-control font-monospace small bg-white border-2" id="aiSummaryTextArea" rows="14" style="border-radius:12px; line-height:1.6; resize:vertical;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-white" style="border-radius:0 0 18px 18px; padding:16px 24px;">
+                <button type="button" class="btn btn-secondary btn-sm fw-bold px-3 py-2" data-bs-dismiss="modal">ปิด</button>
+                <button type="button" class="btn btn-primary btn-sm fw-bold px-4 py-2 shadow" id="btnCopySumAiPrompt" onclick="copySumAiPromptToClipboard()" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border:none;">
+                    <i class="bi bi-clipboard-check-fill me-1"></i> คัดลอกข้อมูลและคำสั่ง AI (Copy to Clipboard)
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js">
+function openSummaryAiModal() {
+    const is25 = currentSummaryCycle === 'sales25';
+    const cycleText = is25 ? 'รอบฝ่ายขาย (ตัดยอดวันที่ 25)' : 'รอบสิ้นเดือนปฏิทิน';
+    const repName = currentRepIndex === 'overall' ? 'ภาพรวมทั้งบริษัท' : (allRepsData[currentRepIndex]?.name || 'ผู้แทนขาย');
+    
+    let prompt = `คำสั่งสำหรับ AI (Prompt for Executive Presentation):\n`;
+    prompt += `--------------------------------------------------\n`;
+    prompt += `คุณคือผู้เชี่ยวชาญการจัดทำสไลด์นำเสนอรายงานการเงินและบัญชีลูกหนี้ระดับ C-Level\n`;
+    prompt += `กรุณานำข้อมูลตารางบัญชีลูกหนี้ (Pivot Matrix) และผลงานการจัดเก็บหนี้ของ บริษัท รอยัล ดี (ไทยแลนด์) จำกัด ด้านล่างนี้ ไปสร้างสไลด์นำเสนอผลการดำเนินงาน 5 สไลด์\n\n`;
+    prompt += `บริบทรายงาน:\n`;
+    prompt += `- ผู้แทน/กลุ่ม: ${repName}\n`;
+    prompt += `- รอบการตัดยอด: ${cycleText}\n`;
+    prompt += `- ปีงบประมาณ: 2569 (สะสมตลอดปี YTD)\n\n`;
+    prompt += `สมการบัญชี 4 องค์ประกอบสำคัญ:\n`;
+    prompt += `1. ลูกหนี้ยกมาต้นงวด + 2. ยอดขายสะสมระหว่างงวด = รวมฐานหนี้ที่ต้องรับผิดชอบ\n`;
+    prompt += `รวมฐานหนี้ - 3. ยอดเก็บเงินได้สำเร็จ = 4. หนี้คงค้างปลายงวดสะสม\n\n`;
+    prompt += `คำแนะนำในการสร้างสไลด์:\n`;
+    prompt += `1. สไลด์ที่ 1: ภาพรวมสถานะทางการเงินและสภาพคล่อง (Cash Collection Rate)\n`;
+    prompt += `2. สไลด์ที่ 2: วิเคราะห์แนวโน้มยอดขายเทียบกับยอดเก็บเงินรายเดือน\n`;
+    prompt += `3. สไลด์ที่ 3: รายงานอายุหนี้และบิลค้างเกิน 120 วันที่ต้องจับตา\n`;
+    prompt += `4. สไลด์ที่ 4: สรุปผลการประเมินสินเชื่อและคำแนะนำฝ่ายบัญชี\n`;
+    prompt += `5. สไลด์ที่ 5: แผนปฏิบัติการเร่งรัดหนี้สินของฝ่ายขายในรอบถัดไป\n\n`;
+    prompt += `โปรดจัดทำเป็น Bullet Points, ไฮไลต์ตัวเลขสำคัญ, และบทพูดผู้นำเสนอ (Speaker Notes) ให้กระชับ สุภาพ พร้อมนำเข้าโปรแกรมสร้างสไลด์ AI ได้ทันที\n`;
+    prompt += `--------------------------------------------------`;
+    
+    document.getElementById('aiSummaryTextArea').value = prompt;
+    const modalEl = document.getElementById('aiSummaryModal');
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
+function copySumAiPromptToClipboard() {
+    const area = document.getElementById('aiSummaryTextArea');
+    area.select();
+    navigator.clipboard.writeText(area.value).then(() => {
+        const btn = document.getElementById('btnCopySumAiPrompt');
+        const origText = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> คัดลอกสำเร็จแล้ว!';
+        btn.className = 'btn btn-success btn-sm fw-bold px-4 py-2 shadow';
+        setTimeout(() => {
+            btn.innerHTML = origText;
+            btn.className = 'btn btn-primary btn-sm fw-bold px-4 py-2 shadow';
+        }, 2500);
+    }).catch(err => {
+        document.execCommand('copy');
+        alert('คัดลอกข้อมูลเรียบร้อยแล้ว!');
+    });
+}
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@@1.4.1/dist/html2canvas.min.js">
+function openSummaryAiModal() {
+    const is25 = currentSummaryCycle === 'sales25';
+    const cycleText = is25 ? 'รอบฝ่ายขาย (ตัดยอดวันที่ 25)' : 'รอบสิ้นเดือนปฏิทิน';
+    const repName = currentRepIndex === 'overall' ? 'ภาพรวมทั้งบริษัท' : (allRepsData[currentRepIndex]?.name || 'ผู้แทนขาย');
+    
+    let prompt = `คำสั่งสำหรับ AI (Prompt for Executive Presentation):\n`;
+    prompt += `--------------------------------------------------\n`;
+    prompt += `คุณคือผู้เชี่ยวชาญการจัดทำสไลด์นำเสนอรายงานการเงินและบัญชีลูกหนี้ระดับ C-Level\n`;
+    prompt += `กรุณานำข้อมูลตารางบัญชีลูกหนี้ (Pivot Matrix) และผลงานการจัดเก็บหนี้ของ บริษัท รอยัล ดี (ไทยแลนด์) จำกัด ด้านล่างนี้ ไปสร้างสไลด์นำเสนอผลการดำเนินงาน 5 สไลด์\n\n`;
+    prompt += `บริบทรายงาน:\n`;
+    prompt += `- ผู้แทน/กลุ่ม: ${repName}\n`;
+    prompt += `- รอบการตัดยอด: ${cycleText}\n`;
+    prompt += `- ปีงบประมาณ: 2569 (สะสมตลอดปี YTD)\n\n`;
+    prompt += `สมการบัญชี 4 องค์ประกอบสำคัญ:\n`;
+    prompt += `1. ลูกหนี้ยกมาต้นงวด + 2. ยอดขายสะสมระหว่างงวด = รวมฐานหนี้ที่ต้องรับผิดชอบ\n`;
+    prompt += `รวมฐานหนี้ - 3. ยอดเก็บเงินได้สำเร็จ = 4. หนี้คงค้างปลายงวดสะสม\n\n`;
+    prompt += `คำแนะนำในการสร้างสไลด์:\n`;
+    prompt += `1. สไลด์ที่ 1: ภาพรวมสถานะทางการเงินและสภาพคล่อง (Cash Collection Rate)\n`;
+    prompt += `2. สไลด์ที่ 2: วิเคราะห์แนวโน้มยอดขายเทียบกับยอดเก็บเงินรายเดือน\n`;
+    prompt += `3. สไลด์ที่ 3: รายงานอายุหนี้และบิลค้างเกิน 120 วันที่ต้องจับตา\n`;
+    prompt += `4. สไลด์ที่ 4: สรุปผลการประเมินสินเชื่อและคำแนะนำฝ่ายบัญชี\n`;
+    prompt += `5. สไลด์ที่ 5: แผนปฏิบัติการเร่งรัดหนี้สินของฝ่ายขายในรอบถัดไป\n\n`;
+    prompt += `โปรดจัดทำเป็น Bullet Points, ไฮไลต์ตัวเลขสำคัญ, และบทพูดผู้นำเสนอ (Speaker Notes) ให้กระชับ สุภาพ พร้อมนำเข้าโปรแกรมสร้างสไลด์ AI ได้ทันที\n`;
+    prompt += `--------------------------------------------------`;
+    
+    document.getElementById('aiSummaryTextArea').value = prompt;
+    const modalEl = document.getElementById('aiSummaryModal');
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
+function copySumAiPromptToClipboard() {
+    const area = document.getElementById('aiSummaryTextArea');
+    area.select();
+    navigator.clipboard.writeText(area.value).then(() => {
+        const btn = document.getElementById('btnCopySumAiPrompt');
+        const origText = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> คัดลอกสำเร็จแล้ว!';
+        btn.className = 'btn btn-success btn-sm fw-bold px-4 py-2 shadow';
+        setTimeout(() => {
+            btn.innerHTML = origText;
+            btn.className = 'btn btn-primary btn-sm fw-bold px-4 py-2 shadow';
+        }, 2500);
+    }).catch(err => {
+        document.execCommand('copy');
+        alert('คัดลอกข้อมูลเรียบร้อยแล้ว!');
+    });
+}
+
+</script>
 <script>
 const monthsLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Months));
 const repsDataStore = {
@@ -545,5 +693,57 @@ function setSummaryCycle(mode) {
 }
 
 window.addEventListener('DOMContentLoaded', () => { selectRep('overall'); });
+
+function openSummaryAiModal() {
+    const is25 = currentSummaryCycle === 'sales25';
+    const cycleText = is25 ? 'รอบฝ่ายขาย (ตัดยอดวันที่ 25)' : 'รอบสิ้นเดือนปฏิทิน';
+    const repName = currentRepIndex === 'overall' ? 'ภาพรวมทั้งบริษัท' : (allRepsData[currentRepIndex]?.name || 'ผู้แทนขาย');
+    
+    let prompt = `คำสั่งสำหรับ AI (Prompt for Executive Presentation):\n`;
+    prompt += `--------------------------------------------------\n`;
+    prompt += `คุณคือผู้เชี่ยวชาญการจัดทำสไลด์นำเสนอรายงานการเงินและบัญชีลูกหนี้ระดับ C-Level\n`;
+    prompt += `กรุณานำข้อมูลตารางบัญชีลูกหนี้ (Pivot Matrix) และผลงานการจัดเก็บหนี้ของ บริษัท รอยัล ดี (ไทยแลนด์) จำกัด ด้านล่างนี้ ไปสร้างสไลด์นำเสนอผลการดำเนินงาน 5 สไลด์\n\n`;
+    prompt += `บริบทรายงาน:\n`;
+    prompt += `- ผู้แทน/กลุ่ม: ${repName}\n`;
+    prompt += `- รอบการตัดยอด: ${cycleText}\n`;
+    prompt += `- ปีงบประมาณ: 2569 (สะสมตลอดปี YTD)\n\n`;
+    prompt += `สมการบัญชี 4 องค์ประกอบสำคัญ:\n`;
+    prompt += `1. ลูกหนี้ยกมาต้นงวด + 2. ยอดขายสะสมระหว่างงวด = รวมฐานหนี้ที่ต้องรับผิดชอบ\n`;
+    prompt += `รวมฐานหนี้ - 3. ยอดเก็บเงินได้สำเร็จ = 4. หนี้คงค้างปลายงวดสะสม\n\n`;
+    prompt += `คำแนะนำในการสร้างสไลด์:\n`;
+    prompt += `1. สไลด์ที่ 1: ภาพรวมสถานะทางการเงินและสภาพคล่อง (Cash Collection Rate)\n`;
+    prompt += `2. สไลด์ที่ 2: วิเคราะห์แนวโน้มยอดขายเทียบกับยอดเก็บเงินรายเดือน\n`;
+    prompt += `3. สไลด์ที่ 3: รายงานอายุหนี้และบิลค้างเกิน 120 วันที่ต้องจับตา\n`;
+    prompt += `4. สไลด์ที่ 4: สรุปผลการประเมินสินเชื่อและคำแนะนำฝ่ายบัญชี\n`;
+    prompt += `5. สไลด์ที่ 5: แผนปฏิบัติการเร่งรัดหนี้สินของฝ่ายขายในรอบถัดไป\n\n`;
+    prompt += `โปรดจัดทำเป็น Bullet Points, ไฮไลต์ตัวเลขสำคัญ, และบทพูดผู้นำเสนอ (Speaker Notes) ให้กระชับ สุภาพ พร้อมนำเข้าโปรแกรมสร้างสไลด์ AI ได้ทันที\n`;
+    prompt += `--------------------------------------------------`;
+    
+    document.getElementById('aiSummaryTextArea').value = prompt;
+    const modalEl = document.getElementById('aiSummaryModal');
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
+function copySumAiPromptToClipboard() {
+    const area = document.getElementById('aiSummaryTextArea');
+    area.select();
+    navigator.clipboard.writeText(area.value).then(() => {
+        const btn = document.getElementById('btnCopySumAiPrompt');
+        const origText = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> คัดลอกสำเร็จแล้ว!';
+        btn.className = 'btn btn-success btn-sm fw-bold px-4 py-2 shadow';
+        setTimeout(() => {
+            btn.innerHTML = origText;
+            btn.className = 'btn btn-primary btn-sm fw-bold px-4 py-2 shadow';
+        }, 2500);
+    }).catch(err => {
+        document.execCommand('copy');
+        alert('คัดลอกข้อมูลเรียบร้อยแล้ว!');
+    });
+}
+
 </script>
 }
