@@ -726,7 +726,9 @@ namespace RoyalD.Web.Controllers
             else if (grp == "general") allBills = allBills.Where(b => !b.IsModernTrade);
 
             // กรองตาม SubFilter
-            if (sub == "sales") allBills = allBills; // แสดงบิลทั้งหมดของกลุ่มนั้น (ยอดขายรวม)
+            if (sub == "sales") allBills = allBills; // แสดงบิลทั้งหมดของกลุ่มนั้น (รวมฐานลูกหนี้ทั้งหมด)
+            else if (sub == "bf") allBills = allBills.Where(b => b.BillDate < new DateTime(2026, 1, 1)); // ลูกหนี้ยกมาต้นปี 69
+            else if (sub == "sales2569") allBills = allBills.Where(b => b.BillDate >= new DateTime(2026, 1, 1)); // ยอดขายใหม่ปี 2569
             else if (sub == "outstanding" || sub == "all_outstanding") allBills = allBills.Where(b => !b.IsPaid);
             else if (sub == "moderntrade") allBills = allBills.Where(b => !b.IsPaid && b.IsModernTrade);
             else if (sub == "general") allBills = allBills.Where(b => !b.IsPaid && !b.IsModernTrade);
@@ -797,6 +799,7 @@ namespace RoyalD.Web.Controllers
                 allFiltered = allFiltered.Where(b => b.Credit == credit.Value);
 
             var filteredList = allFiltered.ToList();
+            var y2569 = new DateTime(2026, 1, 1);
             var metrics = new
             {
                 totalOut = new {
@@ -812,6 +815,10 @@ namespace RoyalD.Web.Controllers
                     cnt = filteredList.Count(b => !b.IsPaid && !b.IsModernTrade)
                 },
                 g1 = new {
+                    bfAmt = filteredList.Where(b => b.GroupCode == "1" && b.BillDate < y2569).Sum(b => b.Amount),
+                    bfCnt = filteredList.Count(b => b.GroupCode == "1" && b.BillDate < y2569),
+                    sales2569Amt = filteredList.Where(b => b.GroupCode == "1" && b.BillDate >= y2569).Sum(b => b.Amount),
+                    sales2569Cnt = filteredList.Count(b => b.GroupCode == "1" && b.BillDate >= y2569),
                     salesAmt = filteredList.Where(b => b.GroupCode == "1").Sum(b => b.Amount),
                     salesCnt = filteredList.Count(b => b.GroupCode == "1"),
                     colAmt = filteredList.Where(b => b.GroupCode == "1" && b.IsPaid).Sum(b => b.Amount),
@@ -826,6 +833,10 @@ namespace RoyalD.Web.Controllers
                     over120Cnt = filteredList.Count(b => b.GroupCode == "1" && !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade)
                 },
                 g2 = new {
+                    bfAmt = filteredList.Where(b => b.GroupCode == "2" && b.BillDate < y2569).Sum(b => b.Amount),
+                    bfCnt = filteredList.Count(b => b.GroupCode == "2" && b.BillDate < y2569),
+                    sales2569Amt = filteredList.Where(b => b.GroupCode == "2" && b.BillDate >= y2569).Sum(b => b.Amount),
+                    sales2569Cnt = filteredList.Count(b => b.GroupCode == "2" && b.BillDate >= y2569),
                     salesAmt = filteredList.Where(b => b.GroupCode == "2").Sum(b => b.Amount),
                     salesCnt = filteredList.Count(b => b.GroupCode == "2"),
                     colAmt = filteredList.Where(b => b.GroupCode == "2" && b.IsPaid).Sum(b => b.Amount),
@@ -840,6 +851,10 @@ namespace RoyalD.Web.Controllers
                     over120Cnt = filteredList.Count(b => b.GroupCode == "2" && !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade)
                 },
                 g3 = new {
+                    bfAmt = filteredList.Where(b => b.GroupCode == "3" && b.BillDate < y2569).Sum(b => b.Amount),
+                    bfCnt = filteredList.Count(b => b.GroupCode == "3" && b.BillDate < y2569),
+                    sales2569Amt = filteredList.Where(b => b.GroupCode == "3" && b.BillDate >= y2569).Sum(b => b.Amount),
+                    sales2569Cnt = filteredList.Count(b => b.GroupCode == "3" && b.BillDate >= y2569),
                     salesAmt = filteredList.Where(b => b.GroupCode == "3").Sum(b => b.Amount),
                     salesCnt = filteredList.Count(b => b.GroupCode == "3"),
                     colAmt = filteredList.Where(b => b.GroupCode == "3" && b.IsPaid).Sum(b => b.Amount),

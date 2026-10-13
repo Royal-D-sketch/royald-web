@@ -317,60 +317,80 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
             <div class="card-header-iceblue">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <span class="fs-6 fw-bold"><i class="bi bi-buildings-fill me-1"></i> 1. บิลเก็บสด 7 วัน (กทม.&ปริมณฑล)</span>
-                    <span class="col-rate-badge" style="color:#0284c7;" title="% Collection Rate = [ (ยอดเก็บได้ ÷ ยอดขายรวม) x 100 ]">
+                    <span class="col-rate-badge" style="color:#0284c7;" title="% Collection Rate = [ (ยอดเก็บได้ ÷ รวมฐานลูกหนี้) x 100 ]">
                         % Collection: <strong id="rate-g1">0.00%</strong>
                     </span>
                 </div>
                 <small class="opacity-90" style="font-size:0.78rem;">เขต กทม. & ปริมณฑล ณ 14/09/2026 เป็นต้นไป (เครดิต 7 วัน)</small>
             </div>
 
-            <!-- Vertical Reconciled Metric Lines -->
             <div class="big-card-body">
-                <!-- แถวที่ 1: ยอดขาย / ลูกหนี้ทั้งหมด -->
-                <div class="metric-row-box" id="btn-g1-sales" onclick="setFilter('1', 'sales')" title="คลิกดูบิลขายทั้งหมดของกลุ่มนี้">
+                <!-- โซนที่ 1: การเดินยอดลูกหนี้ (Roll-Forward Summary) -->
+                <div class="small fw-bold text-muted px-1"><i class="bi bi-arrow-repeat me-1"></i> ส่วนที่ 1: การเดินยอดลูกหนี้ (AR Roll-Forward)</div>
+                
+                <!-- 1.1 ลูกหนี้ยกมาต้นปี 69 (ฟ้าอ่อน) -->
+                <div class="metric-row-box" id="btn-g1-bf" onclick="setFilter('1', 'bf')" title="คลิกดูบิลลูกหนี้ยกมาต้นปี 69">
                     <div>
-                        <div class="metric-title"><i class="bi bi-receipt-cutoff" style="color:#0284c7;"></i> 1. ยอดขาย/ลูกหนี้ทั้งหมด</div>
-                        <div class="metric-sub" id="g1-sales-sub">จำนวน 0 บิล (ยอดขายรวม)</div>
+                        <div class="metric-title"><i class="bi bi-calendar-event text-info"></i> 1. ลูกหนี้ยกมาต้นปี 69</div>
+                        <div class="metric-sub" id="g1-bf-sub">จำนวน 0 บิล (0.00%)</div>
                     </div>
-                    <div class="metric-val-num" style="color:#0284c7;" id="g1-sales-amt">0</div>
+                    <div class="metric-val-num text-info" id="g1-bf-amt">0</div>
                 </div>
 
-                <!-- แถวที่ 2: ยอดเก็บเงินสดได้แล้วสำเร็จ -->
-                <div class="metric-row-box" id="btn-g1-collected" onclick="setFilter('1', 'collected')" title="คลิกดูบิลที่เก็บเงินสดสำเร็จแล้ว">
+                <!-- 1.2 ยอดขายใหม่ปี 2569 (น้ำเงินเข้ม) -->
+                <div class="metric-row-box" id="btn-g1-sales2569" onclick="setFilter('1', 'sales2569')" title="คลิกดูบิลขายใหม่ปี 2569">
                     <div>
-                        <div class="metric-title"><i class="bi bi-check-circle-fill text-success"></i> 2. ยอดเก็บเงินสำเร็จแล้ว</div>
-                        <div class="metric-sub text-success" id="g1-collected-sub">จำนวน 0 บิล (ชำระแล้ว)</div>
+                        <div class="metric-title"><i class="bi bi-receipt-cutoff" style="color:#1d4ed8;"></i> 2. ยอดขายใหม่ปี 2569</div>
+                        <div class="metric-sub" id="g1-sales2569-sub">จำนวน 0 บิล (0.00%)</div>
+                    </div>
+                    <div class="metric-val-num" style="color:#1d4ed8;" id="g1-sales2569-amt">0</div>
+                </div>
+
+                <!-- 1.3 รวมฐานลูกหนี้ทั้งหมด (คลิกดูทั้งหมด) -->
+                <div class="p-2 px-3 rounded-3 d-flex justify-content-between align-items-center hover-bg" id="btn-g1-sales" onclick="setFilter('1', 'sales')" style="background:#e2e8f0; cursor:pointer;" title="คลิกดูบิลทั้งหมดของกลุ่มนี้ (ยกมา + ขายใหม่)">
+                    <div>
+                        <div class="small fw-bold text-dark"><i class="bi bi-calculator me-1"></i> รวมฐานลูกหนี้ทั้งหมด (1+2):</div>
+                        <div class="text-muted" style="font-size:0.73rem;" id="g1-sales-sub">จำนวน 0 บิล (100.0%)</div>
+                    </div>
+                    <div class="fw-black fs-6 text-dark" id="g1-sales-amt">0</div>
+                </div>
+
+                <!-- 1.4 ยอดเก็บเงินสำเร็จแล้ว (สีเขียวเดียว) -->
+                <div class="metric-row-box" id="btn-g1-collected" onclick="setFilter('1', 'collected')" title="คลิกดูบิลที่เก็บเงินสดสำเร็จแล้ว" style="border-left: 4px solid #059669;">
+                    <div>
+                        <div class="metric-title"><i class="bi bi-check-circle-fill text-success"></i> 3. ยอดเก็บเงินสำเร็จแล้ว</div>
+                        <div class="metric-sub text-success" id="g1-collected-sub">จำนวน 0 บิล (0.00%)</div>
                     </div>
                     <div class="metric-val-num text-success fw-bold" id="g1-collected-amt">0</div>
                 </div>
 
-                <!-- แถวที่ 3: ยอดหนี้คงเหลือที่ยังค้างชำระ -->
-                <div class="metric-row-box" id="btn-g1-outstanding" onclick="setFilter('1', 'outstanding')" title="คลิกดูบิลค้างชำระทั้งหมดกลุ่มนี้">
+                <!-- 1.5 ยอดหนี้คงเหลือสุทธิที่ค้างชำระ (สีน้ำเงินคราม) -->
+                <div class="metric-row-box" id="btn-g1-outstanding" onclick="setFilter('1', 'outstanding')" title="คลิกดูบิลค้างชำระทั้งหมดกลุ่มนี้" style="border-left: 4px solid #0284c7;">
                     <div>
-                        <div class="metric-title"><i class="bi bi-hourglass-split" style="color:#0369a1;"></i> 3. ยอดหนี้ค้างชำระรวม</div>
-                        <div class="metric-sub" id="g1-outstanding-sub">จำนวน 0 บิล (ค้างชำระ)</div>
+                        <div class="metric-title"><i class="bi bi-hourglass-split" style="color:#0284c7;"></i> 4. ยอดหนี้ค้างชำระรวม</div>
+                        <div class="metric-sub" id="g1-outstanding-sub">จำนวน 0 บิล (0.00%)</div>
                     </div>
-                    <div class="metric-val-num" style="color:#0369a1;" id="g1-outstanding-amt">0</div>
+                    <div class="metric-val-num" style="color:#0284c7;" id="g1-outstanding-amt">0</div>
                 </div>
 
-                <!-- แถวที่ 4: จำแนกสถานะอายุหนี้ค้าง (Aging Breakdown: ภายในกำหนด, 1-120 วัน, >120 วัน) -->
+                <!-- โซนที่ 2: จำแนกอายุหนี้คงค้าง (Aging Breakdown: ม่วง, ส้ม, แดง) -->
                 <div class="p-2 rounded-3 border bg-white mt-1">
-                    <div class="small fw-bold text-muted mb-2 px-1"><i class="bi bi-pie-chart me-1"></i> จำแนกอายุหนี้คงค้าง (Aging Breakdown):</div>
+                    <div class="small fw-bold text-muted mb-2 px-1"><i class="bi bi-pie-chart me-1"></i> ส่วนที่ 2: จำแนกอายุหนี้คงค้าง (Aging Breakdown):</div>
                     <div class="d-flex flex-column gap-1">
-                        <!-- 4.1 ในกำหนด -->
-                        <div class="d-flex justify-content-between align-items-center px-2 py-1 rounded small hover-bg cursor-pointer" id="btn-g1-current" onclick="setFilter('1', 'current')" style="cursor:pointer; background:#f8fafc;">
-                            <span class="text-secondary"><i class="bi bi-circle-fill me-1" style="color:#10b981; font-size:0.55rem;"></i> ภายในกำหนด (ยังไม่ถึงดิว):</span>
-                            <span class="fw-bold text-dark"><span id="g1-current-amt">0</span> บ. <small class="text-muted" id="g1-current-sub">(0 บิล)</small></span>
+                        <!-- 4.1 ภายในกำหนด (สีม่วง) -->
+                        <div class="d-flex justify-content-between align-items-center px-2 py-1 rounded small hover-bg cursor-pointer" id="btn-g1-current" onclick="setFilter('1', 'current')" style="cursor:pointer; background:#faf5ff;">
+                            <span style="color:#7c3aed;"><i class="bi bi-circle-fill me-1" style="color:#8b5cf6; font-size:0.55rem;"></i> ภายในกำหนด (ยังไม่ถึงดิว):</span>
+                            <span class="fw-bold" style="color:#7c3aed;"><span id="g1-current-amt">0</span> บ. <small class="text-muted" id="g1-current-sub">(0 บิล • 0%)</small></span>
                         </div>
-                        <!-- 4.2 เกินกำหนด 1-120 วัน -->
+                        <!-- 4.2 เกินกำหนด 1-120 วัน (สีส้ม) -->
                         <div class="d-flex justify-content-between align-items-center px-2 py-1 rounded small hover-bg cursor-pointer" id="btn-g1-under120" onclick="setFilter('1', 'under120')" style="cursor:pointer; background:#fffbeb;">
                             <span class="text-warning-emphasis"><i class="bi bi-circle-fill me-1" style="color:#f59e0b; font-size:0.55rem;"></i> เกินกำหนด 1-120 วัน:</span>
-                            <span class="fw-bold text-warning-emphasis"><span id="g1-under120-amt">0</span> บ. <small class="text-muted" id="g1-under120-sub">(0 บิล)</small></span>
+                            <span class="fw-bold text-warning-emphasis"><span id="g1-under120-amt">0</span> บ. <small class="text-muted" id="g1-under120-sub">(0 บิล • 0%)</small></span>
                         </div>
-                        <!-- 4.3 เกินกำหนด > 120 วัน -->
+                        <!-- 4.3 เกินกำหนด > 120 วัน (สีแดง) -->
                         <div class="d-flex justify-content-between align-items-center px-2 py-1 rounded small hover-bg cursor-pointer" id="btn-g1-over120" onclick="setFilter('1', 'over120')" style="cursor:pointer; background:#fff1f2;">
                             <span class="text-danger fw-semibold"><i class="bi bi-circle-fill me-1" style="color:#ef4444; font-size:0.55rem;"></i> วิกฤตเกิน 120 วัน:</span>
-                            <span class="fw-bold text-danger"><span id="g1-over120-amt">0</span> บ. <small class="text-danger" id="g1-over120-sub">(0 บิล)</small></span>
+                            <span class="fw-bold text-danger"><span id="g1-over120-amt">0</span> บ. <small class="text-danger" id="g1-over120-sub">(0 บิล • 0%)</small></span>
                         </div>
                     </div>
                 </div>
@@ -387,60 +407,80 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
             <div class="card-header-warmsand">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <span class="fs-6 fw-bold"><i class="bi bi-hourglass-split me-1"></i> 2. บิลเงินสดรวมสายเวลา (กทม.&ปริมณฑล)</span>
-                    <span class="col-rate-badge" style="color:#b45309;" title="% Collection Rate = [ (ยอดเก็บได้ ÷ ยอดขายรวม) x 100 ]">
+                    <span class="col-rate-badge" style="color:#b45309;" title="% Collection Rate = [ (ยอดเก็บได้ ÷ รวมฐานลูกหนี้) x 100 ]">
                         % Collection: <strong id="rate-g2">0.00%</strong>
                     </span>
                 </div>
                 <small class="opacity-90" style="font-size:0.78rem;">ก่อน 14/09 (เครดิต 7 วัน) + หลัง 14/09 (เครดิต 10 วัน) กทม.&ปริมณฑล</small>
             </div>
 
-            <!-- Vertical Reconciled Metric Lines -->
             <div class="big-card-body">
-                <!-- แถวที่ 1: ยอดขาย / ลูกหนี้ทั้งหมด -->
-                <div class="metric-row-box" id="btn-g2-sales" onclick="setFilter('2', 'sales')" title="คลิกดูบิลขายทั้งหมดของกลุ่มนี้">
+                <!-- โซนที่ 1: การเดินยอดลูกหนี้ (Roll-Forward Summary) -->
+                <div class="small fw-bold text-muted px-1"><i class="bi bi-arrow-repeat me-1"></i> ส่วนที่ 1: การเดินยอดลูกหนี้ (AR Roll-Forward)</div>
+                
+                <!-- 1.1 ลูกหนี้ยกมาต้นปี 69 (ฟ้าอ่อน) -->
+                <div class="metric-row-box" id="btn-g2-bf" onclick="setFilter('2', 'bf')" title="คลิกดูบิลลูกหนี้ยกมาต้นปี 69">
                     <div>
-                        <div class="metric-title"><i class="bi bi-receipt-cutoff" style="color:#d97706;"></i> 1. ยอดขาย/ลูกหนี้ทั้งหมด</div>
-                        <div class="metric-sub" id="g2-sales-sub">จำนวน 0 บิล (ยอดขายรวม)</div>
+                        <div class="metric-title"><i class="bi bi-calendar-event text-info"></i> 1. ลูกหนี้ยกมาต้นปี 69</div>
+                        <div class="metric-sub" id="g2-bf-sub">จำนวน 0 บิล (0.00%)</div>
                     </div>
-                    <div class="metric-val-num" style="color:#d97706;" id="g2-sales-amt">0</div>
+                    <div class="metric-val-num text-info" id="g2-bf-amt">0</div>
                 </div>
 
-                <!-- แถวที่ 2: ยอดเก็บเงินสดได้แล้วสำเร็จ -->
-                <div class="metric-row-box" id="btn-g2-collected" onclick="setFilter('2', 'collected')" title="คลิกดูบิลที่เก็บเงินสดสำเร็จแล้ว">
+                <!-- 1.2 ยอดขายใหม่ปี 2569 (น้ำเงินเข้ม) -->
+                <div class="metric-row-box" id="btn-g2-sales2569" onclick="setFilter('2', 'sales2569')" title="คลิกดูบิลขายใหม่ปี 2569">
                     <div>
-                        <div class="metric-title"><i class="bi bi-check-circle-fill text-success"></i> 2. ยอดเก็บเงินสำเร็จแล้ว</div>
-                        <div class="metric-sub text-success" id="g2-collected-sub">จำนวน 0 บิล (ชำระแล้ว)</div>
+                        <div class="metric-title"><i class="bi bi-receipt-cutoff" style="color:#1d4ed8;"></i> 2. ยอดขายใหม่ปี 2569</div>
+                        <div class="metric-sub" id="g2-sales2569-sub">จำนวน 0 บิล (0.00%)</div>
+                    </div>
+                    <div class="metric-val-num" style="color:#1d4ed8;" id="g2-sales2569-amt">0</div>
+                </div>
+
+                <!-- 1.3 รวมฐานลูกหนี้ทั้งหมด (คลิกดูทั้งหมด) -->
+                <div class="p-2 px-3 rounded-3 d-flex justify-content-between align-items-center hover-bg" id="btn-g2-sales" onclick="setFilter('2', 'sales')" style="background:#e2e8f0; cursor:pointer;" title="คลิกดูบิลทั้งหมดของกลุ่มนี้ (ยกมา + ขายใหม่)">
+                    <div>
+                        <div class="small fw-bold text-dark"><i class="bi bi-calculator me-1"></i> รวมฐานลูกหนี้ทั้งหมด (1+2):</div>
+                        <div class="text-muted" style="font-size:0.73rem;" id="g2-sales-sub">จำนวน 0 บิล (100.0%)</div>
+                    </div>
+                    <div class="fw-black fs-6 text-dark" id="g2-sales-amt">0</div>
+                </div>
+
+                <!-- 1.4 ยอดเก็บเงินสำเร็จแล้ว (สีเขียวเดียว) -->
+                <div class="metric-row-box" id="btn-g2-collected" onclick="setFilter('2', 'collected')" title="คลิกดูบิลที่เก็บเงินสดสำเร็จแล้ว" style="border-left: 4px solid #059669;">
+                    <div>
+                        <div class="metric-title"><i class="bi bi-check-circle-fill text-success"></i> 3. ยอดเก็บเงินสำเร็จแล้ว</div>
+                        <div class="metric-sub text-success" id="g2-collected-sub">จำนวน 0 บิล (0.00%)</div>
                     </div>
                     <div class="metric-val-num text-success fw-bold" id="g2-collected-amt">0</div>
                 </div>
 
-                <!-- แถวที่ 3: ยอดหนี้คงเหลือที่ยังค้างชำระ -->
-                <div class="metric-row-box" id="btn-g2-outstanding" onclick="setFilter('2', 'outstanding')" title="คลิกดูบิลค้างชำระทั้งหมดกลุ่มนี้">
+                <!-- 1.5 ยอดหนี้คงเหลือสุทธิที่ค้างชำระ (ส้มอำพันเข้ม) -->
+                <div class="metric-row-box" id="btn-g2-outstanding" onclick="setFilter('2', 'outstanding')" title="คลิกดูบิลค้างชำระทั้งหมดกลุ่มนี้" style="border-left: 4px solid #d97706;">
                     <div>
-                        <div class="metric-title"><i class="bi bi-hourglass-split" style="color:#b45309;"></i> 3. ยอดหนี้ค้างชำระรวม</div>
-                        <div class="metric-sub" id="g2-outstanding-sub">จำนวน 0 บิล (ค้างชำระ)</div>
+                        <div class="metric-title"><i class="bi bi-hourglass-split" style="color:#d97706;"></i> 4. ยอดหนี้ค้างชำระรวม</div>
+                        <div class="metric-sub" id="g2-outstanding-sub">จำนวน 0 บิล (0.00%)</div>
                     </div>
-                    <div class="metric-val-num" style="color:#b45309;" id="g2-outstanding-amt">0</div>
+                    <div class="metric-val-num" style="color:#d97706;" id="g2-outstanding-amt">0</div>
                 </div>
 
-                <!-- แถวที่ 4: จำแนกสถานะอายุหนี้ค้าง (Aging Breakdown: ภายในกำหนด, 1-120 วัน, >120 วัน) -->
+                <!-- โซนที่ 2: จำแนกอายุหนี้คงค้าง (Aging Breakdown: ม่วง, ส้ม, แดง) -->
                 <div class="p-2 rounded-3 border bg-white mt-1">
-                    <div class="small fw-bold text-muted mb-2 px-1"><i class="bi bi-pie-chart me-1"></i> จำแนกอายุหนี้คงค้าง (Aging Breakdown):</div>
+                    <div class="small fw-bold text-muted mb-2 px-1"><i class="bi bi-pie-chart me-1"></i> ส่วนที่ 2: จำแนกอายุหนี้คงค้าง (Aging Breakdown):</div>
                     <div class="d-flex flex-column gap-1">
-                        <!-- 4.1 ในกำหนด -->
-                        <div class="d-flex justify-content-between align-items-center px-2 py-1 rounded small hover-bg cursor-pointer" id="btn-g2-current" onclick="setFilter('2', 'current')" style="cursor:pointer; background:#f8fafc;">
-                            <span class="text-secondary"><i class="bi bi-circle-fill me-1" style="color:#10b981; font-size:0.55rem;"></i> ภายในกำหนด (ยังไม่ถึงดิว):</span>
-                            <span class="fw-bold text-dark"><span id="g2-current-amt">0</span> บ. <small class="text-muted" id="g2-current-sub">(0 บิล)</small></span>
+                        <!-- 4.1 ภายในกำหนด (สีม่วง) -->
+                        <div class="d-flex justify-content-between align-items-center px-2 py-1 rounded small hover-bg cursor-pointer" id="btn-g2-current" onclick="setFilter('2', 'current')" style="cursor:pointer; background:#faf5ff;">
+                            <span style="color:#7c3aed;"><i class="bi bi-circle-fill me-1" style="color:#8b5cf6; font-size:0.55rem;"></i> ภายในกำหนด (ยังไม่ถึงดิว):</span>
+                            <span class="fw-bold" style="color:#7c3aed;"><span id="g2-current-amt">0</span> บ. <small class="text-muted" id="g2-current-sub">(0 บิล • 0%)</small></span>
                         </div>
-                        <!-- 4.2 เกินกำหนด 1-120 วัน -->
+                        <!-- 4.2 เกินกำหนด 1-120 วัน (สีส้ม) -->
                         <div class="d-flex justify-content-between align-items-center px-2 py-1 rounded small hover-bg cursor-pointer" id="btn-g2-under120" onclick="setFilter('2', 'under120')" style="cursor:pointer; background:#fffbeb;">
                             <span class="text-warning-emphasis"><i class="bi bi-circle-fill me-1" style="color:#f59e0b; font-size:0.55rem;"></i> เกินกำหนด 1-120 วัน:</span>
-                            <span class="fw-bold text-warning-emphasis"><span id="g2-under120-amt">0</span> บ. <small class="text-muted" id="g2-under120-sub">(0 บิล)</small></span>
+                            <span class="fw-bold text-warning-emphasis"><span id="g2-under120-amt">0</span> บ. <small class="text-muted" id="g2-under120-sub">(0 บิล • 0%)</small></span>
                         </div>
-                        <!-- 4.3 เกินกำหนด > 120 วัน -->
+                        <!-- 4.3 เกินกำหนด > 120 วัน (สีแดง) -->
                         <div class="d-flex justify-content-between align-items-center px-2 py-1 rounded small hover-bg cursor-pointer" id="btn-g2-over120" onclick="setFilter('2', 'over120')" style="cursor:pointer; background:#fff1f2;">
                             <span class="text-danger fw-semibold"><i class="bi bi-circle-fill me-1" style="color:#ef4444; font-size:0.55rem;"></i> วิกฤตเกิน 120 วัน:</span>
-                            <span class="fw-bold text-danger"><span id="g2-over120-amt">0</span> บ. <small class="text-danger" id="g2-over120-sub">(0 บิล)</small></span>
+                            <span class="fw-bold text-danger"><span id="g2-over120-amt">0</span> บ. <small class="text-danger" id="g2-over120-sub">(0 บิล • 0%)</small></span>
                         </div>
                     </div>
                 </div>
@@ -457,60 +497,80 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
             <div class="card-header-purple">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <span class="fs-6 fw-bold"><i class="bi bi-geo-alt-fill me-1"></i> 3. บิลค้างชำระ ต่างจังหวัด (ทุกภาค)</span>
-                    <span class="col-rate-badge" style="color:#7c3aed;" title="% Collection Rate = [ (ยอดเก็บได้ ÷ ยอดขายรวม) x 100 ]">
+                    <span class="col-rate-badge" style="color:#7c3aed;" title="% Collection Rate = [ (ยอดเก็บได้ ÷ รวมฐานลูกหนี้) x 100 ]">
                         % Collection: <strong id="rate-g3">0.00%</strong>
                     </span>
                 </div>
                 <small class="opacity-90" style="font-size:0.78rem;">ลูกหนี้ต่างจังหวัดทั่วประเทศทุกภาค</small>
             </div>
 
-            <!-- Vertical Reconciled Metric Lines -->
             <div class="big-card-body">
-                <!-- แถวที่ 1: ยอดขาย / ลูกหนี้ทั้งหมด -->
-                <div class="metric-row-box" id="btn-g3-sales" onclick="setFilter('3', 'sales')" title="คลิกดูบิลขายทั้งหมดของกลุ่มนี้">
+                <!-- โซนที่ 1: การเดินยอดลูกหนี้ (Roll-Forward Summary) -->
+                <div class="small fw-bold text-muted px-1"><i class="bi bi-arrow-repeat me-1"></i> ส่วนที่ 1: การเดินยอดลูกหนี้ (AR Roll-Forward)</div>
+                
+                <!-- 1.1 ลูกหนี้ยกมาต้นปี 69 (ฟ้าอ่อน) -->
+                <div class="metric-row-box" id="btn-g3-bf" onclick="setFilter('3', 'bf')" title="คลิกดูบิลลูกหนี้ยกมาต้นปี 69">
                     <div>
-                        <div class="metric-title"><i class="bi bi-receipt-cutoff" style="color:#7c3aed;"></i> 1. ยอดขาย/ลูกหนี้ทั้งหมด</div>
-                        <div class="metric-sub" id="g3-sales-sub">จำนวน 0 บิล (ยอดขายรวม)</div>
+                        <div class="metric-title"><i class="bi bi-calendar-event text-info"></i> 1. ลูกหนี้ยกมาต้นปี 69</div>
+                        <div class="metric-sub" id="g3-bf-sub">จำนวน 0 บิล (0.00%)</div>
                     </div>
-                    <div class="metric-val-num" style="color:#7c3aed;" id="g3-sales-amt">0</div>
+                    <div class="metric-val-num text-info" id="g3-bf-amt">0</div>
                 </div>
 
-                <!-- แถวที่ 2: ยอดเก็บเงินสดได้แล้วสำเร็จ -->
-                <div class="metric-row-box" id="btn-g3-collected" onclick="setFilter('3', 'collected')" title="คลิกดูบิลที่เก็บเงินสดสำเร็จแล้ว">
+                <!-- 1.2 ยอดขายใหม่ปี 2569 (น้ำเงินเข้ม) -->
+                <div class="metric-row-box" id="btn-g3-sales2569" onclick="setFilter('3', 'sales2569')" title="คลิกดูบิลขายใหม่ปี 2569">
                     <div>
-                        <div class="metric-title"><i class="bi bi-check-circle-fill text-success"></i> 2. ยอดเก็บเงินสำเร็จแล้ว</div>
-                        <div class="metric-sub text-success" id="g3-collected-sub">จำนวน 0 บิล (ชำระแล้ว)</div>
+                        <div class="metric-title"><i class="bi bi-receipt-cutoff" style="color:#1d4ed8;"></i> 2. ยอดขายใหม่ปี 2569</div>
+                        <div class="metric-sub" id="g3-sales2569-sub">จำนวน 0 บิล (0.00%)</div>
+                    </div>
+                    <div class="metric-val-num" style="color:#1d4ed8;" id="g3-sales2569-amt">0</div>
+                </div>
+
+                <!-- 1.3 รวมฐานลูกหนี้ทั้งหมด (คลิกดูทั้งหมด) -->
+                <div class="p-2 px-3 rounded-3 d-flex justify-content-between align-items-center hover-bg" id="btn-g3-sales" onclick="setFilter('3', 'sales')" style="background:#e2e8f0; cursor:pointer;" title="คลิกดูบิลทั้งหมดของกลุ่มนี้ (ยกมา + ขายใหม่)">
+                    <div>
+                        <div class="small fw-bold text-dark"><i class="bi bi-calculator me-1"></i> รวมฐานลูกหนี้ทั้งหมด (1+2):</div>
+                        <div class="text-muted" style="font-size:0.73rem;" id="g3-sales-sub">จำนวน 0 บิล (100.0%)</div>
+                    </div>
+                    <div class="fw-black fs-6 text-dark" id="g3-sales-amt">0</div>
+                </div>
+
+                <!-- 1.4 ยอดเก็บเงินสำเร็จแล้ว (สีเขียวเดียว) -->
+                <div class="metric-row-box" id="btn-g3-collected" onclick="setFilter('3', 'collected')" title="คลิกดูบิลที่เก็บเงินสดสำเร็จแล้ว" style="border-left: 4px solid #059669;">
+                    <div>
+                        <div class="metric-title"><i class="bi bi-check-circle-fill text-success"></i> 3. ยอดเก็บเงินสำเร็จแล้ว</div>
+                        <div class="metric-sub text-success" id="g3-collected-sub">จำนวน 0 บิล (0.00%)</div>
                     </div>
                     <div class="metric-val-num text-success fw-bold" id="g3-collected-amt">0</div>
                 </div>
 
-                <!-- แถวที่ 3: ยอดหนี้คงเหลือที่ยังค้างชำระ -->
-                <div class="metric-row-box" id="btn-g3-outstanding" onclick="setFilter('3', 'outstanding')" title="คลิกดูบิลค้างชำระทั้งหมดกลุ่มนี้">
+                <!-- 1.5 ยอดหนี้คงเหลือสุทธิที่ค้างชำระ (ม่วงเข้ม) -->
+                <div class="metric-row-box" id="btn-g3-outstanding" onclick="setFilter('3', 'outstanding')" title="คลิกดูบิลค้างชำระทั้งหมดกลุ่มนี้" style="border-left: 4px solid #7c3aed;">
                     <div>
-                        <div class="metric-title"><i class="bi bi-hourglass-split" style="color:#6d28d9;"></i> 3. ยอดหนี้ค้างชำระรวม</div>
-                        <div class="metric-sub" id="g3-outstanding-sub">จำนวน 0 บิล (ค้างชำระ)</div>
+                        <div class="metric-title"><i class="bi bi-hourglass-split" style="color:#7c3aed;"></i> 4. ยอดหนี้ค้างชำระรวม</div>
+                        <div class="metric-sub" id="g3-outstanding-sub">จำนวน 0 บิล (0.00%)</div>
                     </div>
-                    <div class="metric-val-num" style="color:#6d28d9;" id="g3-outstanding-amt">0</div>
+                    <div class="metric-val-num" style="color:#7c3aed;" id="g3-outstanding-amt">0</div>
                 </div>
 
-                <!-- แถวที่ 4: จำแนกสถานะอายุหนี้ค้าง (Aging Breakdown: ภายในกำหนด, 1-120 วัน, >120 วัน) -->
+                <!-- โซนที่ 2: จำแนกอายุหนี้คงค้าง (Aging Breakdown: ม่วง, ส้ม, แดง) -->
                 <div class="p-2 rounded-3 border bg-white mt-1">
-                    <div class="small fw-bold text-muted mb-2 px-1"><i class="bi bi-pie-chart me-1"></i> จำแนกอายุหนี้คงค้าง (Aging Breakdown):</div>
+                    <div class="small fw-bold text-muted mb-2 px-1"><i class="bi bi-pie-chart me-1"></i> ส่วนที่ 2: จำแนกอายุหนี้คงค้าง (Aging Breakdown):</div>
                     <div class="d-flex flex-column gap-1">
-                        <!-- 4.1 ในกำหนด -->
-                        <div class="d-flex justify-content-between align-items-center px-2 py-1 rounded small hover-bg cursor-pointer" id="btn-g3-current" onclick="setFilter('3', 'current')" style="cursor:pointer; background:#f8fafc;">
-                            <span class="text-secondary"><i class="bi bi-circle-fill me-1" style="color:#10b981; font-size:0.55rem;"></i> ภายในกำหนด (ยังไม่ถึงดิว):</span>
-                            <span class="fw-bold text-dark"><span id="g3-current-amt">0</span> บ. <small class="text-muted" id="g3-current-sub">(0 บิล)</small></span>
+                        <!-- 4.1 ภายในกำหนด (สีม่วง) -->
+                        <div class="d-flex justify-content-between align-items-center px-2 py-1 rounded small hover-bg cursor-pointer" id="btn-g3-current" onclick="setFilter('3', 'current')" style="cursor:pointer; background:#faf5ff;">
+                            <span style="color:#7c3aed;"><i class="bi bi-circle-fill me-1" style="color:#8b5cf6; font-size:0.55rem;"></i> ภายในกำหนด (ยังไม่ถึงดิว):</span>
+                            <span class="fw-bold" style="color:#7c3aed;"><span id="g3-current-amt">0</span> บ. <small class="text-muted" id="g3-current-sub">(0 บิล • 0%)</small></span>
                         </div>
-                        <!-- 4.2 เกินกำหนด 1-120 วัน -->
+                        <!-- 4.2 เกินกำหนด 1-120 วัน (สีส้ม) -->
                         <div class="d-flex justify-content-between align-items-center px-2 py-1 rounded small hover-bg cursor-pointer" id="btn-g3-under120" onclick="setFilter('3', 'under120')" style="cursor:pointer; background:#fffbeb;">
                             <span class="text-warning-emphasis"><i class="bi bi-circle-fill me-1" style="color:#f59e0b; font-size:0.55rem;"></i> เกินกำหนด 1-120 วัน:</span>
-                            <span class="fw-bold text-warning-emphasis"><span id="g3-under120-amt">0</span> บ. <small class="text-muted" id="g3-under120-sub">(0 บิล)</small></span>
+                            <span class="fw-bold text-warning-emphasis"><span id="g3-under120-amt">0</span> บ. <small class="text-muted" id="g3-under120-sub">(0 บิล • 0%)</small></span>
                         </div>
-                        <!-- 4.3 เกินกำหนด > 120 วัน -->
+                        <!-- 4.3 เกินกำหนด > 120 วัน (สีแดง) -->
                         <div class="d-flex justify-content-between align-items-center px-2 py-1 rounded small hover-bg cursor-pointer" id="btn-g3-over120" onclick="setFilter('3', 'over120')" style="cursor:pointer; background:#fff1f2;">
                             <span class="text-danger fw-semibold"><i class="bi bi-circle-fill me-1" style="color:#ef4444; font-size:0.55rem;"></i> วิกฤตเกิน 120 วัน:</span>
-                            <span class="fw-bold text-danger"><span id="g3-over120-amt">0</span> บ. <small class="text-danger" id="g3-over120-sub">(0 บิล)</small></span>
+                            <span class="fw-bold text-danger"><span id="g3-over120-amt">0</span> บ. <small class="text-danger" id="g3-over120-sub">(0 บิล • 0%)</small></span>
                         </div>
                     </div>
                 </div>
@@ -711,7 +771,9 @@ const subFilterNames = {
     'all_outstanding': 'หนี้ค้างชำระรวมทั้งระบบ (ทุกกลุ่ม + Modern Trade)',
     'moderntrade': 'หนี้กลุ่ม Modern Trade (ค้างตามรอบวางบิล)',
     'general': 'หนี้กลุ่มตลาดทั่วไป 3 กลุ่ม (เซลส์/หน่วยรถติดตาม)',
-    'sales': 'ยอดขาย/ลูกหนี้ทั้งหมด (ปี 2569)',
+    'bf': 'ลูกหนี้ยกมาต้นปี 2569 (บิลค้างเก่าก่อนปี 69)',
+    'sales2569': 'ยอดขายใหม่ปี 2569 (บิลขายระหว่างปี)',
+    'sales': 'รวมฐานลูกหนี้ทั้งหมด (ยกมา + ขายใหม่)',
     'collected': 'ยอดเก็บเงินสดได้แล้วสำเร็จ',
     'outstanding': 'ยอดหนี้ค้างชำระทั้งหมด',
     'current': 'หนี้ภายในกำหนด (ยังไม่ถึงดิว)',
@@ -850,7 +912,7 @@ function renderCompTable(data) {
         } else if (item.agingDays > 0) {
             badgeHtml = `<span class="badge" style="background:#d97706; color:#fff;">${item.agingDays} วัน</span>`;
         } else {
-            badgeHtml = `<span class="badge bg-light text-muted border">ยังไม่ถึงกำหนด</span>`;
+            badgeHtml = `<span class="badge" style="background:#7c3aed; color:#fff;">ยังไม่ถึงกำหนด</span>`;
         }
 
         let mtTag = '';
@@ -941,31 +1003,45 @@ function updateCompMetrics(m) {
         const g = m[gKey];
         if (!g) return;
 
-        // Row 1: Sales
-        setTxt(`g${num}-sales-amt`, fmt(g.salesAmt));
-        setTxt(`g${num}-sales-sub`, `จำนวน ${g.salesCnt.toLocaleString('en-US')} บิล (ยอดขายรวม)`);
+        const totalBaseAmt = (g.salesAmt || 0);
+        const bfPct = totalBaseAmt > 0 ? ((g.bfAmt / totalBaseAmt) * 100).toFixed(2) : '0.00';
+        const sales2569Pct = totalBaseAmt > 0 ? ((g.sales2569Amt / totalBaseAmt) * 100).toFixed(2) : '0.00';
+        const colPct = totalBaseAmt > 0 ? ((g.colAmt / totalBaseAmt) * 100).toFixed(2) : '0.00';
+        const outPct = totalBaseAmt > 0 ? ((g.outAmt / totalBaseAmt) * 100).toFixed(2) : '0.00';
 
-        // Row 2: Collected
+        // Zone 1: Roll-Forward
+        setTxt(`g${num}-bf-amt`, fmt(g.bfAmt));
+        setTxt(`g${num}-bf-sub`, `จำนวน ${g.bfCnt.toLocaleString('en-US')} บิล (${bfPct}%)`);
+
+        setTxt(`g${num}-sales2569-amt`, fmt(g.sales2569Amt));
+        setTxt(`g${num}-sales2569-sub`, `จำนวน ${g.sales2569Cnt.toLocaleString('en-US')} บิล (${sales2569Pct}%)`);
+
+        setTxt(`g${num}-sales-amt`, fmt(totalBaseAmt));
+        setTxt(`g${num}-sales-sub`, `จำนวน ${g.salesCnt.toLocaleString('en-US')} บิล (100.0%)`);
+
         setTxt(`g${num}-collected-amt`, fmt(g.colAmt));
-        setTxt(`g${num}-collected-sub`, `จำนวน ${g.colCnt.toLocaleString('en-US')} บิล (ชำระแล้ว)`);
+        setTxt(`g${num}-collected-sub`, `จำนวน ${g.colCnt.toLocaleString('en-US')} บิล [${colPct}%]`);
 
-        // Row 3: Outstanding
         setTxt(`g${num}-outstanding-amt`, fmt(g.outAmt));
-        setTxt(`g${num}-outstanding-sub`, `จำนวน ${g.outCnt.toLocaleString('en-US')} บิล (ค้างชำระ)`);
+        setTxt(`g${num}-outstanding-sub`, `จำนวน ${g.outCnt.toLocaleString('en-US')} บิล [${outPct}%]`);
 
-        // Row 4: Aging Breakdown
+        // Zone 2: Aging Breakdown (% เทียบกับยอดหนี้ค้าง outAmt)
+        const outAmt = g.outAmt || 0;
+        const curPct = outAmt > 0 ? ((g.currentAmt / outAmt) * 100).toFixed(2) : '0.00';
+        const u120Pct = outAmt > 0 ? ((g.under120Amt / outAmt) * 100).toFixed(2) : '0.00';
+        const o120Pct = outAmt > 0 ? ((g.over120Amt / outAmt) * 100).toFixed(2) : '0.00';
+
         setTxt(`g${num}-current-amt`, fmt(g.currentAmt));
-        setTxt(`g${num}-current-sub`, `(${g.currentCnt.toLocaleString('en-US')} บิล)`);
+        setTxt(`g${num}-current-sub`, `(${g.currentCnt.toLocaleString('en-US')} บิล • ${curPct}%)`);
 
         setTxt(`g${num}-under120-amt`, fmt(g.under120Amt));
-        setTxt(`g${num}-under120-sub`, `(${g.under120Cnt.toLocaleString('en-US')} บิล)`);
+        setTxt(`g${num}-under120-sub`, `(${g.under120Cnt.toLocaleString('en-US')} บิล • ${u120Pct}%)`);
 
         setTxt(`g${num}-over120-amt`, fmt(g.over120Amt));
-        setTxt(`g${num}-over120-sub`, `(${g.over120Cnt.toLocaleString('en-US')} บิล)`);
+        setTxt(`g${num}-over120-sub`, `(${g.over120Cnt.toLocaleString('en-US')} บิล • ${o120Pct}%)`);
 
-        // Collection Rate %
-        const rate = g.salesAmt > 0 ? ((g.colAmt / g.salesAmt) * 100).toFixed(2) : '0.00';
-        setTxt(`rate-g${num}`, `${rate}%`);
+        // Collection Rate % บนการ์ด
+        setTxt(`rate-g${num}`, `${colPct}%`);
     });
 }
 
