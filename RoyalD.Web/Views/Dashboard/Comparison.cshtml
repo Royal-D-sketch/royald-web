@@ -222,6 +222,89 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
 </div>
 
 <!-- ============================================================== -->
+<!-- 0. ส่วนบนสุด: AR EXECUTIVE PORTFOLIO SUMMARY (ภาพรวมยอดหนี้ทั้งระบบ 88.16M) -->
+<!-- ============================================================== -->
+<div class="card border-0 shadow-sm rounded-4 mb-4" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color:#fff;">
+    <div class="card-body p-4">
+        <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-center gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-danger px-2 py-1"><i class="bi bi-shield-exclamation me-1"></i> AR Credit Control</span>
+                    <span class="text-light opacity-75 small">ภาพรวมสถานะลูกหนี้และพอร์ตสินเชื่อทั้งระบบ (Portfolio Overview)</span>
+                </div>
+                <h5 class="fw-bold mb-0 text-white">
+                    <i class="bi bi-wallet2 text-warning me-2"></i>วิเคราะห์สถานะหนี้คงค้างรวมทั้งระบบ (Total Outstanding Breakdown)
+                </h5>
+            </div>
+            <div class="text-xl-end">
+                <span class="badge bg-light text-dark px-3 py-2 fw-semibold">
+                    <i class="bi bi-cursor-fill text-primary me-1"></i> คลิกกล่องด้านล่างเพื่อกรองตารางดูรายละเอียดรายบิลทันที
+                </span>
+            </div>
+        </div>
+
+        <div class="row g-3 mt-2">
+            <!-- กล่องที่ 1: หนี้คงค้างรวมทั้งระบบ (88.16M) -->
+            <div class="col-12 col-md-4">
+                <div class="p-3 rounded-3 h-100 transition-all cursor-pointer border" id="btn-total-out" onclick="setFilter('all', 'all_outstanding')"
+                     style="background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.15) !important; cursor: pointer;"
+                     title="คลิกเพื่อดูบิลค้างชำระทั้งหมดทั้งระบบ (4,153 บิล)">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="text-white-50 small fw-semibold"><i class="bi bi-pie-chart-fill text-warning me-1"></i> หนี้ค้างชำระรวมทั้งระบบ</div>
+                            <div class="fs-4 fw-black text-warning my-1" id="hdr-total-amt">88,167,905.10</div>
+                            <div class="text-light small opacity-90"><span id="hdr-total-cnt">4,153</span> บิล <span class="badge bg-warning text-dark ms-1">100% ของหนี้</span></div>
+                        </div>
+                        <i class="bi bi-arrow-right-circle fs-4 text-warning opacity-75"></i>
+                    </div>
+                    <div class="mt-2 pt-2 border-top border-secondary text-white-50" style="font-size:0.75rem;">
+                        รวมหนี้กลุ่ม 1, 2, 3 + ห้าง Modern Trade
+                    </div>
+                </div>
+            </div>
+
+            <!-- กล่องที่ 2: หนี้กลุ่มโมเดิร์นเทรด (21.40M) -->
+            <div class="col-12 col-md-4">
+                <div class="p-3 rounded-3 h-100 transition-all cursor-pointer border" id="btn-mt-out" onclick="setFilter('moderntrade', 'moderntrade')"
+                     style="background: rgba(56, 189, 248, 0.1); border-color: rgba(56, 189, 248, 0.3) !important; cursor: pointer;"
+                     title="คลิกเพื่อดูบิลห้างโมเดิร์นเทรด (Big C, Lotus's, Makro, CP ALL ฯลฯ)">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="text-info small fw-semibold"><i class="bi bi-buildings-fill me-1"></i> หนี้กลุ่ม Modern Trade (ห้าง)</div>
+                            <div class="fs-4 fw-black text-info my-1" id="hdr-mt-amt">21,396,251.73</div>
+                            <div class="text-light small opacity-90"><span id="hdr-mt-cnt">467</span> บิล <span class="badge bg-info text-dark ms-1">24.26%</span></div>
+                        </div>
+                        <i class="bi bi-arrow-right-circle fs-4 text-info opacity-75"></i>
+                    </div>
+                    <div class="mt-2 pt-2 border-top border-secondary text-info-emphasis" style="font-size:0.75rem; color:#7dd3fc !important;">
+                        ความเสี่ยงต่ำมาก ค้างตามรอบวางบิล-รับเช็ค
+                    </div>
+                </div>
+            </div>
+
+            <!-- กล่องที่ 3: หนี้กลุ่มตลาดทั่วไป 3 กลุ่ม (66.77M) -->
+            <div class="col-12 col-md-4">
+                <div class="p-3 rounded-3 h-100 transition-all cursor-pointer border" id="btn-gen-out" onclick="setFilter('general', 'general')"
+                     style="background: rgba(52, 211, 153, 0.1); border-color: rgba(52, 211, 153, 0.3) !important; cursor: pointer;"
+                     title="คลิกเพื่อดูหนี้ตลาดทั่วไป 3 กลุ่ม (ร้านค้า/ยี่ปั๊ว/ซาปั๊ว/ตจว.)">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="text-success small fw-semibold" style="color:#6ee7b7 !important;"><i class="bi bi-shop-window me-1"></i> หนี้กลุ่มตลาดทั่วไป (3 กลุ่ม)</div>
+                            <div class="fs-4 fw-black my-1" style="color:#6ee7b7;" id="hdr-gen-amt">66,771,653.37</div>
+                            <div class="text-light small opacity-90"><span id="hdr-gen-cnt">3,686</span> บิล <span class="badge bg-success ms-1">75.74%</span></div>
+                        </div>
+                        <i class="bi bi-arrow-right-circle fs-4 text-success opacity-75"></i>
+                    </div>
+                    <div class="mt-2 pt-2 border-top border-secondary text-white-50" style="font-size:0.75rem;">
+                        หนี้ที่ฝ่ายขาย/หน่วยรถต้องติดตามจัดเก็บจริง
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================== -->
 <!-- 1. ส่วนบน: 3 BIG SUMMARY CARDS (โชว์ตัวเลขแนวดิ่ง 4 บรรทัด) -->
 <!-- ============================================================== -->
 <div class="row g-4 mb-4">
@@ -620,9 +703,14 @@ const groupNames = {
     '1': '1. บิลเก็บสด 7 วัน (กทม.&ปริมณฑล)',
     '2': '2. บิลเงินสดรวมสายเวลา (กทม.&ปริมณฑล)',
     '3': '3. บิลค้างชำระ ต่างจังหวัด (ทุกภาค)',
+    'moderntrade': 'ห้าง Modern Trade (บิ๊กซี, โลตัส, แม็คโคร ฯลฯ)',
+    'general': 'ลูกหนี้ตลาดทั่วไป 3 กลุ่ม (ร้านค้า/ตจว.)',
     'all': 'ทุกกลุ่ม'
 };
 const subFilterNames = {
+    'all_outstanding': 'หนี้ค้างชำระรวมทั้งระบบ (ทุกกลุ่ม + Modern Trade)',
+    'moderntrade': 'หนี้กลุ่ม Modern Trade (ค้างตามรอบวางบิล)',
+    'general': 'หนี้กลุ่มตลาดทั่วไป 3 กลุ่ม (เซลส์/หน่วยรถติดตาม)',
     'sales': 'ยอดขาย/ลูกหนี้ทั้งหมด (ปี 2569)',
     'collected': 'ยอดเก็บเงินสดได้แล้วสำเร็จ',
     'outstanding': 'ยอดหนี้ค้างชำระทั้งหมด',
@@ -638,7 +726,21 @@ function setFilter(grp, sub, autoScroll = true) {
     compCurrentPage = 1;
 
     document.querySelectorAll('.metric-row-box').forEach(b => b.classList.remove('active-filter'));
-    if (grp !== 'all' && sub !== 'all') {
+    ['btn-total-out', 'btn-mt-out', 'btn-gen-out'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.boxShadow = 'none';
+    });
+
+    if (sub === 'all_outstanding') {
+        const el = document.getElementById('btn-total-out');
+        if (el) el.style.boxShadow = '0 0 0 3px #f59e0b';
+    } else if (sub === 'moderntrade' || grp === 'moderntrade') {
+        const el = document.getElementById('btn-mt-out');
+        if (el) el.style.boxShadow = '0 0 0 3px #38bdf8';
+    } else if (sub === 'general' || grp === 'general') {
+        const el = document.getElementById('btn-gen-out');
+        if (el) el.style.boxShadow = '0 0 0 3px #34d399';
+    } else if (grp !== 'all' && sub !== 'all') {
         const targetBtn = document.getElementById(`btn-g${grp}-${sub}`);
         if (targetBtn) targetBtn.classList.add('active-filter');
     }
@@ -750,12 +852,20 @@ function renderCompTable(data) {
         } else {
             badgeHtml = `<span class="badge bg-light text-muted border">ยังไม่ถึงกำหนด</span>`;
         }
+
+        let mtTag = '';
+        if (item.isModernTrade) {
+            mtTag = `<span class="badge me-1" style="background:#0284c7; color:#fff; font-size:0.65rem;">Modern Trade</span>`;
+        }
+
         return `<tr>
             <td class="text-center text-muted">${item.index}</td>
             <td class="text-center fw-bold"><span class="badge bg-light text-dark border">${item.billNo}</span></td>
             <td class="text-center text-muted">${item.billDate}</td>
             <td class="text-center"><code class="text-dark fw-bold">${item.customerCode || '-'}</code></td>
-            <td class="fw-bold text-dark col-customer-name" style="min-width:260px;white-space:normal!important;word-break:break-word!important;">${item.customerName || '-'}</td>
+            <td class="fw-bold text-dark col-customer-name" style="min-width:260px;white-space:normal!important;word-break:break-word!important;">
+                ${mtTag}${item.customerName || '-'}
+            </td>
             <td>${item.district || '-'}</td>
             <td>${item.province || '-'}</td>
             <td class="text-center">${item.credit}</td>
@@ -808,8 +918,24 @@ function renderCompPagination(data) {
 function updateCompMetrics(m) {
     if (!m) return;
     const fmt = (v) => (v || 0).toLocaleString('en-US', { maximumFractionDigits: 0 });
+    const fmtDec = (v) => (v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.innerText = txt; };
 
+    // Executive Summary Strip
+    if (m.totalOut) {
+        setTxt('hdr-total-amt', fmtDec(m.totalOut.amt));
+        setTxt('hdr-total-cnt', m.totalOut.cnt.toLocaleString('en-US'));
+    }
+    if (m.mt) {
+        setTxt('hdr-mt-amt', fmtDec(m.mt.amt));
+        setTxt('hdr-mt-cnt', m.mt.cnt.toLocaleString('en-US'));
+    }
+    if (m.gen) {
+        setTxt('hdr-gen-amt', fmtDec(m.gen.amt));
+        setTxt('hdr-gen-cnt', m.gen.cnt.toLocaleString('en-US'));
+    }
+
+    // 3 Groups
     ['1', '2', '3'].forEach(num => {
         const gKey = 'g' + num;
         const g = m[gKey];

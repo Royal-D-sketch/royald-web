@@ -722,10 +722,14 @@ namespace RoyalD.Web.Controllers
             if (grp == "1") allBills = allBills.Where(b => b.GroupCode == "1");
             else if (grp == "2") allBills = allBills.Where(b => b.GroupCode == "2");
             else if (grp == "3") allBills = allBills.Where(b => b.GroupCode == "3");
+            else if (grp == "moderntrade") allBills = allBills.Where(b => b.IsModernTrade);
+            else if (grp == "general") allBills = allBills.Where(b => !b.IsModernTrade);
 
             // กรองตาม SubFilter
             if (sub == "sales") allBills = allBills; // แสดงบิลทั้งหมดของกลุ่มนั้น (ยอดขายรวม)
-            else if (sub == "outstanding") allBills = allBills.Where(b => !b.IsPaid);
+            else if (sub == "outstanding" || sub == "all_outstanding") allBills = allBills.Where(b => !b.IsPaid);
+            else if (sub == "moderntrade") allBills = allBills.Where(b => !b.IsPaid && b.IsModernTrade);
+            else if (sub == "general") allBills = allBills.Where(b => !b.IsPaid && !b.IsModernTrade);
             else if (sub == "current") allBills = allBills.Where(b => !b.IsPaid && b.AgingDays <= 0); // ภายในกำหนด (ยังไม่ถึงดิว)
             else if (sub == "under120") allBills = allBills.Where(b => !b.IsPaid && b.AgingDays > 0 && b.AgingDays <= 120); // เกินกำหนด 1-120 วัน
             else if (sub == "over120") allBills = allBills.Where(b => !b.IsPaid && b.AgingDays > 120 && !b.IsModernTrade); // วิกฤตเกิน 120 วัน
@@ -795,6 +799,18 @@ namespace RoyalD.Web.Controllers
             var filteredList = allFiltered.ToList();
             var metrics = new
             {
+                totalOut = new {
+                    amt = filteredList.Where(b => !b.IsPaid).Sum(b => b.Amount),
+                    cnt = filteredList.Count(b => !b.IsPaid)
+                },
+                mt = new {
+                    amt = filteredList.Where(b => !b.IsPaid && b.IsModernTrade).Sum(b => b.Amount),
+                    cnt = filteredList.Count(b => !b.IsPaid && b.IsModernTrade)
+                },
+                gen = new {
+                    amt = filteredList.Where(b => !b.IsPaid && !b.IsModernTrade).Sum(b => b.Amount),
+                    cnt = filteredList.Count(b => !b.IsPaid && !b.IsModernTrade)
+                },
                 g1 = new {
                     salesAmt = filteredList.Where(b => b.GroupCode == "1").Sum(b => b.Amount),
                     salesCnt = filteredList.Count(b => b.GroupCode == "1"),
@@ -1116,8 +1132,11 @@ namespace RoyalD.Web.Controllers
 
                 if (!string.IsNullOrEmpty(filterType) && filterType.ToLower() != "all")
                 {
-                    if (filterType == "outstanding" && b.IsPaid) return false;
-                    if (filterType == "under120" && (b.IsPaid || b.AgingDays > 120)) return false;
+                    if ((filterType == "outstanding" || filterType == "all_outstanding") && b.IsPaid) return false;
+                    if (filterType == "moderntrade" && (b.IsPaid || !b.IsModernTrade)) return false;
+                    if (filterType == "general" && (b.IsPaid || b.IsModernTrade)) return false;
+                    if (filterType == "current" && (b.IsPaid || b.AgingDays > 0)) return false;
+                    if (filterType == "under120" && (b.IsPaid || b.AgingDays <= 0 || b.AgingDays > 120)) return false;
                     if (filterType == "over120" && (b.IsPaid || b.AgingDays <= 120 || b.IsModernTrade)) return false;
                     if (filterType == "collected" && !b.IsPaid) return false;
                 }
@@ -1265,8 +1284,11 @@ namespace RoyalD.Web.Controllers
 
                 if (!string.IsNullOrEmpty(filterType) && filterType.ToLower() != "all")
                 {
-                    if (filterType == "outstanding" && b.IsPaid) return false;
-                    if (filterType == "under120" && (b.IsPaid || b.AgingDays > 120)) return false;
+                    if ((filterType == "outstanding" || filterType == "all_outstanding") && b.IsPaid) return false;
+                    if (filterType == "moderntrade" && (b.IsPaid || !b.IsModernTrade)) return false;
+                    if (filterType == "general" && (b.IsPaid || b.IsModernTrade)) return false;
+                    if (filterType == "current" && (b.IsPaid || b.AgingDays > 0)) return false;
+                    if (filterType == "under120" && (b.IsPaid || b.AgingDays <= 0 || b.AgingDays > 120)) return false;
                     if (filterType == "over120" && (b.IsPaid || b.AgingDays <= 120 || b.IsModernTrade)) return false;
                     if (filterType == "collected" && !b.IsPaid) return false;
                 }
