@@ -63,6 +63,18 @@ namespace RoyalD.Web.Controllers
             return View(data);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetChartCustomRange(DateTime startDate, DateTime endDate)
+        {
+            if (!CheckPerm("salesreport")) return Forbid();
+            var items = await _svc.GetCustomRangeReportAsync(startDate, endDate);
+            return Json(new {
+                startDate = startDate.ToString("yyyy-MM-dd"),
+                endDate = endDate.ToString("yyyy-MM-dd"),
+                items
+            });
+        }
+
         // Screen 3: Product Movement Details
         public async Task<IActionResult> ProductDetails(string? salesRep = null, DateTime? startDate = null, DateTime? endDate = null, int? credit = null, string? month = null) 
         { 

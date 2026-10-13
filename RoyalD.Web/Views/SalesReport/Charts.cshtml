@@ -1,42 +1,61 @@
-@using RoyalD.Web.Services
 @model RoyalD.Web.Services.AnnualPerformanceViewModel
 @{
-    ViewData["Title"] = "2. กราฟผลงานและเปรียบเทียบผู้แทนขาย (Charts)";
-    var months = Model.Months;
+    ViewData["Title"] = "รายงานผลการดำเนินงานและกราฟวิเคราะห์ยอดขาย";
     var allReps = Model.RepReports;
-    var overall = Model.OverallCompany;
-    bool isAdmin = User.IsInRole("admin");
-    var canDownloadClaim = ViewContext.HttpContext.User.FindFirst("CanDownload")?.Value;
-    bool isSalesRepRole = User.HasClaim(c => c.Type == "Position" && (c.Value.Contains("ผู้แทน") || c.Value.Contains("พนักงานขาย"))) && !isAdmin;
-    bool canDownload = (isAdmin || canDownloadClaim == "true") && !isSalesRepRole;
+    bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
+    var pos = User.FindFirst("Position")?.Value ?? "";
+    bool isSalesRepRole = !isAdmin && (pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย"));
+    bool canDownload = !isSalesRepRole;
 }
 
 <style>
-/* Sub-Tabs Nav */
-.sales-subnav { display:flex; gap:10px; background:#ecfdf5; padding:8px; border-radius:14px; margin-bottom:20px; border:1px solid #a7f3d0; flex-wrap:wrap; }
-.sales-subnav .subnav-item { flex:1; text-align:center; padding:12px 18px; font-weight:800; font-size:1.02rem; color:#065f46; border-radius:10px; text-decoration:none; transition:all .2s ease-in-out; white-space:nowrap; }
-.sales-subnav .subnav-item:hover { background:rgba(255,255,255,0.9); color:#059669; transform:translateY(-1px); }
-.sales-subnav .subnav-item.active { background:#059669; color:white; box-shadow:0 4px 15px rgba(5,150,105,0.3); }
+/* Executive Soft Palette - Professional Financial UI */
+:root {
+    --exec-emerald: #065f46;
+    --exec-mint: #ecfdf5;
+    --exec-mint-border: #a7f3d0;
+    --exec-sky: #0284c7;
+    --exec-sky-light: #f0f9ff;
+    --exec-slate-border: #e2e8f0;
+    --exec-text-main: #1e293b;
+    --exec-text-sub: #64748b;
+}
 
-/* Executive KPI Cards - Soft Pastel Luxury, Very Easy on the Eyes */
-.kpi-card { background:#fff; border-radius:16px; padding:22px; box-shadow:0 3px 12px rgba(15,23,42,0.04); display:flex; flex-direction:column; border:1px solid #e2e8f0; position:relative; overflow:hidden; transition:all 0.2s ease; }
-.kpi-card:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(15,23,42,0.08); }
-.kpi-title { font-size:0.92rem; font-weight:700; color:#475569; margin-bottom:6px; letter-spacing:-0.2px; }
-.kpi-value { font-size:1.95rem; font-weight:900; margin-bottom:4px; letter-spacing:-0.8px; }
-.kpi-icon { position:absolute; top:22px; right:20px; font-size:2.2rem; opacity:0.12; }
-.kpi-sub { font-size:0.82rem; font-weight:600; color:#64748b; }
+/* KPI Cards with Soft Pastel Gradient & Clean Top-Border Accent */
+.kpi-card {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 18px 20px;
+    position: relative;
+    box-shadow: 0 2px 10px rgba(15,23,42,0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid var(--exec-slate-border);
+}
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(15,23,42,0.07);
+}
+.kpi-card.kpi-sales {
+    background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 100%);
+    border-top: 3.5px solid #0284c7;
+}
+.kpi-card.kpi-collect {
+    background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
+    border-top: 3.5px solid #16a34a;
+}
+.kpi-card.kpi-debt {
+    background: linear-gradient(180deg, #fff1f2 0%, #ffffff 100%);
+    border-top: 3.5px solid #e11d48;
+}
+.kpi-card.kpi-rate {
+    background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
+    border-top: 3.5px solid #d97706;
+}
 
-.kpi-sales { background:linear-gradient(180deg, #ffffff 0%, #f0f9ff 100%); border-top:3.5px solid #0284c7; } 
-.kpi-sales .kpi-value { color:#0369a1; } .kpi-sales .kpi-icon { color:#0284c7; }
-
-.kpi-collect { background:linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%); border-top:3.5px solid #059669; } 
-.kpi-collect .kpi-value { color:#047857; } .kpi-collect .kpi-icon { color:#059669; }
-
-.kpi-debt { background:linear-gradient(180deg, #ffffff 0%, #fff1f2 100%); border-top:3.5px solid #e11d48; } 
-.kpi-debt .kpi-value { color:#be123c; } .kpi-debt .kpi-icon { color:#e11d48; }
-
-.kpi-rate { background:linear-gradient(180deg, #ffffff 0%, #fffbeb 100%); border-top:3.5px solid #d97706; } 
-.kpi-rate .kpi-value { color:#b45309; } .kpi-rate .kpi-icon { color:#d97706; }
+.kpi-title { font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 6px; }
+.kpi-value { font-size: 1.7rem; font-weight: 800; color: #0f172a; line-height: 1.2; letter-spacing: -0.5px; }
+.kpi-sub { font-size: 0.78rem; margin-top: 5px; color: #64748b; }
+.kpi-icon { position: absolute; right: 18px; top: 18px; font-size: 2.1rem; opacity: 0.16; }
 
 /* Chart Containers */
 .chart-card { background:#fff; border-radius:16px; padding:24px; box-shadow:0 3px 14px rgba(15,23,42,0.04); border:1px solid #e2e8f0; margin-bottom:24px; }
@@ -56,47 +75,31 @@
 /* Cycle Buttons */
 .cycle-btn-active { background:#0284c7 !important; color:#ffffff !important; border-color:#0284c7 !important; box-shadow:0 2px 8px rgba(2,132,199,0.2) !important; font-weight:700 !important; }
 .cycle-btn-inactive { background:#ffffff !important; color:#475569 !important; border-color:#cbd5e1 !important; font-weight:600 !important; }
+.cycle-btn-inactive:hover { background:#f8fafc !important; color:#0284c7 !important; }
 
 /* Rep Mini Card in Grid */
 .rep-summary-card { background:#fff; border-radius:12px; border:1px solid #e2e8f0; padding:14px; transition:all 0.2s ease-in-out; }
-.rep-summary-card:hover { transform:translateY(-2px); box-shadow:0 6px 15px rgba(0,0,0,0.08); border-color:#93c5fd; }
+.rep-summary-card:hover { border-color:#cbd5e1; box-shadow:0 4px 12px rgba(0,0,0,0.04); }
 
 @@media print {
-    .no-print, .sales-subnav, nav, .btn, .export-bar, .filter-box { display:none !important; }
-    body { background:#fff; font-size:10pt; }
-    .kpi-card, .chart-card { box-shadow:none !important; border:1px solid #ccc !important; }
+    .no-print { display: none !important; }
+    .chart-card { box-shadow: none !important; border: 1px solid #ccc !important; }
 }
 </style>
 
-<!-- Sub-Tabs Navigation Header -->
-<div class="sales-subnav no-print">
-    <a href="/SalesReport/Summary" class="subnav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Summary" || ViewContext.RouteData.Values["action"]?.ToString() == "Sales" ? "active" : "")">
-        <i class="bi bi-table me-2"></i> 1. สรุปยอดขาย
-    </a>
-    <a href="/SalesReport/Charts" class="subnav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Charts" ? "active" : "")">
-        <i class="bi bi-bar-chart-line me-2"></i> 2. กราฟ
-    </a>
-    <a href="/SalesReport/ProductDetails" class="subnav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetails" ? "active" : "")">
-        <i class="bi bi-box-seam me-2"></i> 3. สินค้าขาย (ปริมาณ)
-    </a>
-    <a href="/SalesReport/ProductDetailsAmount" class="subnav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "ProductDetailsAmount" ? "active" : "")">
-        <i class="bi bi-currency-dollar me-2"></i> 4. สินค้าขาย (จำนวนเงิน)
-    </a>
-    @if (!isSalesRepRole)
-    {
-        <a href="/SalesReport/Compare" class="subnav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Compare" ? "active" : "")">
-            <i class="bi bi-people me-2"></i> 5. เปรียบเทียบ
-        </a>
-    }
-</div>
-
-<!-- Header Title & Export Toolbar -->
-<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 export-bar">
+<div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h3 class="mb-1 fw-bold" style="color:#065f46;">
-            <i class="bi bi-graph-up" style="color:#059669;"></i> กราฟผลงานและเปรียบเทียบผู้แทนขาย (Sales & Credit Dashboard)
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a asp-controller="SalesBill" asp-action="Index">หน้าหลัก</a></li>
+                <li class="breadcrumb-item"><a asp-action="Summary">รายงานยอดขาย</a></li>
+                <li class="breadcrumb-item active" aria-current="page">กราฟวิเคราะห์ผลงานและเปรียบเทียบทีม</li>
+            </ol>
+        </nav>
+        <h3 class="fw-bold mb-0 text-dark">
+            <i class="bi bi-bar-chart-line-fill text-primary me-2"></i>กราฟวิเคราะห์ยอดขายและประสิทธิภาพการเก็บเงิน
         </h3>
-        <span class="text-muted fw-semibold">วิเคราะห์เปรียบเทียบยอดขาย หนี้คงค้าง และสุขภาพลูกหนี้ รายทีมและรายบุคคล รองรับรอบปิดยอดวันที่ 25</span>
+        <span class="text-muted small">ระบบรายงานเปรียบเทียบทีมขาย ไทม์ไลน์รายเดือน และคำอธิบายสถานะลูกหนี้รายบุคคล</span>
     </div>
     
     @if (canDownload)
@@ -112,7 +115,7 @@
     }
 </div>
 
-<!-- Super Filter Bar: เลือกทีมซุปเปอร์ไวเซอร์ + เลือกรอบวันที่ 25 / สิ้นเดือน -->
+<!-- Super Filter Bar: เลือกทีมซุปเปอร์ไวเซอร์ + เลือกรอบวันที่ 25 / สิ้นเดือน + กรองช่วงวันที่ -->
 <div class="filter-box no-print">
     <!-- แถวที่ 1: เลือกทีมซุปเปอร์ไวเซอร์ -->
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-3 border-bottom mb-3">
@@ -141,28 +144,27 @@
         </div>
     </div>
 
-    <!-- แถวที่ 2: เลือกรอบการตัดยอด (รอบฝ่ายขายวันที่ 25 vs สิ้นเดือนปฏิทิน vs เลือกเดือน) -->
+    <!-- แถวที่ 2: เลือกรอบการตัดยอด + เลือกช่วงวันที่ -->
     <div class="row align-items-center g-3">
-        <div class="col-md-auto">
+        <!-- ปุ่มลัดรอบการตัดยอด -->
+        <div class="col-md-auto d-flex align-items-center gap-2">
             <span class="fw-bold text-dark small">
-                <i class="bi bi-calendar-check text-primary me-1"></i> รอบการตัดยอด:
+                <i class="bi bi-funnel-fill text-primary me-1"></i> เลือกรอบ:
             </span>
-        </div>
-        <div class="col-md-auto">
             <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="btn cycle-btn-active" id="btn-cycle-25" onclick="setCycleMode('sales25')">
+                <button type="button" class="btn cycle-btn-active" id="btn-cycle-25" onclick="setCycleMode('sales25')" title="บิลขายตัดยอดวันที่ 26 เดือนก่อน - 25 เดือนปัจจุบัน">
                     <i class="bi bi-lightning-charge-fill me-1"></i> รอบฝ่ายขาย (ตัดยอดวันที่ 25)
                 </button>
-                <button type="button" class="btn cycle-btn-inactive" id="btn-cycle-cal" onclick="setCycleMode('calendar')">
+                <button type="button" class="btn cycle-btn-inactive" id="btn-cycle-cal" onclick="setCycleMode('calendar')" title="บิลขายตัดตามเดือนปฏิทิน 1 - 30/31">
                     <i class="bi bi-calendar-event me-1"></i> สิ้นเดือนปฏิทิน (1 - 30/31)
                 </button>
             </div>
         </div>
-        <div class="col-md-auto">
+
+        <!-- เลือกเดือน -->
+        <div class="col-md-auto d-flex align-items-center gap-2">
             <span class="text-muted small fw-bold">ช่วงเดือน:</span>
-        </div>
-        <div class="col-md-3">
-            <select class="form-select form-select-sm fw-bold shadow-sm" id="cycleMonthSelect" onchange="updateDashboardView()" style="border-radius:8px;">
+            <select class="form-select form-select-sm fw-bold shadow-sm" id="cycleMonthSelect" onchange="onMonthSelectChange()" style="border-radius:8px; width:auto; min-width:180px;">
                 <option value="all" selected>สะสมตลอดปี 2569 (YTD)</option>
                 @for(int i=0; i<Model.Months.Count; i++)
                 {
@@ -170,7 +172,20 @@
                 }
             </select>
         </div>
-        <div class="col-md text-end">
+
+        <!-- ตัวเลือกช่วงวันที่ (Custom Date Range) -->
+        <div class="col-md-auto d-flex align-items-center gap-2">
+            <span class="text-muted small fw-bold"><i class="bi bi-calendar3 me-1"></i>ช่วงวันที่:</span>
+            <input type="date" id="filterStartDate" class="form-control form-control-sm shadow-sm" style="width:135px; border-radius:8px; font-weight:600; font-size:0.85rem;" onchange="onCustomDateInputChanged()" />
+            <span class="small text-muted">-</span>
+            <input type="date" id="filterEndDate" class="form-control form-control-sm shadow-sm" style="width:135px; border-radius:8px; font-weight:600; font-size:0.85rem;" onchange="onCustomDateInputChanged()" />
+            <button type="button" class="btn btn-sm btn-outline-primary fw-bold shadow-sm" id="btnApplyCustomRange" onclick="applyCustomDateRange()" style="border-radius:8px;" title="ค้นหาตามช่วงวันที่กำหนดเอง">
+                <i class="bi bi-search"></i> กรอง
+            </button>
+        </div>
+
+        <!-- Badge แสดงสถานะและสรุปช่วงวันที่ -->
+        <div class="col text-end">
             <span class="badge" id="activeFilterBadge" style="background:#ecfdf5; color:#065f46; font-size:0.86rem; padding:8px 14px; border-radius:10px; border:1px solid #a7f3d0; font-weight:700;">
                 <i class="bi bi-check-circle-fill text-success me-1"></i> กำลังแสดง: ทีมคุณวีรนุช | รอบฝ่ายขายวันที่ 25
             </span>
@@ -228,45 +243,60 @@
                         ตัดรอบยอดขายทุกวันที่ 25
                     </span>
                 </div>
-                <div style="position:relative; flex-grow:1; min-height:300px;">
+                <div class="flex-grow-1" style="min-height:330px; position:relative;">
                     <canvas id="mainBarChart"></canvas>
-                </div>
-                <div class="insight-card mt-3" id="main-insight-box">
-                    <!-- Dynamic Insight -->
                 </div>
             </div>
         </div>
         <div class="col-lg-4">
             <div class="chart-card h-100 mb-0 d-flex flex-column">
                 <div class="chart-header">
-                    <i class="bi bi-pie-chart-fill text-success me-2"></i> สัดส่วนประสิทธิภาพการจัดเก็บ
+                    <i class="bi bi-pie-chart-fill text-success me-2"></i> สัดส่วนเก็บเงิน vs หนี้ค้าง (ภาพรวม)
                 </div>
-                <div style="position:relative; flex-grow:1; display:flex; justify-content:center; align-items:center; min-height:220px;">
+                <div class="flex-grow-1 d-flex align-items-center justify-content-center" style="min-height:260px; position:relative;">
                     <canvas id="doughnutChart"></canvas>
                 </div>
-                <div class="text-center mt-3 text-muted small fw-bold" id="doughnutSubtext">
-                    * เปรียบเทียบสัดส่วนยอดเก็บได้สำเร็จ vs หนี้คงค้าง
+                <div class="text-center mt-3 pt-2 border-top">
+                    <small class="text-muted">เปรียบเทียบยอดชำระสำเร็จกับยอดคงค้างในรอบที่เลือก</small>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Charts Row 2: เส้นแนวโน้ม % เก็บเงินรายเดือน -->
+    <!-- Charts Row 2: กราฟเส้นแนวโน้มการจัดเก็บตลอดทั้งปี + Smart Insight -->
     <div class="row g-4 mb-4">
-        <div class="col-12">
+        <div class="col-lg-8">
             <div class="chart-card mb-0">
-                <div class="chart-header">
-                    <i class="bi bi-graph-up-arrow text-warning me-2"></i> เส้นแนวโน้มประสิทธิภาพการเก็บเงิน (%) รายเดือน เทียบเป้าหมายบริษัท
+                <div class="chart-header justify-content-between">
+                    <div>
+                        <i class="bi bi-graph-up-arrow text-warning me-2"></i> แนวโน้มประสิทธิภาพการจัดเก็บรายเดือน (%)
+                    </div>
+                    <span class="badge bg-warning text-dark px-2 py-1 small">เกณฑ์เป้าหมาย: >= 60%</span>
                 </div>
-                <div style="position:relative; height:240px;">
+                <div style="height:250px; position:relative;">
                     <canvas id="trendLineChart"></canvas>
                 </div>
             </div>
         </div>
+        <div class="col-lg-4">
+            <div class="chart-card h-100 mb-0 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="chart-header">
+                        <i class="bi bi-lightbulb-fill text-warning me-2"></i> ข้อความวิเคราะห์อัจฉริยะ (Smart Insight)
+                    </div>
+                    <div class="insight-card" id="main-insight-box">
+                        กำลังวิเคราะห์ข้อมูลผลงานของทีม...
+                    </div>
+                </div>
+                <div class="mt-3 text-muted small p-2 bg-light rounded-3">
+                    <i class="bi bi-info-circle me-1"></i> <b>คำแนะนำทางสินเชื่อ:</b> ข้อมูลวิเคราะห์จากยอดขาย ยอดเก็บ และอัตราหมุนเวียนลูกหนี้ของทีม เพื่อใช้กำกับติดตามและวางแผนการประชุมฝ่ายขาย
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Individual Sales Rep Performance & Credit Assessment Notes (คำอธิบายของผู้แทนขายแต่ละคน) -->
-    <div class="chart-card mb-4" id="repAssessmentSection">
+    <!-- Section: คำอธิบายรายบุคคล (Individual Sales Rep Cards & Assessment Notes) -->
+    <div class="chart-card mb-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="fw-bold mb-0 text-dark">
                 <i class="bi bi-person-lines-fill text-primary me-2"></i>สรุปผลงานและคำอธิบายสถานะลูกหนี้ของผู้แทนขายแต่ละคน (Individual Assessment Notes)
@@ -281,7 +311,7 @@
 
 @section Scripts {
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
 const monthsLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Months));
 const allRepsList = [];
@@ -293,18 +323,45 @@ const allRepsList = [];
     allRepsList.push({
         id: @ri,
         name: "@rep.SalesRep",
-        sales: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.TotalSales).ToList())),
-        collected: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.TotalCollected).ToList())),
-        debt: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.Outstanding).ToList())),
-        rates: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.CollectionRateOnBase).ToList())),
-        totSales: @rep.TotalSales,
-        totCol: @rep.TotalCollected,
-        totDebt: @rep.TotalOutstanding,
-        totRate: @rep.OverallCollectionRateOnBase,
+        
+        // 1. Calendar Cycle Data (1st - 30/31st)
+        salesCal: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.TotalSales).ToList())),
+        collectedCal: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.TotalCollected).ToList())),
+        debtCal: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.Outstanding).ToList())),
+        ratesCal: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData.Select(m => m.CollectionRateOnBase).ToList())),
+        totSalesCal: @rep.TotalSales,
+        totColCal: @rep.TotalCollected,
+        totDebtCal: @rep.TotalOutstanding,
+        totRateCal: @rep.OverallCollectionRateOnBase,
+
+        // 2. Sales 25th Cut-off Cycle Data (26th prev month - 25th curr month)
+        sales25: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData25.Select(m => m.TotalSales).ToList())),
+        collected25: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData25.Select(m => m.TotalCollected).ToList())),
+        debt25: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData25.Select(m => m.Outstanding).ToList())),
+        rates25: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(rep.MonthlyData25.Select(m => m.CollectionRateOnBase).ToList())),
+        totSales25: @rep.TotalSales25,
+        totCol25: @rep.TotalCollected25,
+        totDebt25: @rep.TotalOutstanding25,
+        totRate25: @rep.OverallCollectionRateOnBase25,
+
         overdue120: @rep.TotalOverdue120
     });
     </text>
 }
+
+// Standard month date ranges for 2026
+const monthDateRanges = [
+    { key: "2026-01", calStart: "2026-01-01", calEnd: "2026-01-31", s25Start: "2025-12-26", s25End: "2026-01-25" },
+    { key: "2026-02", calStart: "2026-02-01", calEnd: "2026-02-28", s25Start: "2026-01-26", s25End: "2026-02-25" },
+    { key: "2026-03", calStart: "2026-03-01", calEnd: "2026-03-31", s25Start: "2026-02-26", s25End: "2026-03-25" },
+    { key: "2026-04", calStart: "2026-04-01", calEnd: "2026-04-30", s25Start: "2026-03-26", s25End: "2026-04-25" },
+    { key: "2026-05", calStart: "2026-05-01", calEnd: "2026-05-31", s25Start: "2026-04-26", s25End: "2026-05-25" },
+    { key: "2026-06", calStart: "2026-06-01", calEnd: "2026-06-30", s25Start: "2026-05-26", s25End: "2026-06-25" },
+    { key: "2026-07", calStart: "2026-07-01", calEnd: "2026-07-31", s25Start: "2026-06-26", s25End: "2026-07-25" },
+    { key: "2026-08", calStart: "2026-08-01", calEnd: "2026-08-31", s25Start: "2026-07-26", s25End: "2026-08-25" },
+    { key: "2026-09", calStart: "2026-09-01", calEnd: "2026-09-30", s25Start: "2026-08-26", s25End: "2026-09-25" },
+    { key: "2026-10", calStart: "2026-10-01", calEnd: "2026-10-31", s25Start: "2026-09-26", s25End: "2026-10-25" }
+];
 
 // Supervisor Teams Definition
 const supervisorTeams = {
@@ -317,6 +374,8 @@ const supervisorTeams = {
 let currentTeam = 'weeranut';
 let currentCycleMode = 'sales25'; // 'sales25' หรือ 'calendar'
 let selectedIndividualId = 'team-all';
+let isCustomRange = false;
+let customRangeData = null;
 
 let mainBarChart = null;
 let doughnutChart = null;
@@ -361,10 +420,44 @@ function selectIndividualRep(repVal) {
     updateDashboardView();
 }
 
+function syncDateInputs() {
+    const sInput = document.getElementById('filterStartDate');
+    const eInput = document.getElementById('filterEndDate');
+    const mSelect = document.getElementById('cycleMonthSelect');
+    const mVal = mSelect.value;
+
+    if (mVal === 'all') {
+        if (currentCycleMode === 'sales25') {
+            sInput.value = '2025-12-26';
+            eInput.value = '2026-10-25';
+        } else {
+            sInput.value = '2026-01-01';
+            eInput.value = '2026-10-31';
+        }
+    } else {
+        const idx = parseInt(mVal);
+        const item = monthDateRanges[idx];
+        if (item) {
+            if (currentCycleMode === 'sales25') {
+                sInput.value = item.s25Start;
+                eInput.value = item.s25End;
+            } else {
+                sInput.value = item.calStart;
+                eInput.value = item.calEnd;
+            }
+        }
+    }
+}
+
 function setCycleMode(mode) {
     currentCycleMode = mode;
+    isCustomRange = false;
+    customRangeData = null;
+
     const b25 = document.getElementById('btn-cycle-25');
     const bCal = document.getElementById('btn-cycle-cal');
+    const bCustom = document.getElementById('btnApplyCustomRange');
+    
     if (mode === 'sales25') {
         b25.className = 'btn cycle-btn-active';
         bCal.className = 'btn cycle-btn-inactive';
@@ -372,7 +465,74 @@ function setCycleMode(mode) {
         bCal.className = 'btn cycle-btn-active';
         b25.className = 'btn cycle-btn-inactive';
     }
+    if (bCustom) bCustom.className = 'btn btn-sm btn-outline-primary fw-bold shadow-sm';
+
+    syncDateInputs();
     updateDashboardView();
+}
+
+function onMonthSelectChange() {
+    isCustomRange = false;
+    customRangeData = null;
+    const bCustom = document.getElementById('btnApplyCustomRange');
+    if (bCustom) bCustom.className = 'btn btn-sm btn-outline-primary fw-bold shadow-sm';
+    
+    syncDateInputs();
+    updateDashboardView();
+}
+
+function onCustomDateInputChanged() {
+    // Keep custom inputs ready for search
+}
+
+async function applyCustomDateRange() {
+    const sDate = document.getElementById('filterStartDate').value;
+    const eDate = document.getElementById('filterEndDate').value;
+    if (!sDate || !eDate) {
+        alert('กรุณาเลือกวันที่เริ่มต้นและสิ้นสุด');
+        return;
+    }
+    if (sDate > eDate) {
+        alert('วันที่เริ่มต้นต้องไม่เกินวันที่สิ้นสุด');
+        return;
+    }
+
+    const btn = document.getElementById('btnApplyCustomRange');
+    const origText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> กำลังกรอง...';
+    btn.disabled = true;
+
+    try {
+        const resp = await fetch(`/SalesReport/GetChartCustomRange?startDate=${sDate}&endDate=${eDate}`);
+        if (!resp.ok) throw new Error('API request failed');
+        const data = await resp.json();
+
+        customRangeData = {};
+        if (data.items) {
+            data.items.forEach(it => {
+                customRangeData[it.salesRep] = {
+                    sales: it.sales,
+                    collected: it.collected,
+                    debt: it.outstanding,
+                    rate: it.collectionRate
+                };
+            });
+        }
+        isCustomRange = true;
+
+        // Visual feedback
+        document.getElementById('btn-cycle-25').className = 'btn cycle-btn-inactive';
+        document.getElementById('btn-cycle-cal').className = 'btn cycle-btn-inactive';
+        btn.className = 'btn btn-sm btn-primary fw-bold shadow-sm';
+
+        updateDashboardView();
+    } catch (err) {
+        console.error(err);
+        alert('ไม่สามารถโหลดข้อมูลช่วงวันที่ได้ กรุณาลองใหม่อีกครั้ง');
+    } finally {
+        btn.innerHTML = origText;
+        btn.disabled = false;
+    }
 }
 
 function getActiveReps() {
@@ -390,31 +550,77 @@ function getActiveReps() {
     });
 }
 
+function getRepValues(r, mIdx) {
+    if (isCustomRange && customRangeData && customRangeData[r.name]) {
+        const c = customRangeData[r.name];
+        return {
+            sales: c.sales,
+            collected: c.collected,
+            debt: c.debt,
+            rate: c.rate
+        };
+    }
+
+    const is25 = currentCycleMode === 'sales25';
+    if (mIdx === -1) {
+        return {
+            sales: is25 ? r.totSales25 : r.totSalesCal,
+            collected: is25 ? r.totCol25 : r.totColCal,
+            debt: is25 ? r.totDebt25 : r.totDebtCal,
+            rate: is25 ? r.totRate25 : r.totRateCal
+        };
+    } else {
+        return {
+            sales: is25 ? (r.sales25[mIdx] || 0) : (r.salesCal[mIdx] || 0),
+            collected: is25 ? (r.collected25[mIdx] || 0) : (r.collectedCal[mIdx] || 0),
+            debt: is25 ? (r.debt25[mIdx] || 0) : (r.debtCal[mIdx] || 0),
+            rate: is25 ? (r.rates25[mIdx] || 0) : (r.ratesCal[mIdx] || 0)
+        };
+    }
+}
+
+function getRepMonthlySeries(r) {
+    const is25 = currentCycleMode === 'sales25';
+    return {
+        sales: is25 ? r.sales25 : r.salesCal,
+        collected: is25 ? r.collected25 : r.collectedCal,
+        debt: is25 ? r.debt25 : r.debtCal,
+        rates: is25 ? r.rates25 : r.ratesCal
+    };
+}
+
 function updateDashboardView() {
     const activeReps = getActiveReps();
     const mSelect = document.getElementById('cycleMonthSelect');
     const mVal = mSelect.value;
     const mIdx = mVal === 'all' ? -1 : parseInt(mVal);
 
-    // Update active badge
+    // Update active badge & title
     const teamTitle = currentTeam === 'weeranut' ? 'ทีมคุณวีรนุช' :
                      (currentTeam === 'sunya' ? 'ทีมคุณสัญญา' :
                      (currentTeam === 'nampetch' ? 'ทีมคุณน้ำเพชร' : 'ภาพรวมทั้งบริษัท'));
-    const cycleTitle = currentCycleMode === 'sales25' ? 'รอบฝ่ายขายตัดยอด 25' : 'รอบสิ้นเดือนปฏิทิน';
+    
+    const sDate = document.getElementById('filterStartDate').value;
+    const eDate = document.getElementById('filterEndDate').value;
+    
+    let cycleTitle = currentCycleMode === 'sales25' ? 'รอบฝ่ายขายตัดยอด 25' : 'รอบสิ้นเดือนปฏิทิน';
+    if (isCustomRange) cycleTitle = 'กำหนดช่วงวันที่เอง';
+
     const monthTitle = mIdx === -1 ? 'สะสมทั้งปี (YTD)' : monthsLabels[mIdx];
-    document.getElementById('activeFilterBadge').innerHTML = `<i class="bi bi-info-circle me-1"></i> ${teamTitle} | ${cycleTitle} | ${monthTitle}`;
-    document.getElementById('chartCycleBadge').innerText = currentCycleMode === 'sales25' ? 'ตัดรอบยอดขายทุกวันที่ 25' : 'ตัดรอบสิ้นเดือนปฏิทิน';
+    document.getElementById('activeFilterBadge').innerHTML = `<i class="bi bi-check-circle-fill text-success me-1"></i> ${teamTitle} | ${cycleTitle} (${sDate} ถึง ${eDate})`;
+    document.getElementById('chartCycleBadge').innerText = isCustomRange ? `ช่วงวันที่: ${sDate} ถึง ${eDate}` : (currentCycleMode === 'sales25' ? 'ตัดรอบยอดขายทุกวันที่ 25' : 'ตัดรอบสิ้นเดือนปฏิทิน');
 
     // 1. Calculate Aggregates
     let totalSales = 0, totalCol = 0, totalDebt = 0;
     activeReps.forEach(r => {
-        totalSales += (mIdx === -1 ? r.totSales : (r.sales[mIdx] || 0));
-        totalCol += (mIdx === -1 ? r.totCol : (r.collected[mIdx] || 0));
-        totalDebt += (mIdx === -1 ? r.totDebt : (r.debt[mIdx] || 0));
+        const vals = getRepValues(r, mIdx);
+        totalSales += vals.sales;
+        totalCol += vals.collected;
+        totalDebt += vals.debt;
     });
     const avgRate = totalSales > 0 ? Math.round(totalCol / totalSales * 100) : 0;
 
-    // 2. Render KPIs
+    // 2. Render KPIs with dynamic values
     document.getElementById('kpi-sales-val').innerText = formatNum(totalSales);
     document.getElementById('kpi-collect-val').innerText = formatNum(totalCol);
     document.getElementById('kpi-debt-val').innerText = formatNum(totalDebt);
@@ -446,7 +652,7 @@ function updateDashboardView() {
     renderIndividualAssessmentCards(activeReps, mIdx);
 
     // 7. Auto Smart Insight
-    renderSmartInsight(activeReps, teamTitle, totalSales, totalDebt, avgRate);
+    renderSmartInsight(activeReps, teamTitle, totalSales, totalDebt, avgRate, mIdx);
 }
 
 function renderMainBarChart(activeReps, mIdx) {
@@ -456,28 +662,32 @@ function renderMainBarChart(activeReps, mIdx) {
     let chartLabels = [];
     let datasets = [];
 
-    if (mIdx === -1) {
+    if (mIdx === -1 && !isCustomRange) {
         // Show all months on X-axis, with bars for each active rep
         chartLabels = monthsLabels;
-        datasets = activeReps.map((r, idx) => ({
-            label: r.name,
-            data: monthsLabels.map((m, mi) => r.sales[mi] || 0),
-            backgroundColor: repColors[idx % repColors.length],
-            borderRadius: 4
-        }));
+        datasets = activeReps.map((r, idx) => {
+            const series = getRepMonthlySeries(r);
+            return {
+                label: r.name,
+                data: monthsLabels.map((m, mi) => series.sales[mi] || 0),
+                backgroundColor: repColors[idx % repColors.length],
+                borderRadius: 4
+            };
+        });
     } else {
-        // Single selected month: show active reps on X-axis with Sales vs Debt bars
+        // Single selected month or custom date range: show active reps on X-axis with Sales vs Debt bars
         chartLabels = activeReps.map(r => r.name);
+        const titleSuffix = isCustomRange ? 'ช่วงวันที่เลือก' : monthsLabels[mIdx];
         datasets = [
             {
-                label: 'ยอดขาย (' + monthsLabels[mIdx] + ')',
-                data: activeReps.map(r => r.sales[mIdx] || 0),
+                label: 'ยอดขาย (' + titleSuffix + ')',
+                data: activeReps.map(r => getRepValues(r, mIdx).sales),
                 backgroundColor: '#0284c7',
                 borderRadius: 4
             },
             {
                 label: 'หนี้คงค้าง',
-                data: activeReps.map(r => r.debt[mIdx] || 0),
+                data: activeReps.map(r => getRepValues(r, mIdx).debt),
                 backgroundColor: '#f43f5e',
                 borderRadius: 4
             }
@@ -545,8 +755,9 @@ function renderTrendLineChart(activeReps) {
     const avgMonthlyRates = monthsLabels.map((m, mi) => {
         let sumS = 0, sumC = 0;
         activeReps.forEach(r => {
-            sumS += (r.sales[mi] || 0);
-            sumC += (r.collected[mi] || 0);
+            const series = getRepMonthlySeries(r);
+            sumS += (series.sales[mi] || 0);
+            sumC += (series.collected[mi] || 0);
         });
         return sumS > 0 ? Math.round(sumC / sumS * 100) : 0;
     });
@@ -594,10 +805,11 @@ function renderIndividualAssessmentCards(activeReps, mIdx) {
     let html = '';
 
     activeReps.forEach(r => {
-        const s = mIdx === -1 ? r.totSales : (r.sales[mIdx] || 0);
-        const c = mIdx === -1 ? r.totCol : (r.collected[mIdx] || 0);
-        const d = mIdx === -1 ? r.totDebt : (r.debt[mIdx] || 0);
-        const rate = s > 0 ? Math.round(c / s * 100) : 0;
+        const vals = getRepValues(r, mIdx);
+        const s = vals.sales;
+        const c = vals.collected;
+        const d = vals.debt;
+        const rate = vals.rate;
 
         let statusBadge = '';
         let commentText = '';
@@ -649,23 +861,24 @@ function renderIndividualAssessmentCards(activeReps, mIdx) {
     grid.innerHTML = html;
 }
 
-function renderSmartInsight(activeReps, teamTitle, totalSales, totalDebt, avgRate) {
+function renderSmartInsight(activeReps, teamTitle, totalSales, totalDebt, avgRate, mIdx) {
     const box = document.getElementById('main-insight-box');
     
-    // Find Top Sales
+    // Find Top Sales & Top Debt in current view
     let topSeller = null, maxSale = -1;
     let topDebt = null, maxDebt = -1;
     activeReps.forEach(r => {
-        if (r.totSales > maxSale) { maxSale = r.totSales; topSeller = r; }
-        if (r.totDebt > maxDebt) { maxDebt = r.totDebt; topDebt = r; }
+        const vals = getRepValues(r, mIdx);
+        if (vals.sales > maxSale) { maxSale = vals.sales; topSeller = r; }
+        if (vals.debt > maxDebt) { maxDebt = vals.debt; topDebt = r; }
     });
 
     let msg = `<b><i class="bi bi-cpu-fill text-primary me-1"></i> วิเคราะห์ผลงานทีม (${teamTitle}):</b> `;
     msg += `ยอดขายรวมทั้งสิ้น <b>${formatMoney(totalSales)}</b> บาท ยอดหนี้คงค้างที่ต้องบริหารจัดเก็บ <b>${formatMoney(totalDebt)}</b> บาท `;
-    if (topSeller) {
-        msg += `<br>• 🏆 <b>Top Sales ของทีม:</b> คุณ <b>${topSeller.name}</b> ยอดขายสะสม ${formatMoney(maxSale)} บาท`;
+    if (topSeller && maxSale > 0) {
+        msg += `<br>• 🏆 <b>Top Sales ของทีม:</b> คุณ <b>${topSeller.name}</b> ยอดขาย ${formatMoney(maxSale)} บาท`;
     }
-    if (topDebt && topDebt.totDebt > 0) {
+    if (topDebt && maxDebt > 0) {
         msg += `<br>• ⚠️ <b>จุดที่ต้องติดตามสินเชื่อ (Credit Risk):</b> คุณ <b>${topDebt.name}</b> มีหนี้คงค้าง ${formatMoney(maxDebt)} บาท แนะนำหัวหน้าทีมร่วมวางแผนการเข้าเก็บเงิน`;
     }
 
@@ -684,6 +897,7 @@ function downloadScreenCapture(id) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+    syncDateInputs();
     selectTeam('weeranut');
 });
 </script>
