@@ -32,7 +32,13 @@
                 <div class="fs-2 fw-black text-success">
                     @Model.NewCount.ToString("N0") <small class="fs-6 fw-normal text-muted">บิล</small>
                 </div>
-                <div class="small text-muted">ยอดรวม: @Model.NewAmount.ToString("N2") บาท</div>
+                <div class="small text-muted">
+                    ยอดรวม: @Model.NewAmount.ToString("N2") บาท
+                    @if (Model.NewCustomerCount > 0)
+                    {
+                        <span class="badge bg-primary text-white ms-1"><i class="bi bi-person-plus-fill"></i> ลูกค้าใหม่ @Model.NewCustomerCount ราย</span>
+                    }
+                </div>
             </div>
         </div>
     </div>
@@ -179,7 +185,13 @@
                         <td><code class="fw-bold fs-6">@b.BillNo</code></td>
                         <td class="text-center small text-muted">@b.BillDate.ToString("dd/MM/yyyy")</td>
                         <td><span class="badge bg-light text-dark border">@b.CustomerCode</span></td>
-                        <td class="fw-semibold">@b.CustomerName</td>
+                        <td class="fw-semibold">
+                            @b.CustomerName
+                            @if (b.IsNewCustomer)
+                            {
+                                <span class="badge bg-primary text-white ms-1" style="font-size: 0.75rem;"><i class="bi bi-person-plus-fill"></i> ลูกค้าใหม่</span>
+                            }
+                        </td>
                         <td class="small text-muted">@b.District @b.Province</td>
                         <td class="small">@b.SalesRep</td>
                         <td class="text-center"><span class="badge bg-info text-dark">@b.ItemCount</span></td>

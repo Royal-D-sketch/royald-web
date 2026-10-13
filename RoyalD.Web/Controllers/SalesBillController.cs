@@ -180,9 +180,13 @@ namespace RoyalD.Web.Controllers
                     .ToListAsync();
             }) ?? new List<string>();
 
-            if (status != "cancelled" && canBillNos.Count > 0)
+            if (status != "cancelled")
             {
-                q = q.Where(b => !canBillNos.Contains(b.BillNo));
+                q = q.Where(b => !b.IsCancelled);
+                if (canBillNos.Count > 0)
+                {
+                    q = q.Where(b => !canBillNos.Contains(b.BillNo));
+                }
             }
 
             if (!string.IsNullOrEmpty(status))
@@ -204,7 +208,28 @@ namespace RoyalD.Web.Controllers
                             .ToListAsync();
                     }) ?? new List<string>();
 
-                    q = q.Where(b => b.IsFullyPaid || !activeDebtBillNos.Contains(b.BillNo));
+                    var cutoff2026 = new DateTime(2026, 1, 1);
+                    q = q.Where(b => !b.IsCancelled && (
+                        (b.BillDate < cutoff2026 && (b.IsFullyPaid || !activeDebtBillNos.Contains(b.BillNo))) ||
+                        (b.BillDate >= cutoff2026 && ((b.ReceiptNo != null && b.ReceiptNo != "") || (b.IsFullyPaid && !activeDebtBillNos.Contains(b.BillNo))))
+                    ));
+                }
+                else if (status == "pending_audit")
+                {
+                    var allDebtBillNos = await _cache.GetOrCreateAsync("all_debt_bill_nos_pending_audit", async entry =>
+                    {
+                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2);
+                        return await _db.OutstandingDebts.AsNoTracking()
+                            .Select(d => d.BillNo)
+                            .Distinct()
+                            .ToListAsync();
+                    }) ?? new List<string>();
+
+                    var cutoff2026 = new DateTime(2026, 1, 1);
+                    q = q.Where(b => !b.IsCancelled 
+                                  && (b.ReceiptNo == null || b.ReceiptNo == "") 
+                                  && b.BillDate >= cutoff2026 
+                                  && !allDebtBillNos.Contains(b.BillNo));
                 }
                 else if (status == "unpaid") 
                 {
@@ -345,7 +370,7 @@ namespace RoyalD.Web.Controllers
                 }
                 else if (status == "cancelled")
                 {
-                    q = q.Where(b => canBillNos.Contains(b.BillNo));
+                    q = q.Where(b => b.IsCancelled || canBillNos.Contains(b.BillNo));
                 }
             }
 
@@ -662,9 +687,13 @@ namespace RoyalD.Web.Controllers
                 .Distinct()
                 .ToListAsync();
 
-            if (status != "cancelled" && canBillNos.Count > 0)
+            if (status != "cancelled")
             {
-                q = q.Where(b => !canBillNos.Contains(b.BillNo));
+                q = q.Where(b => !b.IsCancelled);
+                if (canBillNos.Count > 0)
+                {
+                    q = q.Where(b => !canBillNos.Contains(b.BillNo));
+                }
             }
 
             if (!string.IsNullOrEmpty(status))
@@ -682,7 +711,20 @@ namespace RoyalD.Web.Controllers
                         .Distinct()
                         .ToListAsync();
 
-                    q = q.Where(b => b.IsFullyPaid || !activeDebtBillNos.Contains(b.BillNo));
+                    var cutoff2026 = new DateTime(2026, 1, 1);
+                    q = q.Where(b => !b.IsCancelled && (
+                        (b.BillDate < cutoff2026 && (b.IsFullyPaid || !activeDebtBillNos.Contains(b.BillNo))) ||
+                        (b.BillDate >= cutoff2026 && ((b.ReceiptNo != null && b.ReceiptNo != "") || (b.IsFullyPaid && !activeDebtBillNos.Contains(b.BillNo))))
+                    ));
+                }
+                else if (status == "pending_audit")
+                {
+                    var allDebtBillNos = await _db.OutstandingDebts.AsNoTracking().Select(d => d.BillNo).Distinct().ToListAsync();
+                    var cutoff2026 = new DateTime(2026, 1, 1);
+                    q = q.Where(b => !b.IsCancelled 
+                                  && (b.ReceiptNo == null || b.ReceiptNo == "") 
+                                  && b.BillDate >= cutoff2026 
+                                  && !allDebtBillNos.Contains(b.BillNo));
                 }
                 else if (status == "unpaid")
                 {
@@ -774,7 +816,7 @@ namespace RoyalD.Web.Controllers
                 }
                 else if (status == "cancelled")
                 {
-                    q = q.Where(b => canBillNos.Contains(b.BillNo));
+                    q = q.Where(b => b.IsCancelled || canBillNos.Contains(b.BillNo));
                 }
             }
 
@@ -936,9 +978,13 @@ namespace RoyalD.Web.Controllers
                 .Distinct()
                 .ToListAsync();
 
-            if (status != "cancelled" && canBillNos.Count > 0)
+            if (status != "cancelled")
             {
-                q = q.Where(b => !canBillNos.Contains(b.BillNo));
+                q = q.Where(b => !b.IsCancelled);
+                if (canBillNos.Count > 0)
+                {
+                    q = q.Where(b => !canBillNos.Contains(b.BillNo));
+                }
             }
 
             if (!string.IsNullOrEmpty(status))
@@ -956,7 +1002,20 @@ namespace RoyalD.Web.Controllers
                         .Distinct()
                         .ToListAsync();
 
-                    q = q.Where(b => b.IsFullyPaid || !activeDebtBillNos.Contains(b.BillNo));
+                    var cutoff2026 = new DateTime(2026, 1, 1);
+                    q = q.Where(b => !b.IsCancelled && (
+                        (b.BillDate < cutoff2026 && (b.IsFullyPaid || !activeDebtBillNos.Contains(b.BillNo))) ||
+                        (b.BillDate >= cutoff2026 && ((b.ReceiptNo != null && b.ReceiptNo != "") || (b.IsFullyPaid && !activeDebtBillNos.Contains(b.BillNo))))
+                    ));
+                }
+                else if (status == "pending_audit")
+                {
+                    var allDebtBillNos = await _db.OutstandingDebts.AsNoTracking().Select(d => d.BillNo).Distinct().ToListAsync();
+                    var cutoff2026 = new DateTime(2026, 1, 1);
+                    q = q.Where(b => !b.IsCancelled 
+                                  && (b.ReceiptNo == null || b.ReceiptNo == "") 
+                                  && b.BillDate >= cutoff2026 
+                                  && !allDebtBillNos.Contains(b.BillNo));
                 }
                 else if (status == "unpaid")
                 {
@@ -1048,7 +1107,7 @@ namespace RoyalD.Web.Controllers
                 }
                 else if (status == "cancelled")
                 {
-                    q = q.Where(b => canBillNos.Contains(b.BillNo));
+                    q = q.Where(b => b.IsCancelled || canBillNos.Contains(b.BillNo));
                 }
             }
 
@@ -1453,6 +1512,15 @@ namespace RoyalD.Web.Controllers
             {
                 debt.CancelledDate = DateTime.Now;
                 debt.CancelledBy = User.Identity?.Name ?? "system";
+                debt.CancelReason = note ?? "";
+                if (bill != null)
+                {
+                    bill.IsCancelled = true;
+                    bill.IsFullyPaid = false;
+                    bill.CancelledDate = DateTime.Now;
+                    bill.CancelledBy = User.Identity?.Name ?? "system";
+                    bill.CancelledReason = note ?? "";
+                }
             }
             else if (newStatus == DebtStatus.BadDebt)
             {
@@ -1470,9 +1538,18 @@ namespace RoyalD.Web.Controllers
                 newStatus == DebtStatus.Delivering || 
                 newStatus == DebtStatus.Postponed ||
                 newStatus == DebtStatus.ChangeProduct ||
-                newStatus == DebtStatus.Consignment)
+                newStatus == DebtStatus.Consignment ||
+                newStatus == DebtStatus.Cancelled)
             {
                 if (bill != null) bill.IsFullyPaid = false;
+            }
+
+            if (isRestoringFromCancelled && bill != null)
+            {
+                bill.IsCancelled = false;
+                bill.CancelledDate = null;
+                bill.CancelledBy = null;
+                bill.CancelledReason = null;
             }
 
             if (debt.RemainingAmount > 0)

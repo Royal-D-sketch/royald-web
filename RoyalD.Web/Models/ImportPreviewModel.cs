@@ -17,6 +17,7 @@ namespace RoyalD.Web.Models
         public decimal NewAmount { get; set; }
         public decimal DuplicateAmount { get; set; }
         public DateTime LatestDate { get; set; }
+        public int NewCustomerCount { get; set; }
         public List<BillPreviewItem> Items { get; set; } = new();
     }
 
@@ -35,6 +36,7 @@ namespace RoyalD.Web.Models
         public decimal TotalAmount { get; set; }
         public decimal ExistingAmount { get; set; }
         public string StatusType { get; set; } = "NEW"; // NEW, CHANGED, SAME
+        public bool IsNewCustomer { get; set; }
         public int ItemCount { get; set; }
         public List<SalesBillItem> Items { get; set; } = new();
     }

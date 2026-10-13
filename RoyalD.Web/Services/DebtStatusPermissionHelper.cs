@@ -247,7 +247,19 @@ namespace RoyalD.Web.Services
         /// </summary>
         public static bool IsBillPaid(SalesBill? bill, OutstandingDebt? debt)
         {
-            if (bill != null && bill.IsFullyPaid) return true;
+            // บิลที่ถูกยกเลิก ไม่ถือว่าเป็นบิลที่ชำระแล้วเด็ดขาด
+            if (bill?.IsCancelled == true || debt?.Status == DebtStatus.Cancelled) return false;
+
+            // บิลปี 2568 และก่อนหน้า (< 2026-01-01): ยึดยอดยกมาในอดีต (ไม่มียอดค้าง = ชำระแล้ว)
+            if (bill != null && bill.BillDate < new DateTime(2026, 1, 1))
+            {
+                if (bill.IsFullyPaid) return true;
+                if (debt == null) return true;
+            }
+
+            // บิลปัจจุบันปี 2569 เป็นต้นไป: ต้องมีเลขที่ใบเสร็จรับเงิน หรือมีการรับชำระในการ์ดลูกหนี้
+            if (bill != null && !string.IsNullOrEmpty(bill.ReceiptNo)) return true;
+
             if (debt != null)
             {
                 if (debt.Status == DebtStatus.PaidCash || 
@@ -258,7 +270,14 @@ namespace RoyalD.Web.Services
                 if (debt.FullyPaidDate.HasValue) return true;
                 if (debt.RemainingAmount <= 0 && debt.Status != DebtStatus.Cancelled && debt.Status != DebtStatus.BadDebt) return true;
             }
-            return false;
+
+            // หากเป็นบิลปี 2569 ที่ไม่มีใบเสร็จ และไม่มีการชำระในการ์ดลูกหนี้ ไม่ถือว่าชำระแล้ว (รอตรวจสอบ / บิลยกเลิก)
+            if (bill != null && bill.BillDate >= new DateTime(2026, 1, 1))
+            {
+                return false;
+            }
+
+            return bill?.IsFullyPaid == true;
         }
 
         /// <summary>

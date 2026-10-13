@@ -102,7 +102,7 @@ namespace RoyalD.Web.Services
 
             var paidSalesBills = await _db.SalesBills
                 .AsNoTracking()
-                .Where(b => b.IsFullyPaid || (!string.IsNullOrEmpty(b.ReceiptNo) && b.ReceiptDate != null))
+                .Where(b => !b.IsCancelled && (b.IsFullyPaid || (!string.IsNullOrEmpty(b.ReceiptNo) && b.ReceiptDate != null)))
                 .OrderByDescending(b => b.ReceiptDate ?? b.BillDate)
                 .ToListAsync();
 

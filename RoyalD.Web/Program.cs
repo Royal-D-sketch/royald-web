@@ -222,6 +222,10 @@ using (var scope = app.Services.CreateScope())
         AddColumnIfMissing("OutstandingDebts", "ReturnedToAccountDate", "TEXT NULL");
         AddColumnIfMissing("OutstandingDebts", "ReturnedToAccountReason", "TEXT NULL DEFAULT ''");
         AddColumnIfMissing("OutstandingDebts", "ReturnedToDeliveryDate", "TEXT NULL");
+        AddColumnIfMissing("SalesBills", "IsCancelled", "INTEGER NOT NULL DEFAULT 0");
+        AddColumnIfMissing("SalesBills", "CancelledDate", "TEXT NULL");
+        AddColumnIfMissing("SalesBills", "CancelledBy", "TEXT NULL DEFAULT ''");
+        AddColumnIfMissing("SalesBills", "CancelledReason", "TEXT NULL DEFAULT ''");
 
         using (var cmd = conn.CreateCommand())
         {
@@ -231,6 +235,7 @@ using (var scope = app.Services.CreateScope())
                 CREATE INDEX IF NOT EXISTS IX_OutstandingDebts_DueDate ON OutstandingDebts (DueDate);
                 CREATE INDEX IF NOT EXISTS IX_SalesBills_CustomerCode ON SalesBills (CustomerCode);
                 CREATE INDEX IF NOT EXISTS IX_SalesBills_IsFullyPaid ON SalesBills (IsFullyPaid);
+                CREATE INDEX IF NOT EXISTS IX_SalesBills_IsCancelled ON SalesBills (IsCancelled);
             ";
             cmd.ExecuteNonQuery();
         }
@@ -268,6 +273,11 @@ using (var scope = app.Services.CreateScope())
                 @"ALTER TABLE ""SalesBills"" ADD COLUMN IF NOT EXISTS ""ReceiptNo"" varchar(50) DEFAULT ''",
                 @"ALTER TABLE ""SalesBills"" ADD COLUMN IF NOT EXISTS ""ReceiptDate"" timestamp with time zone NULL",
                 @"ALTER TABLE ""SalesBills"" ADD COLUMN IF NOT EXISTS ""IsFullyPaid"" boolean DEFAULT false",
+                @"ALTER TABLE ""SalesBills"" ADD COLUMN IF NOT EXISTS ""IsCancelled"" boolean DEFAULT false",
+                @"ALTER TABLE ""SalesBills"" ADD COLUMN IF NOT EXISTS ""CancelledDate"" timestamp with time zone NULL",
+                @"ALTER TABLE ""SalesBills"" ADD COLUMN IF NOT EXISTS ""CancelledBy"" varchar(100) NULL",
+                @"ALTER TABLE ""SalesBills"" ADD COLUMN IF NOT EXISTS ""CancelledReason"" varchar(500) NULL",
+                @"CREATE INDEX IF NOT EXISTS ""IX_SalesBills_IsCancelled"" ON ""SalesBills"" (""IsCancelled"")",
                 @"ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""ReceiptNo"" varchar(50) DEFAULT ''",
                 @"ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""ReceiptDate"" timestamp with time zone NULL",
                 @"ALTER TABLE ""OutstandingDebts"" ADD COLUMN IF NOT EXISTS ""PoNumber"" varchar(50) DEFAULT ''",
@@ -375,24 +385,71 @@ using (var scope = app.Services.CreateScope())
     }
     catch { }
 
-    // Auto-sync IsFullyPaid on SalesBills based on OutstandingDebts
+    // Auto-sync IsFullyPaid and IsCancelled on SalesBills based on Cut-off and Receipt rules
     try
     {
         if (db.Database.IsNpgsql())
         {
             string syncSql = @"
+                -- 1. บิลที่การ์ดลูกหนี้ระบุเป็นยกเลิก (Status = 14) ให้ปรับบิลขายเป็น IsCancelled = true และ IsFullyPaid = false
+                UPDATE ""SalesBills"" b
+                SET ""IsCancelled"" = true, ""IsFullyPaid"" = false
+                WHERE EXISTS (
+                    SELECT 1 FROM ""OutstandingDebts"" d
+                    WHERE d.""BillNo"" = b.""BillNo""
+                    AND d.""Status"" = 14
+                );
+
+                -- 2. บิลที่ถูกยกเลิก ต้องไม่เป็น IsFullyPaid
+                UPDATE ""SalesBills""
+                SET ""IsFullyPaid"" = false
+                WHERE ""IsCancelled"" = true AND ""IsFullyPaid"" = true;
+
+                -- 3. บิลเก่าปี 2568 และก่อนหน้า (< 2026-01-01): 
+                -- ยึดยอดยกมาในอดีต ถ้าไม่มียอดค้างใน OutstandingDebts และไม่ยกเลิก ให้ถือว่ารับชำระแล้ว
                 UPDATE ""SalesBills"" b
                 SET ""IsFullyPaid"" = true
                 WHERE ""IsFullyPaid"" = false
+                AND ""IsCancelled"" = false
+                AND b.""BillDate"" < '2026-01-01'
                 AND NOT EXISTS (
                     SELECT 1 FROM ""OutstandingDebts"" d
                     WHERE d.""BillNo"" = b.""BillNo""
                     AND d.""Status"" NOT IN (1, 2, 3, 14)
                     AND (d.""RemainingAmount"" > 0 OR d.""Status"" = 4 OR d.""Status"" = 100)
                     AND d.""FullyPaidDate"" IS NULL
-                )
-                AND b.""BillDate"" < (CURRENT_DATE - INTERVAL '7 days');
+                );
 
+                -- 4. บิลปัจจุบันปี 2569 เป็นต้นไป (>= 2026-01-01):
+                -- ต้องมีเลขที่ใบเสร็จรับเงิน หรือมีการ์ดลูกหนี้ที่มีสถานะชำระแล้ว (1, 2, 3) เท่านั้น จึงจะถือว่า IsFullyPaid = true
+                UPDATE ""SalesBills"" b
+                SET ""IsFullyPaid"" = true
+                WHERE ""IsFullyPaid"" = false
+                AND ""IsCancelled"" = false
+                AND b.""BillDate"" >= '2026-01-01'
+                AND (
+                    (b.""ReceiptNo"" IS NOT NULL AND b.""ReceiptNo"" != '')
+                    OR EXISTS (
+                        SELECT 1 FROM ""OutstandingDebts"" d
+                        WHERE d.""BillNo"" = b.""BillNo""
+                        AND (d.""Status"" IN (1, 2, 3) OR (d.""RemainingAmount"" <= 0 AND d.""FullyPaidDate"" IS NOT NULL))
+                    )
+                );
+
+                -- 5. บิลปี 2569 ที่เคยถูกปรับ IsFullyPaid = true อัตโนมัติผิดพลาด (ไม่มีเลขใบเสร็จ และไม่มีลูกหนี้รับชำระ)
+                -- ให้ปลดออกจากการรับเงิน เพื่อรอการตรวจสอบหรือลงบิลยกเลิก
+                UPDATE ""SalesBills"" b
+                SET ""IsFullyPaid"" = false
+                WHERE ""IsFullyPaid"" = true
+                AND b.""BillDate"" >= '2026-01-01'
+                AND (b.""ReceiptNo"" IS NULL OR b.""ReceiptNo"" = '')
+                AND NOT EXISTS (
+                    SELECT 1 FROM ""OutstandingDebts"" d
+                    WHERE d.""BillNo"" = b.""BillNo""
+                    AND (d.""Status"" IN (1, 2, 3) OR (d.""RemainingAmount"" <= 0 AND d.""FullyPaidDate"" IS NOT NULL))
+                );
+
+                -- 6. หากมีลูกหนี้คงเหลือที่ยังค้างอยู่ ต้องปลด IsFullyPaid = false เสมอ
                 UPDATE ""SalesBills"" b
                 SET ""IsFullyPaid"" = false
                 WHERE ""IsFullyPaid"" = true
@@ -412,6 +469,7 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine("Notice syncing IsFullyPaid: " + ex.Message);
     }
 }
+
 
 app.MapGet("/healthz", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
 

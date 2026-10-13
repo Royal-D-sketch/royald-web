@@ -4,10 +4,14 @@
     bool canUploadBills = (ViewBag.CanUploadBills as bool?) ?? true;
     bool canUploadDebtors = (ViewBag.CanUploadDebtors as bool?) ?? true;
     bool canUploadReceipts = (ViewBag.CanUploadReceipts as bool?) ?? true;
+    bool canUploadCustomers = (ViewBag.CanUploadCustomers as bool?) ?? true;
 
     DateTime? latestBillDate = ViewBag.LatestBillDate as DateTime?;
     DateTime? latestDebtorDate = ViewBag.LatestDebtorDate as DateTime?;
     DateTime? latestReceiptDate = ViewBag.LatestReceiptDate as DateTime?;
+
+    int totalCustomersCount = (ViewBag.TotalCustomersCount as int?) ?? 0;
+    string? localCustomerFile = ViewBag.LocalCustomerFile as string;
 
     var dbBillPreview = ViewBag.DbBillPreview as List<RoyalD.Web.Models.SalesBill> ?? new List<RoyalD.Web.Models.SalesBill>();
     var dbDebtorPreview = ViewBag.DbDebtorPreview as List<RoyalD.Web.Models.OutstandingDebt> ?? new List<RoyalD.Web.Models.OutstandingDebt>();
@@ -66,22 +70,28 @@
   <div class="card bg-light border-0 shadow-sm mb-4">
     <div class="card-body py-2 px-3">
       <div class="row g-2 text-center text-md-start align-items-center">
-        <div class="col-md-4">
-          <span class="badge p-2 w-100 text-start shadow-sm" style="background-color: #f0fdfa; color: #0f766e; border: 1.5px solid #0d9488; font-size: 0.9rem;">
-            <i class="bi bi-file-earmark-spreadsheet me-1" style="color: #0d9488;"></i> ข้อมูลบิลขายล่าสุด: 
+        <div class="col-md-3">
+          <span class="badge p-2 w-100 text-start shadow-sm" style="background-color: #f0fdfa; color: #0f766e; border: 1.5px solid #0d9488; font-size: 0.85rem;">
+            <i class="bi bi-file-earmark-spreadsheet me-1" style="color: #0d9488;"></i> บิลขายล่าสุด: 
             <strong style="color: #115e59;">@(latestBillDate != null ? latestBillDate.Value.ToString("dd/MM/yyyy") : "ยังไม่มีข้อมูล")</strong>
           </span>
         </div>
-        <div class="col-md-4">
-          <span class="badge p-2 w-100 text-start shadow-sm" style="background-color: #fefce8; color: #854d0e; border: 1.5px solid #eab308; font-size: 0.9rem;">
-            <i class="bi bi-person-lines-fill me-1" style="color: #ca8a04;"></i> ข้อมูลการ์ดลูกหนี้ล่าสุด: 
+        <div class="col-md-3">
+          <span class="badge p-2 w-100 text-start shadow-sm" style="background-color: #fefce8; color: #854d0e; border: 1.5px solid #eab308; font-size: 0.85rem;">
+            <i class="bi bi-person-lines-fill me-1" style="color: #ca8a04;"></i> การ์ดลูกหนี้ล่าสุด: 
             <strong style="color: #713f12;">@(latestDebtorDate != null ? latestDebtorDate.Value.ToString("dd/MM/yyyy") : "ยังไม่มีข้อมูล")</strong>
           </span>
         </div>
-        <div class="col-md-4">
-          <span class="badge p-2 w-100 text-start shadow-sm" style="background-color: #f0fdf4; color: #166534; border: 1.5px solid #22c55e; font-size: 0.9rem;">
-            <i class="bi bi-receipt me-1" style="color: #16a34a;"></i> ข้อมูลสรุปรับเงินล่าสุด: 
+        <div class="col-md-3">
+          <span class="badge p-2 w-100 text-start shadow-sm" style="background-color: #f0fdf4; color: #166534; border: 1.5px solid #22c55e; font-size: 0.85rem;">
+            <i class="bi bi-receipt me-1" style="color: #16a34a;"></i> สรุปรับเงินล่าสุด: 
             <strong style="color: #14532d;">@(latestReceiptDate != null ? latestReceiptDate.Value.ToString("dd/MM/yyyy") : "ยังไม่มีข้อมูล")</strong>
+          </span>
+        </div>
+        <div class="col-md-3">
+          <span class="badge p-2 w-100 text-start shadow-sm" style="background-color: #eff6ff; color: #1e40af; border: 1.5px solid #3b82f6; font-size: 0.85rem;">
+            <i class="bi bi-people-fill me-1" style="color: #2563eb;"></i> ลูกค้าในระบบ: 
+            <strong style="color: #1e3a8a;">@totalCustomersCount.ToString("N0") ราย</strong>
           </span>
         </div>
       </div>
@@ -319,6 +329,75 @@
                   </div>
                 </div>
               }
+            </div>
+          </div>
+        </div>
+    }
+
+    @if (canUploadCustomers)
+    {
+        <!-- ส่วนที่ 4: ฐานข้อมูลรายละเอียดลูกค้า (Customer Master Portal) -->
+        <div class="col-12">
+          <div class="card shadow-sm border-info" style="border-color: #3b82f6 !important;">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center py-2" style="background-color: #2563eb !important;">
+              <div class="fw-bold">
+                <i class="bi bi-people-fill me-1"></i> ส่วนที่ 4: ฐานข้อมูลชื่อรายละเอียดลูกค้า (Customer Master Data)
+              </div>
+              <span class="badge bg-white text-primary fw-normal">ยึดรหัสลูกค้าเป็นหลัก (เพิ่มลูกค้าใหม่ + อัปเดตที่อยู่/เลขผู้เสียภาษี)</span>
+            </div>
+            <div class="card-body">
+              <div class="row g-3 align-items-center">
+                <!-- Local Auto-Sync Column -->
+                <div class="col-md-6 border-end">
+                  <h6 class="fw-bold text-dark mb-2"><i class="bi bi-folder-check text-success me-1"></i> วิธีที่ 1: เซฟทับไฟล์เดิมในเครื่องแล้วกดซิงค์อัตโนมัติ (แนะนำ ⭐)</h6>
+                  <p class="small text-muted mb-2">
+                    เมื่อ Export จากโปรแกรม CD ให้เซฟทับไฟล์เดิมที่ <code>ข้อมูลลูกค้า\ชื่อรายละเอียดลูกค้า.csv</code> (หรือ .XLS) แล้วกดปุ่มนี้เพื่อซิงค์ข้อมูลเข้าสู่ระบบทันที
+                  </p>
+                  @if (!string.IsNullOrEmpty(localCustomerFile))
+                  {
+                    <div class="mb-2">
+                      <span class="badge bg-success-subtle text-success border border-success-subtle p-2">
+                        <i class="bi bi-file-earmark-check-fill me-1"></i> ตรวจพบไฟล์ในเครื่อง: <b>@System.IO.Path.GetFileName(localCustomerFile)</b>
+                      </span>
+                    </div>
+                  }
+                  <form asp-action="SyncLocalCustomers" method="post" id="formSyncCust">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-primary fw-bold py-2 w-100" onclick="showProgress('syncCustProgress')">
+                      <i class="bi bi-arrow-repeat me-1"></i> ซิงค์ข้อมูลลูกค้าจากโฟลเดอร์ในเครื่องทันที
+                    </button>
+                    <div class="progress mt-2 d-none" id="syncCustProgress">
+                      <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width:100%">กำลังอ่านไฟล์และอัปเดตข้อมูลลูกค้า...</div>
+                    </div>
+                  </form>
+                </div>
+
+                <!-- Web File Upload Column -->
+                <div class="col-md-6">
+                  <h6 class="fw-bold text-dark mb-2"><i class="bi bi-cloud-arrow-up-fill text-primary me-1"></i> วิธีที่ 2: เลือกไฟล์อัปโหลดผ่านหน้าเว็บ</h6>
+                  <form asp-action="UploadCustomers" method="post" enctype="multipart/form-data" id="formUploadCust">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-2">
+                      <input type="file" name="file" accept=".xls,.xlsx,.csv" class="form-control form-control-sm" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary fw-bold py-2 w-100" onclick="showProgress('uploadCustProgress')">
+                      <i class="bi bi-cloud-arrow-up-fill me-1"></i> อัปโหลดไฟล์ชื่อรายละเอียดลูกค้า
+                    </button>
+                    <div class="progress mt-2 d-none" id="uploadCustProgress">
+                      <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width:100%">กำลังนำเข้าและอัปเดตลูกค้า...</div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <div class="mt-3 pt-2 border-top d-flex justify-content-between align-items-center">
+                <div class="small text-muted">
+                  <i class="bi bi-shield-check text-success me-1"></i> ข้อมูลลูกค้าเดิมที่มีอยู่แล้วจะไม่สูญหาย ระบบจะอัปเดตเฉพาะที่อยู่ เลขผู้เสียภาษี สาขา และชื่อเต็มให้ตรงกับ CD เสมอ
+                </div>
+                <div class="fw-bold text-primary small">
+                  ลูกค้าในระบบปัจจุบัน: <strong>@totalCustomersCount.ToString("N0")</strong> ราย
+                </div>
+              </div>
             </div>
           </div>
         </div>

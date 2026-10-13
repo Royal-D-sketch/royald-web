@@ -18,11 +18,11 @@ namespace RoyalD.Web.Controllers
             _db = db;
         }
 
-        private (bool canBills, bool canDebtors, bool canReceipts) GetUploadPermissions()
+        private (bool canBills, bool canDebtors, bool canReceipts, bool canCustomers) GetUploadPermissions()
         {
             if (User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin") || (User.Identity?.Name?.ToLower() == "art"))
             {
-                return (true, true, true);
+                return (true, true, true, true);
             }
 
             var username = User.Identity?.Name ?? "";
@@ -36,16 +36,18 @@ namespace RoyalD.Web.Controllers
             bool canBills = hasGeneralUpload || pages.Contains("uploadsalesbill");
             bool canDebtors = hasGeneralUpload || pages.Contains("uploaddebtor");
             bool canReceipts = hasGeneralUpload || pages.Contains("uploadreceipt");
+            bool canCustomers = hasGeneralUpload || pages.Contains("uploadcustomer");
 
-            return (canBills, canDebtors, canReceipts);
+            return (canBills, canDebtors, canReceipts, canCustomers);
         }
 
         private async Task PopulateViewDataAsync()
         {
-            var (canBills, canDebtors, canReceipts) = GetUploadPermissions();
+            var (canBills, canDebtors, canReceipts, canCustomers) = GetUploadPermissions();
             ViewBag.CanUploadBills = canBills;
             ViewBag.CanUploadDebtors = canDebtors;
             ViewBag.CanUploadReceipts = canReceipts;
+            ViewBag.CanUploadCustomers = canCustomers;
 
             ViewBag.LatestBillDate = await _db.SalesBills.OrderByDescending(b => b.BillDate).Select(b => (DateTime?)b.BillDate).FirstOrDefaultAsync();
             ViewBag.LatestDebtorDate = await _db.OutstandingDebts.OrderByDescending(d => d.BillDate).Select(d => (DateTime?)d.BillDate).FirstOrDefaultAsync();
@@ -55,6 +57,8 @@ namespace RoyalD.Web.Controllers
             ViewBag.TotalBillsCount = await _db.SalesBills.CountAsync();
             ViewBag.TotalDebtorsCount = await _db.OutstandingDebts.CountAsync();
             ViewBag.TotalReceiptsCount = await _db.SalesBills.CountAsync(b => b.ReceiptNo != null && b.ReceiptNo != "");
+            ViewBag.TotalCustomersCount = await _db.Customers.CountAsync();
+            ViewBag.LocalCustomerFile = _importer.FindLocalCustomerMasterFile();
 
             // Top preview rows from current database if not in TempData
             if (ViewBag.LatestBillDate != null)
@@ -73,8 +77,8 @@ namespace RoyalD.Web.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var (canBills, canDebtors, canReceipts) = GetUploadPermissions();
-            if (!canBills && !canDebtors && !canReceipts)
+            var (canBills, canDebtors, canReceipts, canCustomers) = GetUploadPermissions();
+            if (!canBills && !canDebtors && !canReceipts && !canCustomers)
             {
                 TempData["Error"] = "ท่านไม่มีสิทธิ์เข้าใช้งานระบบอัปโหลดข้อมูล";
                 return RedirectToAction("Index", "Home");
@@ -149,7 +153,7 @@ namespace RoyalD.Web.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Upload(IFormFile file, string fileType, bool isCurrentMonth)
         {
-            var (canBills, canDebtors, _) = GetUploadPermissions();
+            var (canBills, canDebtors, _, _) = GetUploadPermissions();
             if (fileType == "outstanding")
             {
                 if (!canDebtors)
@@ -216,7 +220,9 @@ namespace RoyalD.Web.Controllers
                     {
                         var (ins, upd, _, maxDate) = await _importer.ConfirmImportSalesBillAsync(preview.PreviewId, updateDuplicates: true);
                         string dateStr = maxDate != DateTime.MinValue ? maxDate.ToString("dd/MM/yyyy") : "-";
-                        TempData["Success"] = $"นำเข้าบิลขายสำเร็จ {ins + upd} บิล | ข้อมูลบิลขายล่าสุดในระบบ ณ วันที่: {dateStr}";
+                        string custMsg = preview.NewCustomerCount > 0 ? $" (พบรหัสลูกค้าใหม่ {preview.NewCustomerCount:N0} ราย)" : "";
+                        string sameMsg = preview.DuplicateSameCount > 0 ? $", พบบิลเดิมวันที่เดียวกันที่ยอดตรงกัน {preview.DuplicateSameCount:N0} บิล" : "";
+                        TempData["Success"] = $"นำเข้าบิลขายสำเร็จ: เพิ่มบิลใหม่ {ins:N0} บิล{sameMsg}{custMsg} | ข้อมูลบิลขายล่าสุดในระบบ ณ วันที่: {dateStr}";
                         ReportPrewarmBackgroundService.SignalRefresh();
                         return RedirectToAction("Index");
                     }
@@ -232,7 +238,7 @@ namespace RoyalD.Web.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmImport(string previewId, bool updateDuplicates = true, bool skipDuplicates = false)
         {
-            var (canBills, _, _) = GetUploadPermissions();
+            var (canBills, _, _, _) = GetUploadPermissions();
             if (!canBills)
             {
                 TempData["Error"] = "ท่านไม่มีสิทธิ์อัปโหลดบิลขาย";
@@ -284,7 +290,7 @@ namespace RoyalD.Web.Controllers
         [RequestFormLimits(MultipartBodyLengthLimit = 104857600)]
         public async Task<IActionResult> UploadSalesBills(List<IFormFile> files)
         {
-            var (canBills, _, _) = GetUploadPermissions();
+            var (canBills, _, _, _) = GetUploadPermissions();
             if (!canBills)
             {
                 TempData["Error"] = "ท่านไม่มีสิทธิ์อัปโหลดบิลขาย";
@@ -341,7 +347,7 @@ namespace RoyalD.Web.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> UploadReceipt(IFormFile file)
         {
-            var (_, _, canReceipts) = GetUploadPermissions();
+            var (_, _, canReceipts, _) = GetUploadPermissions();
             if (!canReceipts)
             {
                 TempData["Error"] = "ท่านไม่มีสิทธิ์อัปโหลดสรุปรับเงินตามใบเสร็จ";
@@ -364,24 +370,6 @@ namespace RoyalD.Web.Controllers
             {
                 using var stream = file.OpenReadStream();
                 var preview = await _importer.PreviewReceiptMatchAsync(stream, file.FileName);
-
-                if (!preview.Duplicates.Any())
-                {
-                    var (matched, notFound, maxDate) = await _importer.ConfirmReceiptMatchAsync(preview.PreviewId, updateDuplicates: false);
-                    string dateStr = maxDate != DateTime.MinValue ? maxDate.ToString("dd/MM/yyyy") : "-";
-                    TempData["Success"] = $"จับคู่ใบเสร็จสำเร็จ {matched} รายการ (ไม่พบในระบบ: {notFound}) | ข้อมูลใบเสร็จรับเงินล่าสุดในระบบ ณ วันที่: {dateStr}";
-                    _db.AuditLogs.Add(new AuditLog
-                    {
-                        Username = User.Identity?.Name ?? "",
-                        Action = "UPLOAD_RECEIPTS",
-                        Detail = $"File={file.FileName}, Matched={matched}, NotFound={notFound}, LatestDate={dateStr}",
-                        IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
-                        CreatedAt = DateTime.UtcNow
-                    });
-                    await _db.SaveChangesAsync();
-                    return RedirectToAction("Index");
-                }
-
                 return View("ReceiptPreview", preview);
             }
             catch (Exception ex)
@@ -394,7 +382,7 @@ namespace RoyalD.Web.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmReceiptImport(string previewId, List<string>? selectedDuplicates)
         {
-            var (_, _, canReceipts) = GetUploadPermissions();
+            var (_, _, canReceipts, _) = GetUploadPermissions();
             if (!canReceipts)
             {
                 TempData["Error"] = "ท่านไม่มีสิทธิ์อัปโหลดสรุปรับเงินตามใบเสร็จ";
@@ -414,13 +402,15 @@ namespace RoyalD.Web.Controllers
                 var (matched, notFound, maxDate) = await _importer.ConfirmReceiptMatchAsync(previewId, updateDups, selectedDuplicates);
                 int skippedDups = preview.Duplicates.Count - (selectedDuplicates?.Count ?? 0);
                 string dateStr = maxDate != DateTime.MinValue ? maxDate.ToString("dd/MM/yyyy") : "-";
-                TempData["Success"] = $"จับคู่ใบเสร็จสำเร็จ {matched} รายการ, ข้ามซ้ำ {skippedDups} รายการ (ไม่พบในระบบ: {notFound}) | ข้อมูลใบเสร็จรับเงินล่าสุดในระบบ ณ วันที่: {dateStr}";
+                string alreadyMsg = preview.AlreadyMatchedCount > 0 ? $", บิลเดิมที่บันทึกแล้ว {preview.AlreadyMatchedCount:N0} รายการ" : "";
+                string notFoundMsg = preview.NotFoundCount > 0 ? $", ไม่พบบิลในระบบ {preview.NotFoundCount:N0} รายการ" : "";
+                TempData["Success"] = $"จับคู่ใบเสร็จรับเงินสำเร็จ {matched:N0} รายการ{alreadyMsg}{notFoundMsg} | ข้อมูลใบเสร็จรับเงินล่าสุดในระบบ ณ วันที่: {dateStr}";
 
                 _db.AuditLogs.Add(new AuditLog
                 {
                     Username = User.Identity?.Name ?? "",
                     Action = "CONFIRM_RECEIPT_IMPORT",
-                    Detail = $"File={preview.FileName}, Matched={matched}, NotFound={notFound}, Skipped={skippedDups}, LatestDate={dateStr}",
+                    Detail = $"File={preview.FileName}, Matched={matched}, NotFound={notFound}, Skipped={skippedDups}, AlreadyMatched={preview.AlreadyMatchedCount}, LatestDate={dateStr}",
                     IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
                     CreatedAt = DateTime.UtcNow
                 });
@@ -439,6 +429,91 @@ namespace RoyalD.Web.Controllers
         {
             ExcelImportService.RemoveReceiptPreview(previewId);
             TempData["Info"] = "ยกเลิกการนำเข้าใบเสร็จเรียบร้อยแล้ว";
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadCustomers(IFormFile file)
+        {
+            var (_, _, _, canCustomers) = GetUploadPermissions();
+            if (!canCustomers)
+            {
+                TempData["Error"] = "ท่านไม่มีสิทธิ์อัปโหลดข้อมูลลูกค้า";
+                return RedirectToAction("Index");
+            }
+            if (file == null || file.Length == 0)
+            {
+                TempData["Error"] = "กรุณาเลือกไฟล์รายละเอียดลูกค้า";
+                return RedirectToAction("Index");
+            }
+
+            var ext = Path.GetExtension(file.FileName).ToLower();
+            if (ext != ".xls" && ext != ".xlsx" && ext != ".csv")
+            {
+                TempData["Error"] = "รองรับเฉพาะไฟล์ .xls, .xlsx และ .csv เท่านั้น";
+                return RedirectToAction("Index");
+            }
+
+            try
+            {
+                using var stream = file.OpenReadStream();
+                var (ins, upd, tot) = await _importer.ImportCustomersAsync(stream, file.FileName);
+                TempData["Success"] = $"อัปเดตฐานข้อมูลลูกค้าเรียบร้อยแล้ว: เพิ่มลูกค้าใหม่ {ins:N0} ราย, อัปเดตข้อมูลลูกค้าเดิม {upd:N0} ราย (ประมวลผลรวม {tot:N0} รายการ)";
+
+                _db.AuditLogs.Add(new AuditLog
+                {
+                    Username = User.Identity?.Name ?? "",
+                    Action = "UPLOAD_CUSTOMERS",
+                    Detail = $"File={file.FileName}, Inserted={ins}, Updated={upd}, Total={tot}",
+                    IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
+                    CreatedAt = DateTime.UtcNow
+                });
+                await _db.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"เกิดข้อผิดพลาดในการอัปโหลดข้อมูลลูกค้า: {ex.Message}";
+            }
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> SyncLocalCustomers()
+        {
+            var (_, _, _, canCustomers) = GetUploadPermissions();
+            if (!canCustomers)
+            {
+                TempData["Error"] = "ท่านไม่มีสิทธิ์ซิงค์ข้อมูลลูกค้า";
+                return RedirectToAction("Index");
+            }
+
+            try
+            {
+                var (success, message, ins, upd, tot) = await _importer.ImportCustomersFromLocalFileAsync();
+                if (success)
+                {
+                    TempData["Success"] = message;
+                    _db.AuditLogs.Add(new AuditLog
+                    {
+                        Username = User.Identity?.Name ?? "",
+                        Action = "SYNC_LOCAL_CUSTOMERS",
+                        Detail = message,
+                        IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
+                        CreatedAt = DateTime.UtcNow
+                    });
+                    await _db.SaveChangesAsync();
+                }
+                else
+                {
+                    TempData["Error"] = message;
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"เกิดข้อผิดพลาดในการซิงค์ข้อมูลลูกค้า: {ex.Message}";
+            }
+
             return RedirectToAction("Index");
         }
     }

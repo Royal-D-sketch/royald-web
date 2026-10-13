@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RoyalD.Web.Models
@@ -47,6 +47,16 @@ namespace RoyalD.Web.Models
         public DateTime? ReceiptDate { get; set; }
 
         public bool IsFullyPaid { get; set; }
+
+        public bool IsCancelled { get; set; }
+
+        public DateTime? CancelledDate { get; set; }
+
+        [MaxLength(200)]
+        public string? CancelledBy { get; set; }
+
+        [MaxLength(500)]
+        public string? CancelledReason { get; set; }
 
         // Navigation
         public Customer? Customer { get; set; }

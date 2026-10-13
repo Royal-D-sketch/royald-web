@@ -218,7 +218,7 @@ namespace RoyalD.Web.Services
 
             // 2. Get from SalesBills (for fully paid bills without OutstandingDebt records)
             var qBill = _db.SalesBills.AsNoTracking()
-                .Where(b => b.IsFullyPaid && b.ReceiptDate >= cutoffDate);
+                .Where(b => !b.IsCancelled && b.IsFullyPaid && b.ReceiptDate >= cutoffDate);
                 
             // Apply Area Permissions to SalesBills
             if (!string.IsNullOrEmpty(userAllowedRegion) || !string.IsNullOrEmpty(userAllowedProvinces))

@@ -33,7 +33,7 @@
     bool isBadDebt = debt != null && debt.Status == RoyalD.Web.Models.DebtStatus.BadDebt;
     bool isWaitingGoods = debt != null && debt.Status == RoyalD.Web.Models.DebtStatus.WaitingGoods;
     bool isReturn = debt != null && (debt.Status == RoyalD.Web.Models.DebtStatus.ReturnIssued || debt.Status == RoyalD.Web.Models.DebtStatus.ReturnPending);
-    bool isCancelled = debt != null && debt.Status == RoyalD.Web.Models.DebtStatus.Cancelled;
+    bool isCancelled = Model.IsCancelled || (debt != null && debt.Status == RoyalD.Web.Models.DebtStatus.Cancelled);
 
     bool isFullyPaid = DebtStatusPermissionHelper.IsBillPaid(Model, debt);
     bool canChangeDebtStatus = ViewBag.CanChangeDebtStatus == true;
@@ -50,8 +50,10 @@
             </a>
             <span class="fw-bold fs-5" style="color:#0f766e;"><i class="bi bi-receipt text-primary"></i> รายละเอียดบิลขาย: <code>@Model.BillNo</code></span>
             <span class="badge @vatBadgeClass ms-2 px-2 py-1 fs-6 shadow-sm"><i class="bi bi-patch-check-fill me-1"></i> @vatTypeLabel</span>
-            @if (debt != null) { <span class="badge bg-primary ms-2 px-3 py-1 fs-6 shadow-sm"><i class="bi bi-info-circle-fill me-1"></i> สถานะ: @(debt.Status.ToThaiString())</span> }
+            @if (isCancelled) { <span class="badge bg-dark ms-2 px-3 py-1 fs-6 shadow-sm"><i class="bi bi-x-circle-fill me-1"></i> ยกเลิกบิล</span> }
+            else if (debt != null) { <span class="badge bg-primary ms-2 px-3 py-1 fs-6 shadow-sm"><i class="bi bi-info-circle-fill me-1"></i> สถานะ: @(debt.Status.ToThaiString())</span> }
             else if (isFullyPaid) { <span class="badge bg-success ms-2 px-3 py-1 fs-6 shadow-sm border border-success"><i class="bi bi-check-circle-fill me-1"></i> รับชำระครบแล้ว</span> }
+            else { <span class="badge bg-warning text-dark ms-2 px-3 py-1 fs-6 shadow-sm border border-warning"><i class="bi bi-exclamation-triangle-fill text-danger me-1"></i> ไม่อยู่ในลูกหนี้คงเหลือ (รอตรวจสอบ/ยกเลิกในCD)</span> }
         </div>
         <div class="d-flex gap-2">
             <a href="/Debtor/Index?search=@Uri.EscapeDataString(Model.BillNo)" class="btn btn-outline-primary btn-sm fw-bold">
@@ -98,9 +100,9 @@
     {
         <div class="alert alert-dark text-center py-2 mb-3 fw-bold fs-5 shadow-sm rounded-pill" style="border: 2px dashed #343a40;">
             <i class="bi bi-x-circle-fill fs-4 me-2"></i> บิลยกเลิก
-            @if (debt != null && !string.IsNullOrEmpty(debt.Note))
+            @if (!string.IsNullOrEmpty(Model.CancelledReason) || (debt != null && !string.IsNullOrEmpty(debt.Note)))
             {
-                <span class="fs-6 fw-normal ms-2 text-muted">(เหตุผล: @debt.Note)</span>
+                <span class="fs-6 fw-normal ms-2 text-muted">(เหตุผล: @(!string.IsNullOrEmpty(Model.CancelledReason) ? Model.CancelledReason : debt?.Note))</span>
             }
         </div>
     }
@@ -138,6 +140,13 @@
             {
                 <span class="fs-6 fw-normal ms-2">(ใบเสร็จ: @Model.ReceiptNo วันที่: @(Model.ReceiptDate?.ToString("dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture)))</span>
             }
+        </div>
+    }
+    else if (!isFullyPaid && debt == null && Model.BillDate >= new DateTime(2026, 1, 1))
+    {
+        <div class="alert alert-warning text-center py-2 mb-3 fw-bold fs-5 shadow-sm rounded-pill" style="border: 2px dashed #f59e0b; background:#fffbeb; color:#b45309;">
+            <i class="bi bi-exclamation-triangle-fill fs-4 me-2 text-danger"></i> บิลนี้ไม่อยู่ในไฟล์ลูกหนี้คงเหลือ และไม่มีเลขใบเสร็จรับเงิน
+            <div class="fs-6 fw-normal text-muted mt-1">หากบิลนี้ถูกยกเลิกในโปรแกรมบัญชี CD Organizer กรุณาเลือกเปลี่ยนสถานะเป็น <strong>"❌ บิลนี้ยกเลิก"</strong> ในส่วนจัดการด้านล่าง</div>
         </div>
     }
 
@@ -520,7 +529,7 @@
                             <option value="BadDebt" selected="@(debt?.Status == DebtStatus.BadDebt)">หนี้สูญ (Bad Debt)</option>
                             @if (canCancelBill)
                             {
-                                <option value="Cancelled" style="color:red; font-weight:bold;">❌ บิลนี้ยกเลิก (ย้ายไปบิลยกเลิก 30 วัน)</option>
+                                <option value="Cancelled" selected="@(isCancelled)" style="color:red; font-weight:bold;">❌ บิลนี้ยกเลิก (ย้ายไปบิลยกเลิก 30 วัน)</option>
                             }
                         </select>
                     </div>

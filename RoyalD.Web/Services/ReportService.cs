@@ -144,6 +144,7 @@ namespace RoyalD.Web.Services
             var monthLabels = StandardMonthsMap.Values.ToList();
 
             var bills = await _db.SalesBills
+                .Where(b => !b.IsCancelled)
                 .Select(b => new {
                     b.BillNo,
                     b.BillDate,
@@ -276,6 +277,7 @@ namespace RoyalD.Web.Services
             var monthLabels = StandardMonthsMap.Values.ToList();
 
             var bills = await _db.SalesBills
+                .Where(b => !b.IsCancelled)
                 .Select(b => new { 
                     b.BillNo, 
                     b.BillDate, 
@@ -419,7 +421,7 @@ namespace RoyalD.Web.Services
             var (filterReps, selectedRepForUi, hasMultipleAssigned) = SalesRepHelper.ResolveFilter(
                 isRestrictedRep, userSalesRepCode, selectedRep, allReps);
 
-            var billQuery = _db.SalesBills.AsNoTracking().AsQueryable();
+            var billQuery = _db.SalesBills.AsNoTracking().Where(b => !b.IsCancelled).AsQueryable();
             if (filterReps != null && filterReps.Count > 0)
             {
                 billQuery = billQuery.Where(b => filterReps.Contains(b.SalesRep));
@@ -695,7 +697,7 @@ namespace RoyalD.Web.Services
 
         public async Task<List<SalesReportData>> GetSalesSummaryAsync(DateTime? from = null, DateTime? to = null, int? credit = null)
         {
-            var billQ = _db.SalesBills.AsQueryable();
+            var billQ = _db.SalesBills.Where(b => !b.IsCancelled).AsQueryable();
             if (from.HasValue) billQ = billQ.Where(b => b.BillDate >= from.Value.Date);
             if (to.HasValue) billQ = billQ.Where(b => b.BillDate <= to.Value.Date.AddDays(1).AddTicks(-1));
             if (credit.HasValue) billQ = billQ.Where(b => b.Credit == credit.Value);

@@ -1,4 +1,5 @@
 @using RoyalD.Web.Models
+@using RoyalD.Web.Services
 @model List<RoyalD.Web.Models.SalesBill>
 @{
     ViewData["Title"] = "รายการบิลขาย";
@@ -125,6 +126,7 @@
             <select name="status" class="form-select form-select-sm">
                 <option value="">-- ทุกสถานะบิล --</option>
                 <option value="paid" selected="@(ViewBag.Status == "paid")">✅ ชำระครบแล้ว</option>
+                <option value="pending_audit" selected="@(ViewBag.Status == "pending_audit")">⚠️ รอตรวจสอบ / ไม่อยู่ในลูกหนี้ (ยกเลิกใน CD)</option>
                 <option value="unpaid" selected="@(ViewBag.Status == "unpaid")">⏳ ค้างชำระทั้งหมด</option>
                 <option value="overdue120" selected="@(ViewBag.Status == "overdue120")">🚨 ค้างเกิน 120 วัน</option>
                 <option value="installment" selected="@(ViewBag.Status == "installment")">💳 ผ่อนชำระ</option>
@@ -272,7 +274,7 @@
                     var overdueDays = (int)(DateTime.Today - dueDate).TotalDays;
                     debtDict.TryGetValue(b.BillNo, out var debt);
                     var debtStatus = debt?.Status;
-                    bool isCancelled = debtStatus == DebtStatus.Cancelled;
+                    bool isCancelled = b.IsCancelled || debtStatus == DebtStatus.Cancelled;
                     bool isInstallment = debtStatus == DebtStatus.Installment || (int?)debtStatus == 100;
                     bool hasActiveDebt = debt != null 
                         && (debt.RemainingAmount > 0 || isInstallment) 
@@ -281,12 +283,13 @@
                         && debtStatus != DebtStatus.PaidTransfer 
                         && debtStatus != DebtStatus.PaidCheck 
                         && !isCancelled;
-                    bool isPaid = !isCancelled && (b.IsFullyPaid || (debt != null && (debt.RemainingAmount <= 0 || debt.FullyPaidDate.HasValue || debtStatus == DebtStatus.PaidCash || debtStatus == DebtStatus.PaidTransfer || debtStatus == DebtStatus.PaidCheck)));
-                    bool isNoDebtRecord = debt == null && !b.IsFullyPaid;
-                    bool isOverdue = !isPaid && !isInstallment && !isCancelled && overdueDays > 0;
-                    bool isOverdue120 = !isPaid && !isInstallment && !isCancelled && overdueDays > 120;
+                    bool isPaid = DebtStatusPermissionHelper.IsBillPaid(b, debt);
+                    bool isPendingAudit = !isCancelled && !isPaid && debt == null && b.BillDate >= new DateTime(2026, 1, 1);
+                    bool isNoDebtRecord = debt == null && !isPaid && !isPendingAudit;
+                    bool isOverdue = !isPaid && !isInstallment && !isCancelled && !isPendingAudit && overdueDays > 0;
+                    bool isOverdue120 = !isPaid && !isInstallment && !isCancelled && !isPendingAudit && overdueDays > 120;
 
-                    var rowClass = isCancelled ? "table-secondary text-muted" : (isInstallment ? "table-warning" : (isPaid ? "table-success" : (debtStatus == DebtStatus.BadDebt || isOverdue120 ? "table-danger" : "")));
+                    var rowClass = isCancelled ? "table-secondary text-muted" : (isPendingAudit ? "table-warning bg-opacity-25" : (isInstallment ? "table-warning" : (isPaid ? "table-success" : (debtStatus == DebtStatus.BadDebt || isOverdue120 ? "table-danger" : ""))));
                     <tr class="@rowClass">
                         <td class="fw-bold text-primary">
                             @b.BillNo
@@ -317,13 +320,23 @@
                             <span class="badge bg-info text-dark">@(b.Credit == 0 || b.Credit == 7 ? "เงินสด" : $"{b.Credit} วัน")</span>
                         </td><td class="text-center">@b.BillDate.AddDays(b.Credit).ToString("dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture)</td>
                         <td class="text-center">
-                            @if (isInstallment)
+                            @if (isCancelled)
+                            {
+                                <span class="badge bg-secondary text-white">บิลยกเลิก</span>
+                            }
+                            else if (isInstallment)
                             {
                                 <span class="badge bg-warning text-dark"><i class="bi bi-clock-history me-1"></i>ผ่อนชำระ</span>
                             }
                             else if (isPaid)
                             {
                                 <span class="badge bg-success">ชำระแล้ว</span>
+                            }
+                            else if (isPendingAudit)
+                            {
+                                <span class="badge bg-warning text-dark border border-warning" title="ไม่อยู่ในไฟล์ลูกหนี้ และไม่มีเลขใบเสร็จ (อาจเป็นบิลยกเลิกในระบบ CD)">
+                                    <i class="bi bi-exclamation-triangle-fill text-danger me-1"></i>รอตรวจสอบ
+                                </span>
                             }
                             else if (overdueDays > 0)
                             {
@@ -353,6 +366,12 @@
                             else if (isPaid)
                             {
                                 <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>ชำระครบแล้ว</span>
+                            }
+                            else if (isPendingAudit)
+                            {
+                                <span class="badge bg-warning text-dark border border-danger shadow-sm" title="ไม่อยู่ในไฟล์ลูกหนี้ และยังไม่มีใบเสร็จ (อาจยกเลิกบิลในระบบ CD แล้ว)">
+                                    <i class="bi bi-exclamation-triangle-fill text-danger me-1"></i>รอตรวจสอบ/ยกเลิกในCD
+                                </span>
                             }
                             else if (debtStatus == DebtStatus.BadDebt)
                             {
@@ -404,6 +423,12 @@
                              <a href="/SalesBill/Detail?id=@Uri.EscapeDataString(b.BillNo)" class="btn btn-sm btn-outline-primary shadow-sm" title="ดูรายละเอียดบิล">
                                  <i class="bi bi-eye"></i> ดูบิล
                              </a>
+                            @if (isPendingAudit)
+                            {
+                                <a href="/SalesBill/Detail?id=@Uri.EscapeDataString(b.BillNo)" class="btn btn-sm btn-outline-danger shadow-sm ms-1" title="บิลนี้ไม่อยู่ในลูกหนี้ กดเพื่อตรวจสอบหรือลงบิลยกเลิก">
+                                    <i class="bi bi-x-circle"></i> ยกเลิก
+                                </a>
+                            }
                             @if (canDelete)
                             {
                                 <button type="button" class="btn btn-sm btn-outline-danger ms-1 btn-delete-bill"

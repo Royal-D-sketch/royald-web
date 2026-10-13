@@ -491,6 +491,224 @@ namespace RoyalD.Web.Services
         }
 
         // ==========================================
+        // 4. DATA CLEANSING & PARSING FOR CUSTOMERS
+        // ==========================================
+        public static List<Customer> CleanAndParseCustomers(DataTable tbl)
+        {
+            var list = new List<Customer>();
+            if (tbl == null || tbl.Rows.Count < 2) return list;
+
+            int headerRow = -1;
+            for (int r = 0; r < Math.Min(15, tbl.Rows.Count); r++)
+            {
+                string full = string.Join(" ", tbl.Rows[r].ItemArray.Select(x => x?.ToString()?.Trim() ?? "")).Trim();
+                if (full.Contains("รหัส") && (full.Contains("ชื่อ") || full.Contains("ที่อยู่")))
+                {
+                    headerRow = r;
+                    break;
+                }
+            }
+            if (headerRow < 0) headerRow = 4;
+
+            Customer? currentCust = null;
+
+            for (int r = headerRow + 1; r < tbl.Rows.Count; r++)
+            {
+                var row = tbl.Rows[r];
+                string fullRow = string.Join(" ", row.ItemArray.Select(x => x?.ToString()?.Trim() ?? "")).Trim();
+                if (string.IsNullOrWhiteSpace(fullRow)) continue;
+
+                if (fullRow.Contains("รายละเอียดลูกค้า") || fullRow.Contains("Royal-D") || fullRow.Contains("ประเภท") || fullRow.Contains("โดย ART"))
+                    continue;
+
+                string col0 = tbl.Columns.Count > 0 ? row[0]?.ToString()?.Trim() ?? "" : "";
+                string col1 = tbl.Columns.Count > 1 ? row[1]?.ToString()?.Trim() ?? "" : "";
+                string col2 = tbl.Columns.Count > 2 ? row[2]?.ToString()?.Trim() ?? "" : "";
+                string col3 = tbl.Columns.Count > 3 ? row[3]?.ToString()?.Trim() ?? "" : "";
+                string col4 = tbl.Columns.Count > 4 ? row[4]?.ToString()?.Trim() ?? "" : "";
+                string col5 = tbl.Columns.Count > 5 ? row[5]?.ToString()?.Trim() ?? "" : "";
+
+                if (!string.IsNullOrEmpty(col0) && !col0.StartsWith("รหัส"))
+                {
+                    currentCust = new Customer
+                    {
+                        CustomerCode = col0.Length > 200 ? col0.Substring(0, 200) : col0,
+                        Name = col1.Length > 200 ? col1.Substring(0, 200) : col1,
+                        Address = col2.Length > 1000 ? col2.Substring(0, 1000) : col2,
+                        TaxId = col3.Length > 50 ? col3.Substring(0, 50) : col3,
+                        Branch = col4.Length > 100 ? col4.Substring(0, 100) : col4,
+                        DeliveryAddress = col5.Length > 1000 ? col5.Substring(0, 1000) : col5
+                    };
+                    list.Add(currentCust);
+                }
+                else if (currentCust != null && string.IsNullOrEmpty(col0) && string.IsNullOrEmpty(col1))
+                {
+                    if (!string.IsNullOrEmpty(col2))
+                        currentCust.Address = (currentCust.Address + " " + col2).Trim();
+                    if (!string.IsNullOrEmpty(col5))
+                        currentCust.DeliveryAddress = (currentCust.DeliveryAddress + " " + col5).Trim();
+                }
+            }
+
+            return list;
+        }
+
+        public string? FindLocalCustomerMasterFile()
+        {
+            var candidatePaths = new[]
+            {
+                @"f:\อาร์ต\บิลขาย การ์ดลูกหนี้และการติดตามการชำระเงิน\ข้อมูลลูกค้า\ชื่อรายละเอียดลูกค้า.csv",
+                @"f:\อาร์ต\บิลขาย การ์ดลูกหนี้และการติดตามการชำระเงิน\ข้อมูลลูกค้า\ชื่อรายละเอียดลูกค้า.XLS",
+                @"f:\อาร์ต\บิลขาย การ์ดลูกหนี้และการติดตามการชำระเงิน\ข้อมูลลูกค้า\ชื่อรายละเอียดลูกค้า.xlsx",
+                @"c:\Users\User2\Desktop\อาร์ต\บิลขาย การ์ดลูกหนี้และการติดตามการชำระเงิน\ข้อมูลลูกค้า\ชื่อรายละเอียดลูกค้า.csv",
+                @"c:\Users\User2\Desktop\อาร์ต\บิลขาย การ์ดลูกหนี้และการติดตามการชำระเงิน\ข้อมูลลูกค้า\ชื่อรายละเอียดลูกค้า.XLS",
+                @"c:\Users\User2\Desktop\อาร์ต\บิลขาย การ์ดลูกหนี้และการติดตามการชำระเงิน\ข้อมูลลูกค้า\ชื่อรายละเอียดลูกค้า.xlsx",
+                Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "ข้อมูลลูกค้า", "ชื่อรายละเอียดลูกค้า.csv"),
+                Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "ข้อมูลลูกค้า", "ชื่อรายละเอียดลูกค้า.XLS"),
+                Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "ข้อมูลลูกค้า", "ชื่อรายละเอียดลูกค้า.xlsx")
+            };
+
+            foreach (var p in candidatePaths)
+            {
+                try
+                {
+                    if (File.Exists(p)) return Path.GetFullPath(p);
+                }
+                catch { }
+            }
+            return null;
+        }
+
+        public async Task<(int inserted, int updated, int total)> ImportCustomersAsync(Stream stream, string fileName)
+        {
+            var conf = new ExcelReaderConfiguration { FallbackEncoding = Encoding.GetEncoding(874) };
+            using var reader = fileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
+                ? ExcelReaderFactory.CreateCsvReader(stream, conf)
+                : ExcelReaderFactory.CreateReader(stream, conf);
+
+            var ds = reader.AsDataSet(new ExcelDataSetConfiguration { ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = false } });
+            var tbl = ds.Tables[0];
+            if (tbl == null || tbl.Rows.Count < 2) return (0, 0, 0);
+
+            var parsedCustomers = CleanAndParseCustomers(tbl);
+            var codes = parsedCustomers.Select(c => c.CustomerCode).Distinct().ToList();
+            var existingCustomers = await _db.Customers.Where(c => codes.Contains(c.CustomerCode)).ToDictionaryAsync(c => c.CustomerCode);
+
+            int inserted = 0, updated = 0;
+            foreach (var c in parsedCustomers.GroupBy(x => x.CustomerCode).Select(g => g.First()))
+            {
+                if (existingCustomers.TryGetValue(c.CustomerCode, out var ex))
+                {
+                    if (!string.IsNullOrWhiteSpace(c.Name) && (string.IsNullOrWhiteSpace(ex.Name) || c.Name.Length >= ex.Name.Length))
+                        ex.Name = c.Name;
+                    if (!string.IsNullOrWhiteSpace(c.Address)) ex.Address = c.Address;
+                    if (!string.IsNullOrWhiteSpace(c.TaxId)) ex.TaxId = c.TaxId;
+                    if (!string.IsNullOrWhiteSpace(c.Branch)) ex.Branch = c.Branch;
+                    if (!string.IsNullOrWhiteSpace(c.DeliveryAddress)) ex.DeliveryAddress = c.DeliveryAddress;
+                    if (!string.IsNullOrWhiteSpace(c.District) && string.IsNullOrWhiteSpace(ex.District)) ex.District = c.District;
+                    if (!string.IsNullOrWhiteSpace(c.Province) && string.IsNullOrWhiteSpace(ex.Province)) ex.Province = c.Province;
+                    if (!string.IsNullOrWhiteSpace(c.Phone) && string.IsNullOrWhiteSpace(ex.Phone)) ex.Phone = c.Phone;
+                    updated++;
+                }
+                else
+                {
+                    _db.Customers.Add(c);
+                    existingCustomers[c.CustomerCode] = c;
+                    inserted++;
+                }
+
+                if ((inserted + updated) % 200 == 0)
+                {
+                    await _db.SaveChangesAsync();
+                }
+            }
+
+            await _db.SaveChangesAsync();
+
+            // Auto-sync CustomerName to SalesBills and OutstandingDebts
+            if (codes.Count > 0)
+            {
+                try
+                {
+                    await _db.Database.ExecuteSqlRawAsync(@"
+                        UPDATE ""SalesBills"" sb
+                        SET ""CustomerName"" = CASE WHEN c.""Name"" IS NOT NULL AND c.""Name"" != '' AND LENGTH(c.""Name"") > COALESCE(LENGTH(sb.""CustomerName""), 0) THEN c.""Name"" ELSE sb.""CustomerName"" END,
+                            ""District"" = CASE WHEN (sb.""District"" IS NULL OR sb.""District"" = '') AND (c.""District"" IS NOT NULL AND c.""District"" != '') THEN c.""District"" ELSE sb.""District"" END,
+                            ""Province"" = CASE WHEN (sb.""Province"" IS NULL OR sb.""Province"" = '') AND (c.""Province"" IS NOT NULL AND c.""Province"" != '') THEN c.""Province"" ELSE sb.""Province"" END,
+                            ""Phone"" = CASE WHEN (sb.""Phone"" IS NULL OR sb.""Phone"" = '') AND (c.""Phone"" IS NOT NULL AND c.""Phone"" != '') THEN c.""Phone"" ELSE sb.""Phone"" END,
+                            ""Credit"" = CASE WHEN sb.""Credit"" <= 0 AND c.""Credit"" > 0 THEN c.""Credit"" ELSE sb.""Credit"" END
+                        FROM ""Customers"" c
+                        WHERE sb.""CustomerCode"" = c.""CustomerCode"";
+
+                        UPDATE ""OutstandingDebts"" od
+                        SET ""CustomerName"" = CASE WHEN c.""Name"" IS NOT NULL AND c.""Name"" != '' AND LENGTH(c.""Name"") > COALESCE(LENGTH(od.""CustomerName""), 0) THEN c.""Name"" ELSE od.""CustomerName"" END,
+                            ""District"" = CASE WHEN (od.""District"" IS NULL OR od.""District"" = '') AND (c.""District"" IS NOT NULL AND c.""District"" != '') THEN c.""District"" ELSE od.""District"" END,
+                            ""Province"" = CASE WHEN (od.""Province"" IS NULL OR od.""Province"" = '') AND (c.""Province"" IS NOT NULL AND c.""Province"" != '') THEN c.""Province"" ELSE od.""Province"" END,
+                            ""Credit"" = CASE WHEN od.""Credit"" <= 0 AND c.""Credit"" > 0 THEN c.""Credit"" ELSE od.""Credit"" END
+                        FROM ""Customers"" c
+                        WHERE od.""CustomerCode"" = c.""CustomerCode"";");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning("Customer sync raw sql error: {msg}", ex.Message);
+                }
+            }
+
+            return (inserted, updated, parsedCustomers.Count);
+        }
+
+        public async Task<(bool success, string message, int inserted, int updated, int total)> ImportCustomersFromLocalFileAsync()
+        {
+            var path = FindLocalCustomerMasterFile();
+            if (string.IsNullOrEmpty(path) || !File.Exists(path))
+            {
+                return (false, "ไม่พบไฟล์ชื่อรายละเอียดลูกค้าในโฟลเดอร์เครื่อง (ตรวจสอบที่ โฟลเดอร์ข้อมูลลูกค้า)", 0, 0, 0);
+            }
+
+            using var stream = File.OpenRead(path);
+            var (ins, upd, tot) = await ImportCustomersAsync(stream, Path.GetFileName(path));
+            return (true, $"ซิงค์ข้อมูลลูกค้าสำเร็จจากไฟล์ '{Path.GetFileName(path)}': เพิ่มลูกค้าใหม่ {ins:N0} ราย, อัปเดตข้อมูล {upd:N0} ราย (รวม {tot:N0} ราย)", ins, upd, tot);
+        }
+
+        public Dictionary<string, Customer> TryGetCustomersFromLocalFile(List<string> custCodes)
+        {
+            var result = new Dictionary<string, Customer>();
+            if (custCodes == null || custCodes.Count == 0) return result;
+
+            try
+            {
+                var path = FindLocalCustomerMasterFile();
+                if (string.IsNullOrEmpty(path) || !File.Exists(path)) return result;
+
+                using var stream = File.OpenRead(path);
+                var conf = new ExcelReaderConfiguration { FallbackEncoding = Encoding.GetEncoding(874) };
+                using var reader = path.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
+                    ? ExcelReaderFactory.CreateCsvReader(stream, conf)
+                    : ExcelReaderFactory.CreateReader(stream, conf);
+
+                var ds = reader.AsDataSet(new ExcelDataSetConfiguration { ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = false } });
+                var tbl = ds.Tables[0];
+                if (tbl == null) return result;
+
+                var list = CleanAndParseCustomers(tbl);
+                var targetCodes = custCodes.ToHashSet();
+                foreach (var c in list)
+                {
+                    if (targetCodes.Contains(c.CustomerCode) && !result.ContainsKey(c.CustomerCode))
+                    {
+                        result[c.CustomerCode] = c;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("TryGetCustomersFromLocalFile error: {msg}", ex.Message);
+            }
+
+            return result;
+        }
+
+        // ==========================================
         // PREVIEW / CONFIRM SALES BILL FLOW
         // ==========================================
         private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, ImportPreviewResult> _previewCache = new();
@@ -518,14 +736,32 @@ namespace RoyalD.Web.Services
             var billNos = parsedBills.Select(b => b.BillNo).Distinct().ToList();
             var existingBills = await _db.SalesBills.Where(b => billNos.Contains(b.BillNo)).ToDictionaryAsync(b => b.BillNo);
 
+            // Check which customers are new
+            var allCustCodes = parsedBills.Where(b => !string.IsNullOrEmpty(b.CustomerCode)).Select(b => b.CustomerCode).Distinct().ToList();
+            var existingCustCodes = (await _db.Customers.Where(c => allCustCodes.Contains(c.CustomerCode)).Select(c => c.CustomerCode).ToListAsync()).ToHashSet();
+
             foreach (var b in parsedBills)
             {
+                if (!string.IsNullOrEmpty(b.CustomerCode) && !existingCustCodes.Contains(b.CustomerCode))
+                {
+                    b.IsNewCustomer = true;
+                }
+
                 if (existingBills.TryGetValue(b.BillNo, out var ex))
                 {
-                    b.StatusType = "CHANGED";
-                    b.ExistingAmount = ex.TotalAmount;
-                    result.DuplicateChangedCount++;
-                    result.DuplicateAmount += b.TotalAmount;
+                    if (Math.Abs(ex.TotalAmount - b.TotalAmount) < 0.01m)
+                    {
+                        b.StatusType = "SAME";
+                        b.ExistingAmount = ex.TotalAmount;
+                        result.DuplicateSameCount++;
+                    }
+                    else
+                    {
+                        b.StatusType = "CHANGED";
+                        b.ExistingAmount = ex.TotalAmount;
+                        result.DuplicateChangedCount++;
+                        result.DuplicateAmount += b.TotalAmount;
+                    }
                 }
                 else
                 {
@@ -535,6 +771,7 @@ namespace RoyalD.Web.Services
                 }
             }
 
+            result.NewCustomerCount = parsedBills.Where(b => b.IsNewCustomer).Select(b => b.CustomerCode).Distinct().Count();
             result.Items = parsedBills;
             SetPreview(result.PreviewId, result);
             return result;
@@ -556,22 +793,44 @@ namespace RoyalD.Web.Services
                 .Where(b => !string.IsNullOrEmpty(b.CustomerCode) && !string.IsNullOrEmpty(b.CustomerName))
                 .GroupBy(b => b.CustomerCode)
                 .ToDictionary(g => g.Key!, g => g.OrderByDescending(b => b.CustomerName!.Length).First().CustomerName!);
+
+            // Try auto-enriching new customers from local customer master file if present
+            var newCustCodes = custCodes.Where(code => !existingCustsSet.Contains(code)).ToList();
+            Dictionary<string, Customer>? localEnriched = null;
+            if (newCustCodes.Count > 0)
+            {
+                localEnriched = TryGetCustomersFromLocalFile(newCustCodes);
+            }
+
             foreach (var b in p.Items)
             {
                 if (!string.IsNullOrEmpty(b.CustomerCode) && !existingCustsSet.Contains(b.CustomerCode))
                 {
-                    _db.Customers.Add(new Customer
+                    Customer newCust;
+                    if (localEnriched != null && localEnriched.TryGetValue(b.CustomerCode, out var fromFile))
                     {
-                        CustomerCode = b.CustomerCode,
-                        Name = b.CustomerName ?? "",
-                        District = b.District ?? "",
-                        Province = b.Province ?? "",
-                        Phone = b.Phone ?? ""
-                    });
+                        newCust = fromFile;
+                        if (string.IsNullOrEmpty(newCust.District) && !string.IsNullOrEmpty(b.District)) newCust.District = b.District;
+                        if (string.IsNullOrEmpty(newCust.Province) && !string.IsNullOrEmpty(b.Province)) newCust.Province = b.Province;
+                        if (string.IsNullOrEmpty(newCust.Phone) && !string.IsNullOrEmpty(b.Phone)) newCust.Phone = b.Phone;
+                    }
+                    else
+                    {
+                        newCust = new Customer
+                        {
+                            CustomerCode = b.CustomerCode,
+                            Name = b.CustomerName ?? "",
+                            District = b.District ?? "",
+                            Province = b.Province ?? "",
+                            Phone = b.Phone ?? ""
+                        };
+                    }
+
+                    _db.Customers.Add(newCust);
                     existingCustsSet.Add(b.CustomerCode);
                 }
             }
-            // Update existing customers if import has a longer name
+            // Update existing customers if import has a longer name (never overwrite address/taxid)
             foreach (var cust in existingCustEntities)
             {
                 if (bestNameMap.TryGetValue(cust.CustomerCode, out var newName) && newName.Length > (cust.Name?.Length ?? 0))
@@ -591,11 +850,12 @@ namespace RoyalD.Web.Services
                     {
                         ex.BillDate = b.BillDate;
                         ex.CustomerCode = b.CustomerCode;
-                        ex.CustomerName = b.CustomerName;
+                        if (string.IsNullOrEmpty(ex.CustomerName) || (b.CustomerName != null && b.CustomerName.Length > ex.CustomerName.Length))
+                            ex.CustomerName = b.CustomerName;
                         ex.District = b.District;
                         ex.Province = b.Province;
                         ex.SalesRep = b.SalesRep;
-                        ex.Phone = b.Phone;
+                        if (!string.IsNullOrEmpty(b.Phone)) ex.Phone = b.Phone;
                         ex.Credit = b.Credit;
                         ex.TotalAmount = b.TotalAmount;
                         ex.SourceMonth = p.FileType ?? "";
@@ -741,18 +1001,52 @@ namespace RoyalD.Web.Services
                 try
                 {
                     await _db.Database.ExecuteSqlRawAsync(@"
+                        -- 1. บิลที่การ์ดลูกหนี้ระบุเป็นยกเลิก (Status = 14) ให้ปรับบิลขายเป็น IsCancelled = true และ IsFullyPaid = false
+                        UPDATE ""SalesBills"" b
+                        SET ""IsCancelled"" = true, ""IsFullyPaid"" = false
+                        WHERE EXISTS (
+                            SELECT 1 FROM ""OutstandingDebts"" d
+                            WHERE d.""BillNo"" = b.""BillNo""
+                            AND d.""Status"" = 14
+                        );
+
+                        -- 2. บิลที่ถูกยกเลิก ต้องไม่เป็น IsFullyPaid
+                        UPDATE ""SalesBills""
+                        SET ""IsFullyPaid"" = false
+                        WHERE ""IsCancelled"" = true AND ""IsFullyPaid"" = true;
+
+                        -- 3. บิลเก่าปี 2568 และก่อนหน้า (< 2026-01-01): 
+                        -- ยึดยอดยกมาในอดีต ถ้าไม่มียอดค้างใน OutstandingDebts และไม่ยกเลิก ให้ถือว่ารับชำระแล้ว
                         UPDATE ""SalesBills"" b
                         SET ""IsFullyPaid"" = true
                         WHERE ""IsFullyPaid"" = false
+                        AND ""IsCancelled"" = false
+                        AND b.""BillDate"" < '2026-01-01'
                         AND NOT EXISTS (
                             SELECT 1 FROM ""OutstandingDebts"" d
                             WHERE d.""BillNo"" = b.""BillNo""
                             AND d.""Status"" NOT IN (1, 2, 3, 14)
                             AND (d.""RemainingAmount"" > 0 OR d.""Status"" = 4 OR d.""Status"" = 100)
                             AND d.""FullyPaidDate"" IS NULL
-                        )
-                        AND b.""BillDate"" < (CURRENT_DATE - INTERVAL '7 days');
+                        );
 
+                        -- 4. บิลปัจจุบันปี 2569 เป็นต้นไป (>= 2026-01-01):
+                        -- ต้องมีเลขที่ใบเสร็จรับเงิน หรือมีการ์ดลูกหนี้ที่มีสถานะชำระแล้ว (1, 2, 3) เท่านั้น จึงจะถือว่า IsFullyPaid = true
+                        UPDATE ""SalesBills"" b
+                        SET ""IsFullyPaid"" = true
+                        WHERE ""IsFullyPaid"" = false
+                        AND ""IsCancelled"" = false
+                        AND b.""BillDate"" >= '2026-01-01'
+                        AND (
+                            (b.""ReceiptNo"" IS NOT NULL AND b.""ReceiptNo"" != '')
+                            OR EXISTS (
+                                SELECT 1 FROM ""OutstandingDebts"" d
+                                WHERE d.""BillNo"" = b.""BillNo""
+                                AND (d.""Status"" IN (1, 2, 3) OR (d.""RemainingAmount"" <= 0 AND d.""FullyPaidDate"" IS NOT NULL))
+                            )
+                        );
+
+                        -- 5. หากมีลูกหนี้คงเหลือที่ยังค้างอยู่ ต้องปลด IsFullyPaid = false เสมอ
                         UPDATE ""SalesBills"" b
                         SET ""IsFullyPaid"" = false
                         WHERE ""IsFullyPaid"" = true
@@ -795,24 +1089,111 @@ namespace RoyalD.Web.Services
 
             var cleanedRows = CleanAndParseReceipts(tbl, out DateTime maxDate);
             result.LatestDate = maxDate;
+            result.TotalRows = cleanedRows.Count;
+            result.TotalAmount = cleanedRows.Sum(r => r.Amount);
 
             var billNosInFile = cleanedRows.Select(r => r.BillNo).Distinct().ToList();
-            var existingBillsWithReceipt = await _db.SalesBills
-                .Where(b => billNosInFile.Contains(b.BillNo) && b.ReceiptNo != null && b.ReceiptNo != "")
-                .ToDictionaryAsync(b => b.BillNo, b => b.ReceiptNo);
+
+            // Query existing bills in SalesBills
+            var existingSalesBills = await _db.SalesBills
+                .Where(b => billNosInFile.Contains(b.BillNo))
+                .ToListAsync();
+            var salesBillsDict = existingSalesBills
+                .GroupBy(b => b.BillNo)
+                .ToDictionary(g => g.Key, g => g.First());
+
+            // Query existing debts in OutstandingDebts
+            var existingDebts = await _db.OutstandingDebts
+                .Where(d => billNosInFile.Contains(d.BillNo))
+                .ToListAsync();
+            var debtsDict = existingDebts
+                .GroupBy(d => d.BillNo)
+                .ToDictionary(g => g.Key, g => g.First());
+
+            // Customers lookup
+            var custCodes = cleanedRows.Where(r => !string.IsNullOrEmpty(r.CustomerCode)).Select(r => r.CustomerCode).Distinct().ToList();
+            var custMap = await _db.Customers
+                .Where(c => custCodes.Contains(c.CustomerCode))
+                .ToDictionaryAsync(c => c.CustomerCode, c => c.Name);
 
             foreach (var pr in cleanedRows)
             {
-                if (existingBillsWithReceipt.TryGetValue(pr.BillNo, out var existingReceipt))
+                bool foundInBills = salesBillsDict.TryGetValue(pr.BillNo, out var sb);
+                bool foundInDebts = debtsDict.TryGetValue(pr.BillNo, out var db);
+
+                pr.FoundInSalesBills = foundInBills;
+                pr.FoundInDebts = foundInDebts;
+
+                // Customer Name
+                if (!string.IsNullOrEmpty(pr.CustomerCode) && custMap.TryGetValue(pr.CustomerCode, out var cname))
                 {
-                    pr.ExistingReceiptNo = existingReceipt ?? "";
-                    pr.IsDuplicate = true;
-                    result.Duplicates.Add(pr);
+                    pr.CustomerName = cname;
+                }
+                else if (sb != null && !string.IsNullOrEmpty(sb.CustomerName))
+                {
+                    pr.CustomerName = sb.CustomerName;
+                }
+                else if (db != null && !string.IsNullOrEmpty(db.CustomerName))
+                {
+                    pr.CustomerName = db.CustomerName;
+                }
+
+                // Determine Bill Amount from DB
+                decimal billAmt = 0;
+                if (sb != null && sb.TotalAmount > 0) billAmt = sb.TotalAmount;
+                else if (db != null) billAmt = db.OriginalAmount > 0 ? db.OriginalAmount : db.RemainingAmount;
+                pr.BillAmount = billAmt;
+                pr.AmountDiff = pr.Amount - billAmt;
+
+                // Existing Receipt in DB
+                string existingReceipt = "";
+                if (sb != null && !string.IsNullOrEmpty(sb.ReceiptNo)) existingReceipt = sb.ReceiptNo;
+                else if (db != null && !string.IsNullOrEmpty(db.ReceiptNo)) existingReceipt = db.ReceiptNo;
+                pr.ExistingReceiptNo = existingReceipt;
+
+                if (!foundInBills && !foundInDebts)
+                {
+                    // Case 1: NOT FOUND in system (missing bill)
+                    pr.Status = "NOT_FOUND";
+                    result.NotFoundCount++;
+                    result.NotFoundAmount += pr.Amount;
+                    result.NotFoundRows.Add(pr);
+                }
+                else if (!string.IsNullOrEmpty(existingReceipt))
+                {
+                    if (string.Equals(existingReceipt.Trim(), pr.ReceiptNo.Trim(), StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Case 2: ALREADY MATCHED (same receipt number already recorded)
+                        pr.Status = "ALREADY_MATCHED";
+                        result.AlreadyMatchedCount++;
+                        result.AlreadyMatchedAmount += pr.Amount;
+                        result.AlreadyMatchedRows.Add(pr);
+                    }
+                    else
+                    {
+                        // Case 3: RECEIPT CHANGED (different receipt number recorded previously)
+                        pr.Status = "RECEIPT_CHANGED";
+                        pr.IsDuplicate = true;
+                        result.ReceiptChangedCount++;
+                        result.ReceiptChangedAmount += pr.Amount;
+                        result.Duplicates.Add(pr);
+                    }
                 }
                 else
                 {
+                    // Case 4: NEW MATCH
+                    pr.Status = "NEW_MATCH";
+                    result.NewMatchCount++;
+                    result.NewMatchAmount += pr.Amount;
                     result.NewRows.Add(pr);
                 }
+
+                if (billAmt > 0 && Math.Abs(pr.Amount - billAmt) > 0.01m)
+                {
+                    result.AmountMismatchCount++;
+                }
+
+                result.AllRows.Add(pr);
             }
 
             result.PreviewId = Guid.NewGuid().ToString("N");
@@ -841,7 +1222,10 @@ namespace RoyalD.Web.Services
 
             if (preview != null)
             {
+                // Process all new matches
                 rowsToProcess.AddRange(preview.NewRows);
+
+                // Process changed receipts if selected or if updateDuplicates is true
                 if (updateDuplicates)
                 {
                     var dups = selectedDuplicateBillNos != null && selectedDuplicateBillNos.Count > 0
@@ -849,6 +1233,9 @@ namespace RoyalD.Web.Services
                         : preview.Duplicates;
                     rowsToProcess.AddRange(dups);
                 }
+
+                // Also ensure already matched rows have fully paid flag verified
+                rowsToProcess.AddRange(preview.AlreadyMatchedRows);
             }
 
             int matched = 0, notFound = 0;
@@ -952,9 +1339,15 @@ namespace RoyalD.Web.Services
         public DateTime ReceiptDate { get; set; }
         public string ReceiptDateStr { get; set; } = "";
         public string CustomerCode { get; set; } = "";
+        public string CustomerName { get; set; } = "";
         public decimal Amount { get; set; }
+        public decimal BillAmount { get; set; }
+        public decimal AmountDiff { get; set; }
         public string ExistingReceiptNo { get; set; } = "";
         public bool IsDuplicate { get; set; }
+        public string Status { get; set; } = "NEW_MATCH"; // NEW_MATCH, ALREADY_MATCHED, RECEIPT_CHANGED, NOT_FOUND
+        public bool FoundInSalesBills { get; set; }
+        public bool FoundInDebts { get; set; }
     }
 
     public class ReceiptPreviewResult
@@ -962,7 +1355,27 @@ namespace RoyalD.Web.Services
         public string PreviewId { get; set; } = "";
         public string FileName { get; set; } = "";
         public DateTime LatestDate { get; set; }
+        public int TotalRows { get; set; }
+        public decimal TotalAmount { get; set; }
+
+        public int NewMatchCount { get; set; }
+        public decimal NewMatchAmount { get; set; }
+
+        public int AlreadyMatchedCount { get; set; }
+        public decimal AlreadyMatchedAmount { get; set; }
+
+        public int ReceiptChangedCount { get; set; }
+        public decimal ReceiptChangedAmount { get; set; }
+
+        public int NotFoundCount { get; set; }
+        public decimal NotFoundAmount { get; set; }
+
+        public int AmountMismatchCount { get; set; }
+
         public List<ReceiptPreviewRow> NewRows { get; set; } = new();
         public List<ReceiptPreviewRow> Duplicates { get; set; } = new();
+        public List<ReceiptPreviewRow> AlreadyMatchedRows { get; set; } = new();
+        public List<ReceiptPreviewRow> NotFoundRows { get; set; } = new();
+        public List<ReceiptPreviewRow> AllRows { get; set; } = new();
     }
 }
