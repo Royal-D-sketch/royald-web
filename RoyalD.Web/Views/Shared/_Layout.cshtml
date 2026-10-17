@@ -24,6 +24,7 @@
     bool hasDash = isAdmin || allowedPagesList.Contains("dashboard");
     bool hasBill = isAdmin || allowedPagesList.Contains("salesbill");
     bool hasCustProd = isAdmin || allowedPagesList.Contains("customerproduct") || (isSalesRep && allowedPagesList.Contains("salesbill"));
+    bool hasGroupSales = isAdmin || isSalesRep || allowedPagesList.Contains("productgroupsales") || allowedPagesList.Contains("salesreport") || allowedPagesList.Contains("salesbill") || hasCustProd;
     bool hasCustSum = isAdmin || allowedPagesList.Contains("customerpurchasesummary");
     bool hasDebt = isAdmin || allowedPagesList.Contains("debtor");
     bool hasHist = isAdmin || allowedPagesList.Contains("debtorhistory") || allowedPagesList.Contains("history");
@@ -339,7 +340,7 @@
                     </a>
                 }
 
-                @if (hasBill || hasCustProd || hasCancel)
+                @if (hasBill || hasCustProd || hasGroupSales || hasCancel)
                 {
                     <div class="nav-section">บิลขาย</div>
                     @if (hasBill) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesBill" ? "active" : "")"
@@ -349,6 +350,10 @@
                     @if (hasCustProd) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && ViewContext.RouteData.Values["action"]?.ToString() == "CustomerProduct" ? "active" : "")"
                        href="/SalesReport/CustomerProduct">
                         <i class="bi bi-shop"></i> รายการขายรายลูกค้า
+                    </a> }
+                    @if (hasGroupSales) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesReport" && ViewContext.RouteData.Values["action"]?.ToString() == "ProductGroupSales" ? "active" : "")"
+                       href="/SalesReport/ProductGroupSales">
+                        <i class="bi bi-collection"></i> รายงานผู้แทนขายแยกตามกลุ่มสินค้า
                     </a> }
                     @if (isAdmin || allowedPagesList.Contains("waitinggoodsreport")) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "WaitingGoods" ? "active" : "")"
                        href="/Report/WaitingGoods">

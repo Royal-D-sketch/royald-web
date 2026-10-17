@@ -1,3 +1,8 @@
+using System.Drawing;
+using RoyalD.Web.Models;
+using OfficeOpenXml.Style;
+using OfficeOpenXml;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
@@ -318,7 +323,407 @@ namespace RoyalD.Web.Controllers
 
             return File(result, "text/csv", $"Customer_Sales_Report_{DateTime.Now:yyyyMMdd}.csv");
         }
-    }
+    
+
+        // ==========================================
+        // รายงานผู้แทนขายแยกตามกลุ่มสินค้า และใบลดหนี้ (ตัดรอบ 25 / ช่วงวันที่)
+        // ==========================================
+        [HttpGet]
+        public async Task<IActionResult> ProductGroupSales(
+            [FromServices] AppDbContext db,
+            [FromServices] ProductGroupService groupService,
+            string? salesRep = null,
+            string? month25 = null,
+            DateTime? startDate = null,
+            DateTime? endDate = null)
+        {
+            var vm = await BuildProductGroupSalesVmAsync(db, groupService, salesRep, month25, startDate, endDate);
+            return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportProductGroupSalesExcel(
+            [FromServices] AppDbContext db,
+            [FromServices] ProductGroupService groupService,
+            string? salesRep = null,
+            string? month25 = null,
+            DateTime? startDate = null,
+            DateTime? endDate = null)
+        {
+            var vm = await BuildProductGroupSalesVmAsync(db, groupService, salesRep, month25, startDate, endDate);
+
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            using var package = new ExcelPackage();
+
+            // -------------------------------------------------------------
+            // Sheet 1: สรุปยอดขายและลดหนี้แยกกลุ่มสินค้า
+            // -------------------------------------------------------------
+            var ws1 = package.Workbook.Worksheets.Add("สรุปกลุ่มสินค้า");
+            ws1.Cells.Style.Font.Name = "Sarabun";
+            ws1.Cells.Style.Font.Size = 11;
+
+            // Header info
+            ws1.Cells["A1"].Value = "บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด";
+            ws1.Cells["A1"].Style.Font.Size = 16;
+            ws1.Cells["A1"].Style.Font.Bold = true;
+            ws1.Cells["A1"].Style.Font.Color.SetColor(Color.FromArgb(15, 118, 110));
+
+            ws1.Cells["A2"].Value = $"รายงานผู้แทนขายแยกตามกลุ่มสินค้าและใบลดหนี้ (ผู้แทน: {(string.IsNullOrEmpty(vm.SelectedSalesRep) ? "ทุกคน" : vm.SelectedSalesRep)} | ช่วงวันที่: {vm.StartDate:dd/MM/yyyy} - {vm.EndDate:dd/MM/yyyy})";
+            ws1.Cells["A2"].Style.Font.Size = 12;
+            ws1.Cells["A2"].Style.Font.Bold = true;
+
+            int row1 = 4;
+            string[] headers1 = { "ลำดับ", "รหัสกลุ่ม", "ชื่อกลุ่มสินค้า", "จำนวนขาย", "ยอดเงินขาย (บาท)", "จำนวนคืน", "ยอดลดหนี้ (บาท)", "ยอดขายสุทธิ (บาท)" };
+            for (int col = 0; col < headers1.Length; col++)
+            {
+                var cell = ws1.Cells[row1, col + 1];
+                cell.Value = headers1[col];
+                cell.Style.Font.Bold = true;
+                cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                cell.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(13, 148, 136));
+                cell.Style.Font.Color.SetColor(Color.White);
+                cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                cell.Style.Border.BorderAround(ExcelBorderStyle.Thin, Color.FromArgb(15, 118, 110));
+            }
+
+            int seq1 = 1;
+            foreach (var g in vm.Groups)
+            {
+                row1++;
+                ws1.Cells[row1, 1].Value = seq1++;
+                ws1.Cells[row1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                ws1.Cells[row1, 2].Value = g.GroupCode;
+                ws1.Cells[row1, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                ws1.Cells[row1, 3].Value = g.GroupName;
+                ws1.Cells[row1, 4].Value = g.GroupSalesQty;
+                ws1.Cells[row1, 4].Style.Numberformat.Format = "#,##0.00";
+                ws1.Cells[row1, 5].Value = g.GroupSalesAmount;
+                ws1.Cells[row1, 5].Style.Numberformat.Format = "#,##0.00";
+                ws1.Cells[row1, 6].Value = g.GroupReturnQty;
+                ws1.Cells[row1, 6].Style.Numberformat.Format = "#,##0.00";
+                ws1.Cells[row1, 7].Value = g.GroupCreditAmount;
+                ws1.Cells[row1, 7].Style.Numberformat.Format = "#,##0.00";
+                ws1.Cells[row1, 8].Value = g.GroupNetSalesAmount;
+                ws1.Cells[row1, 8].Style.Numberformat.Format = "#,##0.00";
+                ws1.Cells[row1, 8].Style.Font.Bold = true;
+            }
+
+            // Summary Total Row
+            row1++;
+            ws1.Cells[row1, 1, row1, 3].Merge = true;
+            ws1.Cells[row1, 1].Value = "รวมทั้งสิ้น";
+            ws1.Cells[row1, 1].Style.Font.Bold = true;
+            ws1.Cells[row1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            ws1.Cells[row1, 4].Value = vm.TotalSalesQty;
+            ws1.Cells[row1, 4].Style.Numberformat.Format = "#,##0.00";
+            ws1.Cells[row1, 5].Value = vm.TotalGrossSales;
+            ws1.Cells[row1, 5].Style.Numberformat.Format = "#,##0.00";
+            ws1.Cells[row1, 6].Value = vm.TotalReturnQty;
+            ws1.Cells[row1, 6].Style.Numberformat.Format = "#,##0.00";
+            ws1.Cells[row1, 7].Value = vm.TotalCreditNotes;
+            ws1.Cells[row1, 7].Style.Numberformat.Format = "#,##0.00";
+            ws1.Cells[row1, 8].Value = vm.TotalNetSales;
+            ws1.Cells[row1, 8].Style.Numberformat.Format = "#,##0.00";
+            ws1.Cells[row1, 1, row1, 8].Style.Font.Bold = true;
+            ws1.Cells[row1, 1, row1, 8].Style.Fill.PatternType = ExcelFillStyle.Solid;
+            ws1.Cells[row1, 1, row1, 8].Style.Fill.BackgroundColor.SetColor(Color.FromArgb(204, 251, 241));
+
+            ws1.Cells[4, 1, row1, 8].Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            ws1.Cells[4, 1, row1, 8].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            ws1.Cells[4, 1, row1, 8].Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            ws1.Cells[4, 1, row1, 8].Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            ws1.Cells.AutoFitColumns();
+
+            // -------------------------------------------------------------
+            // Sheet 2: รายละเอียดสินค้าทุกรายการ
+            // -------------------------------------------------------------
+            var ws2 = package.Workbook.Worksheets.Add("รายละเอียดสินค้า");
+            ws2.Cells.Style.Font.Name = "Sarabun";
+            ws2.Cells.Style.Font.Size = 10;
+
+            ws2.Cells["A1"].Value = "รายละเอียดสินค้าและกระทบยอดใบลดหนี้รายตัว";
+            ws2.Cells["A1"].Style.Font.Size = 14;
+            ws2.Cells["A1"].Style.Font.Bold = true;
+
+            int row2 = 3;
+            string[] headers2 = { "ลำดับ", "กลุ่มสินค้า", "รหัสสินค้า", "ชื่อสินค้า", "หน่วย", "จำนวนขาย", "ยอดเงินขาย (บาท)", "เลขที่ใบลดหนี้", "จำนวนคืน", "ยอดลดหนี้ (บาท)", "ยอดขายสุทธิ (บาท)" };
+            for (int col = 0; col < headers2.Length; col++)
+            {
+                var cell = ws2.Cells[row2, col + 1];
+                cell.Value = headers2[col];
+                cell.Style.Font.Bold = true;
+                cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                cell.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(15, 118, 110));
+                cell.Style.Font.Color.SetColor(Color.White);
+                cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            }
+
+            int seq2 = 1;
+            foreach (var g in vm.Groups)
+            {
+                foreach (var item in g.Items)
+                {
+                    row2++;
+                    ws2.Cells[row2, 1].Value = seq2++;
+                    ws2.Cells[row2, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    ws2.Cells[row2, 2].Value = g.GroupName;
+                    ws2.Cells[row2, 3].Value = item.ProductCode;
+                    ws2.Cells[row2, 3].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    ws2.Cells[row2, 4].Value = item.ProductName;
+                    ws2.Cells[row2, 5].Value = item.Unit;
+                    ws2.Cells[row2, 5].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    ws2.Cells[row2, 6].Value = item.SalesQty;
+                    ws2.Cells[row2, 6].Style.Numberformat.Format = "#,##0.00";
+                    ws2.Cells[row2, 7].Value = item.SalesAmount;
+                    ws2.Cells[row2, 7].Style.Numberformat.Format = "#,##0.00";
+                    ws2.Cells[row2, 8].Value = item.CreditNoteNos.Any() ? string.Join(", ", item.CreditNoteNos) : "-";
+                    ws2.Cells[row2, 8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    ws2.Cells[row2, 9].Value = item.ReturnQty;
+                    ws2.Cells[row2, 9].Style.Numberformat.Format = "#,##0.00";
+                    ws2.Cells[row2, 10].Value = item.CreditAmount;
+                    ws2.Cells[row2, 10].Style.Numberformat.Format = "#,##0.00";
+                    ws2.Cells[row2, 11].Value = item.NetSalesAmount;
+                    ws2.Cells[row2, 11].Style.Numberformat.Format = "#,##0.00";
+                    ws2.Cells[row2, 11].Style.Font.Bold = true;
+
+                    if (item.HasCreditNote)
+                    {
+                        ws2.Cells[row2, 8, row2, 10].Style.Font.Color.SetColor(Color.FromArgb(185, 28, 28));
+                        ws2.Cells[row2, 8].Style.Font.Bold = true;
+                    }
+                }
+            }
+
+            ws2.Cells[3, 1, row2, 11].Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            ws2.Cells[3, 1, row2, 11].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            ws2.Cells[3, 1, row2, 11].Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            ws2.Cells[3, 1, row2, 11].Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            ws2.Cells.AutoFitColumns();
+
+            var bytes = package.GetAsByteArray();
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"ProductGroupSales_{DateTime.Now:yyyyMMdd_HHmm}.xlsx");
+        }
+
+        private async Task<ProductGroupSalesReportViewModel> BuildProductGroupSalesVmAsync(
+            AppDbContext db,
+            ProductGroupService groupService,
+            string? salesRep,
+            string? month25,
+            DateTime? startDate,
+            DateTime? endDate)
+        {
+            bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin") || (User.Identity?.Name?.ToLower() == "art");
+            var pos = User.FindFirst("Position")?.Value ?? "";
+            bool isSalesRepRole = !isAdmin && (pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย"));
+            string? userRepCode = User.FindFirst("SalesRepCode")?.Value;
+            bool isRestricted = isSalesRepRole || !string.IsNullOrWhiteSpace(userRepCode);
+
+            var allReps = await _cache.GetOrCreateAsync("all_sales_reps_list", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
+                return await SalesRepHelper.GetAllKnownSalesRepsAsync(db, _cache);
+            }) ?? new List<string>();
+
+            var (filterReps, selectedRepForUi, isRestrictedRep) = SalesRepHelper.ResolveFilter(isRestricted, userRepCode, salesRep, allReps);
+
+            // Generate Available 25th Months options
+            string[] thaiMonthAbbr = { "", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค." };
+            var availableMonths25 = new List<Month25Option>();
+            var today = DateTime.Today;
+            for (int i = 0; i < 14; i++)
+            {
+                var refDate = today.AddMonths(-i);
+                int y = refDate.Year;
+                int m = refDate.Month;
+
+                DateTime s25 = m == 1 ? new DateTime(y - 1, 12, 26) : new DateTime(y, m - 1, 26);
+                DateTime e25 = new DateTime(y, m, 25);
+                string key = $"{y}-{m:D2}";
+                int thaiYearShort = (y > 2500 ? y : y + 543) % 100;
+                string label = $"รอบตัด 25 {thaiMonthAbbr[m]} {thaiYearShort:D2} ({s25:dd/MM/yy} - {e25:dd/MM/yy})";
+
+                availableMonths25.Add(new Month25Option
+                {
+                    Key = key,
+                    Label = label,
+                    StartDate = s25,
+                    EndDate = e25
+                });
+            }
+
+            DateTime finalStart;
+            DateTime finalEnd;
+            string selectedM25 = month25 ?? "";
+
+            if (!string.IsNullOrEmpty(month25) && availableMonths25.Any(x => x.Key == month25))
+            {
+                var opt = availableMonths25.First(x => x.Key == month25);
+                finalStart = opt.StartDate;
+                finalEnd = opt.EndDate.AddDays(1).AddTicks(-1);
+            }
+            else if (startDate.HasValue && endDate.HasValue)
+            {
+                finalStart = startDate.Value.Date;
+                finalEnd = endDate.Value.Date.AddDays(1).AddTicks(-1);
+            }
+            else
+            {
+                var currentCycle = availableMonths25.First();
+                selectedM25 = currentCycle.Key;
+                finalStart = currentCycle.StartDate;
+                finalEnd = currentCycle.EndDate.AddDays(1).AddTicks(-1);
+            }
+
+            // 1. Query Sales Bills
+            var billsQuery = db.SalesBills.AsNoTracking()
+                .Where(b => !b.IsCancelled && b.BillDate >= finalStart && b.BillDate <= finalEnd);
+
+            if (filterReps != null && filterReps.Any())
+            {
+                billsQuery = billsQuery.Where(b => filterReps.Contains(b.SalesRep));
+            }
+
+            var billList = await billsQuery.Select(b => new { b.BillNo, b.SalesRep, b.BillDate }).ToListAsync();
+            var billNos = billList.Select(b => b.BillNo).ToList();
+
+            var itemsList = await db.SalesBillItems.AsNoTracking()
+                .Where(i => billNos.Contains(i.BillNo))
+                .Select(i => new { i.BillNo, i.ProductCode, i.ProductName, i.Unit, i.Qty, i.Amount })
+                .ToListAsync();
+
+            // 2. Query Credit Notes
+            var cnQuery = db.CreditNotes.AsNoTracking()
+                .Include(c => c.Items)
+                .Where(c => c.Status != "Cancelled" && c.CreditNoteDate >= finalStart && c.CreditNoteDate <= finalEnd);
+
+            if (filterReps != null && filterReps.Any())
+            {
+                cnQuery = cnQuery.Where(c => filterReps.Contains(c.SalesRep) || filterReps.Contains(c.OriginalSalesRep));
+            }
+
+            var creditNoteList = await cnQuery.ToListAsync();
+
+            var vm = new ProductGroupSalesReportViewModel
+            {
+                SalesReps = isRestrictedRep ? SalesRepHelper.GetAssignedSalesReps(userRepCode, allReps) : allReps,
+                SelectedSalesRep = selectedRepForUi ?? "",
+                IsRestrictedRep = isRestrictedRep,
+                SelectedMonth25 = selectedM25,
+                StartDate = finalStart.Date,
+                EndDate = finalEnd.Date,
+                AvailableMonths25 = availableMonths25,
+                TotalCreditNoteCount = creditNoteList.Count
+            };
+
+            var allMasterGroups = groupService.GetAllGroups();
+            var groupDict = new Dictionary<string, ProductGroupSummaryItem>();
+
+            foreach (var g in allMasterGroups)
+            {
+                groupDict[g.Code] = new ProductGroupSummaryItem
+                {
+                    GroupCode = g.Code,
+                    GroupName = g.Name
+                };
+            }
+            if (!groupDict.ContainsKey("20"))
+            {
+                groupDict["20"] = new ProductGroupSummaryItem { GroupCode = "20", GroupName = "กลุ่ม อิสระ" };
+            }
+
+            var itemMap = new Dictionary<string, Dictionary<string, ProductItemReconcileRow>>();
+            foreach (var gCode in groupDict.Keys)
+            {
+                itemMap[gCode] = new Dictionary<string, ProductItemReconcileRow>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            // Sales items
+            foreach (var item in itemsList)
+            {
+                var gInfo = groupService.GetProductGroup(item.ProductCode, item.ProductName, item.Unit);
+                string gCode = gInfo.GroupCode;
+                if (!groupDict.ContainsKey(gCode)) gCode = "20";
+
+                var gItems = itemMap[gCode];
+                string pCode = string.IsNullOrWhiteSpace(item.ProductCode) ? "-" : item.ProductCode.Trim();
+
+                if (!gItems.TryGetValue(pCode, out var row))
+                {
+                    row = new ProductItemReconcileRow
+                    {
+                        ProductCode = pCode,
+                        ProductName = !string.IsNullOrEmpty(gInfo.ProductName) ? gInfo.ProductName : item.ProductName,
+                        Unit = !string.IsNullOrEmpty(gInfo.Unit) ? gInfo.Unit : (!string.IsNullOrEmpty(item.Unit) ? item.Unit : "ชิ้น")
+                    };
+                    gItems[pCode] = row;
+                }
+
+                row.SalesQty += item.Qty;
+                row.SalesAmount += item.Amount;
+            }
+
+            // Credit Notes items
+            foreach (var cn in creditNoteList)
+            {
+                foreach (var cnItem in cn.Items)
+                {
+                    var gInfo = groupService.GetProductGroup(cnItem.ProductCode, cnItem.ProductName, cnItem.Unit);
+                    string gCode = gInfo.GroupCode;
+                    if (!groupDict.ContainsKey(gCode)) gCode = "20";
+
+                    var gItems = itemMap[gCode];
+                    string pCode = string.IsNullOrWhiteSpace(cnItem.ProductCode) ? "-" : cnItem.ProductCode.Trim();
+
+                    if (!gItems.TryGetValue(pCode, out var row))
+                    {
+                        row = new ProductItemReconcileRow
+                        {
+                            ProductCode = pCode,
+                            ProductName = !string.IsNullOrEmpty(gInfo.ProductName) ? gInfo.ProductName : cnItem.ProductName,
+                            Unit = !string.IsNullOrEmpty(gInfo.Unit) ? gInfo.Unit : (!string.IsNullOrEmpty(cnItem.Unit) ? cnItem.Unit : "ชิ้น")
+                        };
+                        gItems[pCode] = row;
+                    }
+
+                    row.ReturnQty += cnItem.TotalReturnQty;
+                    row.CreditAmount += cnItem.TotalAmount;
+                    if (!string.IsNullOrEmpty(cn.CreditNoteNo) && !row.CreditNoteNos.Contains(cn.CreditNoteNo))
+                    {
+                        row.CreditNoteNos.Add(cn.CreditNoteNo);
+                    }
+                }
+            }
+
+            foreach (var kvp in groupDict.OrderBy(x => x.Key))
+            {
+                var gItem = kvp.Value;
+                var gRows = itemMap[kvp.Key].Values
+                    .Where(r => r.SalesQty != 0 || r.SalesAmount != 0 || r.ReturnQty != 0 || r.CreditAmount != 0)
+                    .OrderByDescending(r => r.SalesAmount)
+                    .ToList();
+
+                if (gRows.Any())
+                {
+                    gItem.Items = gRows;
+                    gItem.GroupSalesQty = gRows.Sum(r => r.SalesQty);
+                    gItem.GroupSalesAmount = gRows.Sum(r => r.SalesAmount);
+                    gItem.GroupReturnQty = gRows.Sum(r => r.ReturnQty);
+                    gItem.GroupCreditAmount = gRows.Sum(r => r.CreditAmount);
+
+                    vm.Groups.Add(gItem);
+                }
+            }
+
+            vm.TotalGrossSales = vm.Groups.Sum(g => g.GroupSalesAmount);
+            vm.TotalCreditNotes = vm.Groups.Sum(g => g.GroupCreditAmount);
+            vm.TotalSalesQty = vm.Groups.Sum(g => g.GroupSalesQty);
+            vm.TotalReturnQty = vm.Groups.Sum(g => g.GroupReturnQty);
+
+            return vm;
+        }
+
+}
 }
 
 

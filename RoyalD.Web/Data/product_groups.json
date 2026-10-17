@@ -1,0 +1,3796 @@
+{
+  "groups": [
+    {
+      "code": "01",
+      "name": "กลุ่มเกลือแร่"
+    },
+    {
+      "code": "02",
+      "name": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    {
+      "code": "03",
+      "name": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    {
+      "code": "04",
+      "name": "กลุ่มคอลลาเจน , แคลร์ โทลาเจน"
+    },
+    {
+      "code": "05",
+      "name": "กลุ่ม Ready to drink"
+    },
+    {
+      "code": "06",
+      "name": "กลุ่มเนเจอร์ไวท์"
+    },
+    {
+      "code": "07",
+      "name": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    {
+      "code": "08",
+      "name": "กลุ่มเวย์โปรตีน"
+    },
+    {
+      "code": "09",
+      "name": "กลุ่มโยเกิร์ต"
+    },
+    {
+      "code": "10",
+      "name": "กลุ่มถังเช่า"
+    },
+    {
+      "code": "11",
+      "name": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    {
+      "code": "12",
+      "name": "กลุ่มกาแฟดริป"
+    },
+    {
+      "code": "13",
+      "name": "กลุ่มนมอัดเม็ด (ชนิด 12)"
+    },
+    {
+      "code": "14",
+      "name": "กลุ่มกาแฟอาราบิก้าถั่วบดละเอียด"
+    },
+    {
+      "code": "15",
+      "name": "กลุ่มวิตามินซี"
+    },
+    {
+      "code": "16",
+      "name": "กลุ่มเครื่องดื่มวิตามินซี"
+    },
+    {
+      "code": "17",
+      "name": "กลุ่ม เครื่องดื่มรสชิงผสมเลมอน"
+    },
+    {
+      "code": "18",
+      "name": "กลุ่ม โพรไบโอติก"
+    },
+    {
+      "code": "19",
+      "name": "กลุ่มนมอัดเม็ด (ชนิด 10 กรัม)"
+    },
+    {
+      "code": "20",
+      "name": "กลุ่ม อิสระ"
+    }
+  ],
+  "products": {
+    "100101": {
+      "productCode": "100101",
+      "productName": "รอแยล-ดี 15 กรัม",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100102": {
+      "productCode": "100102",
+      "productName": "เกลือแร่ชนิดผง รอแยล-ดี 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100201": {
+      "productCode": "100201",
+      "productName": "โรซ่าร์ - ดี 20 กรัม",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100300": {
+      "productCode": "100300",
+      "productName": "รอแยล-ดี 25 กรัม (RDTC 50)",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100301": {
+      "productCode": "100301",
+      "productName": "รอแยล-ดี 25 กรัม",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100301-1": {
+      "productCode": "100301-1",
+      "productName": "รอแยล-ดี 25 กรัม ชนิด 50 ซอง (ลัง)",
+      "unit": "ลัง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100302": {
+      "productCode": "100302",
+      "productName": "รอแยล-ดี 25 กรัม (RDB)",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100302-1": {
+      "productCode": "100302-1",
+      "productName": "Royal - D Orange  50Sachets  x 25 g.",
+      "unit": "Sachets",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100302-2": {
+      "productCode": "100302-2",
+      "productName": "รอแยล-ดี 25 กรัม (RDB) - ใสสะอาด",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100303": {
+      "productCode": "100303",
+      "productName": "รอแยล-ดี 25 กรัม (RDC)",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100303-1": {
+      "productCode": "100303-1",
+      "productName": "Royal - D Green  50Sachets x 25 g",
+      "unit": "Sachets",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100303-2": {
+      "productCode": "100303-2",
+      "productName": "รอแยล-ดี 25 กรัม (RDC) - ใสสะอาด",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100304": {
+      "productCode": "100304",
+      "productName": "รอแยล-ดี 25 กรัม (ชนิด 5 ซอง)",
+      "unit": "กล่อง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100305": {
+      "productCode": "100305",
+      "productName": "ผงชงชิมรอแยล-ดี 500 กรัม (RDC )",
+      "unit": "แพ็ค",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100306": {
+      "productCode": "100306",
+      "productName": "ผงชงชิม รอแยล-ดี 500 กรัม (RDB)",
+      "unit": "แพ็ค",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100307": {
+      "productCode": "100307",
+      "productName": "รอแยล-ดี กลิ่นผลไม้รวม 25 กรัม (RDT10)",
+      "unit": "กล่อง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100307-1": {
+      "productCode": "100307-1",
+      "productName": "ชุดสังฆภัณท์ (RDT 10)",
+      "unit": "ชุด",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100307-2": {
+      "productCode": "100307-2",
+      "productName": "Royal - D Green 10 Sach/Box x 25g",
+      "unit": "Box",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100307-3": {
+      "productCode": "100307-3",
+      "productName": "รอแยล-ดี กลิ่นผลไม้รวม 25 กรัม (RDT10) - ใสสะอาด",
+      "unit": "กล่อง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100308": {
+      "productCode": "100308",
+      "productName": "รอแยล-ดี 25 กรัม (ลัง)(RDT 10)",
+      "unit": "ลัง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100309": {
+      "productCode": "100309",
+      "productName": "รอแยล-ดี กลิ่นส้ม 25 กรัม (RDO 10)",
+      "unit": "กล่อง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100309-1": {
+      "productCode": "100309-1",
+      "productName": "รอแยล-ดี 25 กรัม RDO 10 (ซอง)",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100309-2": {
+      "productCode": "100309-2",
+      "productName": "รอแยล-ดี 25 กรัม (RDO 10)",
+      "unit": "หีบ",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100309-3": {
+      "productCode": "100309-3",
+      "productName": "Royal - D Orange 10Sachets / Box x 25 g",
+      "unit": "Box",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100309-4": {
+      "productCode": "100309-4",
+      "productName": "ชุดสังฆภัณท์ (RDO 10)",
+      "unit": "ชุด",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100309-5": {
+      "productCode": "100309-5",
+      "productName": "รอแยล-ดี กลิ่นส้ม 25 กรัม รุ่น 20 กล่อง (ลัง)",
+      "unit": "ลัง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100309-6": {
+      "productCode": "100309-6",
+      "productName": "รอแยล-ดี กลิ่นส้ม 25 กรัม (RDO 10) - ใสสะอาด",
+      "unit": "กล่อง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100310": {
+      "productCode": "100310",
+      "productName": "รอแยล-ดี กลิ่นสตอรเบอร์รี่ 25 กรัม (RDS 50)",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100310-1": {
+      "productCode": "100310-1",
+      "productName": "Royal - D Strawberry 50Sachets x 25 g.",
+      "unit": "Sachets",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100310-2": {
+      "productCode": "100310-2",
+      "productName": "รอแยล-ดี กลิ่นสตอรเบอร์รี่ 25 กรัม (RDS 50) - ใสสะอาด",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100311": {
+      "productCode": "100311",
+      "productName": "รอแยล-ดี กลิ่นองุ่น  25 กรัม (RDG 50)",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100311-1": {
+      "productCode": "100311-1",
+      "productName": "Royal - D Grape 50Sachets x 25 g.",
+      "unit": "Sachets",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100311-2": {
+      "productCode": "100311-2",
+      "productName": "รอแยล-ดี กลิ่นองุ่น  25 กรัม (RDG 50) - ใสสะอาด",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100312": {
+      "productCode": "100312",
+      "productName": "รอแยล-ดี 25 กรัม (กล่อง)RDT50",
+      "unit": "กล่อง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100313": {
+      "productCode": "100313",
+      "productName": "ผงชงชิมรอแยล-ดี กลิ่นสตรอเบอร์รี่ 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100314": {
+      "productCode": "100314",
+      "productName": "ผงชงชิมรอแยล-ดี กลิ่นองุ่น 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100315": {
+      "productCode": "100315",
+      "productName": "รอแยล-ดี 25 กรัม RDT10 (ซอง)",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100317": {
+      "productCode": "100317",
+      "productName": "รอแยล-ดี สปอร์ต 35 กรัม",
+      "unit": "ถุง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100317-1": {
+      "productCode": "100317-1",
+      "productName": "รอแยล-ดี สปอร์ต 35 กรัม(ซอง)",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100318": {
+      "productCode": "100318",
+      "productName": "รอแยล-ดี กลิ่นสตอรเบอร์รี่ 25 กรัม (RDS 10)",
+      "unit": "กล่อง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100318-1": {
+      "productCode": "100318-1",
+      "productName": "Royal - D Strawberry 25 g x 10Sach/Box",
+      "unit": "Box",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100318-2": {
+      "productCode": "100318-2",
+      "productName": "รอแยล-ดี กลิ่นสตอรเบอร์รี่ 25 กรัม (RDS 10)(ซอง)",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100318-3": {
+      "productCode": "100318-3",
+      "productName": "รอแยล-ดี กลิ่นสตอรเบอร์รี่ 25 กรัม (RDS 10) - ใสสะอาด",
+      "unit": "กล่อง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100319": {
+      "productCode": "100319",
+      "productName": "รอแยล-ดี กลิ่นองุ่น 25 กรัม (RDG10)",
+      "unit": "กล่อง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100319-1": {
+      "productCode": "100319-1",
+      "productName": "Royal - D Grape 25 g x 10Sach/Box",
+      "unit": "Box",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100319-2": {
+      "productCode": "100319-2",
+      "productName": "รอแยล-ดี กลิ่นองุ่น 25 กรัม (RDG10)(ซอง)",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100319-3": {
+      "productCode": "100319-3",
+      "productName": "รอแยล-ดี กลิ่นองุ่น 25 กรัม (RDG10) - ใสสะอาด",
+      "unit": "กล่อง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100320": {
+      "productCode": "100320",
+      "productName": "เครื่องดื่มเกลือแร่ กลิ่นส้ม ชนิดผง (ตรา รอแยล-ดี)",
+      "unit": "กล่อง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100320-1": {
+      "productCode": "100320-1",
+      "productName": "เครื่องดื่มเกลือแร่ กลิ่นส้ม ชนิดผง (ตรา รอแยล-ดี)(หีบ)(RDX10)",
+      "unit": "หีบ",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100321": {
+      "productCode": "100321",
+      "productName": "Tester รอแยล-ดี สปอร์ต 35 กรัม",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100321-1": {
+      "productCode": "100321-1",
+      "productName": "รอแยล-ดี สปอร์ต 35 กรัม (ซอง)",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100401": {
+      "productCode": "100401",
+      "productName": "นีโอไลต์ 25 กรัม",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100401-1": {
+      "productCode": "100401-1",
+      "productName": "Neolyte 1x25g RYD",
+      "unit": "Sachets",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100401-2": {
+      "productCode": "100401-2",
+      "productName": "นีโอไลต์ 25 กรัม - ใสสะอาด",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100402": {
+      "productCode": "100402",
+      "productName": "นีโอไลต์ 25 กรัม (ชนิด 25 ซอง)",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100403": {
+      "productCode": "100403",
+      "productName": "นีโอไลต์ 25 กรัม (กล่อง)",
+      "unit": "กล่อง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100404": {
+      "productCode": "100404",
+      "productName": "นีโอไลต์ 25 กรัม ชนิด 25 ซอง (ลัง)(NL25)",
+      "unit": "ลัง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100404-1": {
+      "productCode": "100404-1",
+      "productName": "นีโอไลต์ 25 กรัม ชนิด 25 ซอง (กล่อง)",
+      "unit": "กล่อง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100405": {
+      "productCode": "100405",
+      "productName": "นีโอไลต์ 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100601": {
+      "productCode": "100601",
+      "productName": "กัมลัง-ดี (รสส้มแคลิฟอร์เนีย) 20 กรัม",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "100602": {
+      "productCode": "100602",
+      "productName": "กัมลัง-ดี (รสมะนาว) 20 กรัม",
+      "unit": "ซอง",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "200101": {
+      "productCode": "200101",
+      "productName": "แคลซี่ - ดี 20 กรัม",
+      "unit": "กล่อง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200101-1": {
+      "productCode": "200101-1",
+      "productName": "Calci - D  10Sachets / Box  Yellow 20 g.",
+      "unit": "Box",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200101-2": {
+      "productCode": "200101-2",
+      "productName": "แคลซี่ - ดี 20 กรัม - ใสสะอาด",
+      "unit": "กล่อง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200102": {
+      "productCode": "200102",
+      "productName": "แคลซี่-ดี 20 กรัม (ตปท.)",
+      "unit": "กล่อง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200103": {
+      "productCode": "200103",
+      "productName": "Tester แคลซี่-ดี 20 กรัม",
+      "unit": "ซอง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200104": {
+      "productCode": "200104",
+      "productName": "ผงชงชิม แคลซี่-ดี 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200104-1": {
+      "productCode": "200104-1",
+      "productName": "ผงชงชิม แคลซี่-ดี 250 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200105": {
+      "productCode": "200105",
+      "productName": "แคลซี่-ดี โกลด์  500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200106": {
+      "productCode": "200106",
+      "productName": "Tester แคลซี่-ดี โกลด์",
+      "unit": "ซอง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200107": {
+      "productCode": "200107",
+      "productName": "แคลซี่ - ดี 20 กรัม(หีบ)",
+      "unit": "หีบ",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200108": {
+      "productCode": "200108",
+      "productName": "แคลซี่ - ดี 20 กรัม  (ชนิด 5 ซอง)",
+      "unit": "ถุง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200109": {
+      "productCode": "200109",
+      "productName": "แคลซี่ - ดี 20 กรัม  (ชนิด 5 ซอง)",
+      "unit": "หีบ",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200110": {
+      "productCode": "200110",
+      "productName": "แคลซี่-ดี โกลด์",
+      "unit": "กล่อง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200110-1": {
+      "productCode": "200110-1",
+      "productName": "แคลซี่-ดี โกลด์",
+      "unit": "หีบ",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200110-2": {
+      "productCode": "200110-2",
+      "productName": "CALCID GOLD 1000mg. 10Sach/Box TH",
+      "unit": "Box",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200110-3": {
+      "productCode": "200110-3",
+      "productName": "แคลซี่-ดี โกลด์ - ใสสะอาด",
+      "unit": "กล่อง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200111": {
+      "productCode": "200111",
+      "productName": "แคลซี่-ดี 20 กรัม(รุ่น 3 ถุง แถม 1 ถุง )",
+      "unit": "แพ็ค",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200112": {
+      "productCode": "200112",
+      "productName": "แคลซี่-ดี 20 กรัม(รุ่น 3 ถุง )",
+      "unit": "แพ็ค",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200113": {
+      "productCode": "200113",
+      "productName": "แคลซี่-ดี 20 กรัม(รุ่น 3 ถุง )",
+      "unit": "หีบ",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200114": {
+      "productCode": "200114",
+      "productName": "แคลซี่ - ดี 20 กรัม 10 ซอง (แพ็ค3)",
+      "unit": "แพ็ค",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200115": {
+      "productCode": "200115",
+      "productName": "ชุด แคลซี่-ดี โกลด์",
+      "unit": "ชุด",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200116": {
+      "productCode": "200116",
+      "productName": "แคลซี่-ดี 20 กรัม(รุ่น 36 ถุง )",
+      "unit": "ลัง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200117": {
+      "productCode": "200117",
+      "productName": "แคลซี่-ดี 20 กรัม ( รุ่น 36 ถุง )",
+      "unit": "แพ็ค",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200118": {
+      "productCode": "200118",
+      "productName": "เสริมอาหารแคลซี่ - ดี (ชนิด 10 ซอง)",
+      "unit": "กล่อง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200118-1": {
+      "productCode": "200118-1",
+      "productName": "ผลิตภัณฑ์เสริมอาหารแคลซี่ - ดี รสส้ม (ชนิด 10 ซอง)",
+      "unit": "ลัง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200119": {
+      "productCode": "200119",
+      "productName": "Tester เสริมอาหารแคลซี่ - ดี",
+      "unit": "ซอง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200120": {
+      "productCode": "200120",
+      "productName": "ผงชงชิมเสริมอาหารแคลซี่ - ดี 250 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200121": {
+      "productCode": "200121",
+      "productName": "ผลิตภัณฑ์เสริมอาหารแคลซี่ - ดี รสส้ม (ชนิด 5 ซอง)",
+      "unit": "ถุง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200200": {
+      "productCode": "200200",
+      "productName": "แคลซี่-ดี ช็อกโก 320 กรัม (ไทย)(ไม่ใช้)",
+      "unit": "กระป๋อง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200201": {
+      "productCode": "200201",
+      "productName": "แคลซี่-ดี ช็อกโก 320 กรัม (ต่างประเทศ)",
+      "unit": "กระป๋อง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200201-1": {
+      "productCode": "200201-1",
+      "productName": "CalclD Chocolate Drink 320g.",
+      "unit": "Caned",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200202": {
+      "productCode": "200202",
+      "productName": "Tester แคลซี่-ดี ช็อกโก ขนาด 30 กรัม",
+      "unit": "ซอง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200203": {
+      "productCode": "200203",
+      "productName": "(ไม่ใช้แล้ว)ผงชงชิม แคลซี่-ดี ช็อกโก 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200204": {
+      "productCode": "200204",
+      "productName": "แคลซี่-ดี ช็อกโก ขนาด 30 กรัม",
+      "unit": "กล่อง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200204-1": {
+      "productCode": "200204-1",
+      "productName": "CalclD Choco Sach/Box",
+      "unit": "Box",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200205": {
+      "productCode": "200205",
+      "productName": "แคลซี่-ดี ช็อกโก ขนาด 30 กรัม (หีบ)",
+      "unit": "หีบ",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200206": {
+      "productCode": "200206",
+      "productName": "แคลซี่-ดี ช็อกโก ขนาด 30 กรัม (ชนิด 5 ซอง)",
+      "unit": "ถุง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200207": {
+      "productCode": "200207",
+      "productName": "แคลซี่-ดี ช็อกโก ขนาด 30 กรัม (ชนิด 5 ซอง)",
+      "unit": "หีบ",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200208": {
+      "productCode": "200208",
+      "productName": "แคลซี่-ดี ช็อกโก ขนาด 30 กรัม (ชนิด 5 ซอง)",
+      "unit": "แพ็ค",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200209": {
+      "productCode": "200209",
+      "productName": "แคลซี่-ดี ช็อกโก ขนาด 30 กรัม 10 ซอง (แพ็ค3)",
+      "unit": "แพ็ค",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200210": {
+      "productCode": "200210",
+      "productName": "ผงชงชิม แคลซี่-ดี ช็อกโก 250 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200211": {
+      "productCode": "200211",
+      "productName": "เสริมอาหารแคลซี่-ดี ช็อกโก  (ชนิด 10 ซอง)",
+      "unit": "กล่อง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200211-1": {
+      "productCode": "200211-1",
+      "productName": "CalcID Choco Sach/Box",
+      "unit": "Box",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200211-2": {
+      "productCode": "200211-2",
+      "productName": "ผลิตภัณฑ์เสริมอาหารแคลซี่ - ดี ช็อกโก  (ชนิด 10 ซอง)(3)",
+      "unit": "แพ็ค",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200211-3": {
+      "productCode": "200211-3",
+      "productName": "ผลิตภัณฑ์เสริมอาหารแคลซี่-ดี ช็อกโก (ชนิด10 ซอง)(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200211-4": {
+      "productCode": "200211-4",
+      "productName": "เสริมอาหารแคลซี่-ดี ช็อกโก  (ชนิด 10 ซอง) - ใสสะอาด",
+      "unit": "กล่อง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200212": {
+      "productCode": "200212",
+      "productName": "Tester เสริมอาหารแคลซี่ - ดี ช็อกโกแลต",
+      "unit": "ซอง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200213": {
+      "productCode": "200213",
+      "productName": "ผงชงชิมเสริมอาหารแคลซี่-ดี ช็อกโก 250 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200300": {
+      "productCode": "200300",
+      "productName": "รอแยล-ดี เวย์โปรตีน รสช๊อกโกแลต 30 กรัม",
+      "unit": "กล่อง",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200300-1": {
+      "productCode": "200300-1",
+      "productName": "รอแยล-ดี เวย์โปรตีน รสช๊อกโกแลต 30กรัม(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200300-2": {
+      "productCode": "200300-2",
+      "productName": "RoyalD Whey Protein CHOCOLATE 15sach",
+      "unit": "Box",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200300-3": {
+      "productCode": "200300-3",
+      "productName": "รอแยล-ดี เวย์โปรตีน รสช๊อกโกแลต 30กรัม(ซอง)",
+      "unit": "ซอง",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200301": {
+      "productCode": "200301",
+      "productName": "Tester รอแยล-ดี เวย์โปรตีน รสช๊อกโกแลต",
+      "unit": "ซอง",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200302": {
+      "productCode": "200302",
+      "productName": "รอแยล-ดี เวย์โปรตีน รสช๊อกโกแลต (ชนิด 5 ซอง)",
+      "unit": "กล่อง",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200302-1": {
+      "productCode": "200302-1",
+      "productName": "รอแยล-ดี เวย์โปรตีน รสช๊อกโกแลต ชนิด 5ซอง (ลัง)",
+      "unit": "ลัง",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200302-2": {
+      "productCode": "200302-2",
+      "productName": "รอแยล-ดี เวย์โปรตีน รสช๊อกโกแลต ชนิด 5ซอง (ซอง)",
+      "unit": "ซอง",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200302-3": {
+      "productCode": "200302-3",
+      "productName": "Royal-D Whey Protein CHOCOLATE 30g 05sach",
+      "unit": "Box",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200303": {
+      "productCode": "200303",
+      "productName": "เสริมอาหารเวย์โปรตีน รสช็อกโกแลต (ชนิด 5 ซอง)",
+      "unit": "กล่อง",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200303-1": {
+      "productCode": "200303-1",
+      "productName": "ผลิตภัณฑ์เสริมอาหารเวย์โปรตีน รสช็อกโกแลต (ลัง)(SWC05)",
+      "unit": "ลัง",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200303-2": {
+      "productCode": "200303-2",
+      "productName": "ผลิตภัณฑ์เสริมอาหารเวย์โปรตีน รสช็อกโกแลต(ซอง)",
+      "unit": "ซอง",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200304": {
+      "productCode": "200304",
+      "productName": "อาหารเสริมแคลซี่-ดี",
+      "unit": "กล่อง",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "200305": {
+      "productCode": "200305",
+      "productName": "เสริมอาหารเวย์โปรตีน รสชาเขียว (ชนิด 10 ซอง)",
+      "unit": "กล่อง",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200305-1": {
+      "productCode": "200305-1",
+      "productName": "เสริมอาหารเวย์โปรตีน รสชาเขียว (ซอง)",
+      "unit": "ซอง",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200306": {
+      "productCode": "200306",
+      "productName": "เสริมอาหารเวย์โปรตีน รสวนิลลา (ชนิด 10 ซอง)",
+      "unit": "กล่อง",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200306-1": {
+      "productCode": "200306-1",
+      "productName": "Royal-D Whey Protein Vanilla 10 Sach/Box",
+      "unit": "Box",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200306-2": {
+      "productCode": "200306-2",
+      "productName": "เสริมอาหารเวย์โปรตีน รสวนิลลา (ซอง)",
+      "unit": "ซอง",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200307": {
+      "productCode": "200307",
+      "productName": "เสริมอาหารเวย์โปรตีน รสชาเขียว 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200308": {
+      "productCode": "200308",
+      "productName": "เสริมอาหารเวย์โปรตีน รสวนิลลา 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200309": {
+      "productCode": "200309",
+      "productName": "Tester เสริมอาหารเวย์โปรตีน รสชาเขียว 50 กรัม",
+      "unit": "ซอง",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200310": {
+      "productCode": "200310",
+      "productName": "เสริมอาหารเวย์โปรตีน รสช๊อกโกแลต 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200311": {
+      "productCode": "200311",
+      "productName": "Tester เสริมอาหารเวย์โปรตีน รสวนิลลา",
+      "unit": "ซอง",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200312": {
+      "productCode": "200312",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร กลิ่นองุ่น ตรา รอแยล-ดี เจล",
+      "unit": "กล่อง",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200312-1": {
+      "productCode": "200312-1",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร กลิ่นองุ่น ตรารอแยล-ดี เจล(ซอง)",
+      "unit": "ซอง",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200312-2": {
+      "productCode": "200312-2",
+      "productName": "Royal D Energy Gel 40g 10 Sach/Box Grape",
+      "unit": "Box",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200313": {
+      "productCode": "200313",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร รสโกโก้ ตรา รอแยล-ดี เจล",
+      "unit": "กล่อง",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200313-1": {
+      "productCode": "200313-1",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร รสโกโก้ ตรารอแยล-ดี เจล(ซอง)",
+      "unit": "ซอง",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200313-2": {
+      "productCode": "200313-2",
+      "productName": "Royal D Energy Gel 40g 10 Sach/Box Cocoa",
+      "unit": "Box",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200314": {
+      "productCode": "200314",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร กลิ่นส้ม ตรา รอแยล-ดี เจล",
+      "unit": "กล่อง",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200314-1": {
+      "productCode": "200314-1",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร กลิ่นส้ม ตรารอแยล-ดี เจล(ซอง)",
+      "unit": "ซอง",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200314-2": {
+      "productCode": "200314-2",
+      "productName": "Royal D Energy Gel 40g 10 Sach/Box Orange",
+      "unit": "Box",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200315": {
+      "productCode": "200315",
+      "productName": "Tester ผลิตภัณฑ์เสริมอาหาร รสโกโก้ ตรา รอแยล-ดี เจล",
+      "unit": "ซอง",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200315-1": {
+      "productCode": "200315-1",
+      "productName": "RoyalD energy gel cocoa Tester",
+      "unit": "Sachets",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200316": {
+      "productCode": "200316",
+      "productName": "Tester ผลิตภัณฑ์เสริมอาหาร กลิ่นส้ม ตรา รอแยล-ดี เจล",
+      "unit": "ซอง",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200316-1": {
+      "productCode": "200316-1",
+      "productName": "RoyalD energy gel orange Tester",
+      "unit": "Sachets",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200317": {
+      "productCode": "200317",
+      "productName": "Tester ผลิตภัณฑ์เสริมอาหาร กลิ่นองุ่น ตรา รอแยล-ดี เจล",
+      "unit": "ซอง",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200317-1": {
+      "productCode": "200317-1",
+      "productName": "RoyalD energy gel grape Tester",
+      "unit": "Sachets",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200318": {
+      "productCode": "200318",
+      "productName": "เสริมอาหารเวย์โปรตีน รสช็อกโกแลต (ชนิด 15 ซอง)",
+      "unit": "กล่อง",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200318-1": {
+      "productCode": "200318-1",
+      "productName": "เสริมอาหารเวย์โปรตีน รสช็อกโกแลต (ชนิด 15 ซอง)(ซอง)",
+      "unit": "ซอง",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200319": {
+      "productCode": "200319",
+      "productName": "Tester เสริมอาหารเวย์โปรตีน รสช็อกโกแลต",
+      "unit": "ซอง",
+      "groupCode": "08",
+      "groupName": "กลุ่มเวย์โปรตีน"
+    },
+    "200320": {
+      "productCode": "200320",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร กลิ่นกาแฟ ตรา รอแยล-ดี เจล(5 ซอง)",
+      "unit": "กล่อง",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200320-1": {
+      "productCode": "200320-1",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร กลิ่นกาแฟ ตรา รอแยล-ดี เจล(5ซอง)(ซอง)",
+      "unit": "ซอง",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200320-2": {
+      "productCode": "200320-2",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร กลิ่นกาแฟ ตรา รอแยล-ดี เจล(5 ซอง)(ลัง)(EGC05)",
+      "unit": "ลัง",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200321": {
+      "productCode": "200321",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร กลิ่นส้ม ตรา รอแยล-ดี เจล(5 ซอง)",
+      "unit": "กล่อง",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200321-1": {
+      "productCode": "200321-1",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร กลิ่นส้ม ตรา รอแยล-ดี เจล(5 ซอง)(ซอง)",
+      "unit": "ซอง",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200321-2": {
+      "productCode": "200321-2",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร กลิ่นส้ม ตรา รอแยล-ดี เจล(5 ซอง)(ลัง)(EGO05)",
+      "unit": "ลัง",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200322": {
+      "productCode": "200322",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร กลิ่นกาแฟ ตรา รอแยล-ดี เจล",
+      "unit": "กล่อง",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200322-1": {
+      "productCode": "200322-1",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร กลิ่นกาแฟ ตรา รอแยล-ดี เจล(ซอง)",
+      "unit": "ซอง",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200322-2": {
+      "productCode": "200322-2",
+      "productName": "Royal D Energy Gel 40g 10 Sach/Box Coffee",
+      "unit": "Box",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200323": {
+      "productCode": "200323",
+      "productName": "Tester ผลิตภัณฑ์เสริมอาหาร กลิ่นกาแฟ ตรา รอแยล-ดี เจล",
+      "unit": "ซอง",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200324": {
+      "productCode": "200324",
+      "productName": "แคล์ร โพรไบโอติก พลัสวิตามินซี (ผลิตภัณฑ์เสริมอาหาร)",
+      "unit": "หลอด",
+      "groupCode": "18",
+      "groupName": "กลุ่ม โพรไบโอติก"
+    },
+    "200324-1": {
+      "productCode": "200324-1",
+      "productName": "Clare's Probiotic plus vltamin C",
+      "unit": "Box",
+      "groupCode": "18",
+      "groupName": "กลุ่ม โพรไบโอติก"
+    },
+    "200324-2": {
+      "productCode": "200324-2",
+      "productName": "แคล์ร โพรไบโอติก พลัสวิตามินซี (ผลิตภัณฑ์เสริมอาหาร)(กล่อง)",
+      "unit": "กล่อง",
+      "groupCode": "18",
+      "groupName": "กลุ่ม โพรไบโอติก"
+    },
+    "200324-3": {
+      "productCode": "200324-3",
+      "productName": "แคล์ร โพรไบโอติก พลัสวิตามินซี (ผลิตภัณฑ์เสริมอาหาร)(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "18",
+      "groupName": "กลุ่ม โพรไบโอติก"
+    },
+    "200325": {
+      "productCode": "200325",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร กลิ่นเรดฟรุ๊ท ตรา รอแยล-ดี เจล 10 ซอง",
+      "unit": "กล่อง",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200325-1": {
+      "productCode": "200325-1",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร กลิ่นเรดฟรุ๊ท ตรา รอแยล-ดี เจล 10 ซอง(ซอง)",
+      "unit": "ซอง",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200325-2": {
+      "productCode": "200325-2",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร กลิ่นเรดฟรุ๊ท ตรา รอแยล-ดี เจล 10 ซอง(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "11",
+      "groupName": "กลุ่ม รอยเยล-ดี เจล"
+    },
+    "200327": {
+      "productCode": "200327",
+      "productName": "โพรไบโอติกส์ ผลิตภัณฑ์เสริมอาหาร (ตรา แคล์ร)",
+      "unit": "กล่อง",
+      "groupCode": "18",
+      "groupName": "กลุ่ม โพรไบโอติก"
+    },
+    "200328": {
+      "productCode": "200328",
+      "productName": "ผลิตภัณฑ์เสริมอาหารเกลือแร่ชนิดเม็ดเคี้ยว ตรา รอแยล-ดี",
+      "unit": "หลอด",
+      "groupCode": "01",
+      "groupName": "กลุ่มเกลือแร่"
+    },
+    "200400": {
+      "productCode": "200400",
+      "productName": "I-Fresh รสส้ม 250 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "200401": {
+      "productCode": "200401",
+      "productName": "I-Fresh  รสส้ม  500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "200402": {
+      "productCode": "200402",
+      "productName": "I-Fresh รสส้ม 300 กรัม",
+      "unit": "กระป๋อง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "200403": {
+      "productCode": "200403",
+      "productName": "I-Fresh รสชามะนาว 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "200404": {
+      "productCode": "200404",
+      "productName": "I-Fresh กลิ่นพั้นซ์ 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "200405": {
+      "productCode": "200405",
+      "productName": "I-Fresh กลิ่นแอปเปิ้ล 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "200406": {
+      "productCode": "200406",
+      "productName": "I-Fresh กลิ่นองุ่น 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "200407": {
+      "productCode": "200407",
+      "productName": "I-Fresh กลิ่นมิกเบอร์รี่ 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "200408": {
+      "productCode": "200408",
+      "productName": "I-Fresh กลิ่นลิ้นจี่ 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "200409": {
+      "productCode": "200409",
+      "productName": "I-Fresh กลิ่นชาเขียว 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "200410": {
+      "productCode": "200410",
+      "productName": "I-Fresh กลิ่นเก๊กฮวย 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "200411": {
+      "productCode": "200411",
+      "productName": "I-Fresh กลิ่นลำใย  500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "200412": {
+      "productCode": "200412",
+      "productName": "I-Fresh กลิ่นบลูฮาวาย  500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "210-0014": {
+      "productCode": "210-0014",
+      "productName": "แก้วกระดาษ ขนาด 6.5 ออนซ์  (รุ่นใหม่)",
+      "unit": "ใบ",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "300101": {
+      "productCode": "300101",
+      "productName": "รอแยล-คอฟฟี่  20 กรัม (ผสมเห็ดหลินจือ)(ไม่ได้ใช้)",
+      "unit": "แพ็ค",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300102": {
+      "productCode": "300102",
+      "productName": "รอแยลคอฟฟี่ ผสมเห็ดหลินจือ",
+      "unit": "กล่อง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300103": {
+      "productCode": "300103",
+      "productName": "รอแยลคอฟฟี่ ผสมโสมสกัด",
+      "unit": "กล่อง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300104": {
+      "productCode": "300104",
+      "productName": "Tester รอแยลคอฟฟี่ ผสมเห็ดหลินจือ",
+      "unit": "ซอง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300104-1": {
+      "productCode": "300104-1",
+      "productName": "รอแยลคอฟฟี่ ผสมเห็ดหลินจือ 20 กรัม (ซอง)",
+      "unit": "ซอง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300105": {
+      "productCode": "300105",
+      "productName": "Tester รอแยลคอฟฟี่ ผสมโสมสกัด",
+      "unit": "ซอง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300105-1": {
+      "productCode": "300105-1",
+      "productName": "รอแยลคอฟฟี่ ผสมโสมสกัด 20 กรัม (ซอง)",
+      "unit": "ซอง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300106": {
+      "productCode": "300106",
+      "productName": "กาแฟดำชนิดผงผสมเห็ดหลินจือ (ชนิด 10 ซอง)",
+      "unit": "กล่อง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300107": {
+      "productCode": "300107",
+      "productName": "Tester กาแฟดำชนิดผงผสมเห็ดหลินจือ",
+      "unit": "ซอง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300108": {
+      "productCode": "300108",
+      "productName": "รอแยลคอฟฟี่ ผสมเห็ดหลินจือ ขนาด 12 ซอง",
+      "unit": "แพ็ค",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300108-1": {
+      "productCode": "300108-1",
+      "productName": "รอแยลคอฟฟี่ ผสมเห็ดหลินจือ ขนาด 12 ซอง(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300109": {
+      "productCode": "300109",
+      "productName": "กาแฟดริปดอยช้าง คั่วเข้ม ตรา รอแยล-คอฟฟี่ ( 5 ซอง)",
+      "unit": "กล่อง",
+      "groupCode": "12",
+      "groupName": "กลุ่มกาแฟดริป"
+    },
+    "300109-1": {
+      "productCode": "300109-1",
+      "productName": "กาแฟดริปดอยช้าง คั่วเข้ม ตรา รอแยล-คอฟฟี่ ( 5 ซอง)(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "12",
+      "groupName": "กลุ่มกาแฟดริป"
+    },
+    "300110": {
+      "productCode": "300110",
+      "productName": "กาแฟดริปดอยช้าง คั่วกลาง ตรา รอแยล-คอฟฟี่ ( 5 ซอง)",
+      "unit": "กล่อง",
+      "groupCode": "12",
+      "groupName": "กลุ่มกาแฟดริป"
+    },
+    "300110-1": {
+      "productCode": "300110-1",
+      "productName": "กาแฟดริปดอยช้าง คั่วกลาง ตรา รอแยล-คอฟฟี่ ( 5 ซอง)(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "12",
+      "groupName": "กลุ่มกาแฟดริป"
+    },
+    "300111": {
+      "productCode": "300111",
+      "productName": "Tester กาแฟดริปดอยช้าง คั่วเข้ม ตรา รอแยล-คอฟฟี่",
+      "unit": "ซอง",
+      "groupCode": "12",
+      "groupName": "กลุ่มกาแฟดริป"
+    },
+    "300112": {
+      "productCode": "300112",
+      "productName": "Tester กาแฟดริปดอยช้าง คั่วกลาง ตรา รอแยล-คอฟฟี่",
+      "unit": "ซอง",
+      "groupCode": "12",
+      "groupName": "กลุ่มกาแฟดริป"
+    },
+    "300113": {
+      "productCode": "300113",
+      "productName": "เมล็ดกาแฟคั่ว บราซิล ซานโดส 200 กรัม",
+      "unit": "ถุง",
+      "groupCode": "14",
+      "groupName": "กลุ่มกาแฟอาราบิก้าถั่วบดละเอียด"
+    },
+    "300114": {
+      "productCode": "300114",
+      "productName": "เมล็ดกาแฟคั่ว โคลัมเบีย 200 กรัม",
+      "unit": "ถุง",
+      "groupCode": "14",
+      "groupName": "กลุ่มกาแฟอาราบิก้าถั่วบดละเอียด"
+    },
+    "300115": {
+      "productCode": "300115",
+      "productName": "เมล็ดกาแฟคั่ว ดอยช้าง อาราบิก้า 100% 250 กรัม",
+      "unit": "ถุง",
+      "groupCode": "14",
+      "groupName": "กลุ่มกาแฟอาราบิก้าถั่วบดละเอียด"
+    },
+    "300116": {
+      "productCode": "300116",
+      "productName": "เมล็ดกาแฟคั่ว อาราบิก้า 100% 250 กรัม",
+      "unit": "ถุง",
+      "groupCode": "14",
+      "groupName": "กลุ่มกาแฟอาราบิก้าถั่วบดละเอียด"
+    },
+    "300117": {
+      "productCode": "300117",
+      "productName": "เมล็ดกาแฟ Royal Arabica Blend ขนาด 250 กรัม",
+      "unit": "ถุง",
+      "groupCode": "14",
+      "groupName": "กลุ่มกาแฟอาราบิก้าถั่วบดละเอียด"
+    },
+    "300118": {
+      "productCode": "300118",
+      "productName": "เมล็ดกาแฟคั่ว ดอยช้าง อาราบิก้าเบลนด์ 100% ขนาด 500 กรัม",
+      "unit": "ถุง",
+      "groupCode": "14",
+      "groupName": "กลุ่มกาแฟอาราบิก้าถั่วบดละเอียด"
+    },
+    "300119": {
+      "productCode": "300119",
+      "productName": "เมล็ดกาแฟคั่ว ดอยช้าง อาราบิก้าเบลนด์ 100% ขนาด 250 กรัม",
+      "unit": "ถุง",
+      "groupCode": "14",
+      "groupName": "กลุ่มกาแฟอาราบิก้าถั่วบดละเอียด"
+    },
+    "300201": {
+      "productCode": "300201",
+      "productName": "เอ็มแอนด์วาย มัลเบอรี่กรีน 12 กรัม",
+      "unit": "กล่อง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "300202": {
+      "productCode": "300202",
+      "productName": "เอ็มแอนด์วาย เยลโล่บาเอล 10 กรัม",
+      "unit": "กล่อง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "300203": {
+      "productCode": "300203",
+      "productName": "เอ็มแอนด์วาย เรดโรสเซล 14 กรัม",
+      "unit": "กล่อง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "300301": {
+      "productCode": "300301",
+      "productName": "รอแยล-คอฟฟี่  20 กรัม (3 in 1)",
+      "unit": "แพ็ค",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300302": {
+      "productCode": "300302",
+      "productName": "รอแยล-คอฟฟี่ 20 กรัม (3 in 1) - H",
+      "unit": "แพ็ค",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300501": {
+      "productCode": "300501",
+      "productName": "แคลร์ส คอฟฟี่ บูสเตอร์",
+      "unit": "กล่อง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300501-1": {
+      "productCode": "300501-1",
+      "productName": "Clare Coffee Booster Formula",
+      "unit": "Box",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300501-2": {
+      "productCode": "300501-2",
+      "productName": "แคลร์ส คอฟฟี่ บูสเตอร์ - ใสสะอาด",
+      "unit": "กล่อง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300502": {
+      "productCode": "300502",
+      "productName": "แคลร์ส คอฟฟี่ บิวตี้",
+      "unit": "กล่อง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300502-1": {
+      "productCode": "300502-1",
+      "productName": "Clare Coffee Beauty Formula",
+      "unit": "Box",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300502-2": {
+      "productCode": "300502-2",
+      "productName": "แคลร์ส คอฟฟี่ บิวตี้ - ใสสะอาด",
+      "unit": "กล่อง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300503": {
+      "productCode": "300503",
+      "productName": "Sample กาแฟ แคลร์ส คอฟฟี่ บูสเตอร์",
+      "unit": "แพ็ค",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300504": {
+      "productCode": "300504",
+      "productName": "Sample กาแฟ แคลร์ส คอฟฟี่ บิวตี้",
+      "unit": "แพ็ค",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300505": {
+      "productCode": "300505",
+      "productName": "(ไม่ใช้แล้ว)ผงชงชิม กาแฟ บูสเตอร์",
+      "unit": "แพ็ค",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300506": {
+      "productCode": "300506",
+      "productName": "(ไม่ใช้แล้)วผงชงชิม กาแฟ บิวตี้",
+      "unit": "แพ็ค",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300507": {
+      "productCode": "300507",
+      "productName": "Tester กาแฟ บูสเตอร์ ขนาด 14 กรัม",
+      "unit": "ซอง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300508": {
+      "productCode": "300508",
+      "productName": "Tester กาแฟ บิวตี้ ขนาด 14 กรัม",
+      "unit": "ซอง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300509": {
+      "productCode": "300509",
+      "productName": "ชุดกิฟเซ็ท แคลร์ส คอฟฟี่ บูสเตอร์",
+      "unit": "ชุด",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300510": {
+      "productCode": "300510",
+      "productName": "ชุดกิฟเซ็ท แคลร์ส คอฟฟี่ บิวตี้",
+      "unit": "ชุด",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300511": {
+      "productCode": "300511",
+      "productName": "Tester แคลร์ คอฟฟี่ พรีไบโอ 14 กรัม",
+      "unit": "ซอง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300512": {
+      "productCode": "300512",
+      "productName": "Tester แคลร์ส คอฟฟี่ คาปูชิโน",
+      "unit": "ซอง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300513": {
+      "productCode": "300513",
+      "productName": "แคลร์ เบอร์รี่(ทดลอง)  ขนาด 12 กรัม",
+      "unit": "ซอง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "300514": {
+      "productCode": "300514",
+      "productName": "ผงชงชิม แคลร์ คอฟฟี่ พรีไบโอ 500 กรัม(ไม่ใช่)",
+      "unit": "แพ็ค",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300515": {
+      "productCode": "300515",
+      "productName": "แคลร์ คอฟฟี่ คาปูชิโน 250 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300516": {
+      "productCode": "300516",
+      "productName": "แคลร์ส ช็อกโก 14 กรัม",
+      "unit": "ซอง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300517": {
+      "productCode": "300517",
+      "productName": "แคลร์ คอฟฟี่ พรีไบโอ 14 กรัม",
+      "unit": "กล่อง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300517-1": {
+      "productCode": "300517-1",
+      "productName": "แคลร์ คอฟฟี่ พรีไบโอ 14 กรัม(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300517-2": {
+      "productCode": "300517-2",
+      "productName": "แคลร์ คอฟฟี่ พรีไบโอ 14 กรัม(หีบ)",
+      "unit": "หีบ",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300517-3": {
+      "productCode": "300517-3",
+      "productName": "Clare Coffee Prebio Formula",
+      "unit": "Box",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300517-4": {
+      "productCode": "300517-4",
+      "productName": "แคลร์ คอฟฟี่ พรีไบโอ 14 กรัม - ใสสะอาด",
+      "unit": "กล่อง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300518": {
+      "productCode": "300518",
+      "productName": "แคลร์ส คอฟฟี่ คาปูชิโน 14 กรัม",
+      "unit": "กล่อง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300519": {
+      "productCode": "300519",
+      "productName": "แคล์ร คอลลาเจน (ชนิด15 ซอง )",
+      "unit": "กล่อง",
+      "groupCode": "04",
+      "groupName": "กลุ่มคอลลาเจน , แคลร์ โทลาเจน"
+    },
+    "300520": {
+      "productCode": "300520",
+      "productName": "ผงชงชิมแคล์รคอลลาเจน 250 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "04",
+      "groupName": "กลุ่มคอลลาเจน , แคลร์ โทลาเจน"
+    },
+    "300521": {
+      "productCode": "300521",
+      "productName": "แคลร์ คอฟฟี่ คาปูชิโน กลิ่นไอรีซครีม 14 กรัม",
+      "unit": "กล่อง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300522": {
+      "productCode": "300522",
+      "productName": "แคลร์ คอฟฟี่ คาปูชิโน กลิ่นฮาเซลนัท 14 กรัม",
+      "unit": "กล่อง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300523": {
+      "productCode": "300523",
+      "productName": "Tester แคล์ร คอลลาเจน",
+      "unit": "ซอง",
+      "groupCode": "04",
+      "groupName": "กลุ่มคอลลาเจน , แคลร์ โทลาเจน"
+    },
+    "300524": {
+      "productCode": "300524",
+      "productName": "Tester แคลร์คอฟฟี่ คาปูชิโน กลิ่นไอริชครีม",
+      "unit": "ซอง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300525": {
+      "productCode": "300525",
+      "productName": "Tester แคลร์คอฟฟี่คาปูชิโน่ กลิ่นฮาเซลนัท",
+      "unit": "ซอง",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300526": {
+      "productCode": "300526",
+      "productName": "แคล์ร คอลลาเจน (ชนิด 10 ซอง)",
+      "unit": "กล่อง",
+      "groupCode": "04",
+      "groupName": "กลุ่มคอลลาเจน , แคลร์ โทลาเจน"
+    },
+    "300526-1": {
+      "productCode": "300526-1",
+      "productName": "แคล์ร คอลลาเจน (ชนิด 10 ซอง)",
+      "unit": "ซอง",
+      "groupCode": "04",
+      "groupName": "กลุ่มคอลลาเจน , แคลร์ โทลาเจน"
+    },
+    "300527": {
+      "productCode": "300527",
+      "productName": "แคลร์ คอลลาเจน (ชนิด 10 ซอง)",
+      "unit": "หีบ",
+      "groupCode": "04",
+      "groupName": "กลุ่มคอลลาเจน , แคลร์ โทลาเจน"
+    },
+    "300528": {
+      "productCode": "300528",
+      "productName": "เครื่องดื่มมะเขือเทศชนิดผง ตราแคล์ร โทลาเจน",
+      "unit": "กล่อง",
+      "groupCode": "04",
+      "groupName": "กลุ่มคอลลาเจน , แคลร์ โทลาเจน"
+    },
+    "300529": {
+      "productCode": "300529",
+      "productName": "กาแฟปรุงสำเร็จ เฟิร์สรอแยล ไวท์คอฟฟี่ 30g.",
+      "unit": "ถุง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300530": {
+      "productCode": "300530",
+      "productName": "รอแยล-คอฟฟี่ อาราบิก้าโรบัสต้าเบลนด์ 10",
+      "unit": "กล่อง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300530-1": {
+      "productCode": "300530-1",
+      "productName": "รอแยล-คอฟฟี่ อาราบิก้าโรบัสต้าเบลนด์ 10 (หีบ)",
+      "unit": "หีบ",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300530-2": {
+      "productCode": "300530-2",
+      "productName": "Arabica Coffee Pack 10 Sack/Box",
+      "unit": "Box",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300530-3": {
+      "productCode": "300530-3",
+      "productName": "Arabica Coffee Pack 27 Sack/Pack",
+      "unit": "Pack",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300530-4": {
+      "productCode": "300530-4",
+      "productName": "Arabica Coffee Pack 05 Sack/Bag",
+      "unit": "Bag",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300531": {
+      "productCode": "300531",
+      "productName": "รอแยล-คอฟฟี่ อาราบิก้าโรบัสต้าเบลนด์ 05",
+      "unit": "ถุง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300531-1": {
+      "productCode": "300531-1",
+      "productName": "รอแยล-คอฟฟี่ อาราบิก้าโรบัสต้าเบลนด์ 05 (รุ่น48ถุง)",
+      "unit": "ถุง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300532": {
+      "productCode": "300532",
+      "productName": "ผงชงชิม อาราบิก้าโรบัสต้าเบลนด์  250 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300533": {
+      "productCode": "300533",
+      "productName": "Tester รอแยล-คอฟฟี่ อาราบิก้าโรบัสต้าเบลนด์",
+      "unit": "ซอง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300533-1": {
+      "productCode": "300533-1",
+      "productName": "รอแยล-คอฟฟี่ อาราบิก้าโรบัสต้าเบลนด์ (30 ซอง)",
+      "unit": "แพ็ค",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300533-2": {
+      "productCode": "300533-2",
+      "productName": "รอแยล-คอฟฟี่ อาราบิก้าโรบัสต้าเบลนด์",
+      "unit": "ซอง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300534": {
+      "productCode": "300534",
+      "productName": "รอแยล-คอฟฟี่ อาราบิก้าโรบัสต้าเบลนด์(รุ่น27ซอง)",
+      "unit": "แพ็ค",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300534-1": {
+      "productCode": "300534-1",
+      "productName": "รอแยล-คอฟฟี่ อาราบิก้าโรบัสต้าเบลนด์ (27 ซอง) (ลัง) (RYA 27)",
+      "unit": "ลัง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300534-2": {
+      "productCode": "300534-2",
+      "productName": "รอแยล-คอฟฟี่ อาราบิก้าโรบัสต้าเบลนด์(รุ่น27ซอง)(12แพ็ค)",
+      "unit": "แพ็ค",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300534-3": {
+      "productCode": "300534-3",
+      "productName": "รอแยล-คอฟฟี่ อาราบิก้าโรบัสต้าเบลนด์(รุ่น27ซอง) - ใสสะอาด",
+      "unit": "แพ็ค",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300535": {
+      "productCode": "300535",
+      "productName": "ผงชงชิม  แคลร์โทลาเจน 250 g.",
+      "unit": "แพ็ค",
+      "groupCode": "04",
+      "groupName": "กลุ่มคอลลาเจน , แคลร์ โทลาเจน"
+    },
+    "300536": {
+      "productCode": "300536",
+      "productName": "รอแยล-คอฟฟี่ อาราบิก้าโรบัสต้าเบลนด์ 05 (หีบ)(RYA 05)",
+      "unit": "หีบ",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300537": {
+      "productCode": "300537",
+      "productName": "ผงชงชิม อาราบิก้าโรบัสตร้าเบลนด์ 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300538": {
+      "productCode": "300538",
+      "productName": "Tester กาแฟปรุงสำเร็จเฟิร์สรอแยลไวท์คอฟฟี่",
+      "unit": "ซอง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300539": {
+      "productCode": "300539",
+      "productName": "Tester เครื่องดื่มมะเขือเทศชนิดผง ตราแคล์ร โทลาเจน",
+      "unit": "ซอง",
+      "groupCode": "04",
+      "groupName": "กลุ่มคอลลาเจน , แคลร์ โทลาเจน"
+    },
+    "300540": {
+      "productCode": "300540",
+      "productName": "ผงชงชิม แคลร์ คอฟฟี่ พรีไบโอ 250 กรัม (แพ็ค)",
+      "unit": "แพ็ค",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300541": {
+      "productCode": "300541",
+      "productName": "แคล์ร คอฟฟี่ เอสเพรสโซ่ 250 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300543": {
+      "productCode": "300543",
+      "productName": "ชุดกิ๊ฟเซ็ท",
+      "unit": "ชุด",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "300544": {
+      "productCode": "300544",
+      "productName": "แคลร์ส คอฟฟี่ บูสเตอร์ 10 ซอง (แพ็ค3)",
+      "unit": "แพ็ค",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300545": {
+      "productCode": "300545",
+      "productName": "แคลร์ส คอฟฟี่ บิวตี้ 10 ซอง (แพ็ค3)",
+      "unit": "แพ็ค",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300546": {
+      "productCode": "300546",
+      "productName": "แคลร์ส คอฟฟี่ พรีไบโอ 14 กรัม 10 ซอง (แพ็ค3)",
+      "unit": "แพ็ค",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300547": {
+      "productCode": "300547",
+      "productName": "ผงชงชิม แคลร์ คอฟฟี่ บิวตี้ 250 กรัม (แพ็ค)",
+      "unit": "แพ็ค",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300548": {
+      "productCode": "300548",
+      "productName": "ผงชงชิม แคลร์ คอฟฟี่ บูสเตอร์ 250 กรัม (แพ็ค)",
+      "unit": "แพ็ค",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300549": {
+      "productCode": "300549",
+      "productName": "ชุดกิ๊ฟเซ็ท Clare's Tolagen",
+      "unit": "ชุด",
+      "groupCode": "04",
+      "groupName": "กลุ่มคอลลาเจน , แคลร์ โทลาเจน"
+    },
+    "300550": {
+      "productCode": "300550",
+      "productName": "ชุด Clare's Tolagen",
+      "unit": "ชุด",
+      "groupCode": "04",
+      "groupName": "กลุ่มคอลลาเจน , แคลร์ โทลาเจน"
+    },
+    "300551": {
+      "productCode": "300551",
+      "productName": "เครื่องดื่มชนิดผง ตรา แคล์ร ไฟเบอร์",
+      "unit": "กล่อง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "300551-1": {
+      "productCode": "300551-1",
+      "productName": "เครื่องดื่มชนิดผง ตรา แคล์ร ไฟเบอร์ (ลัง)",
+      "unit": "ลัง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "300551-2": {
+      "productCode": "300551-2",
+      "productName": "Clare's Flber Lemon Honey 170g",
+      "unit": "Box",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "300551-3": {
+      "productCode": "300551-3",
+      "productName": "เครื่องดื่มชนิดผง ตรา แคล์ร ไฟเบอร์ (ซอง)",
+      "unit": "ซอง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "300551-4": {
+      "productCode": "300551-4",
+      "productName": "เครื่องดื่มชนิดผง ตรา แคล์ร ไฟเบอร์ - ใสสะอาด",
+      "unit": "กล่อง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "300552": {
+      "productCode": "300552",
+      "productName": "Tester เครื่องดื่มชนิดผง ตรา แคล์ร ไฟเบอร์",
+      "unit": "ซอง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "300553": {
+      "productCode": "300553",
+      "productName": "กิ๊ฟเซ็ทแคลซี่-ดี รสส้มและรสช็อกโกแลต",
+      "unit": "ชุด",
+      "groupCode": "02",
+      "groupName": "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์"
+    },
+    "300554": {
+      "productCode": "300554",
+      "productName": "กิ๊ฟเซ็ทแคลร์คอฟฟี่ สูตรพรีไบโอและสูตรบิวตี้",
+      "unit": "ชุด",
+      "groupCode": "03",
+      "groupName": "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่"
+    },
+    "300555": {
+      "productCode": "300555",
+      "productName": "อาหารเสริมใยอาหารชนิดผง ตราแคล์ร ไฟเบอร์",
+      "unit": "กล่อง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "300556": {
+      "productCode": "300556",
+      "productName": "คอลลาเจน 10,000 มก. (กลิ่นส้ม)",
+      "unit": "กล่อง",
+      "groupCode": "04",
+      "groupName": "กลุ่มคอลลาเจน , แคลร์ โทลาเจน"
+    },
+    "300557": {
+      "productCode": "300557",
+      "productName": "Tester คอลลาเจน 10,000 มก. (กลิ่นส้ม)",
+      "unit": "ซอง",
+      "groupCode": "04",
+      "groupName": "กลุ่มคอลลาเจน , แคลร์ โทลาเจน"
+    },
+    "300558": {
+      "productCode": "300558",
+      "productName": "กาแฟสำเร็จรูปผสมอาราบิก้า ตรารอแยล คอฟฟี่โกลด์ 100กรัม",
+      "unit": "ถุง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300558-1": {
+      "productCode": "300558-1",
+      "productName": "กาแฟสำเร็จรูปผสมอาราบิก้า ตรารอแยล คอฟฟี่โกลด์ 100กรัม(ลัง)(RYF100)",
+      "unit": "ลัง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300558-2": {
+      "productCode": "300558-2",
+      "productName": "Arabeca Freeze Dried coffee (3in1) 100 mg",
+      "unit": "Bag",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300559": {
+      "productCode": "300559",
+      "productName": "กาแฟสำเร็จรูปผสมอาราบิก้า ตรารอแยล คอฟฟี่โกลด์ 50กรัม",
+      "unit": "ถุง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300559-1": {
+      "productCode": "300559-1",
+      "productName": "กาแฟสำเร็จรูปผสมอาราบิก้า ตรารอแยล คอฟฟี่โกลด์ 50กรัม(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300560": {
+      "productCode": "300560",
+      "productName": "เมล็ดกาแฟคั่วแท้ ตรารอแยล-คอฟฟี่ 250 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "14",
+      "groupName": "กลุ่มกาแฟอาราบิก้าถั่วบดละเอียด"
+    },
+    "300561": {
+      "productCode": "300561",
+      "productName": "ชุดกระเช้าของขวัญใหญ่",
+      "unit": "ชุด",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "300562": {
+      "productCode": "300562",
+      "productName": "ชุดกระเช้าของขวัญเล็ก",
+      "unit": "ชุด",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "300563": {
+      "productCode": "300563",
+      "productName": "กาแฟสำเร็จรูป อาราบิก้า เอสเปรสโซ่ ตรารอแยล-คอฟฟี่โกลด์(รุ่น22ซอง)",
+      "unit": "แพ็ค",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300563-1": {
+      "productCode": "300563-1",
+      "productName": "กาแฟอาราบิก้า เอสเปรสโซ ตรารอแยล-คอฟฟี่โกลด์(รุ่น22ซอง)(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300563-2": {
+      "productCode": "300563-2",
+      "productName": "กาแฟอาราบิก้า เอสเปรสโซ ตรารอแยล-คอฟฟี่โกลด์(รุ่น22ซอง)(ซอง)",
+      "unit": "ซอง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300563-3": {
+      "productCode": "300563-3",
+      "productName": "Arabeca Esperesso RoyalD Coffee\"22Sach",
+      "unit": "Pack",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300563-4": {
+      "productCode": "300563-4",
+      "productName": "กาแฟสำเร็จรูป อาราบิก้า เอสเปรสโซ่ ตรารอแยล-คอฟฟี่โกลด์(รุ่น22ซอง) - ใสสะอาด",
+      "unit": "แพ็ค",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300563-5": {
+      "productCode": "300563-5",
+      "productName": "กาแฟสำเร็จรูป อาราบิก้า เอสเปรสโซ่ ตรารอแยล-คอฟฟี่โกลด์(รุ่น22ซอง)(รุ่น12แพ็ค)",
+      "unit": "แพ็ค",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300564": {
+      "productCode": "300564",
+      "productName": "Tester อาราบิก้า เอสเปรสโซ ตรารอแยล-คอฟฟี่โกลด์",
+      "unit": "ซอง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300564-1": {
+      "productCode": "300564-1",
+      "productName": "อาราบิก้า เอสเปรสโซ ตรารอแยล-คอฟฟี่โกลด์(ซอง)",
+      "unit": "ซอง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300565": {
+      "productCode": "300565",
+      "productName": "ผงชงชิมกาแฟอาราบิก้า เอสเพรสโซ่ 250 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300566": {
+      "productCode": "300566",
+      "productName": "ชุด GIFT SET",
+      "unit": "ชุด",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "300567": {
+      "productCode": "300567",
+      "productName": "ชุด GIFT SET (2566)",
+      "unit": "ชุด",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "300568": {
+      "productCode": "300568",
+      "productName": "อาราบิก้า ลาเต้ กาแฟปรุงสำเร็จชนิดผง ตรารอแยล-คอฟฟี่(รุ่น22ซอง)",
+      "unit": "แพ็ค",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300568-1": {
+      "productCode": "300568-1",
+      "productName": "อาราบิก้า ลาเต้ กาแฟปรุงสำเร็จชนิดผง ตรารอแยล-คอฟฟี่(รุ่น22ซอง)(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300569": {
+      "productCode": "300569",
+      "productName": "รอแยล-คอฟฟี่ อาราบิก้าโรบัสต้าเบลนด์(รุ่น27แถมRYE)",
+      "unit": "แพ็ค",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300569-1": {
+      "productCode": "300569-1",
+      "productName": "รอแยล-คอฟฟี่ อาราบิก้าโรบัสต้าเบลนด์(รุ่น27แถมRYE)(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300570": {
+      "productCode": "300570",
+      "productName": "Tester อาราบิก้า ลาเต้ กาแฟปรุงสำเร็จชนิดผง ตรารอแยล-คอฟฟี่",
+      "unit": "ซอง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300570-1": {
+      "productCode": "300570-1",
+      "productName": "อาราบิก้า ลาเต้ กาแฟปรุงสำเร็จชนิดผง ตรารอแยล-คอฟฟี่(ซอง)",
+      "unit": "ซอง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300571": {
+      "productCode": "300571",
+      "productName": "รอแยล-คอฟฟี่ โกลด์ เครมมา ขนาด 40กรัม",
+      "unit": "ถุง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300571-1": {
+      "productCode": "300571-1",
+      "productName": "รอแยล-คอฟฟี่ โกลด์ เครมมา ขนาด 40กรัม(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300572": {
+      "productCode": "300572",
+      "productName": "รอแยล-คอฟฟี่ โกลด์ เครมมา ขนาด 100กรัม",
+      "unit": "ถุง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "300572-1": {
+      "productCode": "300572-1",
+      "productName": "รอแยล-คอฟฟี่ โกลด์ เครมมา ขนาด 100กรัม(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "07",
+      "groupName": "กลุ่มอาราบิก้า , ไวท์คอฟฟี่"
+    },
+    "400101": {
+      "productCode": "400101",
+      "productName": "เบลลาครีมวิตามินอี 15 กรัม",
+      "unit": "หลอด",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "400201": {
+      "productCode": "400201",
+      "productName": "เบลลาครีมลดรอยฝ้า 15 กรัม",
+      "unit": "หลอด",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "400301": {
+      "productCode": "400301",
+      "productName": "เบลลาครีมลดรอยสิว 5 กรัม",
+      "unit": "หลอด",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500101": {
+      "productCode": "500101",
+      "productName": "โคโซแตน 60 ml.",
+      "unit": "ขวด",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500102": {
+      "productCode": "500102",
+      "productName": "เนเจอร์ทุเรียน ขนาด 100 กรัม",
+      "unit": "กล่อง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500102-1": {
+      "productCode": "500102-1",
+      "productName": "เนเจอร์ทุเรียน ขนาด 100 กรัม (ลัง)",
+      "unit": "ลัง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500103": {
+      "productCode": "500103",
+      "productName": "เนเจอร์ทุเรียน ขนาด 40 กรัม",
+      "unit": "ถุง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500103-1": {
+      "productCode": "500103-1",
+      "productName": "เนเจอร์ทุเรียน ขนาด 40 กรัม (ลัง)",
+      "unit": "ลัง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500104": {
+      "productCode": "500104",
+      "productName": "Tester เนเจอร์ทุเรียน ขนาด 20 กรัม",
+      "unit": "ซอง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500105": {
+      "productCode": "500105",
+      "productName": "เนเจอร์ทุเรียน ขนาด 70 กรัม",
+      "unit": "ซอง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500106": {
+      "productCode": "500106",
+      "productName": "มะม่วงอบแห้ง ขนาด 35 กรัม",
+      "unit": "ซอง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500107": {
+      "productCode": "500107",
+      "productName": "มะม่วงอบกรอบ ตราเนเจอร์ไวต้า",
+      "unit": "กล่อง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500108": {
+      "productCode": "500108",
+      "productName": "มะพร้าวอบกรอบ ตราเฟิร์สรอยัล",
+      "unit": "ซอง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500109": {
+      "productCode": "500109",
+      "productName": "มะม่วงอบแห้ง ตราเฟิร์สรอยัล",
+      "unit": "ซอง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500110": {
+      "productCode": "500110",
+      "productName": "เนเจอร์ไวต้า รสส้มแคลิฟอร์เนีย  500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "06",
+      "groupName": "กลุ่มเนเจอร์ไวท์"
+    },
+    "500111": {
+      "productCode": "500111",
+      "productName": "เนเจอร์ไวต้า รสองุ่น 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "06",
+      "groupName": "กลุ่มเนเจอร์ไวท์"
+    },
+    "500112": {
+      "productCode": "500112",
+      "productName": "เนเจอร์ไวต้า รสกีวี่ 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "06",
+      "groupName": "กลุ่มเนเจอร์ไวท์"
+    },
+    "500113": {
+      "productCode": "500113",
+      "productName": "เนเจอร์ไวต้า รสสัปปะรด 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "06",
+      "groupName": "กลุ่มเนเจอร์ไวท์"
+    },
+    "500114": {
+      "productCode": "500114",
+      "productName": "เนเจอร์ไวต้า รสพั้นซ์  500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "06",
+      "groupName": "กลุ่มเนเจอร์ไวท์"
+    },
+    "500115": {
+      "productCode": "500115",
+      "productName": "เนเจอร์ไวต้า รสฮันนี่เลมอน 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "06",
+      "groupName": "กลุ่มเนเจอร์ไวท์"
+    },
+    "500116": {
+      "productCode": "500116",
+      "productName": "เนเจอร์ไวต้า รสมิกซ์เบอร์รี่ 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "06",
+      "groupName": "กลุ่มเนเจอร์ไวท์"
+    },
+    "500117": {
+      "productCode": "500117",
+      "productName": "เนเจอร์ไวต้า รสฝรั่งสีชมพู 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "06",
+      "groupName": "กลุ่มเนเจอร์ไวท์"
+    },
+    "500118": {
+      "productCode": "500118",
+      "productName": "เนเจอร์ไวต้า รสสตอรเบอร์รี่ 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "06",
+      "groupName": "กลุ่มเนเจอร์ไวท์"
+    },
+    "500119": {
+      "productCode": "500119",
+      "productName": "เนเจอร์ทุเรียน ขนาด 200 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500120": {
+      "productCode": "500120",
+      "productName": "มะพร้าวอบกรอบ รสดั้งเดิม ขนาด 40 กรัม",
+      "unit": "กล่อง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500121": {
+      "productCode": "500121",
+      "productName": "มะพร้าวอบกรอบ รสเค็ม ขนาด 40 กรัม",
+      "unit": "กล่อง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500122": {
+      "productCode": "500122",
+      "productName": "มะพร้าวอบกรอบ รสวาซาบิ ขนาด 40 กรัม",
+      "unit": "กล่อง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500123": {
+      "productCode": "500123",
+      "productName": "มะพร้าวอบกรอบ เคลือบช็อคโกแลต",
+      "unit": "แพ็ค",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500124": {
+      "productCode": "500124",
+      "productName": "เนเจอร์ทุเรียน ขนาด100กรัม (หีบ)",
+      "unit": "หีบ",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500125": {
+      "productCode": "500125",
+      "productName": "เนเจอร์ไวต้า กาแฟเอสเพรสโซ่  500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "06",
+      "groupName": "กลุ่มเนเจอร์ไวท์"
+    },
+    "500126": {
+      "productCode": "500126",
+      "productName": "เนเจอร์ไวต้า ช็อกโกแลต 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "06",
+      "groupName": "กลุ่มเนเจอร์ไวท์"
+    },
+    "500126-1": {
+      "productCode": "500126-1",
+      "productName": "เนเจอร์ไวต้า ช็อกโกแลต 500 กรัม (ไม่ติดสติ๊กเกอร์)",
+      "unit": "แพ็ค",
+      "groupCode": "06",
+      "groupName": "กลุ่มเนเจอร์ไวท์"
+    },
+    "500127": {
+      "productCode": "500127",
+      "productName": "เนเจอร์ไวต้า คาปูชิโน่ 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "06",
+      "groupName": "กลุ่มเนเจอร์ไวท์"
+    },
+    "500128": {
+      "productCode": "500128",
+      "productName": "เนเจอร์ไวต้า รสมะม่วง 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "06",
+      "groupName": "กลุ่มเนเจอร์ไวท์"
+    },
+    "500129": {
+      "productCode": "500129",
+      "productName": "เนเจอร์ทุเรียน ขนาด 280 กรัม",
+      "unit": "ถุง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500129-1": {
+      "productCode": "500129-1",
+      "productName": "เนเจอร์ทุเรียน ขนาด 280 กรัม(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500130": {
+      "productCode": "500130",
+      "productName": "ข้าวเหนียวทุเรียน",
+      "unit": "กล่อง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500131": {
+      "productCode": "500131",
+      "productName": "ข้าวเหนียวมะม่วง",
+      "unit": "กล่อง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500132": {
+      "productCode": "500132",
+      "productName": "Tester ข้าวเหนียวทุเรียน ขนาด 40 กรัม",
+      "unit": "ซอง",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500133": {
+      "productCode": "500133",
+      "productName": "เนเจอร์ไวต้า คาเฟ่ ชาเขียวลาเต้ 350 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "06",
+      "groupName": "กลุ่มเนเจอร์ไวท์"
+    },
+    "500134": {
+      "productCode": "500134",
+      "productName": "ผงไอศรีม รสนม 1000 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500135": {
+      "productCode": "500135",
+      "productName": "ผงไอศรีม รสทุเรียน 1000 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500136": {
+      "productCode": "500136",
+      "productName": "ผงไอศครีม รสช็อกโกแลต ขนาด 1000 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500137": {
+      "productCode": "500137",
+      "productName": "ผงไอศรีม รสวนิลา 1000 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500138": {
+      "productCode": "500138",
+      "productName": "ผงไอศรีม รสชาเขียว 1000 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "20",
+      "groupName": "กลุ่ม อิสระ"
+    },
+    "500139": {
+      "productCode": "500139",
+      "productName": "เนเจอร์ไวต้า รสชาไทย 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "06",
+      "groupName": "กลุ่มเนเจอร์ไวท์"
+    },
+    "500140": {
+      "productCode": "500140",
+      "productName": "เนเจอร์ไวต้า รสชาไทย 350 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "06",
+      "groupName": "กลุ่มเนเจอร์ไวท์"
+    },
+    "500141": {
+      "productCode": "500141",
+      "productName": "เนเจอร์ไวต้า รสแอปเปิ้ล 500 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "06",
+      "groupName": "กลุ่มเนเจอร์ไวท์"
+    },
+    "500142": {
+      "productCode": "500142",
+      "productName": "เครื่องดื่มรสนมชนิดผง ตราเนเจอร์คาเฟ่ 350 กรัม",
+      "unit": "แพ็ค",
+      "groupCode": "06",
+      "groupName": "กลุ่มเนเจอร์ไวท์"
+    },
+    "500159": {
+      "productCode": "500159",
+      "productName": "Tester โยเกิร์ตอบกรอบ (รสมะเขือเทศ) รูปไดโนเสาร์",
+      "unit": "ซอง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500160": {
+      "productCode": "500160",
+      "productName": "Tester โยเกิร์ตอบกรอบ (รสมะม่วง) รูปไดโนเสาร์",
+      "unit": "ซอง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500161": {
+      "productCode": "500161",
+      "productName": "Tester โยเกิร์ตอบกรอบ (รสออริจินอล) รูปไดโนเสาร์",
+      "unit": "ซอง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500162": {
+      "productCode": "500162",
+      "productName": "Tester โยเกิร์ตอบกรอบ (รสสตอเบอร์รี่) รูปไดโนเสาร์",
+      "unit": "ซอง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500163": {
+      "productCode": "500163",
+      "productName": "โยเกิร์ตอบกรอบ (รสออริจินอล) รูปไดโนเสาร์  25กรัม",
+      "unit": "กล่อง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500164": {
+      "productCode": "500164",
+      "productName": "โยเกิร์ตอบกรอบ (รสสตอเบอร์รี่) รูปไดโนเสาร์ 25กรัม",
+      "unit": "กล่อง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500165": {
+      "productCode": "500165",
+      "productName": "โยเกิร์ตอบกรอบ (รสมะเขือเทศ) รูปไดโนเสาร์ 25กรัม",
+      "unit": "กล่อง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500166": {
+      "productCode": "500166",
+      "productName": "โยเกิร์ตอบกรอบ (รสมะม่วง) รูปไดโนเสาร์ 25กรัม",
+      "unit": "กล่อง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500167": {
+      "productCode": "500167",
+      "productName": "ถั่งเช่า 30 แคปซูล ตรา รอแยล คอร์ดี้-พลัส",
+      "unit": "ขวด",
+      "groupCode": "10",
+      "groupName": "กลุ่มถังเช่า"
+    },
+    "500167-1": {
+      "productCode": "500167-1",
+      "productName": "Royal CORDY Plus 30c",
+      "unit": "Box",
+      "groupCode": "10",
+      "groupName": "กลุ่มถังเช่า"
+    },
+    "500167-2": {
+      "productCode": "500167-2",
+      "productName": "ถั่งเช่า 30 แคปซูล ตรา รอแยล คอร์ดี้-พลัส (ใสสะอาด)",
+      "unit": "ขวด",
+      "groupCode": "10",
+      "groupName": "กลุ่มถังเช่า"
+    },
+    "500168": {
+      "productCode": "500168",
+      "productName": "ถั่งเช่า 24 กล่อง ตรา รอแยล คอร์ดี้-พลัส",
+      "unit": "กล่อง",
+      "groupCode": "10",
+      "groupName": "กลุ่มถังเช่า"
+    },
+    "500168-1": {
+      "productCode": "500168-1",
+      "productName": "ถั่งเช่าสีทอง ขนาด 2 แคปซูล ตรา รอแยล คอร์ดี้-พลัส",
+      "unit": "กล่อง",
+      "groupCode": "10",
+      "groupName": "กลุ่มถังเช่า"
+    },
+    "500168-2": {
+      "productCode": "500168-2",
+      "productName": "Royal CORDY Plus 24 Box (RCP24)",
+      "unit": "Box",
+      "groupCode": "10",
+      "groupName": "กลุ่มถังเช่า"
+    },
+    "500169": {
+      "productCode": "500169",
+      "productName": "Tester ถั่งเช่า ตรา รอแยล คอร์ดี้-พลัส",
+      "unit": "ซอง",
+      "groupCode": "10",
+      "groupName": "กลุ่มถังเช่า"
+    },
+    "500170": {
+      "productCode": "500170",
+      "productName": "Royal CORDY Plus 10c  (RCP10)",
+      "unit": "Box",
+      "groupCode": "10",
+      "groupName": "กลุ่มถังเช่า"
+    },
+    "500170-1": {
+      "productCode": "500170-1",
+      "productName": "ถั่งเช่าสีทอง ขนาด 10 แคปซูล ตรา รอแยล คอร์ดี้-พลัส",
+      "unit": "กล่อง",
+      "groupCode": "10",
+      "groupName": "กลุ่มถังเช่า"
+    },
+    "500171": {
+      "productCode": "500171",
+      "productName": "โยเกิร์ตอบกรอบ รสออริจินอล รูปหัวใจ 25กรัม",
+      "unit": "กล่อง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500172": {
+      "productCode": "500172",
+      "productName": "โยเกิร์ตอบกรอบ รสสตอเบอร์รี่ รูปหัวใจ 25กรัม",
+      "unit": "กล่อง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500173": {
+      "productCode": "500173",
+      "productName": "โยเกิร์ตอบกรอบ รสกล้วย รูปหัวใจ 25กรัม",
+      "unit": "กล่อง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500174": {
+      "productCode": "500174",
+      "productName": "โยเกิร์ตอบกรอบ รสมะเขือเทศ รูปหัวใจ 25กรัม",
+      "unit": "กล่อง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500175": {
+      "productCode": "500175",
+      "productName": "โยเกิร์ตอบกรอบ รสมะม่วง รูปหัวใจ 25กรัม",
+      "unit": "กล่อง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500176": {
+      "productCode": "500176",
+      "productName": "Tester โยเกิร์ตอบกรอบ รสออริจินอล รูปหัวใจ",
+      "unit": "ซอง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500177": {
+      "productCode": "500177",
+      "productName": "Tester โยเกิร์ตอบกรอบ รสสตอเบอร์รี่ รูปหัวใจ",
+      "unit": "ซอง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500178": {
+      "productCode": "500178",
+      "productName": "Tester โยเกิร์ตอบกรอบ รสกล้วย รูปหัวใจ",
+      "unit": "ซอง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500179": {
+      "productCode": "500179",
+      "productName": "Tester โยเกิร์ตอบกรอบ รสมะเขือเทศ รูปหัวใจ",
+      "unit": "ซอง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500180": {
+      "productCode": "500180",
+      "productName": "Tester โยเกิร์ตอบกรอบ รสมะม่วง รูปหัวใจ",
+      "unit": "ซอง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500181": {
+      "productCode": "500181",
+      "productName": "ชุดถั่งเช่า 30 แคปซูล (แถมรุ่น10แคปซูล)",
+      "unit": "ชุด",
+      "groupCode": "10",
+      "groupName": "กลุ่มถังเช่า"
+    },
+    "500182": {
+      "productCode": "500182",
+      "productName": "Royal Cordy Plus 30c Pack 2 Box",
+      "unit": "Set",
+      "groupCode": "10",
+      "groupName": "กลุ่มถังเช่า"
+    },
+    "500183": {
+      "productCode": "500183",
+      "productName": "Royal Cordy Plus 10c Pack 2 Box",
+      "unit": "Set",
+      "groupCode": "10",
+      "groupName": "กลุ่มถังเช่า"
+    },
+    "500184": {
+      "productCode": "500184",
+      "productName": "โยเกิร์ตอบกรอบ รสออริจินอล รูปหัวใจ 20 กรัม (ซอง)",
+      "unit": "ซอง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500184-1": {
+      "productCode": "500184-1",
+      "productName": "โยเกิร์ตอบกรอบ รสออริจินอล รูปหัวใจ 20 กรัม (กล่อง)",
+      "unit": "กล่อง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500184-2": {
+      "productCode": "500184-2",
+      "productName": "โยเกิร์ตอบกรอบ รสออริจินอล รูปหัวใจ 20 กรัม (ลัง)",
+      "unit": "ลัง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500184-3": {
+      "productCode": "500184-3",
+      "productName": "Freeze Dries Heart figure Yogust Oringnal Flavour \"Nature Bite\"20g.",
+      "unit": "Box",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500185": {
+      "productCode": "500185",
+      "productName": "โยเกิร์ตอบกรอบ รสสตอเบอร์รี่ รูปหัวใจ 20 กรัม (ซอง)",
+      "unit": "ซอง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500185-1": {
+      "productCode": "500185-1",
+      "productName": "โยเกิร์ตอบกรอบ รสสตอเบอร์รี่ รูปหัวใจ 20 กรัม (กล่อง)",
+      "unit": "กล่อง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500185-2": {
+      "productCode": "500185-2",
+      "productName": "โยเกิร์ตอบกรอบ รสสตอเบอร์รี่ รูปหัวใจ 20 กรัม (ลัง)",
+      "unit": "ลัง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500185-3": {
+      "productCode": "500185-3",
+      "productName": "Freeze Dries Heart figure Yogust Strawberry Flavour \"Nature Bite\"20g.",
+      "unit": "Box",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500186": {
+      "productCode": "500186",
+      "productName": "ถั่งเช่า ผสมมัลติวิตามิน ตรารอแยล คอร์ดี้-พลัส",
+      "unit": "กล่อง",
+      "groupCode": "10",
+      "groupName": "กลุ่มถังเช่า"
+    },
+    "500186-1": {
+      "productCode": "500186-1",
+      "productName": "ถั่งเช่า ผสมมัลติวิตามิน ตรารอแยล คอร์ดี้-พลัส(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "10",
+      "groupName": "กลุ่มถังเช่า"
+    },
+    "500186-2": {
+      "productCode": "500186-2",
+      "productName": "ถั่งเช่า ผสมมัลติวิตามิน ตรารอแยล คอร์ดี้-พลัส(ซอง)",
+      "unit": "ซอง",
+      "groupCode": "10",
+      "groupName": "กลุ่มถังเช่า"
+    },
+    "500187": {
+      "productCode": "500187",
+      "productName": "เทสเตอร์ ถั่งเช่า ผสมมัลติวิตามิน ตรารอแยล คอร์ดี้-พลัส",
+      "unit": "ซอง",
+      "groupCode": "10",
+      "groupName": "กลุ่มถังเช่า"
+    },
+    "500188": {
+      "productCode": "500188",
+      "productName": "Freeze-Dried Yogut Original Flavour",
+      "unit": "Box",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500189": {
+      "productCode": "500189",
+      "productName": "Freeze-Dried Yogut Strawberry Flavour",
+      "unit": "Box",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500190": {
+      "productCode": "500190",
+      "productName": "Freeze-Dried Yogut Mango Flavour",
+      "unit": "Box",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500191": {
+      "productCode": "500191",
+      "productName": "Freeze-Dried Yogut Tomato Flavour",
+      "unit": "Box",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500192": {
+      "productCode": "500192",
+      "productName": "โยเกิร์ตอบกรอบ รสกล้วย รูปหัวใจ 20 กรัม (ซอง)",
+      "unit": "ซอง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500192-1": {
+      "productCode": "500192-1",
+      "productName": "โยเกิร์ตอบกรอบ รสกล้วย รูปหัวใจ 20 กรัม (กล่อง)",
+      "unit": "กล่อง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500192-2": {
+      "productCode": "500192-2",
+      "productName": "โยเกิร์ตอบกรอบ รสกล้วย รูปหัวใจ 20 กรัม (ลัง)",
+      "unit": "ลัง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500192-3": {
+      "productCode": "500192-3",
+      "productName": "Freeze Dries Heart figure Yogust Banana Flavour \"Nature Bite\"20g.",
+      "unit": "Box",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500193": {
+      "productCode": "500193",
+      "productName": "โยเกิร์ตอบกรอบ รสมะม่วง รูปหัวใจ 20 กรัม (ซอง)",
+      "unit": "ซอง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500193-1": {
+      "productCode": "500193-1",
+      "productName": "โยเกิร์ตอบกรอบ รสมะม่วง รูปหัวใจ 20 กรัม (กล่อง)",
+      "unit": "กล่อง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500193-2": {
+      "productCode": "500193-2",
+      "productName": "โยเกิร์ตอบกรอบ รสมะม่วง รูปหัวใจ 20 กรัม (ลัง)",
+      "unit": "ลัง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500193-3": {
+      "productCode": "500193-3",
+      "productName": "Freeze Dries Heart figure Yogust Mango Flavour \"Nature Bite\"20g.",
+      "unit": "Box",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500194": {
+      "productCode": "500194",
+      "productName": "โยเกิร์ตอบกรอบ บลูเบอร์รี่ รูปไดโนเสาร์ 25 กรัม",
+      "unit": "กล่อง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500194-1": {
+      "productCode": "500194-1",
+      "productName": "Freeze Dries Dinosaur figure Yogust Snack-Blueberry \"Nature Bite\"",
+      "unit": "Box",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500195": {
+      "productCode": "500195",
+      "productName": "นมปรุงแต่งอัดเม็ด รสหวาน 12 (กล่อง)",
+      "unit": "กล่อง",
+      "groupCode": "13",
+      "groupName": "กลุ่มนมอัดเม็ด (ชนิด 12)"
+    },
+    "500195-1": {
+      "productCode": "500195-1",
+      "productName": "นมปรุงแต่งอัดเม็ด รสหวาน 12 (ซอง)",
+      "unit": "ซอง",
+      "groupCode": "13",
+      "groupName": "กลุ่มนมอัดเม็ด (ชนิด 12)"
+    },
+    "500195-2": {
+      "productCode": "500195-2",
+      "productName": "นมปรุงแต่งอัดเม็ด รสหวาน 12 (ลัง)",
+      "unit": "ลัง",
+      "groupCode": "13",
+      "groupName": "กลุ่มนมอัดเม็ด (ชนิด 12)"
+    },
+    "500195-3": {
+      "productCode": "500195-3",
+      "productName": "Sweetened Flavored Milk Tablet \"Natur Bite\" 12",
+      "unit": "Box",
+      "groupCode": "13",
+      "groupName": "กลุ่มนมอัดเม็ด (ชนิด 12)"
+    },
+    "500196": {
+      "productCode": "500196",
+      "productName": "นมปรุงแต่งอัดเม็ด รสช็อกโกแลต 12 (กล่อง)",
+      "unit": "กล่อง",
+      "groupCode": "13",
+      "groupName": "กลุ่มนมอัดเม็ด (ชนิด 12)"
+    },
+    "500196-1": {
+      "productCode": "500196-1",
+      "productName": "นมปรุงแต่งอัดเม็ด รสช็อกโกแลต 12(ซอง)",
+      "unit": "ซอง",
+      "groupCode": "13",
+      "groupName": "กลุ่มนมอัดเม็ด (ชนิด 12)"
+    },
+    "500196-2": {
+      "productCode": "500196-2",
+      "productName": "นมปรุงแต่งอัดเม็ด รสช็อกโกแลต 12 (ลัง)",
+      "unit": "ลัง",
+      "groupCode": "13",
+      "groupName": "กลุ่มนมอัดเม็ด (ชนิด 12)"
+    },
+    "500196-3": {
+      "productCode": "500196-3",
+      "productName": "Chocolate Flavored Milk Tablet \"Natur Bite\" 12",
+      "unit": "Box",
+      "groupCode": "13",
+      "groupName": "กลุ่มนมอัดเม็ด (ชนิด 12)"
+    },
+    "500197": {
+      "productCode": "500197",
+      "productName": "Tester นมปรุงแต่งอัดเม็ด รสหวาน 10 g.",
+      "unit": "ซอง",
+      "groupCode": "19",
+      "groupName": "กลุ่มนมอัดเม็ด (ชนิด 10 กรัม)"
+    },
+    "500198": {
+      "productCode": "500198",
+      "productName": "Tester นมปรุงแต่งอัดเม็ด รสช็อกโกแลต 10g.",
+      "unit": "ซอง",
+      "groupCode": "19",
+      "groupName": "กลุ่มนมอัดเม็ด (ชนิด 10 กรัม)"
+    },
+    "500199": {
+      "productCode": "500199",
+      "productName": "Tester นมปรุงแต่งอัดเม็ด รสสตรอเบอร์รี่ 10g",
+      "unit": "ซอง",
+      "groupCode": "19",
+      "groupName": "กลุ่มนมอัดเม็ด (ชนิด 10 กรัม)"
+    },
+    "500200": {
+      "productCode": "500200",
+      "productName": "วิตามินซี 60มก. กลิ่นส้ม ตราเนเจอร์ ไบท์",
+      "unit": "ซอง",
+      "groupCode": "15",
+      "groupName": "กลุ่มวิตามินซี"
+    },
+    "500200-1": {
+      "productCode": "500200-1",
+      "productName": "วิตามินซี 60มก. กลิ่นส้ม ตราเนเจอร์ ไบท์ (กล่อง)",
+      "unit": "กล่อง",
+      "groupCode": "15",
+      "groupName": "กลุ่มวิตามินซี"
+    },
+    "500200-2": {
+      "productCode": "500200-2",
+      "productName": "วิตามินซี 60มก. กลิ่นส้ม ตราเนเจอร์ ไบท์ (ลัง)",
+      "unit": "ลัง",
+      "groupCode": "15",
+      "groupName": "กลุ่มวิตามินซี"
+    },
+    "500200-3": {
+      "productCode": "500200-3",
+      "productName": "Vitamin C 1200 mg Orange Flavour",
+      "unit": "Box",
+      "groupCode": "15",
+      "groupName": "กลุ่มวิตามินซี"
+    },
+    "500201": {
+      "productCode": "500201",
+      "productName": "วิตามินซี 60มก. กลิ่นองุ่น ตราเนเจอร์ ไบท์",
+      "unit": "ซอง",
+      "groupCode": "15",
+      "groupName": "กลุ่มวิตามินซี"
+    },
+    "500201-1": {
+      "productCode": "500201-1",
+      "productName": "วิตามินซี 60มก. กลิ่นองุ่น ตราเนเจอร์ ไบท์ (กล่อง)",
+      "unit": "กล่อง",
+      "groupCode": "15",
+      "groupName": "กลุ่มวิตามินซี"
+    },
+    "500201-2": {
+      "productCode": "500201-2",
+      "productName": "วิตามินซี 60มก. กลิ่นองุ่น ตราเนเจอร์ ไบท์ (ลัง)",
+      "unit": "ลัง",
+      "groupCode": "15",
+      "groupName": "กลุ่มวิตามินซี"
+    },
+    "500201-3": {
+      "productCode": "500201-3",
+      "productName": "Vitamin C 1200 mg Grape Flavour",
+      "unit": "Box",
+      "groupCode": "15",
+      "groupName": "กลุ่มวิตามินซี"
+    },
+    "500202": {
+      "productCode": "500202",
+      "productName": "Tester วิตามินซี 60มก. กลิ่นส้ม ตราเนเจอร์ ไบท์",
+      "unit": "ซอง",
+      "groupCode": "15",
+      "groupName": "กลุ่มวิตามินซี"
+    },
+    "500203": {
+      "productCode": "500203",
+      "productName": "Tester วิตามินซี 60มก. กลิ่นองุ่น ตราเนเจอร์ ไบท์",
+      "unit": "ซอง",
+      "groupCode": "15",
+      "groupName": "กลุ่มวิตามินซี"
+    },
+    "500204": {
+      "productCode": "500204",
+      "productName": "Natural lemon flavoured beverage (Royal-d c1000 brand)",
+      "unit": "กล่อง",
+      "groupCode": "15",
+      "groupName": "กลุ่มวิตามินซี"
+    },
+    "500204-1": {
+      "productCode": "500204-1",
+      "productName": "วิตามินซี 1000มก. (กลิ่นไลม์) ผลิตภัณฑ์เสริมอาหาร ตรา รอแยล-ดี",
+      "unit": "กล่อง",
+      "groupCode": "15",
+      "groupName": "กลุ่มวิตามินซี"
+    },
+    "500205": {
+      "productCode": "500205",
+      "productName": "โยเกิร์ตอบกรอบ แครนเบอร์รี่ รูปหัวใจ 25 กรัม",
+      "unit": "กล่อง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500205-1": {
+      "productCode": "500205-1",
+      "productName": "Freeze Dries Heart figure Yogust Snack-Cranberry \"Nature Bite\"25g.",
+      "unit": "Box",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500206": {
+      "productCode": "500206",
+      "productName": "โยเกิร์ตอบกรอบ แครนเบอร์รี่ รูปหัวใจ 20 กรัม",
+      "unit": "ซอง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500206-1": {
+      "productCode": "500206-1",
+      "productName": "โยเกิร์ตอบกรอบ แครนเบอร์รี่ รูปหัวใจ 20 กรัม(กล่อง)",
+      "unit": "กล่อง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500206-2": {
+      "productCode": "500206-2",
+      "productName": "Freeze Dries Heart figure Yogust Snack-Cranberry \"Nature Bite\" 20g.",
+      "unit": "Box",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500207": {
+      "productCode": "500207",
+      "productName": "โยเกิร์ตอบกรอบ บลูเบอร์รี่ รูปหัวใจ 20 กรัม",
+      "unit": "ซอง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500207-1": {
+      "productCode": "500207-1",
+      "productName": "โยเกิร์ตอบกรอบ บลูเบอร์รี่ รูปหัวใจ 20 กรัม(กล่อง)",
+      "unit": "กล่อง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500207-2": {
+      "productCode": "500207-2",
+      "productName": "Freeze Dries Heart figure Yogust Snack-Blueberry \"Nature Bite\" 20g.",
+      "unit": "Box",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500208": {
+      "productCode": "500208",
+      "productName": "โยเกิร์ตอบกรอบ บลูเบอร์รี่ รูปหัวใจ 25 กรัม",
+      "unit": "กล่อง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500208-1": {
+      "productCode": "500208-1",
+      "productName": "Freeze Dries Heart figure Yogust Snack-Blueberry \"Nature Bite\"",
+      "unit": "Box",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500209": {
+      "productCode": "500209",
+      "productName": "โยเกิร์ตอบกรอบ แครนเบอร์รี่ รูปไดโนเสาร์ 25 กรัม",
+      "unit": "กล่อง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500209-1": {
+      "productCode": "500209-1",
+      "productName": "Freeze Dries Dinosaur figure Yogust Snack-Cranberry \"Nature Bite\"",
+      "unit": "Box",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500210": {
+      "productCode": "500210",
+      "productName": "นมปรุงแต่งอัดเม็ด รสหวาน 10 (กล่อง)",
+      "unit": "กล่อง",
+      "groupCode": "19",
+      "groupName": "กลุ่มนมอัดเม็ด (ชนิด 10 กรัม)"
+    },
+    "500210-1": {
+      "productCode": "500210-1",
+      "productName": "นมปรุงแต่งอัดเม็ด รสหวาน 10 (ซอง)",
+      "unit": "ซอง",
+      "groupCode": "19",
+      "groupName": "กลุ่มนมอัดเม็ด (ชนิด 10 กรัม)"
+    },
+    "500210-2": {
+      "productCode": "500210-2",
+      "productName": "Sweetened Flavored Milk Tablet \"Natur Bite\"",
+      "unit": "Box",
+      "groupCode": "19",
+      "groupName": "กลุ่มนมอัดเม็ด (ชนิด 10 กรัม)"
+    },
+    "500211": {
+      "productCode": "500211",
+      "productName": "นมปรุงแต่งอัดเม็ด รสช็อกโกแลต 10 (กล่อง)",
+      "unit": "กล่อง",
+      "groupCode": "19",
+      "groupName": "กลุ่มนมอัดเม็ด (ชนิด 10 กรัม)"
+    },
+    "500211-1": {
+      "productCode": "500211-1",
+      "productName": "นมปรุงแต่งอัดเม็ด รสช็อกโกแลต 10 (ซอง)",
+      "unit": "ซอง",
+      "groupCode": "19",
+      "groupName": "กลุ่มนมอัดเม็ด (ชนิด 10 กรัม)"
+    },
+    "500211-2": {
+      "productCode": "500211-2",
+      "productName": "Chocolate Flavored Milk Tablet \"Natur Bite\"",
+      "unit": "Box",
+      "groupCode": "19",
+      "groupName": "กลุ่มนมอัดเม็ด (ชนิด 10 กรัม)"
+    },
+    "500212": {
+      "productCode": "500212",
+      "productName": "นมปรุงแต่งอัดเม็ด รสสตอเบอร์รี่ 10 (กล่อง)",
+      "unit": "กล่อง",
+      "groupCode": "19",
+      "groupName": "กลุ่มนมอัดเม็ด (ชนิด 10 กรัม)"
+    },
+    "500212-1": {
+      "productCode": "500212-1",
+      "productName": "นมปรุงแต่งอัดเม็ด รสสตอเบอร์รี่ 10 (ซอง)",
+      "unit": "ซอง",
+      "groupCode": "19",
+      "groupName": "กลุ่มนมอัดเม็ด (ชนิด 10 กรัม)"
+    },
+    "500212-2": {
+      "productCode": "500212-2",
+      "productName": "Strawberry Flavored Milk Tablet \"Natur Bite\"",
+      "unit": "Box",
+      "groupCode": "19",
+      "groupName": "กลุ่มนมอัดเม็ด (ชนิด 10 กรัม)"
+    },
+    "500213": {
+      "productCode": "500213",
+      "productName": "Tester โยเกิร์ตอบกรอบ แครนเบอร์รี่ รูปหัวใจ",
+      "unit": "ซอง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500214": {
+      "productCode": "500214",
+      "productName": "Tester โยเกิร์ตอบกรอบ บลูเบอร์รี่ รูปหัวใจ",
+      "unit": "ซอง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500215": {
+      "productCode": "500215",
+      "productName": "Tester โยเกิร์ตอบกรอบ แครนเบอร์รี่ รูปไดโนเสาร์ 25 กรัม",
+      "unit": "ซอง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500216": {
+      "productCode": "500216",
+      "productName": "Tester โยเกิร์ตอบกรอบ บลูเบอร์รี่ รูปไดโนเสาร์ 25 กรัม",
+      "unit": "ซอง",
+      "groupCode": "09",
+      "groupName": "กลุ่มโยเกิร์ต"
+    },
+    "500301": {
+      "productCode": "500301",
+      "productName": "รอแยล-ดี น้ำ รสสตอเบอร์รี่ 390 ml. (RWS 390)",
+      "unit": "ขวด",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500302": {
+      "productCode": "500302",
+      "productName": "รอแยล-ดี น้ำ รสองุ่น 390 ml.(RWG 390)",
+      "unit": "ขวด",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500303": {
+      "productCode": "500303",
+      "productName": "รอแยล-ดี น้ำ 390 ml. (RDW 390)",
+      "unit": "ขวด",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500304": {
+      "productCode": "500304",
+      "productName": "รอแยล-ดี น้ำ รสสตอเบอร์รี่ 330 ml. (RWS 330)",
+      "unit": "ขวด",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500304-1": {
+      "productCode": "500304-1",
+      "productName": "Mixed Frulls Flavoured Juice (Strawberry)",
+      "unit": "Bottle",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500304-2": {
+      "productCode": "500304-2",
+      "productName": "รอแยล-ดี น้ำ รสสตอเบอร์รี่ 330 ml. (RWS 330)( 72 ขวด)",
+      "unit": "ขวด",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500305": {
+      "productCode": "500305",
+      "productName": "รอแยล-ดี น้ำ รสองุ่น 330 ml.(RWG 330)",
+      "unit": "ขวด",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500305-1": {
+      "productCode": "500305-1",
+      "productName": "Mixed Frulls Flavoured Juice (Grape)",
+      "unit": "Bottle",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500306": {
+      "productCode": "500306",
+      "productName": "รอแยล-ดี น้ำ 330 ml. (RDW 330) ( 24 ขวด)",
+      "unit": "ขวด",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500306-1": {
+      "productCode": "500306-1",
+      "productName": "รอแยล-ดี น้ำ 330 ml. (RDW 330) ( 72 ขวด)",
+      "unit": "ขวด",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500306-2": {
+      "productCode": "500306-2",
+      "productName": "Mixed Frulls Flavoured Juice (Mixed Frult)",
+      "unit": "Bottle",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500307": {
+      "productCode": "500307",
+      "productName": "เครื่องดื่มน้ำรสองุ่น12% ผสมเกลือแร่ 330 ml.(RWM330)",
+      "unit": "ขวด",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500307-1": {
+      "productCode": "500307-1",
+      "productName": "เครื่องดื่มน้ำรสองุ่น12% ผสมเกลือแร่ 330 ml. รุ่น12ขวด",
+      "unit": "แพ็ค",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500307-2": {
+      "productCode": "500307-2",
+      "productName": "เครื่องดื่มน้ำรสองุ่น12% ผสมเกลือแร่ 330 ml.(RWM330)(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500307-3": {
+      "productCode": "500307-3",
+      "productName": "เครื่องดื่มน้ำรสองุ่น12% ผสมเกลือแร่ 330 ml.(RWM330 รุ่น 5 แถม 1)",
+      "unit": "ขวด",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500307-4": {
+      "productCode": "500307-4",
+      "productName": "เครื่องดื่มน้ำรสองุ่น12% ผสมเกลือแร่ 330 ml.(RWM330 รุ่น 5 แถม 1)(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500308": {
+      "productCode": "500308",
+      "productName": "รอแยล-ดี วิตามิน วอเตอร์ วิตามิน B",
+      "unit": "ขวด",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500308-1": {
+      "productCode": "500308-1",
+      "productName": "รอแยล-ดี วิตามินบีวอเตอร์420ml รุ่น12ขวด",
+      "unit": "แพ็ค",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500308-2": {
+      "productCode": "500308-2",
+      "productName": "รอแยล-ดี วิตามินบีวอเตอร์420ml รุ่น12ขวด",
+      "unit": "ขวด",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500308-3": {
+      "productCode": "500308-3",
+      "productName": "รอแยล-ดี วิตามิน วอเตอร์ วิตามิน B (ลัง)",
+      "unit": "ลัง",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500308-4": {
+      "productCode": "500308-4",
+      "productName": "Royal-D Vitamin Water (B1,B6,B12)",
+      "unit": "Bottle",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500309": {
+      "productCode": "500309",
+      "productName": "รอแยล-ดี วิตามิน วอเตอร์ วิตามิน C",
+      "unit": "ขวด",
+      "groupCode": "16",
+      "groupName": "กลุ่มเครื่องดื่มวิตามินซี"
+    },
+    "500309-1": {
+      "productCode": "500309-1",
+      "productName": "รอแยล-ดี วิตามิน วอเตอร์ วิตามิน C(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "16",
+      "groupName": "กลุ่มเครื่องดื่มวิตามินซี"
+    },
+    "500310": {
+      "productCode": "500310",
+      "productName": "เครื่องดื่มวิตามิน ซี 1000มก(ตปท)",
+      "unit": "ขวด",
+      "groupCode": "16",
+      "groupName": "กลุ่มเครื่องดื่มวิตามินซี"
+    },
+    "500310-1": {
+      "productCode": "500310-1",
+      "productName": "Royal D Vitamin B1,B2,B6 & Vitamin C1000mg",
+      "unit": "Bottle",
+      "groupCode": "16",
+      "groupName": "กลุ่มเครื่องดื่มวิตามินซี"
+    },
+    "500310-2": {
+      "productCode": "500310-2",
+      "productName": "เครื่องดื่มวิตามิน ซี 1000มก(กล่อง)",
+      "unit": "กล่อง",
+      "groupCode": "16",
+      "groupName": "กลุ่มเครื่องดื่มวิตามินซี"
+    },
+    "500310-3": {
+      "productCode": "500310-3",
+      "productName": "เครื่องดื่มวิตามิน ซี 1000มก(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "16",
+      "groupName": "กลุ่มเครื่องดื่มวิตามินซี"
+    },
+    "500311": {
+      "productCode": "500311",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร วิตามินซี 1000 มก. (ตรา รอแยล-ดี)",
+      "unit": "ขวด",
+      "groupCode": "16",
+      "groupName": "กลุ่มเครื่องดื่มวิตามินซี"
+    },
+    "500311-1": {
+      "productCode": "500311-1",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร วิตามินซี 1000 มก. (ตรา รอแยล-ดี)(กล่อง)",
+      "unit": "กล่อง",
+      "groupCode": "16",
+      "groupName": "กลุ่มเครื่องดื่มวิตามินซี"
+    },
+    "500311-2": {
+      "productCode": "500311-2",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร วิตามินซี 1000 มก. (ตรา รอแยล-ดี)(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "16",
+      "groupName": "กลุ่มเครื่องดื่มวิตามินซี"
+    },
+    "500311-3": {
+      "productCode": "500311-3",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร วิตามินซี 1000 มก. (ตรา รอแยล-ดี)(รุ่น5กล่อง)(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "16",
+      "groupName": "กลุ่มเครื่องดื่มวิตามินซี"
+    },
+    "500311-4": {
+      "productCode": "500311-4",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร วิตามินซี 1000 มก. (ตรา รอแยล-ดี)(รุ่น5กล่อง)",
+      "unit": "ขวด",
+      "groupCode": "16",
+      "groupName": "กลุ่มเครื่องดื่มวิตามินซี"
+    },
+    "500311-5": {
+      "productCode": "500311-5",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร วิตามินซี 1000 มก. (ตรา รอแยล-ดี)(กิ๊ฟเซ็ท)",
+      "unit": "กล่อง",
+      "groupCode": "16",
+      "groupName": "กลุ่มเครื่องดื่มวิตามินซี"
+    },
+    "500311-6": {
+      "productCode": "500311-6",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร วิตามินซี 1000 มก. (ตรา รอแยล-ดี)(รุ่น5กล่อง)(กล่อง)",
+      "unit": "กล่อง",
+      "groupCode": "16",
+      "groupName": "กลุ่มเครื่องดื่มวิตามินซี"
+    },
+    "500312": {
+      "productCode": "500312",
+      "productName": "เครื่องดื่มกลิ่นส้มผสมวิตามินและเกลือแร่ ขนาด 330 ml (RBW330)",
+      "unit": "ขวด",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500312-1": {
+      "productCode": "500312-1",
+      "productName": "Royal D Vitamin B1,B6,B12 & Vitamin C (Arrange) 330ml",
+      "unit": "bottle",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "500313": {
+      "productCode": "500313",
+      "productName": "เครื่องดื่มรสขิงผสมเลมอน รอแยล-ดี",
+      "unit": "ขวด",
+      "groupCode": "17",
+      "groupName": "กลุ่ม เครื่องดื่มรสชิงผสมเลมอน"
+    },
+    "500313-1": {
+      "productCode": "500313-1",
+      "productName": "Ginger extract Honey vltamin C,E",
+      "unit": "bottle",
+      "groupCode": "17",
+      "groupName": "กลุ่ม เครื่องดื่มรสชิงผสมเลมอน"
+    },
+    "500313-2": {
+      "productCode": "500313-2",
+      "productName": "เครื่องดื่มรสขิงผสมเลมอน รอแยล-ดี (กล่อง)",
+      "unit": "กล่อง",
+      "groupCode": "17",
+      "groupName": "กลุ่ม เครื่องดื่มรสชิงผสมเลมอน"
+    },
+    "500313-3": {
+      "productCode": "500313-3",
+      "productName": "เครื่องดื่มรสขิงผสมเลมอน รอแยล-ดี(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "17",
+      "groupName": "กลุ่ม เครื่องดื่มรสชิงผสมเลมอน"
+    },
+    "500313-4": {
+      "productCode": "500313-4",
+      "productName": "เครื่องดื่มรสขิงผสมเลมอน รอแยล-ดี(กิ๊ฟเซ็ท)",
+      "unit": "กล่อง",
+      "groupCode": "17",
+      "groupName": "กลุ่ม เครื่องดื่มรสชิงผสมเลมอน"
+    },
+    "500313-5": {
+      "productCode": "500313-5",
+      "productName": "Ginger extract Honey vltamin C,E(Box)",
+      "unit": "BOX",
+      "groupCode": "17",
+      "groupName": "กลุ่ม เครื่องดื่มรสชิงผสมเลมอน"
+    },
+    "500314": {
+      "productCode": "500314",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร ตรารอแยล คอร์ดี้ พลัส ถั่งเช่าสกัด 2000มก.",
+      "unit": "ขวด",
+      "groupCode": "10",
+      "groupName": "กลุ่มถังเช่า"
+    },
+    "500314-1": {
+      "productCode": "500314-1",
+      "productName": "Dietay Supplement Product Royal Cordy Plus Brand",
+      "unit": "Box",
+      "groupCode": "10",
+      "groupName": "กลุ่มถังเช่า"
+    },
+    "500314-2": {
+      "productCode": "500314-2",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร ตรารอแยล คอร์ดี้ พลัส ถังเช่าสกัด 2000มก.(กล่อง)",
+      "unit": "กล่อง",
+      "groupCode": "10",
+      "groupName": "กลุ่มถังเช่า"
+    },
+    "500314-3": {
+      "productCode": "500314-3",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร ตรารอแยล คอร์ดี้ พลัส ถังเช่าสกัด 2000มก.(ลัง)",
+      "unit": "ลัง",
+      "groupCode": "10",
+      "groupName": "กลุ่มถังเช่า"
+    },
+    "500314-4": {
+      "productCode": "500314-4",
+      "productName": "ผลิตภัณฑ์เสริมอาหาร ตรารอแยล คอร์ดี้ พลัส ถั่งเช่าสกัด 2000มก.(กิ๊ฟเซ็ท)",
+      "unit": "กล่อง",
+      "groupCode": "10",
+      "groupName": "กลุ่มถังเช่า"
+    },
+    "505000": {
+      "productCode": "505000",
+      "productName": "เครื่องดื่ม Synergy (ไทย)",
+      "unit": "ขวด",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "505000-1": {
+      "productCode": "505000-1",
+      "productName": "เครื่องดื่ม Synergy (ไทย) (แพ็ค 6 ขวด)",
+      "unit": "แพ็ค",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "505000-2": {
+      "productCode": "505000-2",
+      "productName": "เครื่องดื่ม Synergy (F)",
+      "unit": "ขวด",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "505001": {
+      "productCode": "505001",
+      "productName": "เครื่องดื่ม Synergy (ตปท)",
+      "unit": "ขวด",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "505002": {
+      "productCode": "505002",
+      "productName": "เครื่องดื่ม Synergy (ไทย) (หีบ)",
+      "unit": "ขวด",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "505003": {
+      "productCode": "505003",
+      "productName": "เครื่องดื่มน้ำทับทิมตรา ซินเนอร์จี้ ไฮ-ซี (รุ่น 60 ขวด)",
+      "unit": "ขวด",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "505003-1": {
+      "productCode": "505003-1",
+      "productName": "เครื่องดื่มน้ำทับทิมตรา ซินเนอร์จี้ ไฮ-ซี (แพ็ค 6 ขวด)",
+      "unit": "แพ็ค",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "505004": {
+      "productCode": "505004",
+      "productName": "เครื่องดื่ม Synergy (รุ่น 60 ขวด)",
+      "unit": "ขวด",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "505005": {
+      "productCode": "505005",
+      "productName": "เครื่องดื่มน้ำทับทิมตรา ซินเนอร์จี้ ไฮ-ซี (แพ็ค)",
+      "unit": "ขวด",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    },
+    "505006": {
+      "productCode": "505006",
+      "productName": "เครื่องดื่มน้ำทับทิมตรา ซินเนอร์จี้ ไฮ-ซี (หีบ)",
+      "unit": "หีบ",
+      "groupCode": "05",
+      "groupName": "กลุ่ม Ready to drink"
+    }
+  }
+}
