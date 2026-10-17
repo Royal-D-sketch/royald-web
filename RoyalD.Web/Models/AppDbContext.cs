@@ -16,6 +16,9 @@ namespace RoyalD.Web.Models
         public DbSet<FileAttachment> FileAttachments { get; set; } = null!;
         public DbSet<PendingProduct> PendingProducts { get; set; } = null!;
         public DbSet<UserMenuPermission> UserMenuPermissions { get; set; } = null!;
+        public DbSet<CreditNote> CreditNotes { get; set; } = null!;
+        public DbSet<CreditNoteItem> CreditNoteItems { get; set; } = null!;
+        public DbSet<CreditNoteWarehouseEntry> CreditNoteWarehouseEntries { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -49,6 +52,33 @@ namespace RoyalD.Web.Models
                 .WithMany(d => d.PaymentRecords)
                 .HasForeignKey(p => p.OutstandingDebtId);
 
+            // CreditNote → CreditNoteItem
+            modelBuilder.Entity<CreditNoteItem>()
+                .HasOne(i => i.CreditNote)
+                .WithMany(c => c.Items)
+                .HasForeignKey(i => i.CreditNoteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // CreditNote → CreditNoteWarehouseEntry
+            modelBuilder.Entity<CreditNoteWarehouseEntry>()
+                .HasOne(e => e.CreditNote)
+                .WithMany(c => c.WarehouseEntries)
+                .HasForeignKey(e => e.CreditNoteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // CreditNote Indexes
+            modelBuilder.Entity<CreditNote>()
+                .HasIndex(c => c.CreditNoteNo)
+                .IsUnique();
+            modelBuilder.Entity<CreditNote>()
+                .HasIndex(c => c.CreditNoteDate);
+            modelBuilder.Entity<CreditNote>()
+                .HasIndex(c => c.CustomerCode);
+            modelBuilder.Entity<CreditNote>()
+                .HasIndex(c => c.SalesRep);
+            modelBuilder.Entity<CreditNote>()
+                .HasIndex(c => c.OriginalSalesRep);
+
             // Indexes for High Performance
             modelBuilder.Entity<SalesBill>()
                 .HasIndex(b => b.SalesRep);
@@ -81,6 +111,3 @@ namespace RoyalD.Web.Models
         }
     }
 }
-
-
-

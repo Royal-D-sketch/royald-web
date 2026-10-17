@@ -1,0 +1,434 @@
+@model RoyalD.Web.Models.CreditNote
+@{
+    Layout = null; // Clean print layout without web sidebar
+    string paperSize = ViewBag.PaperSize as string ?? "A4";
+    bool isContinuous = paperSize == "Continuous9x11";
+    string thaiBaht = ViewBag.ThaiBahtText as string ?? "";
+}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <title>ใบลดหนี้ — @Model.CreditNoteNo</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        body {
+            font-family: 'Sarabun', 'TH Sarabun New', Tahoma, sans-serif;
+            font-size: 13.5px;
+            color: #111;
+            background: #e2e8f0;
+            margin: 0;
+            padding: 20px 0;
+        }
+
+        /* Paper Containers */
+        .paper-page {
+            background: #fff;
+            margin: 0 auto;
+            padding: 18mm 16mm 14mm 16mm;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            page-break-inside: avoid;
+            break-inside: avoid;
+            position: relative;
+        }
+
+        /* A4 Size: 210mm x 297mm */
+        .page-a4 {
+            width: 210mm;
+            min-height: 297mm;
+            max-height: 297mm;
+        }
+
+        /* Continuous Computer Form Size: 9 x 11 inches (228.6mm x 279.4mm) */
+        .page-continuous {
+            width: 9in;
+            min-height: 11in;
+            max-height: 11in;
+            padding: 14mm 14mm 12mm 14mm;
+        }
+
+        .doc-header-title {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: #0f172a;
+        }
+
+        .company-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .border-box {
+            border: 1px solid #94a3b8;
+            border-radius: 6px;
+            padding: 8px 12px;
+        }
+
+        .table-items {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .table-items th {
+            background-color: #f1f5f9 !important;
+            border: 1px solid #94a3b8;
+            padding: 6px 8px;
+            font-weight: 700;
+            text-align: center;
+        }
+        .table-items td {
+            border: 1px solid #cbd5e1;
+            padding: 5px 8px;
+        }
+
+        .tax-summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px;
+        }
+        .tax-summary-table td {
+            padding: 3px 6px;
+        }
+
+        /* 4 Horizontal Signatures */
+        .sig-col {
+            border: 1px solid #94a3b8;
+            border-radius: 6px;
+            padding: 10px 6px 6px 6px;
+            text-align: center;
+            font-size: 11.5px;
+            min-height: 95px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .sig-line {
+            border-bottom: 1px dashed #64748b;
+            margin: 28px 10px 4px 10px;
+        }
+
+        /* Print Controls Bar */
+        .no-print {
+            position: fixed;
+            top: 15px;
+            right: 20px;
+            z-index: 9999;
+            background: rgba(15, 23, 42, 0.95);
+            padding: 10px 18px;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Print Styles */
+        @@media print {
+            body {
+                background: #fff !important;
+                padding: 0 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .paper-page {
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 10mm 12mm 10mm 12mm !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                max-height: none !important;
+            }
+
+            @@page {
+                size: @(isContinuous ? "9in 11in portrait" : "A4 portrait");
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Floating Print Control Bar (Screen only) -->
+    <div class="no-print">
+        <span class="text-white small fw-bold">
+            <i class="bi bi-printer me-1"></i> เลือกขนาดกระดาษ:
+        </span>
+        <div class="btn-group btn-group-sm" role="group">
+            <a href="/CreditNote/Print?id=@Model.Id&paperSize=A4" class="btn @(!isContinuous ? "btn-primary fw-bold" : "btn-outline-light")">
+                กระดาษมาตรฐาน A4
+            </a>
+            <a href="/CreditNote/Print?id=@Model.Id&paperSize=Continuous9x11" class="btn @(isContinuous ? "btn-primary fw-bold" : "btn-outline-light")">
+                กระดาษต่อเนื่อง 9 x 11"
+            </a>
+        </div>
+        <button type="button" class="btn btn-sm btn-success fw-bold px-3" onclick="window.print();">
+            <i class="bi bi-printer-fill me-1"></i> สั่งพิมพ์ทันที
+        </button>
+        <a href="/CreditNote/Detail?id=@Model.Id" class="btn btn-sm btn-outline-light">
+            <i class="bi bi-x-circle"></i> ปิด
+        </a>
+    </div>
+
+    <!-- Printable Single Page Container -->
+    <div class="paper-page @(isContinuous ? "page-continuous" : "page-a4")">
+        
+        <!-- Header: Company Info & Credit Note Title -->
+        <div class="row align-items-start pb-2 border-bottom border-2 border-dark mb-2">
+            <div class="col-7">
+                <div class="company-title">บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด (สำนักงานใหญ่)</div>
+                <div style="font-size: 12px; line-height: 1.4; color:#334155;">
+                    เลขที่ 127, 129 ถนนจรัญสนิทวงศ์ แขวงบางอ้อ เขตบางพลัด กรุงเทพมหานคร 10700<br/>
+                    โทรศัพท์: 0-2433-2884, 0-2433-2885 &nbsp;|&nbsp; เลขประจำตัวผู้เสียภาษีอากร: <strong>0105560129681</strong>
+                </div>
+            </div>
+            <div class="col-5 text-end">
+                <div class="doc-header-title text-primary">ใบลดหนี้ / CREDIT NOTE</div>
+                <div class="fw-bold" style="font-size: 12px; color:#475569;">
+                    (เอกสารออกเป็นชุด / ต้นฉบับใบกำกับภาษีลดหนี้)
+                </div>
+            </div>
+        </div>
+
+        <!-- Document Details & Customer Info -->
+        <div class="row g-2 mb-2">
+            <!-- Customer Box -->
+            <div class="col-7">
+                <div class="border-box h-100">
+                    <div class="fw-bold text-dark border-bottom pb-1 mb-1" style="font-size: 12.5px;">
+                        ข้อมูลลูกค้า / CUSTOMER DETAILS
+                    </div>
+                    <table style="width:100%; font-size:12px; line-height:1.45;">
+                        <tr>
+                            <td style="width: 80px; font-weight:600;">รหัสลูกค้า:</td>
+                            <td class="fw-bold">@Model.CustomerCode</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:600; vertical-align:top;">ชื่อลูกค้า:</td>
+                            <td class="fw-bold text-dark">@Model.CustomerName</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:600; vertical-align:top;">ที่อยู่:</td>
+                            <td>@(string.IsNullOrEmpty(Model.CustomerAddress) ? "-" : Model.CustomerAddress)</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:600;">เลขผู้เสียภาษี:</td>
+                            <td>@(string.IsNullOrEmpty(Model.CustomerTaxId) ? "-" : Model.CustomerTaxId) &nbsp;&nbsp; สาขา: <strong>@Model.CustomerBranch</strong></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Doc Meta Box -->
+            <div class="col-5">
+                <div class="border-box h-100 bg-light-subtle">
+                    <table style="width:100%; font-size:12px; line-height:1.5;">
+                        <tr>
+                            <td style="width: 125px; font-weight:700;">เลขที่ใบลดหนี้:</td>
+                            <td class="fw-bold fs-6 text-primary">@Model.CreditNoteNo</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:600;">วันที่ออกเอกสาร:</td>
+                            <td class="fw-bold">@Model.CreditNoteDate.ToString("dd/MM/yyyy")</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:600;">อ้างอิงบิลเดิม:</td>
+                            <td><strong>@(string.IsNullOrEmpty(Model.OriginalBillNo) ? "-" : Model.OriginalBillNo)</strong></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:600;">วันที่บิลเดิม:</td>
+                            <td>@(Model.OriginalBillDate.HasValue ? Model.OriginalBillDate.Value.ToString("dd/MM/yyyy") : "-")</td>
+                        </tr>
+                        <tr style="border-top:1px dashed #cbd5e1;">
+                            <td style="font-weight:700; color:#0f766e;">ผู้แทนขาย (Sales Rep):</td>
+                            <td class="fw-bold text-dark">
+                                @Model.SalesRep
+                                @if (!string.IsNullOrEmpty(Model.OriginalSalesRep) && Model.OriginalSalesRep != Model.SalesRep)
+                                {
+                                    <div class="text-muted" style="font-size:0.75rem; font-weight:normal;">(เซลส์ตามบิลเดิม: @Model.OriginalSalesRep)</div>
+                                }
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reason for Credit Note (ม.86/10) -->
+        <div class="px-2 py-1 mb-2 bg-light border rounded small d-flex justify-content-between align-items-center" style="font-size:11.5px;">
+            <div>
+                <strong>สาเหตุในการออกใบลดหนี้:</strong> @Model.Reason
+            </div>
+            @if (Model.IsPriceOverridden)
+            {
+                <div class="text-muted" style="font-size:11px;">
+                    <i class="bi bi-pencil-fill"></i> มีการปรับราคาต่อหน่วย (Override): @Model.PriceOverrideReason
+                </div>
+            }
+        </div>
+
+        <!-- Line Items Table -->
+        <table class="table-items mb-2">
+            <thead>
+                <tr>
+                    <th style="width: 35px;">ลำดับ</th>
+                    <th style="width: 90px;">รหัสสินค้า</th>
+                    <th>รายการสินค้า (Description)</th>
+                    <th style="width: 75px;">จำนวนคืน</th>
+                    <th style="width: 50px;">หน่วย</th>
+                    <th style="width: 95px;">ราคา/หน่วย</th>
+                    <th style="width: 105px;">จำนวนเงิน (บาท)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{ int rowIdx = 1; }
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td class="text-center">@rowIdx</td>
+                        <td class="text-center font-monospace">@item.ProductCode</td>
+                        <td>
+                            <div class="fw-semibold">@item.ProductName</div>
+                            @if (!string.IsNullOrEmpty(item.WarehouseBreakdown))
+                            {
+                                <small class="text-muted" style="font-size:10.5px;">[@item.WarehouseBreakdown]</small>
+                            }
+                        </td>
+                        <td class="text-end fw-bold">@item.TotalReturnQty.ToString("N0")</td>
+                        <td class="text-center">@item.Unit</td>
+                        <td class="text-end">@item.UnitPrice.ToString("N4")</td>
+                        <td class="text-end fw-semibold">@item.AmountBeforeVat.ToString("N2")</td>
+                    </tr>
+                    rowIdx++;
+                }
+
+                @* Fill empty rows to keep the document look neat if few items *@
+                @for (int fill = rowIdx; fill <= 5; fill++)
+                {
+                    <tr style="height: 24px;">
+                        <td class="text-center text-muted">@fill</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Tax Summary Breakdown (ม.86/10) & Thai Baht Text -->
+        <div class="row g-2 mb-3 align-items-stretch">
+            <div class="col-7">
+                <div class="border-box h-100 d-flex flex-column justify-content-between" style="font-size:12px;">
+                    <div>
+                        <div class="fw-bold mb-1">จำนวนเงินตัวอักษร / AMOUNT IN WORDS:</div>
+                        <div class="p-2 bg-light border rounded fw-bold text-primary text-center" style="font-size:13px;">
+                            (@thaiBaht)
+                        </div>
+                    </div>
+                    <div class="small text-muted mt-2 pt-1 border-top" style="font-size:11px;">
+                        * เอกสารนี้คำนวณราคาเฉลี่ยสุทธิต่อหน่วยตามประมวลรัษฎากร ได้รับการกระทบยอดลูกหนี้เรียบร้อยแล้ว
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-5">
+                <div class="border-box h-100">
+                    <table class="tax-summary-table">
+                        @if (Model.OriginalBillAmount > 0)
+                        {
+                            <tr>
+                                <td>มูลค่าตามใบกำกับภาษีเดิม:</td>
+                                <td class="text-end fw-semibold">@Model.OriginalBillAmount.ToString("N2")</td>
+                            </tr>
+                            <tr>
+                                <td>มูลค่าที่ถูกต้อง:</td>
+                                <td class="text-end fw-semibold">@Model.CorrectAmount.ToString("N2")</td>
+                            </tr>
+                        }
+                        <tr style="border-top:1px solid #cbd5e1;">
+                            <td class="fw-bold">มูลค่าผลต่างที่ลดลง (ก่อนภาษี):</td>
+                            <td class="text-end fw-bold text-dark">@Model.TotalAmountBeforeVat.ToString("N2")</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">ภาษีมูลค่าเพิ่ม (VAT 7%):</td>
+                            <td class="text-end fw-bold">@Model.VatAmount.ToString("N2")</td>
+                        </tr>
+                        <tr style="border-top:2px solid #0f172a; border-bottom:2px solid #0f172a; background:#f8fafc;">
+                            <td class="fw-bold text-primary fs-6">จำนวนเงินรวมทั้งสิ้น:</td>
+                            <td class="text-end fw-bold text-success fs-6">@Model.GrandTotal.ToString("N2")</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4 Horizontal Signatures Section -->
+        <div class="row g-2 mt-1">
+            <!-- 1. ผู้จัดทำ (บัญชี) -->
+            <div class="col-3">
+                <div class="sig-col">
+                    <div class="fw-bold">ผู้จัดทำ (บัญชี)</div>
+                    <div class="sig-line"></div>
+                    <div>
+                        <div>(@(string.IsNullOrEmpty(Model.CreatedBy) ? "..................................................." : Model.CreatedBy))</div>
+                        <div class="text-muted mt-1" style="font-size:10px;">วันที่: ....../....../............</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. ผู้แทนขาย -->
+            <div class="col-3">
+                <div class="sig-col">
+                    <div class="fw-bold">ผู้แทนขาย (Sales Rep)</div>
+                    <div class="sig-line"></div>
+                    <div>
+                        <div class="fw-semibold">(@(string.IsNullOrEmpty(Model.SalesRep) ? "..................................................." : Model.SalesRep))</div>
+                        <div class="text-muted mt-1" style="font-size:10px;">วันที่: ....../....../............</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. ผู้ตรวจสอบ -->
+            <div class="col-3">
+                <div class="sig-col">
+                    <div class="fw-bold">ผู้ตรวจสอบ (Auditor)</div>
+                    <div class="sig-line"></div>
+                    <div>
+                        <div>(...................................................)</div>
+                        <div class="text-muted mt-1" style="font-size:10px;">วันที่: ....../....../............</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. ผู้อนุมัติ -->
+            <div class="col-3">
+                <div class="sig-col">
+                    <div class="fw-bold">ผู้อนุมัติ (Authorized)</div>
+                    <div class="sig-line"></div>
+                    <div>
+                        <div>(...................................................)</div>
+                        <div class="text-muted mt-1" style="font-size:10px;">วันที่: ....../....../............</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

@@ -60,6 +60,10 @@ namespace RoyalD.Web.Services
                 bool isAllowed = false;
                 if (controller == "dashboard" && allowedList.Contains("dashboard")) isAllowed = true;
                 else if (controller == "salesbill" && allowedList.Contains("salesbill")) isAllowed = true;
+                else if (controller == "creditnote")
+                {
+                    if (allowedList.Contains("creditnote") || allowedList.Contains("salesbill") || allowedList.Contains("report") || allowedList.Contains("returnnotes")) isAllowed = true;
+                }
                 else if (controller == "salesreport")
                 {
                     if (action == "customerproduct" || action == "exportcustomerproductexcel" || action == "exportcustomerproductcsv")

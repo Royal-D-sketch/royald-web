@@ -1,0 +1,237 @@
+@model RoyalD.Web.Models.CreditNote
+@{
+    ViewData["Title"] = $"ใบลดหนี้ {Model.CreditNoteNo}";
+    string thaiBaht = ViewBag.ThaiBahtText as string ?? "";
+}
+
+<div class="container-fluid px-3 py-2">
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+        <div class="d-flex align-items-center gap-2">
+            <a href="/CreditNote" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> กลับหน้ารายการ
+            </a>
+            <h4 class="mb-0 text-primary fw-bold">
+                <i class="bi bi-file-earmark-diff me-1"></i> ใบลดหนี้เลขที่ @Model.CreditNoteNo
+            </h4>
+            <span class="badge bg-success">@Model.Status</span>
+            @if (Model.IsPriceOverridden)
+            {
+                <span class="badge bg-warning text-dark"><i class="bi bi-pencil-fill"></i> มีการแก้ไขราคา</span>
+            }
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/CreditNote/Print?id=@Model.Id&paperSize=A4" target="_blank" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-printer"></i> พิมพ์กระดาษ A4
+            </a>
+            <a href="/CreditNote/Print?id=@Model.Id&paperSize=Continuous9x11" target="_blank" class="btn btn-sm btn-outline-info">
+                <i class="bi bi-printer-fill"></i> พิมพ์ต่อเนื่อง 9 x 11 นิ้ว
+            </a>
+        </div>
+    </div>
+
+    <!-- Metadata Cards -->
+    <div class="row g-3 mb-3">
+        <!-- Customer & Seller -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100" style="border-radius:10px;">
+                <div class="card-header bg-white py-2 fw-bold text-dark border-bottom">
+                    <i class="bi bi-shop me-1 text-primary"></i> ข้อมูลลูกค้า / ร้านค้า
+                </div>
+                <div class="card-body p-3 small">
+                    <table class="table table-sm table-borderless mb-0">
+                        <tr>
+                            <td style="width: 110px;" class="text-muted">รหัสลูกค้า:</td>
+                            <td class="fw-bold">@Model.CustomerCode</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">ชื่อร้านค้า:</td>
+                            <td class="fw-bold text-dark fs-6">@Model.CustomerName</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">ที่อยู่:</td>
+                            <td>@(string.IsNullOrEmpty(Model.CustomerAddress) ? "-" : Model.CustomerAddress)</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">เลขประจำตัวผู้เสียภาษี:</td>
+                            <td>@(string.IsNullOrEmpty(Model.CustomerTaxId) ? "-" : Model.CustomerTaxId) &nbsp;|&nbsp; สาขา: <strong>@Model.CustomerBranch</strong></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Document Details -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100" style="border-radius:10px;">
+                <div class="card-header bg-white py-2 fw-bold text-dark border-bottom">
+                    <i class="bi bi-info-circle me-1 text-primary"></i> รายละเอียดเอกสาร
+                </div>
+                <div class="card-body p-3 small">
+                    <table class="table table-sm table-borderless mb-0">
+                        <tr>
+                            <td style="width: 140px;" class="text-muted">วันที่ออกเอกสาร:</td>
+                            <td class="fw-bold">@Model.CreditNoteDate.ToString("dd/MM/yyyy")</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">ผู้แทนขายปัจจุบัน:</td>
+                            <td class="fw-bold text-primary">
+                                <i class="bi bi-person-check-fill me-1"></i>@Model.SalesRep
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">ผู้แทนขายเดิมตามบิล:</td>
+                            <td class="text-muted">
+                                @(string.IsNullOrEmpty(Model.OriginalSalesRep) ? "-" : Model.OriginalSalesRep)
+                                <span class="badge bg-light text-muted border ms-1">เป้าหมายหักคอม: @(Model.CommissionDeductTarget == "OriginalRep" ? "หักเซลส์เดิม (ไม่หักคนใหม่)" : "ส่วนกลางบริษัท")</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">อ้างอิงบิลขายเดิม:</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(Model.OriginalBillNo))
+                                {
+                                    <a href="/SalesBill/Detail?id=@Uri.EscapeDataString(Model.OriginalBillNo)" target="_blank" class="fw-bold text-decoration-none">
+                                        @Model.OriginalBillNo
+                                    </a>
+                                    @if (Model.OriginalBillDate.HasValue)
+                                    {
+                                        <span class="text-muted ms-1">(@Model.OriginalBillDate.Value.ToString("dd/MM/yyyy"))</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">สาเหตุการคืน:</td>
+                            <td class="text-dark">@Model.Reason</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.IsPriceOverridden)
+    {
+        <div class="alert alert-warning py-2 px-3 mb-3 border-0 shadow-xs" style="border-radius:8px;">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i> 
+            <strong>บันทึกประวัติการแก้ไขราคาต่อหน่วย (Audit Log):</strong> @Model.PriceOverrideReason
+        </div>
+    }
+
+    <!-- Items Table -->
+    <div class="card shadow-sm border-0 mb-3" style="border-radius:10px;">
+        <div class="card-header bg-white py-2 fw-bold text-dark border-bottom">
+            <i class="bi bi-box-seam me-1 text-primary"></i> รายการสินค้าคืน (Group By ทุกคลัง)
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle mb-0">
+                    <thead class="table-light small text-center">
+                        <tr>
+                            <th style="width: 40px;">#</th>
+                            <th style="width: 120px;">รหัสสินค้า</th>
+                            <th>รายการสินค้า</th>
+                            <th style="width: 100px;">จำนวนคืนรวม</th>
+                            <th style="width: 60px;">หน่วย</th>
+                            <th style="width: 150px;">การแยกคลัง</th>
+                            <th style="width: 130px;">ราคาเฉลี่ยสุทธิเดิม</th>
+                            <th style="width: 130px;">ราคาที่ใช้จริง</th>
+                            <th style="width: 130px;">ยอดก่อน VAT</th>
+                            <th style="width: 100px;">VAT 7%</th>
+                            <th style="width: 140px;">ยอดรวมสุทธิ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ int idx = 1; }
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td class="text-center small">@idx</td>
+                                <td class="font-monospace fw-bold">@item.ProductCode</td>
+                                <td>
+                                    <div class="fw-semibold">@item.ProductName</div>
+                                    @if (item.BillNotFound)
+                                    {
+                                        <span class="badge bg-danger">ไม่พบบิลเดิม</span>
+                                    }
+                                </td>
+                                <td class="text-end fw-bold text-primary">@item.TotalReturnQty.ToString("N0")</td>
+                                <td class="text-center small">@item.Unit</td>
+                                <td class="small text-muted">@item.WarehouseBreakdown</td>
+                                <td class="text-end text-muted">@item.OriginalNetUnitPrice.ToString("N4")</td>
+                                <td class="text-end fw-bold @(item.IsPriceOverridden ? "text-warning" : "")">
+                                    @item.UnitPrice.ToString("N4")
+                                </td>
+                                <td class="text-end fw-semibold">@item.AmountBeforeVat.ToString("N2")</td>
+                                <td class="text-end">@item.VatAmount.ToString("N2")</td>
+                                <td class="text-end fw-bold text-success">@item.TotalAmount.ToString("N2")</td>
+                            </tr>
+                            idx++;
+                        }
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr class="fw-bold">
+                            <td colspan="8" class="text-end">ยอดรวมทั้งสิ้น (บาท):</td>
+                            <td class="text-end text-primary">@Model.TotalAmountBeforeVat.ToString("N2")</td>
+                            <td class="text-end text-primary">@Model.VatAmount.ToString("N2")</td>
+                            <td class="text-end text-success fs-6">@Model.GrandTotal.ToString("N2")</td>
+                        </tr>
+                        <tr>
+                            <td colspan="11" class="text-center py-2 text-primary fw-bold bg-light">
+                                (@thaiBaht)
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warehouse Entries Detail (Raw entries) -->
+    @if (Model.WarehouseEntries != null && Model.WarehouseEntries.Any())
+    {
+        <div class="card shadow-sm border-0 mb-3" style="border-radius:10px;">
+            <div class="card-header bg-white py-2 fw-bold text-dark border-bottom small">
+                <i class="bi bi-stack me-1 text-primary"></i> ข้อมูลแยกคลังและวันหมดอายุตามใบงานคลัง (Warehouse Breakdown Log)
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>รหัสสินค้า</th>
+                                <th>ชื่อสินค้า</th>
+                                <th class="text-center">คลัง</th>
+                                <th>วันหมดอายุ (Expiry)</th>
+                                <th class="text-end">จำนวนคืนจริง</th>
+                                <th>Lot No.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var entry in Model.WarehouseEntries)
+                            {
+                                <tr>
+                                    <td class="font-monospace">@entry.ProductCode</td>
+                                    <td>@entry.ProductName</td>
+                                    <td class="text-center">
+                                        <span class="badge @(entry.WarehouseNo == "1" ? "bg-success" : (entry.WarehouseNo == "3" ? "bg-warning text-dark" : "bg-danger"))">
+                                            คลัง @entry.WarehouseNo
+                                        </span>
+                                    </td>
+                                    <td>@(entry.ExpiryDate.HasValue ? entry.ExpiryDate.Value.ToString("dd/MM/yyyy") : "-")</td>
+                                    <td class="text-end fw-bold">@entry.Qty.ToString("N0")</td>
+                                    <td>@(string.IsNullOrEmpty(entry.LotNo) ? "-" : entry.LotNo)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>

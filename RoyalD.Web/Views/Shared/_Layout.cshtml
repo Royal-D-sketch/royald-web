@@ -36,6 +36,7 @@
     bool hasInstallment = isAdmin || allowedPagesList.Contains("installment");
     bool hasBadDebt = isAdmin || allowedPagesList.Contains("baddebt");
     bool hasReturnNotes = isAdmin || allowedPagesList.Contains("returnnotes");
+    bool hasCreditNote = isAdmin || allowedPagesList.Contains("creditnote") || allowedPagesList.Contains("salesbill") || allowedPagesList.Contains("returnnotes");
     bool hasReturnedToAccount = isAdmin || allowedPagesList.Contains("returnedtoaccount") || allowedPagesList.Contains("report");
     bool hasUpload = isAdmin || allowedPagesList.Contains("upload") || allowedPagesList.Contains("uploadsalesbill") || allowedPagesList.Contains("uploaddebtor") || allowedPagesList.Contains("uploadreceipt");
 }
@@ -358,6 +359,7 @@
                         <i class="bi bi-arrow-return-right"></i> บิลส่งคืนกลับมาบัญชี
                     </a> }
                     @if (hasReturnNotes) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" && ViewContext.RouteData.Values["action"]?.ToString() == "ReturnNotes" ? "active" : "")" href="/Report/ReturnNotes"><i class="bi bi-arrow-return-left"></i> รับคืนสินค้า</a> }
+                    @if (hasCreditNote) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "CreditNote" ? "active" : "")" href="/CreditNote"><i class="bi bi-file-earmark-diff"></i> คืนสินค้าและใบลดหนี้ (CN)</a> }
                     @if (hasCancel)
                     {
                         <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Cancelled" ? "active" : "")"
@@ -405,6 +407,11 @@
                            href="/SalesReport/CustomerPurchaseSummary">
                             <i class="bi bi-person-lines-fill"></i> สรุปการซื้อรายลูกค้า
                         </a>
+                    @if (hasCreditNote) {
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "CreditNote" && ViewContext.RouteData.Values["action"]?.ToString() == "Report" ? "active" : "")" href="/CreditNote/Report">
+                            <i class="bi bi-journal-arrow-down"></i> รายงานสินค้าคืนและใบลดหนี้
+                        </a>
+                    }
                     }
                 }
 
