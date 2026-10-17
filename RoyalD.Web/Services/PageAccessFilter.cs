@@ -76,8 +76,7 @@ namespace RoyalD.Web.Services
                     }
                     else if (action == "productgroupsales" || action == "exportproductgroupsalesexcel")
                     {
-                        var pos = user.FindFirst("Position")?.Value ?? "";
-                        if (allowedList.Contains("productgroupsales") || allowedList.Contains("salesreport") || allowedList.Contains("customerproduct") || allowedList.Contains("salesbill") || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย"))
+                        if (allowedList.Contains("productgroupsales"))
                         {
                             isAllowed = true;
                         }

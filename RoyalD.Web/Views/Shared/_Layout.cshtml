@@ -24,7 +24,7 @@
     bool hasDash = isAdmin || allowedPagesList.Contains("dashboard");
     bool hasBill = isAdmin || allowedPagesList.Contains("salesbill");
     bool hasCustProd = isAdmin || allowedPagesList.Contains("customerproduct") || (isSalesRep && allowedPagesList.Contains("salesbill"));
-    bool hasGroupSales = isAdmin || isSalesRep || allowedPagesList.Contains("productgroupsales") || allowedPagesList.Contains("salesreport") || allowedPagesList.Contains("salesbill") || hasCustProd;
+    bool hasGroupSales = isAdmin || allowedPagesList.Contains("productgroupsales");
     bool hasCustSum = isAdmin || allowedPagesList.Contains("customerpurchasesummary");
     bool hasDebt = isAdmin || allowedPagesList.Contains("debtor");
     bool hasHist = isAdmin || allowedPagesList.Contains("debtorhistory") || allowedPagesList.Contains("history");
