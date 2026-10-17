@@ -123,14 +123,37 @@
                     <label class="form-label fw-bold small text-dark mb-1">วันที่ออกใบลดหนี้</label>
                     <input type="date" id="docDate" class="form-control form-control-sm" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
                     
-                    <label class="form-label fw-bold small text-dark mb-1 mt-2">สาเหตุการคืนสินค้า (ม.86/10)</label>
-                    <select id="returnReason" class="form-select form-select-sm">
-                        <option value="รับคืนสินค้าชำรุด/เสียหายจากการขนส่ง">รับคืนสินค้าชำรุด/เสียหายจากการขนส่ง</option>
-                        <option value="รับคืนสินค้าหมดอายุจากการเก็บรักษา">รับคืนสินค้าหมดอายุจากการเก็บรักษา</option>
-                        <option value="รับคืนสินค้าตามเงื่อนไขสัญญาการค้า">รับคืนสินค้าตามเงื่อนไขสัญญาการค้า</option>
-                        <option value="สินค้าผิดขนาด/ผิดรายการจากคำสั่งซื้อ">สินค้าผิดขนาด/ผิดรายการจากคำสั่งซื้อ</option>
-                        <option value="คำนวณราคาสินค้าหรือจำนวนในใบกำกับภาษีเดิมผิด">คำนวณราคาสินค้าผิดในบิลเดิม</option>
-                    </select>
+                    <label class="form-label fw-bold small text-dark mb-1 mt-2 d-flex justify-content-between align-items-center">
+                        <span>สาเหตุการคืนสินค้า (ม.86/10)</span>
+                        <span class="badge bg-light text-primary border" style="font-size:0.7rem;"><i class="bi bi-pencil"></i> พิมพ์เพิ่มเองได้</span>
+                    </label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" id="returnReason" list="returnReasonList" class="form-control form-control-sm" 
+                               value="รับคืนสินค้าชำรุด/เสียหาย/หมดอายุ" 
+                               placeholder="พิมพ์ระบุสาเหตุเอง หรือคลิกเลือกจากรายการ..." />
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="เลือกจากรายการ">
+                            เลือก
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:0.85rem; max-width:360px;">
+                            <li><h6 class="dropdown-header">สาเหตุมาตรฐาน (ม.86/10)</h6></li>
+                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="selectReason('รับคืนสินค้าชำรุด/เสียหาย/หมดอายุ')"><i class="bi bi-check2 text-success"></i> รับคืนสินค้าชำรุด/เสียหาย/หมดอายุ</a></li>
+                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="selectReason('รับคืนสินค้าชำรุด/เสียหายจากการขนส่ง')"><i class="bi bi-truck text-primary"></i> รับคืนสินค้าชำรุด/เสียหายจากการขนส่ง</a></li>
+                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="selectReason('รับคืนสินค้าหมดอายุจากการเก็บรักษา')"><i class="bi bi-hourglass-bottom text-warning"></i> รับคืนสินค้าหมดอายุจากการเก็บรักษา</a></li>
+                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="selectReason('รับคืนสินค้าตามเงื่อนไขสัญญาการค้า')"><i class="bi bi-file-earmark-text text-info"></i> รับคืนสินค้าตามเงื่อนไขสัญญาการค้า</a></li>
+                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="selectReason('สินค้าผิดขนาด/ผิดรายการจากคำสั่งซื้อ')"><i class="bi bi-exclamation-triangle text-danger"></i> สินค้าผิดขนาด/ผิดรายการจากคำสั่งซื้อ</a></li>
+                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="selectReason('คำนวณราคาสินค้าหรือจำนวนในใบกำกับภาษีเดิมผิด')"><i class="bi bi-calculator text-secondary"></i> คำนวณราคาสินค้าหรือจำนวนผิดในบิลเดิม</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-primary fw-bold" href="javascript:void(0)" onclick="$('#returnReason').focus().select()"><i class="bi bi-pencil-square"></i> ✏️ พิมพ์ระบุสาเหตุอื่น ๆ เอง...</a></li>
+                        </ul>
+                        <datalist id="returnReasonList">
+                            <option value="รับคืนสินค้าชำรุด/เสียหาย/หมดอายุ" />
+                            <option value="รับคืนสินค้าชำรุด/เสียหายจากการขนส่ง" />
+                            <option value="รับคืนสินค้าหมดอายุจากการเก็บรักษา" />
+                            <option value="รับคืนสินค้าตามเงื่อนไขสัญญาการค้า" />
+                            <option value="สินค้าผิดขนาด/ผิดรายการจากคำสั่งซื้อ" />
+                            <option value="คำนวณราคาสินค้าหรือจำนวนในใบกำกับภาษีเดิมผิด" />
+                        </datalist>
+                    </div>
                 </div>
             </div>
 
@@ -867,6 +890,10 @@
         .catch(err => {
             alert('เกิดข้อผิดพลาดในการส่งข้อมูล: ' + err.message);
         });
+    }
+
+    function selectReason(val) {
+        $('#returnReason').val(val);
     }
 </script>
 

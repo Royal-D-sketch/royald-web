@@ -107,7 +107,12 @@
                         </tr>
                         <tr>
                             <td class="text-muted">สาเหตุการคืน:</td>
-                            <td class="text-dark">@Model.Reason</td>
+                            <td class="text-dark">
+                                <span id="lblReasonText" class="fw-semibold">@Model.Reason</span>
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 ms-2" onclick="openEditReasonModal()" title="แก้ไขสาเหตุการคืน">
+                                    <i class="bi bi-pencil"></i> แก้ไขสาเหตุ
+                                </button>
+                            </td>
                         </tr>
                     </table>
                 </div>
@@ -235,3 +240,95 @@
         </div>
     }
 </div>
+
+
+<!-- Modal แก้ไขสาเหตุการคืนสินค้า -->
+<div class="modal fade" id="modalEditReason" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-light py-2">
+                <h6 class="modal-title fw-bold text-dark"><i class="bi bi-pencil-square text-primary me-1"></i> แก้ไขสาเหตุการคืนสินค้า (@Model.CreditNoteNo)</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-3">
+                <label class="form-label fw-bold small text-dark mb-1">
+                    สาเหตุการคืนสินค้า (ม.86/10)
+                    <span class="badge bg-light text-primary border ms-1" style="font-size:0.7rem;">พิมพ์เพิ่มเองได้</span>
+                </label>
+                <div class="input-group mb-2">
+                    <input type="text" id="editReasonInput" list="modalReasonList" class="form-control" 
+                           value="@Model.Reason" 
+                           placeholder="พิมพ์ระบุสาเหตุเอง หรือเลือกจากรายการ..." />
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        เลือก
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:0.85rem; max-width:360px;">
+                        <li><h6 class="dropdown-header">สาเหตุมาตรฐาน (ม.86/10)</h6></li>
+                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="setEditReason('รับคืนสินค้าชำรุด/เสียหาย/หมดอายุ')"><i class="bi bi-check2 text-success"></i> รับคืนสินค้าชำรุด/เสียหาย/หมดอายุ</a></li>
+                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="setEditReason('รับคืนสินค้าชำรุด/เสียหายจากการขนส่ง')"><i class="bi bi-truck text-primary"></i> รับคืนสินค้าชำรุด/เสียหายจากการขนส่ง</a></li>
+                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="setEditReason('รับคืนสินค้าหมดอายุจากการเก็บรักษา')"><i class="bi bi-hourglass-bottom text-warning"></i> รับคืนสินค้าหมดอายุจากการเก็บรักษา</a></li>
+                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="setEditReason('รับคืนสินค้าตามเงื่อนไขสัญญาการค้า')"><i class="bi bi-file-earmark-text text-info"></i> รับคืนสินค้าตามเงื่อนไขสัญญาการค้า</a></li>
+                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="setEditReason('สินค้าผิดขนาด/ผิดรายการจากคำสั่งซื้อ')"><i class="bi bi-exclamation-triangle text-danger"></i> สินค้าผิดขนาด/ผิดรายการจากคำสั่งซื้อ</a></li>
+                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="setEditReason('คำนวณราคาสินค้าหรือจำนวนในใบกำกับภาษีเดิมผิด')"><i class="bi bi-calculator text-secondary"></i> คำนวณราคาสินค้าหรือจำนวนผิดในบิลเดิม</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-primary fw-bold" href="javascript:void(0)" onclick="$('#editReasonInput').focus().select()"><i class="bi bi-pencil-square"></i> ✏️ พิมพ์ระบุสาเหตุอื่น ๆ เอง...</a></li>
+                    </ul>
+                    <datalist id="modalReasonList">
+                        <option value="รับคืนสินค้าชำรุด/เสียหาย/หมดอายุ" />
+                        <option value="รับคืนสินค้าชำรุด/เสียหายจากการขนส่ง" />
+                        <option value="รับคืนสินค้าหมดอายุจากการเก็บรักษา" />
+                        <option value="รับคืนสินค้าตามเงื่อนไขสัญญาการค้า" />
+                        <option value="สินค้าผิดขนาด/ผิดรายการจากคำสั่งซื้อ" />
+                        <option value="คำนวณราคาสินค้าหรือจำนวนในใบกำกับภาษีเดิมผิด" />
+                    </datalist>
+                </div>
+                <div class="small text-muted"><i class="bi bi-info-circle"></i> สาเหตุนี้จะปรากฏบนใบลดหนี้เมื่อสั่งพิมพ์ทั้งขนาด A4 และกระดาษต่อเนื่อง 9x11 นิ้ว</div>
+            </div>
+            <div class="modal-footer bg-light py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">ยกเลิก</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="saveEditedReason()"><i class="bi bi-check-lg"></i> บันทึกสาเหตุใหม่</button>
+            </div>
+        </div>
+    </div>
+</div>
+@Html.AntiForgeryToken()
+
+<script>
+    function openEditReasonModal() {
+        const modal = new bootstrap.Modal(document.getElementById('modalEditReason'));
+        modal.show();
+    }
+    function setEditReason(val) {
+        document.getElementById('editReasonInput').value = val;
+    }
+    function saveEditedReason() {
+        const newReason = document.getElementById('editReasonInput').value.trim();
+        if (!newReason) {
+            alert('กรุณาระบุสาเหตุการคืนสินค้า');
+            return;
+        }
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+        fetch('/CreditNote/UpdateReason', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': token
+            },
+            body: JSON.stringify({
+                id: @Model.Id,
+                reason: newReason
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('lblReasonText').innerText = data.newReason;
+                bootstrap.Modal.getInstance(document.getElementById('modalEditReason')).hide();
+                alert('แก้ไขสาเหตุเรียบร้อยแล้ว');
+            } else {
+                alert(data.message || 'เกิดข้อผิดพลาดในการบันทึก');
+            }
+        })
+        .catch(err => alert('เกิดข้อผิดพลาด: ' + err.message));
+    }
+</script>
