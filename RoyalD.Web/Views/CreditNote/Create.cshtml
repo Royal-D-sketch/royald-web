@@ -466,7 +466,7 @@
                 <td class="text-center small text-muted">${rowIdx}</td>
                 <td>
                     <div class="input-group input-group-sm">
-                        <input type="text" class="form-control form-control-sm txt-prod-code fw-semibold" placeholder="รหัส เช่น 100301" value="${pCode}" onchange="lookupProdName(this)" list="dlMasterProducts" />
+                        <input type="text" class="form-control form-control-sm txt-prod-code fw-semibold" placeholder="พิมพ์รหัส หรือชื่อสินค้า..." value="${pCode}" oninput="lookupProdName(this)" onchange="lookupProdName(this)" onkeydown="handleCodeKeydown(event, this)" list="dlMasterProducts" autocomplete="off" />
                     </div>
                     <small class="text-muted d-block lbl-prod-name mt-1" style="font-size:0.75rem;"></small>
                 </td>
@@ -481,7 +481,7 @@
                     <input type="date" class="form-control form-control-sm txt-exp-date" value="${expDate}" />
                 </td>
                 <td>
-                    <input type="number" step="any" min="0" class="form-control form-control-sm text-end fw-bold txt-qty text-primary" placeholder="0" value="${qty}" />
+                    <input type="number" step="any" min="0" class="form-control form-control-sm text-end fw-bold txt-qty text-primary" placeholder="0" value="${qty}" onkeydown="handleQtyKeydown(event, this)" />
                 </td>
                 <td>
                     <input type="text" class="form-control form-control-sm txt-lot" placeholder="Lot No." value="${lot}" />
@@ -513,15 +513,59 @@
     }
 
     function lookupProdName(input) {
-        const val = $(input).val().trim().toUpperCase();
+        let val = $(input).val().trim();
         const row = $(input).closest('tr');
-        const match = masterProducts.find(p => p.code.toUpperCase() === val);
+        if (!val) {
+            row.find('.lbl-prod-name').html('');
+            return;
+        }
+
+        // Check if input is formatted like "[100301] ..."
+        const bracketMatch = val.match(/\[(.*?)\]/);
+        if (bracketMatch) {
+            val = bracketMatch[1].trim();
+            $(input).val(val);
+        }
+
+        // Lookup in master by code
+        let match = masterProducts.find(p => p.code.toUpperCase() === val.toUpperCase());
+        
+        // If not matched by code, check if user typed part of product name
+        if (!match) {
+            const nameMatch = masterProducts.find(p => p.name.trim().toLowerCase() === val.toLowerCase());
+            if (nameMatch) {
+                match = nameMatch;
+                $(input).val(nameMatch.code); // Auto-fill clean code!
+            }
+        }
+
         if (match) {
-            row.find('.lbl-prod-name').text(match.name).removeClass('text-danger').addClass('text-success');
-        } else if (val) {
-            row.find('.lbl-prod-name').text('ไม่พบชื่อใน Master (จะค้นหาในบิลเดิม)').removeClass('text-success').addClass('text-muted');
+            const unitText = match.unit ? ` (${match.unit})` : '';
+            row.find('.lbl-prod-name').html(`<i class="bi bi-check-circle-fill text-success"></i> <span class="fw-bold text-success">${match.name}</span><span class="text-muted small">${unitText}</span>`);
         } else {
-            row.find('.lbl-prod-name').text('');
+            row.find('.lbl-prod-name').html(`<span class="text-secondary"><i class="bi bi-search"></i> รหัสสินค้าใหม่ (จะค้นหาราคาจากบิลเดิม)</span>`);
+        }
+    }
+
+    function handleCodeKeydown(e, input) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            $(input).closest('tr').find('.txt-qty').focus().select();
+        }
+    }
+
+    function handleQtyKeydown(e, input) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const row = $(input).closest('tr');
+            const nextRow = row.next('tr');
+            if (nextRow.length > 0) {
+                nextRow.find('.txt-prod-code').focus().select();
+            } else {
+                addManualRow();
+                const newRow = $('#manualGridBody tr:last-child');
+                newRow.find('.txt-prod-code').focus().select();
+            }
         }
     }
 
@@ -902,7 +946,7 @@
     {
         foreach (var p in products)
         {
-            <option value="@p.Code">@p.Name</option>
+            <option value="@p.Code">[@p.Code] @p.Name (@p.Unit)</option>
         }
     }
 </datalist>
