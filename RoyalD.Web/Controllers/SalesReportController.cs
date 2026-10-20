@@ -368,7 +368,7 @@ namespace RoyalD.Web.Controllers
             ws1.Cells["A1"].Style.Font.Bold = true;
             ws1.Cells["A1"].Style.Font.Color.SetColor(Color.FromArgb(15, 118, 110));
 
-            ws1.Cells["A2"].Value = $"รายงานผู้แทนขายแยกตามกลุ่มสินค้าและใบลดหนี้ (ผู้แทน: {(string.IsNullOrEmpty(vm.SelectedSalesRep) ? "ทุกคน" : vm.SelectedSalesRep)} | ช่วงวันที่: {vm.StartDate:dd/MM/yyyy} - {vm.EndDate:dd/MM/yyyy})";
+            ws1.Cells["A2"].Value = $"รายงานผู้แทนขายแยกตามกลุ่มสินค้าและใบลดหนี้ (ผู้แทน: {(string.IsNullOrEmpty(vm.SelectedSalesRep) ? "ทุกคน" : vm.SelectedSalesRep)} | ช่วงวันที่: {vm.StartDate:dd/MM/yyyy} - {vm.EndDate:dd/MM/yyyy} | ไม่รวมสินค้า Tester)";
             ws1.Cells["A2"].Style.Font.Size = 12;
             ws1.Cells["A2"].Style.Font.Bold = true;
 
@@ -638,10 +638,20 @@ namespace RoyalD.Web.Controllers
                 itemMap[gCode] = new Dictionary<string, ProductItemReconcileRow>(StringComparer.OrdinalIgnoreCase);
             }
 
-            // Sales items
+            // Sales items (ข้ามสินค้าที่เป็น Tester ไม่นำมาจัดกลุ่ม)
             foreach (var item in itemsList)
             {
+                if (groupService.IsTester(item.ProductCode, item.ProductName))
+                {
+                    continue;
+                }
+
                 var gInfo = groupService.GetProductGroup(item.ProductCode, item.ProductName, item.Unit);
+                if (groupService.IsTester(gInfo.ProductCode, gInfo.ProductName))
+                {
+                    continue;
+                }
+
                 string gCode = gInfo.GroupCode;
                 if (!groupDict.ContainsKey(gCode)) gCode = "20";
 
@@ -663,12 +673,22 @@ namespace RoyalD.Web.Controllers
                 row.SalesAmount += item.Amount;
             }
 
-            // Credit Notes items
+            // Credit Notes items (ข้ามสินค้าที่เป็น Tester ไม่นำมาจัดกลุ่ม)
             foreach (var cn in creditNoteList)
             {
                 foreach (var cnItem in cn.Items)
                 {
+                    if (groupService.IsTester(cnItem.ProductCode, cnItem.ProductName))
+                    {
+                        continue;
+                    }
+
                     var gInfo = groupService.GetProductGroup(cnItem.ProductCode, cnItem.ProductName, cnItem.Unit);
+                    if (groupService.IsTester(gInfo.ProductCode, gInfo.ProductName))
+                    {
+                        continue;
+                    }
+
                     string gCode = gInfo.GroupCode;
                     if (!groupDict.ContainsKey(gCode)) gCode = "20";
 

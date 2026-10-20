@@ -82,6 +82,37 @@ namespace RoyalD.Web.Services
             return _groups;
         }
 
+        public static bool IsTesterProduct(string? code, string? name)
+        {
+            if (!string.IsNullOrWhiteSpace(code) && code.IndexOf("tester", StringComparison.OrdinalIgnoreCase) >= 0)
+                return true;
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                if (name.IndexOf("tester", StringComparison.OrdinalIgnoreCase) >= 0 || name.Contains("เทสเตอร์"))
+                    return true;
+            }
+            return false;
+        }
+
+        public bool IsTester(string? productCode, string? productName = "")
+        {
+            if (IsTesterProduct(productCode, productName)) return true;
+
+            var cleanCode = (productCode ?? "").Trim();
+            if (!string.IsNullOrEmpty(cleanCode) && _productMap.TryGetValue(cleanCode, out var info))
+            {
+                if (IsTesterProduct(info.ProductCode, info.ProductName)) return true;
+            }
+
+            var matchPrefix = _productMap.Keys.FirstOrDefault(k => !string.IsNullOrEmpty(cleanCode) && (cleanCode.StartsWith(k) || k.StartsWith(cleanCode)));
+            if (matchPrefix != null && _productMap.TryGetValue(matchPrefix, out var pInfo))
+            {
+                if (IsTesterProduct(pInfo.ProductCode, pInfo.ProductName)) return true;
+            }
+
+            return false;
+        }
+
         public ProductGroupItemInfo GetProductGroup(string productCode, string fallbackName = "", string fallbackUnit = "")
         {
             if (string.IsNullOrWhiteSpace(productCode))
