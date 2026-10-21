@@ -268,7 +268,16 @@ function requestLocationPermission() {
             iconOk.classList.remove('d-none');
             box.className = 'gps-box alert alert-success mb-3';
             statusText.innerText = 'ระบุตำแหน่งที่ตั้งสำเร็จ พร้อมเข้าสู่ระบบ';
-            helpText.innerHTML = `📍 ตำแหน่งของคุณ: <strong class="text-success">${detectedLocation}</strong> <small class="text-muted">(${lat.toFixed(4)}, ${lng.toFixed(4)})</small>`;
+            helpText.innerHTML = `📍 ตำแหน่งของคุณ: <strong class="text-success" id="detected-loc-text">${detectedLocation}</strong> <small class="text-muted">(${lat.toFixed(4)}, ${lng.toFixed(4)})</small>
+            <div class="mt-2 d-flex gap-2 justify-content-center align-items-center flex-wrap">
+                <span class="text-muted" style="font-size:0.75rem;">(สลับตำแหน่งหากต้องการ):</span>
+                <button type="button" class="btn btn-sm btn-outline-teal py-0 px-2 shadow-xs" style="font-size:0.78rem;" onclick="setLocationManual('อ.บางใหญ่ จ.นนทบุรี')">
+                    <i class="bi bi-geo-alt-fill text-danger me-1"></i>อ.บางใหญ่
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-teal py-0 px-2 shadow-xs" style="font-size:0.78rem;" onclick="setLocationManual('อ.บางบัวทอง จ.นนทบุรี')">
+                    <i class="bi bi-geo-alt-fill text-primary me-1"></i>อ.บางบัวทอง
+                </button>
+            </div>`;
             submitBtn.disabled = false;
             retryBlock.style.display = 'none';
         },
@@ -308,13 +317,20 @@ function formatThaiLocation(district, prov, lat, lng) {
     let cleanDist = (district || '').trim();
     cleanDist = cleanDist.replace(/^(อำเภอ|อ\.|เขต|เทศบาลนคร|เทศบาลเมือง|เทศบาลตำบล)\s*/, '').trim();
 
-    // ดักตำแหน่งใน จ.นนทบุรี และ อ.บางใหญ่ โดยเฉพาะ
+    // ดักตำแหน่งใน จ.นนทบุรี แยกตามอำเภอจริง (ทั้งบางใหญ่ และ บางบัวทอง)
     const isNonthaburi = cleanProv.includes('นนทบุรี') || (lat >= 13.78 && lat <= 14.10 && lng >= 100.18 && lng <= 100.60);
     if (isNonthaburi) {
         cleanProv = 'นนทบุรี';
-        // พิกัด อ.บางใหญ่ จ.นนทบุรี (Lat 13.80-13.935, Lng 100.30-100.46) รวมถึงโหนดอินเทอร์เน็ต 13.9214, 100.4324
-        if ((lat >= 13.80 && lat <= 13.935 && lng >= 100.30 && lng <= 100.46) || cleanDist.includes('บางใหญ่') || cleanDist.includes('เสาธงหิน') || cleanDist.includes('บางแม่นาง') || cleanDist.includes('บางเลน') || cleanDist.includes('พิมลราช') || cleanDist.includes('บางบัวทอง')) {
+        if (cleanDist.includes('บางบัวทอง') || cleanDist.includes('พิมลราช') || cleanDist.includes('โสนลอย') || cleanDist.includes('บางคูรัด') || cleanDist.includes('ละหาร')) {
+            cleanDist = 'บางบัวทอง';
+        } else if (cleanDist.includes('บางใหญ่') || cleanDist.includes('เสาธงหิน') || cleanDist.includes('บางแม่นาง') || cleanDist.includes('บางเลน') || cleanDist.includes('บ้านใหม่') || cleanDist.includes('บางม่วง')) {
             cleanDist = 'บางใหญ่';
+        } else if (cleanDist.includes('ปากเกร็ด')) {
+            cleanDist = 'ปากเกร็ด';
+        } else if (cleanDist.includes('บางกรวย')) {
+            cleanDist = 'บางกรวย';
+        } else if (cleanDist.includes('ไทรน้อย')) {
+            cleanDist = 'ไทรน้อย';
         } else if (cleanDist.includes('เทศบาลนคร') || cleanDist === '' || cleanDist === 'เมือง') {
             cleanDist = 'เมืองนนทบุรี';
         }
@@ -331,13 +347,12 @@ function formatThaiLocation(district, prov, lat, lng) {
 
 function resolveLocationName(lat, lng) {
     if (lat >= 13.78 && lat <= 14.10 && lng >= 100.18 && lng <= 100.60) {
-        // อ.บางใหญ่ (ครอบคลุมพิกัด 13.80 - 13.935, Lng 100.30 - 100.46 รวมถึงโหนดอินเทอร์เน็ต 13.9214, 100.4324)
-        if (lat >= 13.80 && lat <= 13.935 && lng >= 100.30 && lng <= 100.46) return 'อ.บางใหญ่ จ.นนทบุรี';
-        if (lat >= 13.935 && lng <= 100.35) return 'อ.ไทรน้อย จ.นนทบุรี';
-        if (lat >= 13.935 && lng <= 100.455) return 'อ.บางบัวทอง จ.นนทบุรี';
-        if (lat >= 13.89 && lng > 100.46) return 'อ.ปากเกร็ด จ.นนทบุรี';
+        if (lat >= 13.95 && lng <= 100.35) return 'อ.ไทรน้อย จ.นนทบุรี';
+        if (lat >= 13.905 && lng <= 100.455) return 'อ.บางบัวทอง จ.นนทบุรี';
+        if (lat >= 13.89 && lng > 100.455) return 'อ.ปากเกร็ด จ.นนทบุรี';
         if (lat < 13.84 && lng <= 100.51) return 'อ.บางกรวย จ.นนทบุรี';
-        return 'อ.บางใหญ่ จ.นนทบุรี';
+        if (lat >= 13.80 && lat < 13.905 && lng >= 100.30 && lng <= 100.455) return 'อ.บางใหญ่ จ.นนทบุรี';
+        return 'อ.เมืองนนทบุรี จ.นนทบุรี';
     }
     if (lat >= 13.60 && lat <= 13.95 && lng >= 100.40 && lng <= 100.85) return 'กรุงเทพมหานคร';
     if (lat >= 13.95 && lat <= 14.20 && lng >= 100.45 && lng <= 100.85) return 'จ.ปทุมธานี';
@@ -351,6 +366,15 @@ function resolveLocationName(lat, lng) {
     if (lat >= 6.80 && lat <= 7.30 && lng >= 100.40 && lng <= 100.80) return 'จ.สงขลา (หาดใหญ่)';
     if (lat >= 7.75 && lat <= 8.20 && lng >= 98.25 && lng <= 98.45) return 'จ.ภูเก็ต';
     return 'ประเทศไทย';
+}
+
+function setLocationManual(loc) {
+    document.getElementById('location-name-field').value = loc;
+    const txt = document.getElementById('detected-loc-text');
+    if (txt) {
+        txt.innerText = loc;
+        txt.className = 'text-primary fw-bold';
+    }
 }
 
 function validateGpsBeforeSubmit(e) {
