@@ -72,7 +72,7 @@ namespace RoyalD.Web.Services
                 else if (controller == "salesbill" && allowedList.Contains("salesbill")) isAllowed = true;
                 else if (controller == "creditnote")
                 {
-                    if (allowedList.Contains("creditnote") || allowedList.Contains("salesbill") || allowedList.Contains("report") || allowedList.Contains("returnnotes")) isAllowed = true;
+                    if (allowedList.Contains("creditnote")) isAllowed = true;
                 }
                 else if (controller == "salesreport")
                 {

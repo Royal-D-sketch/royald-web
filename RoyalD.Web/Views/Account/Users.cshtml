@@ -113,6 +113,7 @@
                     <option value="restore" selected="@(ViewBag.Permission == "restore")">♻️ มีสิทธิ์กู้บิลยกเลิก</option>
                     <option value="cancel_view" selected="@(ViewBag.Permission == "cancel_view")">👁️ มีสิทธิ์ดูบิลยกเลิก</option>
                     <option value="salesrep" selected="@(ViewBag.Permission == "salesrep")">👔 เฉพาะผู้แทนขาย (ไม่มีสิทธิ์ดูบิล)</option>
+                    <option value="creditnote" selected="@(ViewBag.Permission == "creditnote")">📄 สิทธิ์คืนสินค้าและใบลดหนี้ (CN)</option>
                 </select>
             </div>
 
@@ -239,6 +240,7 @@
                                                 "UploadDebtor" => "อัปโหลดการ์ดลูกหนี้",
                                                 "UploadReceipt" => "อัปโหลดสรุปรับเงิน",
                                                 "ProductGroupSales" => "กลุ่มสินค้า",
+                                                "CreditNote" => "คืนสินค้า/ใบลดหนี้ (CN)",
                                                 _ => p
                                             };
                                             <span class="badge bg-light text-dark border" style="font-size:0.75rem;">@pTitle</span>

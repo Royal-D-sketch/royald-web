@@ -37,7 +37,7 @@
     bool hasInstallment = isAdmin || allowedPagesList.Contains("installment");
     bool hasBadDebt = isAdmin || allowedPagesList.Contains("baddebt");
     bool hasReturnNotes = isAdmin || allowedPagesList.Contains("returnnotes");
-    bool hasCreditNote = isAdmin || allowedPagesList.Contains("creditnote") || allowedPagesList.Contains("salesbill") || allowedPagesList.Contains("returnnotes");
+    bool hasCreditNote = isAdmin || allowedPagesList.Contains("creditnote");
     bool hasReturnedToAccount = isAdmin || allowedPagesList.Contains("returnedtoaccount") || allowedPagesList.Contains("report");
     bool hasUpload = isAdmin || allowedPagesList.Contains("upload") || allowedPagesList.Contains("uploadsalesbill") || allowedPagesList.Contains("uploaddebtor") || allowedPagesList.Contains("uploadreceipt");
 }
