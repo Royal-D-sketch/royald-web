@@ -15,7 +15,10 @@ namespace RoyalD.Web.Services
             ["121.1"] = new() { "สัญญา", "สัญญาลักษณ์", "สัณห์", "สัญญา LN", "สัญญา N", "สิริญญา", "ชาติวุธ N" },
             ["124.0"] = new() { "วีรนุช", "วีรนุช 8", "วีรนุช T" },
             ["115.0"] = new() { "จันทิมา" },
-            ["155.0"] = new() { "ธัญลักษณ์", "ธัญญลักษณ์" },
+            ["155.0"] = new() { "ธัญญ์ลักษณ์" },
+            ["ธัญลักษณ์"] = new() { "ธัญญ์ลักษณ์" },
+            ["ธัญญลักษณ์"] = new() { "ธัญญ์ลักษณ์" },
+            ["ธัญญ์ลัษณ์"] = new() { "ธัญญ์ลักษณ์" },
             ["158.0"] = new() { "วีระศักดิ์", "วีรนุช T" },
             ["150.0"] = new() { "อภิญญา" },
             ["146.0"] = new() { "ธนะศักดิ์", "ธนาศักดิ์" },
@@ -74,6 +77,10 @@ namespace RoyalD.Web.Services
                         IsCode(s))
                     {
                         return;
+                    }
+                    if (s == "ธัญลักษณ์" || s == "ธัญญลักษณ์" || s == "ธัญญ์ลัษณ์")
+                    {
+                        s = "ธัญญ์ลักษณ์";
                     }
                     set.Add(s);
                 }
@@ -168,6 +175,10 @@ namespace RoyalD.Web.Services
                         if ((inputClean.Contains("ธนศักดิ") || inputClean.Contains("ธนาศักดิ")) &&
                             (dbClean.Contains("ธนศักดิ") || dbClean.Contains("ธนาศักดิ")))
                             return true;
+
+                        // Phonetic tolerance for ธัญญ์ลักษณ์
+                        if (inputClean.StartsWith("ธัญ") && dbClean.StartsWith("ธัญ"))
+                            return true;
                     }
 
                     return false;
@@ -213,6 +224,10 @@ namespace RoyalD.Web.Services
             if (!string.IsNullOrWhiteSpace(requestedSalesRep))
             {
                 var reqTrim = requestedSalesRep.Trim();
+                if (reqTrim == "ธัญลักษณ์" || reqTrim == "ธัญญลักษณ์" || reqTrim == "ธัญญ์ลัษณ์")
+                {
+                    reqTrim = "ธัญญ์ลักษณ์";
+                }
 
                 // If user selected or entered a code (e.g. 121.1), map to actual rep names
                 List<string>? targetNames = null;
