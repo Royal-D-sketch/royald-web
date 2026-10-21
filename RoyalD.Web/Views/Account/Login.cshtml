@@ -312,8 +312,8 @@ function formatThaiLocation(district, prov, lat, lng) {
     const isNonthaburi = cleanProv.includes('นนทบุรี') || (lat >= 13.78 && lat <= 14.10 && lng >= 100.18 && lng <= 100.60);
     if (isNonthaburi) {
         cleanProv = 'นนทบุรี';
-        // พิกัด อ.บางใหญ่ จ.นนทบุรี (Lat 13.81-13.915, Lng 100.31-100.455)
-        if ((lat >= 13.81 && lat <= 13.915 && lng >= 100.31 && lng <= 100.455) || cleanDist.includes('บางใหญ่') || cleanDist.includes('เสาธงหิน') || cleanDist.includes('บางแม่นาง') || cleanDist.includes('บางเลน')) {
+        // พิกัด อ.บางใหญ่ จ.นนทบุรี (Lat 13.80-13.935, Lng 100.30-100.46) รวมถึงโหนดอินเทอร์เน็ต 13.9214, 100.4324
+        if ((lat >= 13.80 && lat <= 13.935 && lng >= 100.30 && lng <= 100.46) || cleanDist.includes('บางใหญ่') || cleanDist.includes('เสาธงหิน') || cleanDist.includes('บางแม่นาง') || cleanDist.includes('บางเลน') || cleanDist.includes('พิมลราช') || cleanDist.includes('บางบัวทอง')) {
             cleanDist = 'บางใหญ่';
         } else if (cleanDist.includes('เทศบาลนคร') || cleanDist === '' || cleanDist === 'เมือง') {
             cleanDist = 'เมืองนนทบุรี';
@@ -331,12 +331,13 @@ function formatThaiLocation(district, prov, lat, lng) {
 
 function resolveLocationName(lat, lng) {
     if (lat >= 13.78 && lat <= 14.10 && lng >= 100.18 && lng <= 100.60) {
-        if (lat >= 13.92 && lng <= 100.35) return 'อ.ไทรน้อย จ.นนทบุรี';
-        if (lat >= 13.91 && lng <= 100.455) return 'อ.บางบัวทอง จ.นนทบุรี';
-        if (lat >= 13.89 && lng > 100.455) return 'อ.ปากเกร็ด จ.นนทบุรี';
+        // อ.บางใหญ่ (ครอบคลุมพิกัด 13.80 - 13.935, Lng 100.30 - 100.46 รวมถึงโหนดอินเทอร์เน็ต 13.9214, 100.4324)
+        if (lat >= 13.80 && lat <= 13.935 && lng >= 100.30 && lng <= 100.46) return 'อ.บางใหญ่ จ.นนทบุรี';
+        if (lat >= 13.935 && lng <= 100.35) return 'อ.ไทรน้อย จ.นนทบุรี';
+        if (lat >= 13.935 && lng <= 100.455) return 'อ.บางบัวทอง จ.นนทบุรี';
+        if (lat >= 13.89 && lng > 100.46) return 'อ.ปากเกร็ด จ.นนทบุรี';
         if (lat < 13.84 && lng <= 100.51) return 'อ.บางกรวย จ.นนทบุรี';
-        if (lat >= 13.81 && lat <= 13.915 && lng >= 100.31 && lng <= 100.455) return 'อ.บางใหญ่ จ.นนทบุรี';
-        return 'อ.เมืองนนทบุรี จ.นนทบุรี';
+        return 'อ.บางใหญ่ จ.นนทบุรี';
     }
     if (lat >= 13.60 && lat <= 13.95 && lng >= 100.40 && lng <= 100.85) return 'กรุงเทพมหานคร';
     if (lat >= 13.95 && lat <= 14.20 && lng >= 100.45 && lng <= 100.85) return 'จ.ปทุมธานี';
