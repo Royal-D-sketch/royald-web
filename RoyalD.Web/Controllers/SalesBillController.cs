@@ -163,7 +163,7 @@ namespace RoyalD.Web.Controllers
             }
 
             if (!string.IsNullOrEmpty(search))
-                q = q.Where(b => b.BillNo.Contains(search) || b.CustomerName.Contains(search) || b.CustomerCode.Contains(search));
+                q = ApplySearchFilter(q, search);
             if (!string.IsNullOrEmpty(month))
                 q = q.Where(b => b.SourceMonth == month);
             if (credit.HasValue)
@@ -649,24 +649,7 @@ namespace RoyalD.Web.Controllers
                 q = q.Where(b => distVariants.Contains(b.District) || b.District.Contains(district));
             }
 
-            var allDbReps = await _cache.GetOrCreateAsync("all_salesbill_reps", async entry =>
-            {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
-                var raw = await _db.SalesBills.AsNoTracking()
-                    .Select(b => b.SalesRep)
-                    .Where(s => !string.IsNullOrEmpty(s))
-                    .Distinct()
-                    .ToListAsync();
-
-                return raw
-                    .Where(s => !string.IsNullOrWhiteSpace(s) &&
-                                !s.Contains("5%") &&
-                                !s.Contains("page", StringComparison.OrdinalIgnoreCase) &&
-                                !s.Contains("หน้า", StringComparison.OrdinalIgnoreCase) &&
-                                !s.All(char.IsDigit))
-                    .OrderBy(s => s)
-                    .ToList();
-            }) ?? new List<string>();
+            var allDbReps = await SalesRepHelper.GetAllKnownSalesRepsAsync(_db, _cache);
 
             var (filterReps, _, _) = SalesRepHelper.ResolveFilter(isRestricted, currentUser?.SalesRepCode, salesRep, allDbReps);
             if (filterReps != null && filterReps.Count > 0)
@@ -675,7 +658,7 @@ namespace RoyalD.Web.Controllers
             }
 
             if (!string.IsNullOrEmpty(search))
-                q = q.Where(b => b.BillNo.Contains(search) || b.CustomerName.Contains(search) || b.CustomerCode.Contains(search));
+                q = ApplySearchFilter(q, search);
             if (!string.IsNullOrEmpty(month))
                 q = q.Where(b => b.SourceMonth == month);
             if (credit.HasValue)
@@ -940,24 +923,7 @@ namespace RoyalD.Web.Controllers
                 q = q.Where(b => distVariants.Contains(b.District) || b.District.Contains(district));
             }
 
-            var allDbReps = await _cache.GetOrCreateAsync("all_salesbill_reps", async entry =>
-            {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
-                var raw = await _db.SalesBills.AsNoTracking()
-                    .Select(b => b.SalesRep)
-                    .Where(s => !string.IsNullOrEmpty(s))
-                    .Distinct()
-                    .ToListAsync();
-
-                return raw
-                    .Where(s => !string.IsNullOrWhiteSpace(s) &&
-                                !s.Contains("5%") &&
-                                !s.Contains("page", StringComparison.OrdinalIgnoreCase) &&
-                                !s.Contains("หน้า", StringComparison.OrdinalIgnoreCase) &&
-                                !s.All(char.IsDigit))
-                    .OrderBy(s => s)
-                    .ToList();
-            }) ?? new List<string>();
+            var allDbReps = await SalesRepHelper.GetAllKnownSalesRepsAsync(_db, _cache);
 
             var (filterReps, _, _) = SalesRepHelper.ResolveFilter(isRestricted, currentUser?.SalesRepCode, salesRep, allDbReps);
             if (filterReps != null && filterReps.Count > 0)
@@ -965,7 +931,7 @@ namespace RoyalD.Web.Controllers
                 q = q.Where(b => filterReps.Contains(b.SalesRep));
             }
 
-            if (!string.IsNullOrEmpty(search)) q = q.Where(b => b.BillNo.Contains(search) || b.CustomerName.Contains(search) || b.CustomerCode.Contains(search));
+            if (!string.IsNullOrEmpty(search)) q = ApplySearchFilter(q, search);
             if (!string.IsNullOrEmpty(month)) q = q.Where(b => b.SourceMonth == month);
             if (startDate.HasValue) q = q.Where(b => b.BillDate >= startDate.Value.Date);
             if (endDate.HasValue) q = q.Where(b => b.BillDate <= endDate.Value.Date.AddDays(1).AddTicks(-1));
@@ -1580,6 +1546,22 @@ namespace RoyalD.Web.Controllers
             await _db.SaveChangesAsync();
             TempData["Success"] = $"อัปเดตสถานะบิล {billNo} เป็น {newStatus} แล้ว";
             return !string.IsNullOrEmpty(Request.Headers["Referer"]) ? Redirect(Request.Headers["Referer"].ToString()) : RedirectToAction("Detail", new { id = billNo });
+        }
+
+        private static IQueryable<SalesBill> ApplySearchFilter(IQueryable<SalesBill> q, string search)
+        {
+            var searchTrim = search.Trim();
+            if (SalesRepHelper.CodeToNamesMap.TryGetValue(searchTrim, out var codeReps) && codeReps.Count > 0)
+            {
+                return q.Where(b => b.BillNo.Contains(search) || 
+                                    b.CustomerName.Contains(search) || 
+                                    b.CustomerCode.Contains(search) || 
+                                    (b.SalesRep != null && codeReps.Contains(b.SalesRep)));
+            }
+            return q.Where(b => b.BillNo.Contains(search) || 
+                                b.CustomerName.Contains(search) || 
+                                b.CustomerCode.Contains(search) || 
+                                (b.SalesRep != null && b.SalesRep.Contains(search)));
         }
 
     }

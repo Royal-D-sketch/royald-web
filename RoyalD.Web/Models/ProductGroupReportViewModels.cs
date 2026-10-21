@@ -53,6 +53,17 @@ namespace RoyalD.Web.Models
         public DateTime EndDate { get; set; }
         public List<Month25Option> AvailableMonths25 { get; set; } = new();
 
+        // Area Filters
+        public string? SelectedRegion { get; set; }
+        public string? SelectedProvince { get; set; }
+        public string? SelectedDistrict { get; set; }
+        public List<string> AvailableRegions { get; set; } = new();
+        public List<string> AvailableProvinces { get; set; } = new();
+        public bool HasRegionRestriction { get; set; }
+        public bool HasProvinceRestriction { get; set; }
+        public Dictionary<string, List<string>> RegionProvincesMap { get; set; } = new();
+        public Dictionary<string, List<string>> ProvinceDistricts { get; set; } = new();
+
         // Grand Totals
         public decimal TotalGrossSales { get; set; }
         public decimal TotalCreditNotes { get; set; }

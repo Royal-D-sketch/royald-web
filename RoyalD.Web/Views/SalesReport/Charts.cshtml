@@ -139,7 +139,7 @@
 
         <div class="d-flex align-items-center gap-2">
             <span class="text-muted fw-bold small">หรือเลือกเฉพาะบุคคล:</span>
-            <select class="form-select form-select-sm fw-bold shadow-sm" id="repSelectDropdown" onchange="selectIndividualRep(this.value)" style="border:1.5px solid #10b981; border-radius:8px; min-width:180px;" @(isSalesRepRole ? "disabled" : "")>
+            <select class="form-select form-select-sm fw-bold shadow-sm" id="repSelectDropdown" onchange="selectIndividualRep(this.value)" style="border:1.5px solid #10b981; border-radius:8px; min-width:180px;">
                 <option value="team-all" selected>👥 ทุกคนในทีมที่เลือก</option>
                 @for (int ri = 0; ri < allReps.Count; ri++)
                 {

@@ -35,7 +35,15 @@ namespace RoyalD.Web.Services
         private async Task<IQueryable<OutstandingDebt>> ApplySalesRepFilterAsync(IQueryable<OutstandingDebt> q, string? salesRep)
         {
             if (string.IsNullOrEmpty(salesRep)) return q;
-            var repInputs = salesRep.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList();
+            var rawInputs = salesRep.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList();
+            var repInputs = new List<string>();
+            foreach (var r in rawInputs)
+            {
+                if (SalesRepHelper.CodeToNamesMap.TryGetValue(r, out var mapped))
+                    repInputs.AddRange(mapped);
+                else
+                    repInputs.Add(r);
+            }
             var allDbReps = await _cache.GetOrCreateAsync("all_debtor_reps_raw", async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
@@ -170,7 +178,25 @@ namespace RoyalD.Web.Services
             }
 
             if (!string.IsNullOrEmpty(search))
-                q = q.Where(d => d.CustomerName.Contains(search) || d.BillNo.Contains(search) || d.CustomerCode.Contains(search) || (d.ReceiptNo != null && d.ReceiptNo.Contains(search)));
+            {
+                var searchTrim = search.Trim();
+                if (SalesRepHelper.CodeToNamesMap.TryGetValue(searchTrim, out var codeReps) && codeReps.Count > 0)
+                {
+                    q = q.Where(d => d.CustomerName.Contains(search) || 
+                                     d.BillNo.Contains(search) || 
+                                     d.CustomerCode.Contains(search) || 
+                                     (d.ReceiptNo != null && d.ReceiptNo.Contains(search)) ||
+                                     (d.SalesRep != null && codeReps.Contains(d.SalesRep)));
+                }
+                else
+                {
+                    q = q.Where(d => d.CustomerName.Contains(search) || 
+                                     d.BillNo.Contains(search) || 
+                                     d.CustomerCode.Contains(search) || 
+                                     (d.ReceiptNo != null && d.ReceiptNo.Contains(search)) ||
+                                     (d.SalesRep != null && d.SalesRep.Contains(search)));
+                }
+            }
 
             if (!string.IsNullOrEmpty(credit))
             {
@@ -211,7 +237,25 @@ namespace RoyalD.Web.Services
             }
 
             if (!string.IsNullOrEmpty(search))
-                q = q.Where(d => d.CustomerName.Contains(search) || d.BillNo.Contains(search) || d.CustomerCode.Contains(search) || (d.ReceiptNo != null && d.ReceiptNo.Contains(search)));
+            {
+                var searchTrim = search.Trim();
+                if (SalesRepHelper.CodeToNamesMap.TryGetValue(searchTrim, out var codeReps) && codeReps.Count > 0)
+                {
+                    q = q.Where(d => d.CustomerName.Contains(search) || 
+                                     d.BillNo.Contains(search) || 
+                                     d.CustomerCode.Contains(search) || 
+                                     (d.ReceiptNo != null && d.ReceiptNo.Contains(search)) ||
+                                     (d.SalesRep != null && codeReps.Contains(d.SalesRep)));
+                }
+                else
+                {
+                    q = q.Where(d => d.CustomerName.Contains(search) || 
+                                     d.BillNo.Contains(search) || 
+                                     d.CustomerCode.Contains(search) || 
+                                     (d.ReceiptNo != null && d.ReceiptNo.Contains(search)) ||
+                                     (d.SalesRep != null && d.SalesRep.Contains(search)));
+                }
+            }
 
             var debtList = await q.ToListAsync();
             var existingBillNos = new HashSet<string>(debtList.Select(d => d.BillNo), StringComparer.OrdinalIgnoreCase);
@@ -316,7 +360,25 @@ namespace RoyalD.Web.Services
             }
 
             if (!string.IsNullOrEmpty(search))
-                q = q.Where(d => d.CustomerName.Contains(search) || d.BillNo.Contains(search) || d.CustomerCode.Contains(search) || (d.ReceiptNo != null && d.ReceiptNo.Contains(search)));
+            {
+                var searchTrim = search.Trim();
+                if (SalesRepHelper.CodeToNamesMap.TryGetValue(searchTrim, out var codeReps) && codeReps.Count > 0)
+                {
+                    q = q.Where(d => d.CustomerName.Contains(search) || 
+                                     d.BillNo.Contains(search) || 
+                                     d.CustomerCode.Contains(search) || 
+                                     (d.ReceiptNo != null && d.ReceiptNo.Contains(search)) ||
+                                     (d.SalesRep != null && codeReps.Contains(d.SalesRep)));
+                }
+                else
+                {
+                    q = q.Where(d => d.CustomerName.Contains(search) || 
+                                     d.BillNo.Contains(search) || 
+                                     d.CustomerCode.Contains(search) || 
+                                     (d.ReceiptNo != null && d.ReceiptNo.Contains(search)) ||
+                                     (d.SalesRep != null && d.SalesRep.Contains(search)));
+                }
+            }
 
             var list = await q.OrderByDescending(d => d.CancelledDate ?? d.BillDate).ToListAsync();
             

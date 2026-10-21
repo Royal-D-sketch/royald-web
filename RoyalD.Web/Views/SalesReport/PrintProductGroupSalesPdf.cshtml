@@ -1,0 +1,368 @@
+@model RoyalD.Web.Models.ProductGroupSalesReportViewModel
+@{
+    Layout = null;
+    string printedBy = ViewBag.PrintedBy as string ?? "Admin";
+}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>รายงานผู้แทนขายแยกตามกลุ่มสินค้า — บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" />
+    <style>
+        @@page {
+            size: A4 portrait;
+            margin: 6mm 8mm 6mm 8mm;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        html, body {
+            background-color: #ffffff;
+            color: #0f172a;
+            font-family: 'Sarabun', 'Noto Sans Thai', Tahoma, Arial, sans-serif;
+            font-size: 11px;
+            line-height: 1.25;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+        }
+
+        .screen-topbar {
+            background: #f8fafc;
+            border-bottom: 1px solid #cbd5e1;
+            padding: 10px 16px;
+            margin-bottom: 10px;
+        }
+
+        .page-a4 {
+            width: 100%;
+            max-width: 194mm;
+            margin: 0 auto;
+            padding: 4px 0;
+            page-break-inside: avoid !important;
+            page-break-after: avoid !important;
+        }
+
+        .header-box {
+            border-bottom: 2px solid #0f766e;
+            padding-bottom: 6px;
+            margin-bottom: 6px;
+        }
+
+        .company-title {
+            color: #0f766e;
+            font-size: 15px;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: 0.3px;
+        }
+
+        .doc-title {
+            color: #1e293b;
+            font-size: 13px;
+            font-weight: 700;
+            margin: 2px 0 3px 0;
+        }
+
+        .meta-line {
+            font-size: 10px;
+            color: #475569;
+        }
+
+        /* KPI summary strip */
+        .kpi-strip {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1.1fr;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .kpi-cell {
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 4px 8px;
+            background: #f8fafc;
+        }
+
+        .kpi-cell.kpi-gross {
+            border-left: 3px solid #0284c7;
+            background: #f0f9ff;
+        }
+
+        .kpi-cell.kpi-credit {
+            border-left: 3px solid #dc2626;
+            background: #fef2f2;
+        }
+
+        .kpi-cell.kpi-net {
+            border-left: 3px solid #16a34a;
+            background: #f0fdf4;
+        }
+
+        .kpi-label {
+            font-size: 9.5px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 1px;
+        }
+
+        .kpi-val {
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        /* Group Summary Table */
+        .table-a4 {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10.5px;
+            margin-bottom: 6px;
+        }
+
+        .table-a4 th {
+            background-color: #0f766e !important;
+            color: #ffffff !important;
+            font-weight: 700;
+            text-align: center;
+            vertical-align: middle;
+            padding: 4px 4px;
+            border: 1px solid #0d655e;
+            font-size: 10px;
+            line-height: 1.15;
+        }
+
+        .table-a4 td {
+            padding: 3px 5px;
+            border: 1px solid #cbd5e1;
+            vertical-align: middle;
+            line-height: 1.15;
+        }
+
+        .table-a4 tr:nth-child(even) td {
+            background-color: #f8fafc !important;
+        }
+
+        .table-a4 tr.total-row td {
+            background-color: #ccfbf1 !important;
+            font-weight: 800;
+            border-top: 2px solid #0f766e !important;
+            border-bottom: 2px solid #0f766e !important;
+            color: #0f766e;
+            padding: 4px 5px;
+            font-size: 10.5px;
+        }
+
+        /* Signatures Block */
+        .signatures-box {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px dashed #cbd5e1;
+        }
+
+        .sign-cell {
+            text-align: center;
+            font-size: 9.5px;
+            color: #475569;
+        }
+
+        .sign-line {
+            margin-top: 20px;
+            border-bottom: 1px dotted #94a3b8;
+            width: 75%;
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 3px;
+        }
+
+        @@media print {
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            .page-a4 {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            .table-a4 th {
+                background-color: #0f766e !important;
+                color: #ffffff !important;
+            }
+
+            .table-a4 tr.total-row td {
+                background-color: #ccfbf1 !important;
+                color: #0f766e !important;
+            }
+
+            .kpi-cell.kpi-gross { background: #f0f9ff !important; }
+            .kpi-cell.kpi-credit { background: #fef2f2 !important; }
+            .kpi-cell.kpi-net { background: #f0fdf4 !important; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Screen View Control Bar (Hidden when printed) -->
+    <div class="screen-topbar no-print d-flex justify-content-between align-items-center shadow-xs">
+        <div>
+            <h6 class="mb-0 fw-bold" style="color:#0f766e;">
+                <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i> รายงานผู้แทนขายแยกตามกลุ่มสินค้าและใบลดหนี้ (PDF / Print พอดี 1 หน้า A4)
+            </h6>
+            <span class="text-muted" style="font-size:0.8rem;">
+                💡 ระบบจัดหน้ากระดาษพอดี 1 หน้า A4 อัตโนมัติ (ขนาดกระดาษ A4 แนวตั้ง | รวมสินค้า Tester เรียบร้อย)
+            </span>
+        </div>
+        <div class="d-flex gap-2">
+            <button onclick="window.print()" class="btn btn-sm btn-danger fw-bold px-3 shadow-sm">
+                <i class="bi bi-printer-fill me-1"></i> สั่งพิมพ์ / บันทึก PDF (1 หน้า A4)
+            </button>
+            <button onclick="window.close()" class="btn btn-sm btn-outline-secondary px-3">
+                <i class="bi bi-x-circle me-1"></i> ปิดหน้านี้
+            </button>
+        </div>
+    </div>
+
+    <!-- 1-Page A4 Container -->
+    <div class="page-a4">
+        <!-- Header -->
+        <div class="header-box text-center">
+            <h1 class="company-title">บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด</h1>
+            <h2 class="doc-title">รายงานสรุปยอดขายแยกตามกลุ่มสินค้าและกระทบยอดใบลดหนี้</h2>
+            <div class="meta-line d-flex justify-content-between align-items-center">
+                <span>
+                    <strong>ผู้แทนขาย:</strong> @(string.IsNullOrEmpty(Model.SelectedSalesRep) ? "ทุกคน (ภาพรวม)" : Model.SelectedSalesRep)
+                    &nbsp;|&nbsp;
+                    <strong>ช่วงวันที่:</strong> @Model.StartDate.ToString("dd/MM/yyyy") - @Model.EndDate.ToString("dd/MM/yyyy")
+                    @if (!string.IsNullOrEmpty(Model.SelectedMonth25))
+                    {
+                        <span>(รอบตัด 25: @Model.SelectedMonth25)</span>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.SelectedProvince))
+                    {
+                        <span>&nbsp;|&nbsp;<strong>จังหวัด:</strong> @Model.SelectedProvince</span>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.SelectedDistrict))
+                    {
+                        <span>&nbsp;|&nbsp;<strong>เขต/อำเภอ:</strong> @Model.SelectedDistrict</span>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.SelectedRegion) && string.IsNullOrEmpty(Model.SelectedProvince))
+                    {
+                        <span>&nbsp;|&nbsp;<strong>ภาค:</strong> @Model.SelectedRegion</span>
+                    }
+                </span>
+                <span>
+                    <strong>พิมพ์เมื่อ:</strong> @DateTime.Now.ToString("dd/MM/yyyy HH:mm") น. &nbsp;|&nbsp; <strong>ผู้พิมพ์:</strong> @printedBy
+                </span>
+            </div>
+        </div>
+
+        <!-- KPI Summary Strip -->
+        <div class="kpi-strip">
+            <div class="kpi-cell kpi-gross">
+                <div class="kpi-label">ยอดขายรวม (Gross Sales)</div>
+                <div class="kpi-val text-primary">
+                    @Model.TotalGrossSales.ToString("N2") <small style="font-size:9px; font-weight:normal; color:#64748b;">บาท (@Model.TotalSalesQty.ToString("N0") ชิ้น)</small>
+                </div>
+            </div>
+            <div class="kpi-cell kpi-credit">
+                <div class="kpi-label">หัก ใบลดหนี้ (Credit Notes @Model.TotalCreditNoteCount ฉบับ)</div>
+                <div class="kpi-val text-danger">
+                    -@Model.TotalCreditNotes.ToString("N2") <small style="font-size:9px; font-weight:normal; color:#dc2626;">บาท (คืน @Model.TotalReturnQty.ToString("N0") ชิ้น)</small>
+                </div>
+            </div>
+            <div class="kpi-cell kpi-net">
+                <div class="kpi-label">ยอดขายสุทธิปิดทริป (Net Sales)</div>
+                <div class="kpi-val text-success">
+                    @Model.TotalNetSales.ToString("N2") <small style="font-size:9px; font-weight:normal; color:#16a34a;">บาท (สุทธิ @Model.TotalNetQty.ToString("N0") ชิ้น)</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Groups Summary Table -->
+        <table class="table-a4">
+            <thead>
+                <tr>
+                    <th style="width: 28px;">#</th>
+                    <th style="width: 48px;">รหัสกลุ่ม</th>
+                    <th style="text-align: left; padding-left: 8px;">ชื่อกลุ่มสินค้า (20 กลุ่ม Master)</th>
+                    <th style="width: 70px;" class="text-end">จำนวนขาย</th>
+                    <th style="width: 98px;" class="text-end">ยอดขาย (บาท)</th>
+                    <th style="width: 60px;" class="text-end">จำนวนคืน</th>
+                    <th style="width: 90px;" class="text-end">ยอดลดหนี้ (บาท)</th>
+                    <th style="width: 105px;" class="text-end">ยอดขายสุทธิ (บาท)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{ int seq = 1; }
+                @foreach (var g in Model.Groups)
+                {
+                    <tr>
+                        <td class="text-center text-muted">@(seq++)</td>
+                        <td class="text-center font-monospace fw-bold">@g.GroupCode</td>
+                        <td style="text-align: left; padding-left: 8px;" class="fw-semibold text-dark">
+                            @g.GroupName
+                            <span style="font-size:8.5px; color:#64748b; font-weight:normal;">(@g.Items.Count รายการ)</span>
+                        </td>
+                        <td class="text-end">@g.GroupSalesQty.ToString("N0")</td>
+                        <td class="text-end fw-bold text-primary">@g.GroupSalesAmount.ToString("N2")</td>
+                        <td class="text-end text-danger">@(g.GroupReturnQty > 0 ? $"-{g.GroupReturnQty:N0}" : "-")</td>
+                        <td class="text-end text-danger">@(g.GroupCreditAmount > 0 ? $"-{g.GroupCreditAmount:N2}" : "0.00")</td>
+                        <td class="text-end fw-bold text-success">@g.GroupNetSalesAmount.ToString("N2")</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr class="total-row">
+                    <td colspan="3" class="text-center">รวมยอดทั้งสิ้น (Grand Total)</td>
+                    <td class="text-end">@Model.TotalSalesQty.ToString("N0")</td>
+                    <td class="text-end">@Model.TotalGrossSales.ToString("N2")</td>
+                    <td class="text-end text-danger">@(Model.TotalReturnQty > 0 ? $"-{Model.TotalReturnQty:N0}" : "-")</td>
+                    <td class="text-end text-danger">@(Model.TotalCreditNotes > 0 ? $"-{Model.TotalCreditNotes:N2}" : "0.00")</td>
+                    <td class="text-end">@Model.TotalNetSales.ToString("N2")</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <!-- Signatures Section -->
+        <div class="signatures-box">
+            <div class="sign-cell">
+                <div>ผู้จัดทำรายงาน</div>
+                <div class="sign-line"></div>
+                <div>( .................................................... )</div>
+                <div style="font-size:8.5px; color:#94a3b8; margin-top:1px;">วันที่ ........ / ........ / ............</div>
+            </div>
+            <div class="sign-cell">
+                <div>ผู้ตรวจสอบ (บัญชี/การเงิน)</div>
+                <div class="sign-line"></div>
+                <div>( .................................................... )</div>
+                <div style="font-size:8.5px; color:#94a3b8; margin-top:1px;">วันที่ ........ / ........ / ............</div>
+            </div>
+            <div class="sign-cell">
+                <div>ผู้จัดการฝ่ายขาย / ผู้อนุมัติ</div>
+                <div class="sign-line"></div>
+                <div>( .................................................... )</div>
+                <div style="font-size:8.5px; color:#94a3b8; margin-top:1px;">วันที่ ........ / ........ / ............</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

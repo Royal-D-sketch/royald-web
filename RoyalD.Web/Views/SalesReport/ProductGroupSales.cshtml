@@ -1,14 +1,12 @@
 @model RoyalD.Web.Models.ProductGroupSalesReportViewModel
 @{
     ViewData["Title"] = "รายงานผู้แทนขายแยกตามกลุ่มสินค้า";
+    var posClaim = ViewContext.HttpContext.User.FindFirst("Position")?.Value ?? "";
+    var repCodeClaim = ViewContext.HttpContext.User.FindFirst("SalesRepCode")?.Value;
+    bool isSalesRepUser = posClaim == "ผู้แทนขาย" || posClaim == "พนักงานขาย" || posClaim.Contains("ผู้แทน") || posClaim.Contains("พนักงานขาย") || !string.IsNullOrWhiteSpace(repCodeClaim);
+    bool isAdminUser = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin") || (User.Identity?.Name?.ToLower() == "art");
+    bool canDownloadUser = (isAdminUser || ViewContext.HttpContext.User.FindFirst("CanDownload")?.Value == "true") && !isSalesRepUser;
 }
-
-<style>
-    /* ปลดล็อกให้ปุ่ม Export Excel ของหน้ารายงานผู้แทนขายแยกตามกลุ่มสินค้าแสดงผลได้สำหรับทุกคนที่มีสิทธิ์เข้าหน้านี้ */
-    .btn-export-groupsales, a[href*="ExportProductGroupSalesExcel"] {
-        display: inline-flex !important;
-    }
-</style>
 
 <div class="container-fluid px-3 py-2">
     <!-- Breadcrumb & Header -->
@@ -24,61 +22,113 @@
                 <i class="bi bi-collection me-2"></i>รายงานผู้แทนขายแยกตามกลุ่มสินค้า
             </h4>
             <div class="text-muted small mt-1">
-                สรุปยอดขายปิดทริปทุกวันที่ 25 และหักลดยอดใบลดหนี้รายตัวสินค้า (อ้างอิง 20 กลุ่มสินค้า Master | ไม่นำสินค้า Tester จัดกลุ่ม)
+                สรุปยอดขายปิดทริปทุกวันที่ 25 และหักลดยอดใบลดหนี้รายตัวสินค้า (อ้างอิง 20 กลุ่มสินค้า Master | รวมสินค้า Tester)
             </div>
         </div>
-        <div class="d-flex gap-2">
-            <a href="@Url.Action("ExportProductGroupSalesExcel", new { salesRep = Model.SelectedSalesRep, month25 = Model.SelectedMonth25, startDate = Model.StartDate.ToString("yyyy-MM-dd"), endDate = Model.EndDate.ToString("yyyy-MM-dd") })" 
-               class="btn btn-sm btn-success shadow-sm fw-bold btn-export-groupsales">
-                <i class="bi bi-file-earmark-excel me-1"></i> ส่งออก Excel (.xlsx)
-            </a>
-            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()">
-                <i class="bi bi-printer me-1"></i> พิมพ์หน้านี้
-            </button>
-        </div>
+        @if (canDownloadUser)
+        {
+            <div class="d-flex gap-2">
+                <a href="@Url.Action("ExportProductGroupSalesExcel", new { salesRep = Model.SelectedSalesRep, month25 = Model.SelectedMonth25, startDate = Model.StartDate.ToString("yyyy-MM-dd"), endDate = Model.EndDate.ToString("yyyy-MM-dd"), region = Model.SelectedRegion, province = Model.SelectedProvince, district = Model.SelectedDistrict })" 
+                   class="btn btn-sm btn-success shadow-sm fw-bold">
+                    <i class="bi bi-file-earmark-excel me-1"></i> ส่งออก Excel (.xlsx)
+                </a>
+                <a href="@Url.Action("PrintProductGroupSalesPdf", new { salesRep = Model.SelectedSalesRep, month25 = Model.SelectedMonth25, startDate = Model.StartDate.ToString("yyyy-MM-dd"), endDate = Model.EndDate.ToString("yyyy-MM-dd"), region = Model.SelectedRegion, province = Model.SelectedProvince, district = Model.SelectedDistrict })" 
+                   target="_blank" class="btn btn-sm btn-danger shadow-sm fw-bold">
+                    <i class="bi bi-file-earmark-pdf-fill me-1"></i> พิมพ์ / ออก PDF (1 หน้า A4)
+                </a>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+                    <i class="bi bi-printer me-1"></i> พิมพ์หน้านี้
+                </button>
+            </div>
+        }
     </div>
 
     <!-- Filter Card -->
     <div class="card shadow-sm border-0 mb-3" style="border-radius:10px;">
         <div class="card-header bg-white py-2 fw-bold text-dark border-bottom d-flex justify-content-between align-items-center">
             <span><i class="bi bi-funnel-fill text-primary me-1"></i> ตัวกรองรายงานปิดทริปยอดขาย</span>
-            <a href="@Url.Action("ExportProductGroupSalesExcel", new { salesRep = Model.SelectedSalesRep, month25 = Model.SelectedMonth25, startDate = Model.StartDate.ToString("yyyy-MM-dd"), endDate = Model.EndDate.ToString("yyyy-MM-dd") })" 
-               class="btn btn-sm btn-outline-success fw-bold btn-export-groupsales py-0 px-2">
-                <i class="bi bi-file-earmark-excel me-1"></i> Export Excel
-            </a>
+            @if (canDownloadUser)
+            {
+                <div class="d-flex gap-1">
+                    <a href="@Url.Action("ExportProductGroupSalesExcel", new { salesRep = Model.SelectedSalesRep, month25 = Model.SelectedMonth25, startDate = Model.StartDate.ToString("yyyy-MM-dd"), endDate = Model.EndDate.ToString("yyyy-MM-dd"), region = Model.SelectedRegion, province = Model.SelectedProvince, district = Model.SelectedDistrict })" 
+                       class="btn btn-sm btn-outline-success fw-bold py-0 px-2">
+                        <i class="bi bi-file-earmark-excel me-1"></i> Export Excel
+                    </a>
+                    <a href="@Url.Action("PrintProductGroupSalesPdf", new { salesRep = Model.SelectedSalesRep, month25 = Model.SelectedMonth25, startDate = Model.StartDate.ToString("yyyy-MM-dd"), endDate = Model.EndDate.ToString("yyyy-MM-dd"), region = Model.SelectedRegion, province = Model.SelectedProvince, district = Model.SelectedDistrict })" 
+                       target="_blank" class="btn btn-sm btn-outline-danger fw-bold py-0 px-2">
+                        <i class="bi bi-file-earmark-pdf-fill me-1"></i> พิมพ์ PDF (1 หน้า A4)
+                    </a>
+                </div>
+            }
         </div>
         <div class="card-body p-3">
             <form method="get" action="/SalesReport/ProductGroupSales" id="filterForm">
-                <div class="row g-2 align-items-end">
+                <div class="row g-2 align-items-end mb-2">
                     <!-- Sales Rep Dropdown -->
                     <div class="col-md-3">
                         <label class="form-label small fw-bold text-dark mb-1">
                             <i class="bi bi-person me-1"></i>ผู้แทนขาย (Sales Rep)
                         </label>
-                        @if (Model.IsRestrictedRep && Model.SalesReps.Count <= 1)
-                        {
-                            <input type="hidden" name="salesRep" value="@Model.SelectedSalesRep" />
-                            <select class="form-select form-select-sm" disabled style="background-color:#f1f5f9; cursor:not-allowed;">
-                                <option selected>@(string.IsNullOrEmpty(Model.SelectedSalesRep) ? "เฉพาะผู้แทนขายตนเอง" : Model.SelectedSalesRep)</option>
-                            </select>
-                        }
-                        else
-                        {
-                            <select name="salesRep" class="form-select form-select-sm">
-                                @if (!Model.IsRestrictedRep || Model.SalesReps.Count > 1)
-                                {
-                                    <option value="" selected="@(string.IsNullOrEmpty(Model.SelectedSalesRep) ? "selected" : null)">-- ผู้แทนขายทุกคน (ภาพรวม) --</option>
-                                }
-                                @foreach (var rep in Model.SalesReps)
-                                {
-                                    <option value="@rep" selected="@(rep == Model.SelectedSalesRep ? "selected" : null)">@rep</option>
-                                }
-                            </select>
-                        }
+                        <select name="salesRep" class="form-select form-select-sm select2-searchable">
+                            <option value="">@(Model.IsRestrictedRep ? "-- ทุกผู้แทนที่รับผิดชอบ --" : "-- ผู้แทนขายทุกคน (ภาพรวม) --")</option>
+                            @foreach (var rep in Model.SalesReps)
+                            {
+                                <option value="@rep" selected="@(rep == Model.SelectedSalesRep ? "selected" : null)">@rep</option>
+                            }
+                        </select>
                     </div>
 
-                    <!-- Cut-Off 25th Month Selector -->
+                    <!-- Region Selector -->
                     <div class="col-md-3">
+                        <label class="form-label small fw-bold text-dark mb-1">
+                            <i class="bi bi-geo me-1 text-primary"></i>ภาค / เขต
+                        </label>
+                        <select name="region" id="region-select" class="form-select form-select-sm" onchange="onRegionChange()">
+                            <option value="">@(Model.HasRegionRestriction ? "-- ทุกภาคที่รับผิดชอบ --" : "-- ทุกภาค --")</option>
+                            @foreach (var reg in Model.AvailableRegions)
+                            {
+                                <option value="@reg" selected="@(reg == Model.SelectedRegion ? "selected" : null)">@reg</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Province Selector -->
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-dark mb-1">
+                            <i class="bi bi-geo-alt me-1 text-primary"></i>จังหวัด
+                        </label>
+                        <select name="province" id="province-select" class="form-select form-select-sm select2-searchable" onchange="onProvinceChange()">
+                            <option value="">@(Model.HasProvinceRestriction ? "-- ทุกจังหวัดที่รับผิดชอบ --" : "-- ทุกจังหวัด --")</option>
+                            @foreach (var p in Model.AvailableProvinces)
+                            {
+                                <option value="@p" selected="@(p == Model.SelectedProvince ? "selected" : null)">@p</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- District Selector (for BKK) -->
+                    <div class="col-md-3" id="district-filter-col" style="@(Model.SelectedProvince == "กรุงเทพมหานคร" || Model.SelectedProvince == "กรุงเทพฯ" || Model.SelectedProvince == "กรุงเทพ" ? "" : "display:none;")">
+                        <label class="form-label small fw-bold text-dark mb-1">
+                            <i class="bi bi-compass me-1 text-primary"></i>เขต / อำเภอ
+                        </label>
+                        <select name="district" id="district-select" class="form-select form-select-sm select2-searchable">
+                            <option value="">-- ทุกเขต (กรุงเทพฯ) --</option>
+                            @if (Model.ProvinceDistricts.ContainsKey("กรุงเทพมหานคร"))
+                            {
+                                foreach (var d in Model.ProvinceDistricts["กรุงเทพมหานคร"])
+                                {
+                                    string dLabel = "เขต" + d.Replace("เขต", "").Trim();
+                                    bool isDSelected = Model.SelectedDistrict == d || Model.SelectedDistrict == dLabel;
+                                    <option value="@dLabel" selected="@(isDSelected ? "selected" : null)">@dLabel</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row g-2 align-items-end">
+                    <!-- Cut-Off 25th Month Selector -->
+                    <div class="col-md-4">
                         <label class="form-label small fw-bold text-dark mb-1">
                             <i class="bi bi-calendar-check me-1 text-primary"></i>รอบปิดทริปตัด 25 (ประจำเดือน)
                         </label>
@@ -97,13 +147,13 @@
                     </div>
 
                     <!-- Start Date -->
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <label class="form-label small fw-bold text-dark mb-1">วันที่เริ่มต้น</label>
                         <input type="date" name="startDate" id="startDateInput" class="form-control form-control-sm" value="@Model.StartDate.ToString("yyyy-MM-dd")" />
                     </div>
 
                     <!-- End Date -->
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <label class="form-label small fw-bold text-dark mb-1">วันที่สิ้นสุด</label>
                         <input type="date" name="endDate" id="endDateInput" class="form-control form-control-sm" value="@Model.EndDate.ToString("yyyy-MM-dd")" />
                     </div>
@@ -127,7 +177,7 @@
         <div class="small text-dark">
             <i class="bi bi-info-circle-fill text-primary me-1"></i>
             <strong>ผู้แทนขาย:</strong> <span class="text-primary fw-bold">@(string.IsNullOrEmpty(Model.SelectedSalesRep) ? "ทุกคน (ภาพรวม)" : Model.SelectedSalesRep)</span> &nbsp;|&nbsp;
-            <strong>ช่วงวันที่:</strong> <span class="fw-bold">@Model.StartDate.ToString("dd/MM/yyyy")</span> ถึง <span class="fw-bold">@Model.EndDate.ToString("dd/MM/yyyy")</span> &nbsp;|&nbsp; <span class="badge bg-secondary"><i class="bi bi-funnel me-1"></i>ไม่รวมสินค้า Tester</span>
+            <strong>ช่วงวันที่:</strong> <span class="fw-bold">@Model.StartDate.ToString("dd/MM/yyyy")</span> ถึง <span class="fw-bold">@Model.EndDate.ToString("dd/MM/yyyy")</span> &nbsp;|&nbsp; <span class="badge" style="background:#0d9488;"><i class="bi bi-check-circle me-1"></i>รวมสินค้า Tester</span>
             @if (!string.IsNullOrEmpty(Model.SelectedMonth25))
             {
                 <span class="badge bg-primary ms-1">รอบตัด 25 (@Model.SelectedMonth25)</span>
@@ -185,35 +235,35 @@
             @foreach (var g in Model.Groups)
             {
                 var collapseId = $"collapseGroup_{g.GroupCode}";
-                <div class="card shadow-sm border-0 mb-3" style="border-radius:10px; overflow:hidden;">
-                    <!-- Group Header -->
-                    <div class="card-header bg-white py-2 px-3 d-flex flex-wrap justify-content-between align-items-center" 
-                         style="cursor:pointer;" 
+                <div class="card shadow-sm mb-3" style="border-radius:10px; overflow:hidden; border: 1px solid #99f6e4;">
+                    <!-- Group Header (หัวกลุ่มสินค้า — ใช้สีเขียวเข้ม Teal และสีทอง ตัดกับรายการสินค้าสีขาวอย่างชัดเจน) -->
+                    <div class="card-header py-2 px-3 d-flex flex-wrap justify-content-between align-items-center" 
+                         style="cursor:pointer; background: linear-gradient(135deg, #0f766e 0%, #115e59 100%); color: #ffffff; border-bottom: 2px solid #0d9488;" 
                          data-bs-toggle="collapse" 
                          data-bs-target="#@collapseId" 
                          aria-expanded="true">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-secondary">กลุ่ม @g.GroupCode</span>
-                            <span class="fw-bold text-dark fs-6">@g.GroupName</span>
-                            <span class="badge bg-light text-muted border">@g.Items.Count รายการสินค้า</span>
+                            <span class="badge shadow-xs" style="background:#f59e0b; color:#1e293b; font-weight:800; font-size:0.85rem; padding: 4px 8px;">กลุ่ม @g.GroupCode</span>
+                            <span class="fw-bold fs-6 text-white">@g.GroupName</span>
+                            <span class="badge" style="background:rgba(255,255,255,0.18); color:#ffffff; border:1px solid rgba(255,255,255,0.3); font-weight:500;">@g.Items.Count รายการสินค้า</span>
                         </div>
                         <div class="d-flex align-items-center gap-3 small">
                             <div>
-                                <span class="text-muted">ยอดขาย:</span>
-                                <strong class="text-primary">@g.GroupSalesAmount.ToString("N2")</strong>
+                                <span style="color: rgba(255,255,255,0.85);">ยอดขาย:</span>
+                                <strong class="text-white">@g.GroupSalesAmount.ToString("N2")</strong>
                             </div>
                             @if (g.GroupCreditAmount > 0)
                             {
-                                <div>
-                                    <span class="text-danger">หักใบลดหนี้:</span>
-                                    <strong class="text-danger">-@g.GroupCreditAmount.ToString("N2")</strong>
+                                <div style="background: rgba(239, 68, 68, 0.3); padding: 2px 8px; border-radius: 4px;">
+                                    <span style="color: #fecaca;">หักใบลดหนี้:</span>
+                                    <strong style="color: #fee2e2;">-@g.GroupCreditAmount.ToString("N2")</strong>
                                 </div>
                             }
-                            <div class="border-start ps-3">
-                                <span class="text-muted">สุทธิ:</span>
-                                <strong class="text-success fs-6">@g.GroupNetSalesAmount.ToString("N2")</strong> บาท
+                            <div class="ps-3" style="background: rgba(34, 197, 94, 0.3); padding: 2px 10px; border-radius: 4px;">
+                                <span style="color: rgba(255,255,255,0.9);">สุทธิ:</span>
+                                <strong class="fs-6" style="color: #86efac;">@g.GroupNetSalesAmount.ToString("N2")</strong> <span style="color: rgba(255,255,255,0.85);">บาท</span>
                             </div>
-                            <i class="bi bi-chevron-down text-muted"></i>
+                            <i class="bi bi-chevron-down text-white-50 ms-1"></i>
                         </div>
                     </div>
 
@@ -222,7 +272,7 @@
                         <div class="card-body p-0">
                             <div class="table-responsive">
                                 <table class="table table-sm table-hover align-middle mb-0" style="font-size:0.87rem;">
-                                    <thead class="table-light text-center small text-muted">
+                                    <thead style="background:#f1f5f9; color:#334155; border-bottom: 2px solid #cbd5e1;" class="text-center small">
                                         <tr>
                                             <th style="width: 40px;">#</th>
                                             <th style="width: 100px;">รหัสสินค้า</th>
@@ -281,7 +331,7 @@
                                         }
                                     </tbody>
                                     <!-- Group Subtotal Footer -->
-                                    <tfoot class="table-light fw-bold small">
+                                    <tfoot style="background:#f0fdf4; border-top:2px solid #0d9488; color:#0f766e;" class="fw-bold small">
                                         <tr>
                                             <td colspan="4" class="text-center text-muted">รวมกลุ่ม @g.GroupCode (@g.GroupName)</td>
                                             <td class="text-end">@g.GroupSalesQty.ToString("N0")</td>
@@ -327,6 +377,60 @@
 </div>
 
 <script>
+    const allProvincesMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RegionProvincesMap));
+    const allAvailableProvinces = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AvailableProvinces));
+    const provinceDistrictsMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ProvinceDistricts));
+    const hasProvRestriction = @(Model.HasProvinceRestriction ? "true" : "false");
+
+    function onProvinceChange() {
+        const pSel = document.getElementById('province-select');
+        const selectedProv = pSel ? pSel.value : '';
+        const distCol = document.getElementById('district-filter-col');
+        const distSel = document.getElementById('district-select');
+
+        const isBkk = selectedProv === 'กรุงเทพมหานคร' || selectedProv === 'กรุงเทพฯ' || selectedProv === 'กรุงเทพ' || selectedProv === 'กทม';
+        if (distCol) {
+            distCol.style.display = isBkk ? '' : 'none';
+        }
+        if (distSel) {
+            if (!isBkk) {
+                distSel.value = '';
+            } else if (distSel.options.length <= 1) {
+                const bkkDists = provinceDistrictsMap['กรุงเทพมหานคร'] || [];
+                distSel.innerHTML = '<option value="">-- ทุกเขต (กรุงเทพฯ) --</option>';
+                bkkDists.forEach(d => {
+                    const dLabel = 'เขต' + d.replace(/^เขต/, '').trim();
+                    const opt = document.createElement('option');
+                    opt.value = dLabel;
+                    opt.textContent = dLabel;
+                    distSel.appendChild(opt);
+                });
+            }
+        }
+    }
+
+    function onRegionChange() {
+        const reg = document.getElementById('region-select').value;
+        const pSel = document.getElementById('province-select');
+        pSel.innerHTML = '<option value="">' + (hasProvRestriction ? '-- ทุกจังหวัดที่รับผิดชอบ --' : '-- ทุกจังหวัด --') + '</option>';
+        let provList = [];
+        if (!reg) {
+            provList = allAvailableProvinces;
+        } else if (allProvincesMap[reg]) {
+            provList = allProvincesMap[reg];
+        }
+        provList.sort().forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p;
+            opt.textContent = p;
+            pSel.appendChild(opt);
+        });
+        if (window.jQuery && $(pSel).data('select2')) {
+            $(pSel).val('').trigger('change.select2');
+        }
+        onProvinceChange();
+    }
+
     function onMonth25Change(select) {
         const opt = select.options[select.selectedIndex];
         if (opt.value) {

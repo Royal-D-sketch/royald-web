@@ -8,6 +8,34 @@ namespace RoyalD.Web.Services
     public static class SalesRepHelper
     {
         /// <summary>
+        /// Code-to-names mapping for sales rep codes (e.g. 121.1 -> สัญญา, สัญญาลักษณ์, etc.)
+        /// </summary>
+        public static readonly Dictionary<string, List<string>> CodeToNamesMap = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["121.1"] = new() { "สัญญา", "สัญญาลักษณ์", "สัณห์", "สัญญา LN", "สัญญา N", "สิริญญา", "ชาติวุธ N" },
+            ["124.0"] = new() { "วีรนุช", "วีรนุช 8", "วีรนุช T" },
+            ["115.0"] = new() { "จันทิมา" },
+            ["155.0"] = new() { "ธัญลักษณ์", "ธัญญลักษณ์" },
+            ["158.0"] = new() { "วีระศักดิ์", "วีรนุช T" },
+            ["150.0"] = new() { "อภิญญา" },
+            ["146.0"] = new() { "ธนะศักดิ์", "ธนาศักดิ์" },
+            ["145.0"] = new() { "ทินภัทร", "ปานชลี" },
+            ["129.2"] = new() { "ชุลีวรรณ W", "ชุลีวรรณ", "สัญญา T" },
+            ["125.1"] = new() { "น้ำเพชร", "ณัฐนันท์", "จิตติศักดิ์", "บุญเสริม", "วัชรี" },
+            ["114.1"] = new() { "ณัฐนันท์" },
+            ["132.1"] = new() { "วัชรี" },
+            ["125.2"] = new() { "บุญเสริม", "บุญเสริม T" },
+            ["985.1"] = new() { "จิตติศักดิ์" }
+        };
+
+        public static bool IsCode(string? s)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return false;
+            var t = s.Trim();
+            return System.Text.RegularExpressions.Regex.IsMatch(t, @"^[\d\.]+$");
+        }
+
+        /// <summary>
         /// Retrieves all unique sales reps across SalesBills, OutstandingDebts, and configured AppUsers.
         /// Results are filtered from junk items, cached for 10 minutes, and ordered.
         /// </summary>
@@ -43,7 +71,7 @@ namespace RoyalD.Web.Services
                     if (s.Contains("5%") ||
                         s.Contains("page", StringComparison.OrdinalIgnoreCase) ||
                         s.Contains("หน้า", StringComparison.OrdinalIgnoreCase) ||
-                        s.All(char.IsDigit))
+                        IsCode(s))
                     {
                         return;
                     }
@@ -100,6 +128,18 @@ namespace RoyalD.Web.Services
 
             foreach (var input in rawInputs)
             {
+                if (CodeToNamesMap.TryGetValue(input, out var mappedFromCode))
+                {
+                    foreach (var m in mappedFromCode) matched.Add(m);
+                    continue;
+                }
+
+                if (IsCode(input))
+                {
+                    // Numeric code without mapping: do NOT add code directly since SalesBills store names!
+                    continue;
+                }
+
                 var exactMatches = allDbReps.Where(dbRep => 
                     string.Equals(dbRep, input, StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(dbRep.Replace(" ", ""), input.Replace(" ", ""), StringComparison.OrdinalIgnoreCase)
@@ -139,7 +179,7 @@ namespace RoyalD.Web.Services
                 }
                 else
                 {
-                    matched.Add(input);
+                    if (!IsCode(input)) matched.Add(input);
                 }
             }
 
@@ -150,9 +190,10 @@ namespace RoyalD.Web.Services
         /// Validates and resolves the effective sales rep(s) to query:
         /// - If user is restricted and has assigned reps:
         ///   - If selectedRep is specified and matches one of the assigned reps -> filters by that rep only.
+        ///   - If selectedRep is a code (e.g. 121.1) -> maps to real rep names and matches assigned reps.
         ///   - Otherwise (empty/null or non-matching) -> filters by ALL assigned reps.
         /// - If user is not restricted:
-        ///   - If selectedRep is specified -> filters by selectedRep.
+        ///   - If selectedRep is specified -> filters by selectedRep (or mapped names if it's a code).
         ///   - If empty -> no sales rep filter (null).
         /// Returns (FilterReps, SelectedRepForUi, HasMultipleAssigned).
         /// </summary>
@@ -169,32 +210,56 @@ namespace RoyalD.Web.Services
             bool isRestrictedWithAssigned = isRestricted && assignedReps.Count > 0;
             bool hasMultipleAssigned = isRestrictedWithAssigned && assignedReps.Count > 1;
 
-            if (isRestrictedWithAssigned)
+            if (!string.IsNullOrWhiteSpace(requestedSalesRep))
             {
-                if (!string.IsNullOrWhiteSpace(requestedSalesRep))
-                {
-                    var reqTrim = requestedSalesRep.Trim();
-                    var matchedReq = assignedReps.FirstOrDefault(r => 
-                        string.Equals(r, reqTrim, StringComparison.OrdinalIgnoreCase) ||
-                        string.Equals(r.Replace(" ", ""), reqTrim.Replace(" ", ""), StringComparison.OrdinalIgnoreCase) ||
-                        r.IndexOf(reqTrim, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        reqTrim.IndexOf(r, StringComparison.OrdinalIgnoreCase) >= 0);
+                var reqTrim = requestedSalesRep.Trim();
 
-                    if (matchedReq != null)
-                    {
-                        return (new List<string> { matchedReq }, matchedReq, hasMultipleAssigned);
-                    }
+                // If user selected or entered a code (e.g. 121.1), map to actual rep names
+                List<string>? targetNames = null;
+                if (CodeToNamesMap.TryGetValue(reqTrim, out var codeMapped))
+                {
+                    targetNames = codeMapped;
+                }
+                else if (!IsCode(reqTrim))
+                {
+                    targetNames = new List<string> { reqTrim };
                 }
 
-                // If no specific rep requested or not in allowed list: filter by all assigned reps
-                return (assignedReps, "", hasMultipleAssigned);
+                if (isRestrictedWithAssigned)
+                {
+                    if (targetNames != null)
+                    {
+                        var matchedFromAssigned = assignedReps.Where(r => 
+                            targetNames.Any(tn => 
+                                string.Equals(r, tn, StringComparison.OrdinalIgnoreCase) ||
+                                string.Equals(r.Replace(" ", ""), tn.Replace(" ", ""), StringComparison.OrdinalIgnoreCase) ||
+                                r.IndexOf(tn, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                tn.IndexOf(r, StringComparison.OrdinalIgnoreCase) >= 0)).ToList();
+
+                        if (matchedFromAssigned.Count > 0)
+                        {
+                            return (matchedFromAssigned, matchedFromAssigned.First(), hasMultipleAssigned);
+                        }
+                    }
+
+                    // Fallback to all assigned reps
+                    return (assignedReps, "", hasMultipleAssigned);
+                }
+                else
+                {
+                    // Not restricted or has no assigned reps
+                    if (targetNames != null && targetNames.Count > 0)
+                    {
+                        return (targetNames, targetNames.First(), false);
+                    }
+                    return (null, "", false);
+                }
             }
             else
             {
-                // Not restricted or has no assigned reps
-                if (!string.IsNullOrWhiteSpace(requestedSalesRep))
+                if (isRestrictedWithAssigned)
                 {
-                    return (new List<string> { requestedSalesRep.Trim() }, requestedSalesRep.Trim(), false);
+                    return (assignedReps, "", hasMultipleAssigned);
                 }
                 return (null, "", false);
             }

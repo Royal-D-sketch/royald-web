@@ -38,6 +38,16 @@ namespace RoyalD.Web.Services
                     return;
                 }
 
+                var pos = user.FindFirst("Position")?.Value ?? "";
+                var repCode = user.FindFirst("SalesRepCode")?.Value;
+                bool isSalesRepUser = pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย") || !string.IsNullOrWhiteSpace(repCode);
+
+                if (isSalesRepUser && (action.StartsWith("export", StringComparison.OrdinalIgnoreCase) || action.Contains("export", StringComparison.OrdinalIgnoreCase)))
+                {
+                    context.Result = new ForbidResult();
+                    return;
+                }
+
                 // Cache lookup for 30 seconds to make page clicks blazing fast while reflecting changes quickly
                 var username = user.Identity.Name ?? "";
                 var (role, allowedPages) = await _cache.GetOrCreateAsync($"user_perm_{username}", async entry =>
@@ -66,15 +76,14 @@ namespace RoyalD.Web.Services
                 }
                 else if (controller == "salesreport")
                 {
-                    if (action == "customerproduct" || action == "exportcustomerproductexcel" || action == "exportcustomerproductcsv")
+                    if (action == "customerproduct")
                     {
-                        var pos = user.FindFirst("Position")?.Value ?? "";
                         if (allowedList.Contains("customerproduct") || allowedList.Contains("salesbill") || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย"))
                         {
                             isAllowed = true;
                         }
                     }
-                    else if (action == "productgroupsales" || action == "exportproductgroupsalesexcel")
+                    else if (action == "productgroupsales")
                     {
                         if (allowedList.Contains("productgroupsales"))
                         {

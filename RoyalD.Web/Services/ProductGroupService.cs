@@ -19,8 +19,8 @@ namespace RoyalD.Web.Services
         public string ProductCode { get; set; } = string.Empty;
         public string ProductName { get; set; } = string.Empty;
         public string Unit { get; set; } = string.Empty;
-        public string GroupCode { get; set; } = "20";
-        public string GroupName { get; set; } = "กลุ่ม อิสระ";
+        public string GroupCode { get; set; } = string.Empty;
+        public string GroupName { get; set; } = string.Empty;
     }
 
     public class ProductGroupBundle
@@ -99,13 +99,18 @@ namespace RoyalD.Web.Services
             if (IsTesterProduct(productCode, productName)) return true;
 
             var cleanCode = (productCode ?? "").Trim();
+            if (cleanCode.EndsWith(".0", StringComparison.OrdinalIgnoreCase))
+            {
+                cleanCode = cleanCode[..^2];
+            }
+
             if (!string.IsNullOrEmpty(cleanCode) && _productMap.TryGetValue(cleanCode, out var info))
             {
                 if (IsTesterProduct(info.ProductCode, info.ProductName)) return true;
             }
 
-            var matchPrefix = _productMap.Keys.FirstOrDefault(k => !string.IsNullOrEmpty(cleanCode) && (cleanCode.StartsWith(k) || k.StartsWith(cleanCode)));
-            if (matchPrefix != null && _productMap.TryGetValue(matchPrefix, out var pInfo))
+            var matchKey = _productMap.Keys.FirstOrDefault(k => cleanCode.Equals(k, StringComparison.OrdinalIgnoreCase));
+            if (matchKey != null && _productMap.TryGetValue(matchKey, out var pInfo))
             {
                 if (IsTesterProduct(pInfo.ProductCode, pInfo.ProductName)) return true;
             }
@@ -113,40 +118,40 @@ namespace RoyalD.Web.Services
             return false;
         }
 
-        public ProductGroupItemInfo GetProductGroup(string productCode, string fallbackName = "", string fallbackUnit = "")
+        public ProductGroupItemInfo? GetProductGroup(string productCode, string fallbackName = "", string fallbackUnit = "")
         {
             if (string.IsNullOrWhiteSpace(productCode))
             {
-                return new ProductGroupItemInfo
-                {
-                    ProductCode = "-",
-                    ProductName = fallbackName,
-                    Unit = fallbackUnit,
-                    GroupCode = "20",
-                    GroupName = "กลุ่ม อิสระ"
-                };
+                return null;
             }
 
             var cleanCode = productCode.Trim();
+            if (cleanCode.EndsWith(".0", StringComparison.OrdinalIgnoreCase))
+            {
+                cleanCode = cleanCode[..^2];
+            }
+
             if (_productMap.TryGetValue(cleanCode, out var info))
             {
-                return info;
+                if (!string.IsNullOrWhiteSpace(info.GroupCode))
+                {
+                    return info;
+                }
+                return null;
             }
 
-            var matchPrefix = _productMap.Keys.FirstOrDefault(k => cleanCode.StartsWith(k) || k.StartsWith(cleanCode));
-            if (matchPrefix != null && _productMap.TryGetValue(matchPrefix, out var pInfo))
+            var matchKey = _productMap.Keys.FirstOrDefault(k => cleanCode.Equals(k, StringComparison.OrdinalIgnoreCase));
+            if (matchKey != null && _productMap.TryGetValue(matchKey, out var pInfo))
             {
-                return pInfo;
+                if (!string.IsNullOrWhiteSpace(pInfo.GroupCode))
+                {
+                    return pInfo;
+                }
+                return null;
             }
 
-            return new ProductGroupItemInfo
-            {
-                ProductCode = cleanCode,
-                ProductName = !string.IsNullOrEmpty(fallbackName) ? fallbackName : cleanCode,
-                Unit = !string.IsNullOrEmpty(fallbackUnit) ? fallbackUnit : "ชิ้น",
-                GroupCode = "20",
-                GroupName = "กลุ่ม อิสระ"
-            };
+            // ถ้าไม่มีกลุ่มสินค้า หรือไม่พบในรายการที่มีกลุ่มสินค้า ให้คืนค่า null ไม่ต้องจัดเข้ากลุ่มสินค้า
+            return null;
         }
 
         private List<ProductGroupDefinition> GetDefaultGroups()
@@ -154,25 +159,25 @@ namespace RoyalD.Web.Services
             return new List<ProductGroupDefinition>
             {
                 new() { Code = "01", Name = "กลุ่มเกลือแร่" },
-                new() { Code = "02", Name = "กลุ่มแคลเซี่ยม,แคลซีตี-โกลด์" },
-                new() { Code = "03", Name = "กลุ่มแคร์คอฟฟี่,รอยเยลคอฟฟี่" },
+                new() { Code = "02", Name = "กลุ่มแคลเซี่ยม,แคลซี่ดี-โกลด์" },
+                new() { Code = "03", Name = "กลุ่มแคล์รคอฟฟี่,รอแยลคอฟฟี่" },
                 new() { Code = "04", Name = "กลุ่มคอลลาเจน , แคลร์ โทลาเจน" },
-                new() { Code = "05", Name = "กลุ่ม Ready to drink" },
-                new() { Code = "06", Name = "กลุ่มเนเจอร์ไวท์" },
-                new() { Code = "07", Name = "กลุ่มอาราบิก้า , ไวท์คอฟฟี่" },
+                new() { Code = "05", Name = "กลุ่มReaby to drink" },
+                new() { Code = "06", Name = "กลุ่มเนเจอร์ไวต้า" },
+                new() { Code = "07", Name = "กลุ่มอาราบิก้า ,ไวท์คอฟฟี่" },
                 new() { Code = "08", Name = "กลุ่มเวย์โปรตีน" },
                 new() { Code = "09", Name = "กลุ่มโยเกิร์ต" },
-                new() { Code = "10", Name = "กลุ่มถังเช่า" },
-                new() { Code = "11", Name = "กลุ่ม รอยเยล-ดี เจล" },
+                new() { Code = "10", Name = "กลุ่มถั่งเช่า" },
+                new() { Code = "11", Name = "กลุ่ม รอแยล-ดี เจล" },
                 new() { Code = "12", Name = "กลุ่มกาแฟดริป" },
-                new() { Code = "13", Name = "กลุ่มนมอัดเม็ด (ชนิด 12)" },
-                new() { Code = "14", Name = "กลุ่มกาแฟอาราบิก้าถั่วบดละเอียด" },
+                new() { Code = "13", Name = "กลุ่มนมอัดเม็ด" },
+                new() { Code = "14", Name = "กลุ่มกาแฟอาราบิก้าคั่วบดละเอียด" },
                 new() { Code = "15", Name = "กลุ่มวิตามินซี" },
                 new() { Code = "16", Name = "กลุ่มเครื่องดื่มวิตามินซี" },
-                new() { Code = "17", Name = "กลุ่ม เครื่องดื่มรสชิงผสมเลมอน" },
-                new() { Code = "18", Name = "กลุ่ม โพรไบโอติก" },
-                new() { Code = "19", Name = "กลุ่มนมอัดเม็ด (ชนิด 10 กรัม)" },
-                new() { Code = "20", Name = "กลุ่ม อิสระ" }
+                new() { Code = "17", Name = "กลุ่ม เครื่องดื่มรสขิงผสมเลมอน" },
+                new() { Code = "18", Name = "กลุ่ม  โพรไบโอติก" },
+                new() { Code = "19", Name = "กลุ่มนมอัดเม็ด" },
+                new() { Code = "20", Name = "กลุ่ม  อิสระ" }
             };
         }
     }

@@ -156,6 +156,7 @@ namespace RoyalD.Web.Services
         private readonly AppDbContext _db;
 
         public ReportService(AppDbContext db) => _db = db;
+        public AppDbContext Db => _db;
 
         private static readonly Dictionary<string, string> StandardMonthsMap = new()
         {
@@ -194,7 +195,7 @@ namespace RoyalD.Web.Services
             var debtDict = debts.GroupBy(d => d.BillNo).ToDictionary(g => g.Key, g => g.First());
 
             var allReps = bills.Select(b => b.SalesRep)
-                .Where(r => !string.IsNullOrEmpty(r) && r != "ไม่ระบุ")
+                .Where(r => !string.IsNullOrEmpty(r) && r != "ไม่ระบุ" && !SalesRepHelper.IsCode(r))
                 .Distinct()
                 .OrderBy(r => r)
                 .ToList();
@@ -350,7 +351,7 @@ namespace RoyalD.Web.Services
             var debtDict = debts.GroupBy(d => d.BillNo).ToDictionary(g => g.Key, g => g.First());
 
             var allReps = bills.Select(b => b.SalesRep)
-                .Where(r => !string.IsNullOrEmpty(r) && r != "ไม่ระบุ")
+                .Where(r => !string.IsNullOrEmpty(r) && r != "ไม่ระบุ" && !SalesRepHelper.IsCode(r))
                 .Distinct()
                 .OrderBy(r => r)
                 .ToList();
@@ -558,6 +559,7 @@ namespace RoyalD.Web.Services
                 .Distinct()
                 .OrderBy(r => r)
                 .ToListAsync();
+            allReps = allReps.Where(r => !SalesRepHelper.IsCode(r)).ToList();
 
             var result = new List<SalesRepCustomRangeItem>();
 
@@ -639,6 +641,7 @@ namespace RoyalD.Web.Services
                 .Distinct()
                 .OrderBy(r => r)
                 .ToListAsync();
+            allReps = allReps.Where(r => !SalesRepHelper.IsCode(r)).ToList();
 
             bool isRestrictedRep = isRestricted || !string.IsNullOrWhiteSpace(userSalesRepCode);
             var (filterReps, selectedRepForUi, hasMultipleAssigned) = SalesRepHelper.ResolveFilter(
@@ -956,6 +959,7 @@ namespace RoyalD.Web.Services
 
             var allReps = sales.Select(s => s.SalesRep)
                 .Union(outstanding.Select(o => o.SalesRep))
+                .Where(r => !string.IsNullOrEmpty(r) && !SalesRepHelper.IsCode(r))
                 .Distinct().ToList();
 
             return allReps.Select(rep => new SalesReportData
@@ -1134,6 +1138,17 @@ namespace RoyalD.Web.Services
                 var cTrim = cand.Trim();
                 if (cTrim.Length < 2) continue;
 
+                if (SalesRepHelper.CodeToNamesMap.TryGetValue(cTrim, out var codeMapped))
+                {
+                    foreach (var name in codeMapped)
+                    {
+                        var found = dbReps.FirstOrDefault(r => r.Equals(name, StringComparison.OrdinalIgnoreCase) || r.Contains(name));
+                        if (found != null) matched.Add(found);
+                    }
+                    continue;
+                }
+                if (SalesRepHelper.IsCode(cTrim)) continue;
+
                 var cClean = CleanThai(cTrim);
 
                 foreach (var dbRep in dbReps)
@@ -1174,7 +1189,14 @@ namespace RoyalD.Web.Services
             string? userFullName = null,
             string? username = null,
             string? selectedMonth = null, 
-            DateTime? selectedDate = null)
+            DateTime? selectedDate = null,
+            string? region = null,
+            string? province = null,
+            string? district = null,
+            string? userAllowedRegion = null,
+            string? userAllowedProvinces = null,
+            string? userAllowedDistricts = null,
+            bool isRestricted = false)
         {
             var allDbReps = await _db.SalesBills
                 .Where(b => b.SalesRep != null && b.SalesRep != "")
@@ -1182,6 +1204,10 @@ namespace RoyalD.Web.Services
                 .Distinct()
                 .OrderBy(x => x)
                 .ToListAsync();
+            allDbReps = allDbReps.Where(r => !SalesRepHelper.IsCode(r)).ToList();
+
+            var areaScope = RegionHelper.ResolveAreaFilter(
+                isRestricted, userAllowedRegion, userAllowedProvinces, region, province);
 
             var vm = new CustomerProductViewModel
             {
@@ -1192,48 +1218,60 @@ namespace RoyalD.Web.Services
                 StartDate = startDate,
                 EndDate = endDate,
                 Credit = credit,
-                AllMonths = StandardMonthsMap
+                AllMonths = StandardMonthsMap,
+                SelectedRegion = areaScope.SelectedRegion,
+                SelectedProvince = areaScope.SelectedProvince,
+                SelectedDistrict = district ?? "",
+                AvailableRegions = areaScope.AvailableRegions,
+                AvailableProvinces = areaScope.AvailableProvinces,
+                HasRegionRestriction = areaScope.HasRegionRestriction,
+                HasProvinceRestriction = areaScope.HasProvinceRestriction,
+                RegionProvincesMap = areaScope.RegionProvincesMap,
+                ProvinceDistricts = ThailandDistrictData.All,
+                IsRestricted = isRestricted
             };
 
             var query = _db.SalesBillItems
                 .Include(i => i.SalesBill)
                 .AsQueryable()
-                .Where(i => i.Price > 0);
+                .Where(i => i.Price > 0 && !i.SalesBill.IsCancelled);
 
-            bool isRestrictedRep = !string.IsNullOrWhiteSpace(userSalesRepCode) || !string.IsNullOrWhiteSpace(userFullName);
-            if (isRestrictedRep)
+            // 1. Area filtering
+            if (areaScope.EffectiveProvinceVariants != null && areaScope.EffectiveProvinceVariants.Count > 0)
             {
-                var repMatches = ResolveMatchingReps(userSalesRepCode, userFullName, username, allDbReps);
-                if (repMatches.Count > 0)
+                query = query.Where(i => areaScope.EffectiveProvinceVariants.Contains(i.SalesBill.Province));
+            }
+
+            if (!string.IsNullOrEmpty(userAllowedDistricts))
+            {
+                var rawDist = userAllowedDistricts.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(d => d.Trim());
+                var allowedDistList = RegionHelper.ExpandDistrictVariants(rawDist);
+                if (allowedDistList != null && allowedDistList.Count > 0)
                 {
-                    vm.AllReps = repMatches;
-                    if (!string.IsNullOrEmpty(selectedRep) && repMatches.Contains(selectedRep, StringComparer.OrdinalIgnoreCase))
-                    {
-                        vm.SelectedRep = selectedRep;
-                        query = query.Where(i => i.SalesBill.SalesRep == selectedRep);
-                    }
-                    else
-                    {
-                        vm.SelectedRep = repMatches.Count == 1 ? repMatches[0] : null;
-                        query = query.Where(i => repMatches.Contains(i.SalesBill.SalesRep));
-                    }
-                }
-                else
-                {
-                    // Sales rep has no matching sales bills in database
-                    vm.AllReps = new List<string>();
-                    vm.SelectedRep = selectedRep;
-                    query = query.Where(i => false);
+                    query = query.Where(i => allowedDistList.Contains(i.SalesBill.District));
                 }
             }
-            else
+
+            if (!string.IsNullOrEmpty(district))
             {
-                vm.AllReps = allDbReps;
-                vm.SelectedRep = selectedRep;
-                if (!string.IsNullOrEmpty(selectedRep))
-                {
-                    query = query.Where(i => i.SalesBill.SalesRep == selectedRep);
-                }
+                var distVariants = RegionHelper.ExpandDistrictVariants(new[] { district });
+                query = query.Where(i => distVariants.Contains(i.SalesBill.District) || i.SalesBill.District.Contains(district));
+            }
+
+            // 2. Sales rep filtering
+            var (filterReps, selectedRepForUi, _) = SalesRepHelper.ResolveFilter(
+                isRestricted, userSalesRepCode, selectedRep, allDbReps);
+
+            var assignedReps = isRestricted && !string.IsNullOrWhiteSpace(userSalesRepCode)
+                ? SalesRepHelper.GetAssignedSalesReps(userSalesRepCode, allDbReps)
+                : allDbReps;
+
+            vm.AllReps = assignedReps;
+            vm.SelectedRep = selectedRepForUi ?? "";
+
+            if (filterReps != null && filterReps.Count > 0)
+            {
+                query = query.Where(i => filterReps.Contains(i.SalesBill.SalesRep));
             }
 
             if (startDate.HasValue)
@@ -1273,18 +1311,35 @@ namespace RoyalD.Web.Services
             if (!string.IsNullOrWhiteSpace(q))
             {
                 var qClean = "%" + q.Trim() + "%";
-                query = query.Where(i =>
-                    (i.SalesBill.CustomerCode != null && EF.Functions.ILike(i.SalesBill.CustomerCode, qClean)) ||
-                    (i.SalesBill.CustomerName != null && EF.Functions.ILike(i.SalesBill.CustomerName, qClean)) ||
-                    (i.ProductCode != null && EF.Functions.ILike(i.ProductCode, qClean)) ||
-                    (i.ProductName != null && EF.Functions.ILike(i.ProductName, qClean))
-                );
+                var qTrim = q.Trim();
+                if (SalesRepHelper.CodeToNamesMap.TryGetValue(qTrim, out var codeReps) && codeReps.Count > 0)
+                {
+                    query = query.Where(i =>
+                        (i.SalesBill.CustomerCode != null && EF.Functions.ILike(i.SalesBill.CustomerCode, qClean)) ||
+                        (i.SalesBill.CustomerName != null && EF.Functions.ILike(i.SalesBill.CustomerName, qClean)) ||
+                        (i.ProductCode != null && EF.Functions.ILike(i.ProductCode, qClean)) ||
+                        (i.ProductName != null && EF.Functions.ILike(i.ProductName, qClean)) ||
+                        (i.SalesBill.SalesRep != null && codeReps.Contains(i.SalesBill.SalesRep))
+                    );
+                }
+                else
+                {
+                    query = query.Where(i =>
+                        (i.SalesBill.CustomerCode != null && EF.Functions.ILike(i.SalesBill.CustomerCode, qClean)) ||
+                        (i.SalesBill.CustomerName != null && EF.Functions.ILike(i.SalesBill.CustomerName, qClean)) ||
+                        (i.ProductCode != null && EF.Functions.ILike(i.ProductCode, qClean)) ||
+                        (i.ProductName != null && EF.Functions.ILike(i.ProductName, qClean)) ||
+                        (i.SalesBill.SalesRep != null && EF.Functions.ILike(i.SalesBill.SalesRep, qClean))
+                    );
+                }
             }
 
             var items = await query.AsNoTracking().Select(i => new {
                 CustCode = i.SalesBill.CustomerCode,
                 Cust = i.SalesBill.CustomerName,
                 Rep = i.SalesBill.SalesRep,
+                Province = i.SalesBill.Province,
+                District = i.SalesBill.District,
                 Credit = i.SalesBill.Credit,
                 Year = i.SalesBill.BillDate.Year,
                 Month = i.SalesBill.BillDate.Month,
@@ -1320,6 +1375,8 @@ namespace RoyalD.Web.Services
                         CustomerCode = g.Key.CustCode ?? "",
                         CustomerName = g.Key.Cust ?? "",
                         SalesRep = g.Key.Rep ?? "",
+                        Province = g.FirstOrDefault()?.Province ?? "",
+                        District = g.FirstOrDefault()?.District ?? "",
                         ProductCode = g.Key.Code ?? "",
                         ProductName = g.Key.Name ?? "",
                         Unit = ProductCatalogService.GetUnit(g.Key.Code, g.Key.Name, g.FirstOrDefault()?.Unit),
@@ -1388,6 +1445,7 @@ namespace RoyalD.Web.Services
                 .Distinct()
                 .OrderBy(x => x)
                 .ToListAsync();
+            allDbReps = allDbReps.Where(r => !SalesRepHelper.IsCode(r)).ToList();
 
             var vm = new CustomerPurchaseSummaryViewModel
             {
@@ -1406,38 +1464,19 @@ namespace RoyalD.Web.Services
                 .AsQueryable();
 
             bool isRestrictedRep = !string.IsNullOrWhiteSpace(userSalesRepCode) || !string.IsNullOrWhiteSpace(userFullName);
-            if (isRestrictedRep)
+            var (filterReps, selectedRepForUi, _) = SalesRepHelper.ResolveFilter(
+                isRestrictedRep, userSalesRepCode, selectedRep, allDbReps);
+
+            var assignedReps = isRestrictedRep && !string.IsNullOrWhiteSpace(userSalesRepCode)
+                ? SalesRepHelper.GetAssignedSalesReps(userSalesRepCode, allDbReps)
+                : allDbReps;
+
+            vm.SalesReps = assignedReps;
+            vm.SelectedSalesRep = selectedRepForUi ?? "";
+
+            if (filterReps != null && filterReps.Count > 0)
             {
-                var repMatches = ResolveMatchingReps(userSalesRepCode, userFullName, username, allDbReps);
-                if (repMatches.Count > 0)
-                {
-                    vm.SalesReps = repMatches;
-                    if (!string.IsNullOrEmpty(selectedRep) && repMatches.Contains(selectedRep, StringComparer.OrdinalIgnoreCase))
-                    {
-                        vm.SelectedSalesRep = selectedRep;
-                        itemQuery = itemQuery.Where(i => i.SalesBill.SalesRep == selectedRep);
-                    }
-                    else
-                    {
-                        vm.SelectedSalesRep = repMatches.Count == 1 ? repMatches[0] : null;
-                        itemQuery = itemQuery.Where(i => repMatches.Contains(i.SalesBill.SalesRep));
-                    }
-                }
-                else
-                {
-                    vm.SalesReps = new List<string>();
-                    vm.SelectedSalesRep = selectedRep;
-                    itemQuery = itemQuery.Where(i => false);
-                }
-            }
-            else
-            {
-                vm.SalesReps = allDbReps;
-                vm.SelectedSalesRep = selectedRep;
-                if (!string.IsNullOrEmpty(selectedRep))
-                {
-                    itemQuery = itemQuery.Where(i => i.SalesBill.SalesRep == selectedRep);
-                }
+                itemQuery = itemQuery.Where(i => filterReps.Contains(i.SalesBill.SalesRep));
             }
 
             if (startDate.HasValue)
@@ -1551,6 +1590,18 @@ namespace RoyalD.Web.Services
         public List<string> AllReps { get; set; } = new();
         public Dictionary<string, string> AllMonths { get; set; } = new();
         public List<CustomerProductItem> Items { get; set; } = new();
+
+        // Area Filter Properties
+        public string? SelectedRegion { get; set; }
+        public string? SelectedProvince { get; set; }
+        public string? SelectedDistrict { get; set; }
+        public List<string> AvailableRegions { get; set; } = new();
+        public List<string> AvailableProvinces { get; set; } = new();
+        public bool HasRegionRestriction { get; set; }
+        public bool HasProvinceRestriction { get; set; }
+        public Dictionary<string, List<string>> RegionProvincesMap { get; set; } = new();
+        public Dictionary<string, List<string>> ProvinceDistricts { get; set; } = new();
+        public bool IsRestricted { get; set; }
     }
 
     public class CustomerProductItem
@@ -1559,6 +1610,8 @@ namespace RoyalD.Web.Services
         public string CustomerCode { get; set; } = "";
         public string CustomerName { get; set; } = "";
         public string SalesRep { get; set; } = "";
+        public string Province { get; set; } = "";
+        public string District { get; set; } = "";
         public string ProductCode { get; set; } = "";
         public string ProductName { get; set; } = "";
         public decimal Price { get; set; }

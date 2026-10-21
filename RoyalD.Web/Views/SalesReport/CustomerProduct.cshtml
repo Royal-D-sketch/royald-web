@@ -113,7 +113,7 @@
     <div class="card-body py-3 px-4">
         <form method="get" class="row g-3 align-items-end">
             <input type="hidden" name="pageSize" value="@(ViewBag.PageSize ?? 100)" />
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <label class="form-label fw-bold text-success">
                     <i class="bi bi-search me-1"></i> ค้นหาอัจฉริยะ
                 </label>
@@ -121,30 +121,50 @@
                     placeholder="พิมพ์ชื่อลูกค้า, รหัส, ชื่อสินค้า..."
                     value="@Model.SearchQuery" autofocus autocomplete="off" />
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="form-label fw-bold text-success"><i class="bi bi-person me-1"></i> ผู้แทนขาย</label>
-                @if (isSalesRep && Model.AllReps.Count <= 1)
-                {
-                    <input type="hidden" name="rep" value="@Model.SelectedRep" />
-                    <input type="text" class="form-control fw-bold text-success bg-white" value="@(Model.SelectedRep ?? "ผู้แทนขาย")" readonly />
-                }
-                else
-                {
-                    <select name="rep" class="form-select select2-searchable">
-                        <option value="">@(isSalesRep ? "-- ทุกผู้แทนที่รับผิดชอบ --" : "-- ทุกคน --")</option>
-                        @foreach (var r in Model.AllReps)
+                <select name="rep" class="form-select select2-searchable">
+                    <option value="">@(isSalesRep ? "-- ทุกผู้แทนที่รับผิดชอบ --" : "-- ทุกคน --")</option>
+                    @foreach (var r in Model.AllReps)
+                    {
+                        <option value="@r" selected="@(Model.SelectedRep == r ? "selected" : null)">@r</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold text-success"><i class="bi bi-geo me-1"></i> ภาค / เขต</label>
+                <select name="region" id="region-select" class="form-select" onchange="onRegionChange()">
+                    <option value="">@(Model.HasRegionRestriction ? "-- ทุกภาคที่รับผิดชอบ --" : "-- ทุกภาค --")</option>
+                    @foreach (var reg in Model.AvailableRegions)
+                    {
+                        <option value="@reg" selected="@(reg == Model.SelectedRegion ? "selected" : null)">@reg</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold text-success"><i class="bi bi-geo-alt me-1"></i> จังหวัด</label>
+                <select name="province" id="province-select" class="form-select select2-searchable" onchange="onProvinceChange()">
+                    <option value="">@(Model.HasProvinceRestriction ? "-- ทุกจังหวัดที่รับผิดชอบ --" : "-- ทุกจังหวัด --")</option>
+                    @foreach (var p in Model.AvailableProvinces)
+                    {
+                        <option value="@p" selected="@(p == Model.SelectedProvince ? "selected" : null)">@p</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3" id="district-filter-col" style="@(Model.SelectedProvince == "กรุงเทพมหานคร" || Model.SelectedProvince == "กรุงเทพฯ" || Model.SelectedProvince == "กรุงเทพ" ? "" : "display:none;")">
+                <label class="form-label fw-bold text-success"><i class="bi bi-compass me-1"></i> เขต / อำเภอ</label>
+                <select name="district" id="district-select" class="form-select select2-searchable">
+                    <option value="">-- ทุกเขต (กรุงเทพฯ) --</option>
+                    @if (Model.ProvinceDistricts.ContainsKey("กรุงเทพมหานคร"))
+                    {
+                        foreach (var d in Model.ProvinceDistricts["กรุงเทพมหานคร"])
                         {
-                            if (Model.SelectedRep == r)
-                            {
-                                <option value="@r" selected>@r</option>
-                            }
-                            else
-                            {
-                                <option value="@r">@r</option>
-                            }
+                            string dLabel = "เขต" + d.Replace("เขต", "").Trim();
+                            bool isDSelected = Model.SelectedDistrict == d || Model.SelectedDistrict == dLabel;
+                            <option value="@dLabel" selected="@(isDSelected ? "selected" : null)">@dLabel</option>
                         }
-                    </select>
-                }
+                    }
+                </select>
             </div>
             <div class="col-md-2">
                 <label class="form-label fw-bold text-success"><i class="bi bi-calendar-event me-1"></i> ตั้งแต่วันที่</label>
@@ -154,11 +174,11 @@
                 <label class="form-label fw-bold text-success"><i class="bi bi-calendar-event me-1"></i> ถึงวันที่</label>
                 <input type="date" name="endDate" class="form-control" value="@(Model.EndDate?.ToString("yyyy-MM-dd"))" />
             </div>
-            <div class="col-md-1">
+            <div class="col-md-2">
                 <label class="form-label fw-bold text-success"><i class="bi bi-clock-history me-1"></i> เครดิต</label>
                 <input type="number" name="credit" class="form-control" placeholder="วัน" value="@Model.Credit" min="0" />
             </div>
-            <div class="col-12 d-flex justify-content-end gap-2 mt-2">
+            <div class="col-md-6 d-flex justify-content-end gap-2 mt-2">
                 <button type="submit" class="btn btn-success fw-bold shadow-sm px-4">
                     <i class="bi bi-search me-1"></i> ค้นหา
                 </button>
@@ -193,7 +213,8 @@
                         <th>#</th>
                         <th>เดือน</th>
                         <th class="text-start">รหัสลูกค้า</th>
-                        <th class="text-start col-customer-name" style="min-width: 260px; white-space: normal !important;">ชื่อลูกค้า</th>
+                        <th class="text-start col-customer-name" style="min-width: 240px; white-space: normal !important;">ชื่อลูกค้า</th>
+                        <th class="text-start">จังหวัด / เขต</th>
                         <th class="text-start">รหัสสินค้า : ชื่อสินค้า</th>
                         <th class="text-center">หน่วยสินค้า</th>
                         <th>ราคา/หน่วย</th>
@@ -204,9 +225,9 @@
                 <tbody>
                     @if (!pagedList.Any())
                     {
-                        <tr><td colspan="9" class="text-center text-muted py-4">
+                        <tr><td colspan="10" class="text-center text-muted py-4">
                             <i class="bi bi-search me-2 fs-4"></i><br/>
-                            ไม่พบข้อมูล — @(isSalesRep ? "ไม่มีรายการขายในขอบเขตของผู้แทนขาย" : "ลองพิมพ์คำค้นหาในช่องด้านบน")
+                            ไม่พบข้อมูล — @(isSalesRep ? "ไม่มีรายการขายในขอบเขตหรือพื้นที่ของผู้แทนขาย" : "ลองพิมพ์คำค้นหาในช่องด้านบน")
                         </td></tr>
                     }
                     else
@@ -217,7 +238,14 @@
                                 <td class="text-center text-muted">@(idx++)</td>
                                 <td class="text-center text-muted">@item.Month</td>
                                 <td class="text-start fw-bold text-success">@item.CustomerCode</td>
-                                <td class="text-start fw-bold col-customer-name" style="min-width: 260px; white-space: normal !important; word-break: break-word !important;">@item.CustomerName</td>
+                                <td class="text-start fw-bold col-customer-name" style="min-width: 240px; white-space: normal !important; word-break: break-word !important;">@item.CustomerName</td>
+                                <td class="text-start small text-muted">
+                                    @(!string.IsNullOrEmpty(item.Province) ? item.Province : "-")
+                                    @if (!string.IsNullOrEmpty(item.District))
+                                    {
+                                        <br/><span class="text-secondary small">(@item.District)</span>
+                                    }
+                                </td>
                                 <td class="text-start">
                                     <span class="badge bg-light text-dark border me-1">@item.ProductCode</span>@item.ProductName
                                 </td>
@@ -258,10 +286,10 @@
                 @if (curPage > 1)
                 {
                     <li class="page-item">
-                        <a class="page-link" href="@Url.Action("CustomerProduct", new { rep = Model.SelectedRep, q = Model.SearchQuery, startDate = Model.StartDate?.ToString("yyyy-MM-dd"), endDate = Model.EndDate?.ToString("yyyy-MM-dd"), credit = Model.Credit, page = 1, pageSize = pSize })" title="หน้าแรก">«</a>
+                        <a class="page-link" href="@Url.Action("CustomerProduct", new { rep = Model.SelectedRep, q = Model.SearchQuery, startDate = Model.StartDate?.ToString("yyyy-MM-dd"), endDate = Model.EndDate?.ToString("yyyy-MM-dd"), credit = Model.Credit, region = Model.SelectedRegion, province = Model.SelectedProvince, district = Model.SelectedDistrict, page = 1, pageSize = pSize })" title="หน้าแรก">«</a>
                     </li>
                     <li class="page-item">
-                        <a class="page-link" href="@Url.Action("CustomerProduct", new { rep = Model.SelectedRep, q = Model.SearchQuery, startDate = Model.StartDate?.ToString("yyyy-MM-dd"), endDate = Model.EndDate?.ToString("yyyy-MM-dd"), credit = Model.Credit, page = curPage - 1, pageSize = pSize })">‹ ก่อนหน้า</a>
+                        <a class="page-link" href="@Url.Action("CustomerProduct", new { rep = Model.SelectedRep, q = Model.SearchQuery, startDate = Model.StartDate?.ToString("yyyy-MM-dd"), endDate = Model.EndDate?.ToString("yyyy-MM-dd"), credit = Model.Credit, region = Model.SelectedRegion, province = Model.SelectedProvince, district = Model.SelectedDistrict, page = curPage - 1, pageSize = pSize })">‹ ก่อนหน้า</a>
                     </li>
                 }
 
@@ -273,17 +301,17 @@
                     }
                     else
                     {
-                        <li class="page-item"><a class="page-link" href="@Url.Action("CustomerProduct", new { rep = Model.SelectedRep, q = Model.SearchQuery, startDate = Model.StartDate?.ToString("yyyy-MM-dd"), endDate = Model.EndDate?.ToString("yyyy-MM-dd"), credit = Model.Credit, page = p, pageSize = pSize })">@p</a></li>
+                        <li class="page-item"><a class="page-link" href="@Url.Action("CustomerProduct", new { rep = Model.SelectedRep, q = Model.SearchQuery, startDate = Model.StartDate?.ToString("yyyy-MM-dd"), endDate = Model.EndDate?.ToString("yyyy-MM-dd"), credit = Model.Credit, region = Model.SelectedRegion, province = Model.SelectedProvince, district = Model.SelectedDistrict, page = p, pageSize = pSize })">@p</a></li>
                     }
                 }
 
                 @if (curPage < totPages)
                 {
                     <li class="page-item">
-                        <a class="page-link" href="@Url.Action("CustomerProduct", new { rep = Model.SelectedRep, q = Model.SearchQuery, startDate = Model.StartDate?.ToString("yyyy-MM-dd"), endDate = Model.EndDate?.ToString("yyyy-MM-dd"), credit = Model.Credit, page = curPage + 1, pageSize = pSize })">ถัดไป ›</a>
+                        <a class="page-link" href="@Url.Action("CustomerProduct", new { rep = Model.SelectedRep, q = Model.SearchQuery, startDate = Model.StartDate?.ToString("yyyy-MM-dd"), endDate = Model.EndDate?.ToString("yyyy-MM-dd"), credit = Model.Credit, region = Model.SelectedRegion, province = Model.SelectedProvince, district = Model.SelectedDistrict, page = curPage + 1, pageSize = pSize })">ถัดไป ›</a>
                     </li>
                     <li class="page-item">
-                        <a class="page-link" href="@Url.Action("CustomerProduct", new { rep = Model.SelectedRep, q = Model.SearchQuery, startDate = Model.StartDate?.ToString("yyyy-MM-dd"), endDate = Model.EndDate?.ToString("yyyy-MM-dd"), credit = Model.Credit, page = totPages, pageSize = pSize })" title="หน้าสุดท้าย">»</a>
+                        <a class="page-link" href="@Url.Action("CustomerProduct", new { rep = Model.SelectedRep, q = Model.SearchQuery, startDate = Model.StartDate?.ToString("yyyy-MM-dd"), endDate = Model.EndDate?.ToString("yyyy-MM-dd"), credit = Model.Credit, region = Model.SelectedRegion, province = Model.SelectedProvince, district = Model.SelectedDistrict, page = totPages, pageSize = pSize })" title="หน้าสุดท้าย">»</a>
                     </li>
                 }
             </ul>
@@ -293,6 +321,60 @@
 
 @section Scripts {
 <script>
+    const allProvincesMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RegionProvincesMap));
+    const allAvailableProvinces = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AvailableProvinces));
+    const provinceDistrictsMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ProvinceDistricts));
+    const hasProvRestriction = @(Model.HasProvinceRestriction ? "true" : "false");
+
+    function onProvinceChange() {
+        const pSel = document.getElementById('province-select');
+        const selectedProv = pSel ? pSel.value : '';
+        const distCol = document.getElementById('district-filter-col');
+        const distSel = document.getElementById('district-select');
+
+        const isBkk = selectedProv === 'กรุงเทพมหานคร' || selectedProv === 'กรุงเทพฯ' || selectedProv === 'กรุงเทพ' || selectedProv === 'กทม';
+        if (distCol) {
+            distCol.style.display = isBkk ? '' : 'none';
+        }
+        if (distSel) {
+            if (!isBkk) {
+                distSel.value = '';
+            } else if (distSel.options.length <= 1) {
+                const bkkDists = provinceDistrictsMap['กรุงเทพมหานคร'] || [];
+                distSel.innerHTML = '<option value="">-- ทุกเขต (กรุงเทพฯ) --</option>';
+                bkkDists.forEach(d => {
+                    const dLabel = 'เขต' + d.replace(/^เขต/, '').trim();
+                    const opt = document.createElement('option');
+                    opt.value = dLabel;
+                    opt.textContent = dLabel;
+                    distSel.appendChild(opt);
+                });
+            }
+        }
+    }
+
+    function onRegionChange() {
+        const reg = document.getElementById('region-select').value;
+        const pSel = document.getElementById('province-select');
+        pSel.innerHTML = '<option value="">' + (hasProvRestriction ? '-- ทุกจังหวัดที่รับผิดชอบ --' : '-- ทุกจังหวัด --') + '</option>';
+        let provList = [];
+        if (!reg) {
+            provList = allAvailableProvinces;
+        } else if (allProvincesMap[reg]) {
+            provList = allProvincesMap[reg];
+        }
+        provList.sort().forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p;
+            opt.textContent = p;
+            pSel.appendChild(opt);
+        });
+        if (window.jQuery && $(pSel).data('select2')) {
+            $(pSel).val('').trigger('change.select2');
+        }
+        onProvinceChange();
+    }
+
     function changePageSize(size) {
         const url = new URL(window.location.href);
         url.searchParams.set('pageSize', size);
