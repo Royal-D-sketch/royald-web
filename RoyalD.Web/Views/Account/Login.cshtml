@@ -268,19 +268,7 @@ function requestLocationPermission() {
             iconOk.classList.remove('d-none');
             box.className = 'gps-box alert alert-success mb-3';
             statusText.innerText = 'ระบุตำแหน่งที่ตั้งสำเร็จ พร้อมเข้าสู่ระบบ';
-            helpText.innerHTML = `📍 ตำแหน่งของคุณ: <strong class="text-success" id="detected-loc-text">${detectedLocation}</strong> <small class="text-muted">(${lat.toFixed(4)}, ${lng.toFixed(4)})</small>
-            <div class="mt-2 d-flex gap-1 justify-content-center align-items-center flex-wrap">
-                <span class="text-muted" style="font-size:0.75rem;">(สลับตำแหน่งหากต้องการ):</span>
-                <button type="button" class="btn btn-sm btn-outline-teal py-0 px-2 shadow-xs" style="font-size:0.78rem;" onclick="setLocationManual('เขตบางพลัด กรุงเทพมหานคร')">
-                    <i class="bi bi-geo-alt-fill text-success me-1"></i>เขตบางพลัด
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-teal py-0 px-2 shadow-xs" style="font-size:0.78rem;" onclick="setLocationManual('อ.บางใหญ่ จ.นนทบุรี')">
-                    <i class="bi bi-geo-alt-fill text-danger me-1"></i>อ.บางใหญ่
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-teal py-0 px-2 shadow-xs" style="font-size:0.78rem;" onclick="setLocationManual('อ.บางบัวทอง จ.นนทบุรี')">
-                    <i class="bi bi-geo-alt-fill text-primary me-1"></i>อ.บางบัวทอง
-                </button>
-            </div>`;
+            helpText.innerHTML = `📍 ตำแหน่งของคุณ: <strong class="text-success" id="detected-loc-text">${detectedLocation}</strong> <small class="text-muted">(${lat.toFixed(4)}, ${lng.toFixed(4)})</small>`;
             submitBtn.disabled = false;
             retryBlock.style.display = 'none';
         },
@@ -385,15 +373,6 @@ function resolveLocationName(lat, lng) {
     if (lat >= 6.80 && lat <= 7.30 && lng >= 100.40 && lng <= 100.80) return 'จ.สงขลา (หาดใหญ่)';
     if (lat >= 7.75 && lat <= 8.20 && lng >= 98.25 && lng <= 98.45) return 'จ.ภูเก็ต';
     return 'ประเทศไทย';
-}
-
-function setLocationManual(loc) {
-    document.getElementById('location-name-field').value = loc;
-    const txt = document.getElementById('detected-loc-text');
-    if (txt) {
-        txt.innerText = loc;
-        txt.className = 'text-primary fw-bold';
-    }
 }
 
 function validateGpsBeforeSubmit(e) {
