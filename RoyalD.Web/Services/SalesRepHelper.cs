@@ -8,11 +8,11 @@ namespace RoyalD.Web.Services
     public static class SalesRepHelper
     {
         /// <summary>
-        /// Code-to-names mapping for sales rep codes (e.g. 121.1 -> สัญญา, สัญญาลักษณ์, etc.)
+        /// Code-to-names mapping for sales rep codes (e.g. 121.1 -> สัญญา, สัณห์, etc.)
         /// </summary>
         public static readonly Dictionary<string, List<string>> CodeToNamesMap = new(StringComparer.OrdinalIgnoreCase)
         {
-            ["121.1"] = new() { "สัญญา", "สัญญาลักษณ์", "สัณห์", "สัญญา LN", "สัญญา N", "สิริญญา", "ชาติวุธ N" },
+            ["121.1"] = new() { "สัญญา", "สัณห์", "สัญญา LN", "สัญญา N", "สิริญญา", "ชาติวุธ N" },
             ["124.0"] = new() { "วีรนุช", "วีรนุช 8", "วีรนุช T" },
             ["115.0"] = new() { "จันทิมา" },
             ["155.0"] = new() { "ธัญญ์ลักษณ์" },
@@ -74,6 +74,7 @@ namespace RoyalD.Web.Services
                     if (s.Contains("5%") ||
                         s.Contains("page", StringComparison.OrdinalIgnoreCase) ||
                         s.Contains("หน้า", StringComparison.OrdinalIgnoreCase) ||
+                        s.Contains("สัญญาลักษณ์") ||
                         IsCode(s))
                     {
                         return;
@@ -194,6 +195,7 @@ namespace RoyalD.Web.Services
                 }
             }
 
+            matched.RemoveWhere(s => s.Contains("สัญญาลักษณ์"));
             return matched.OrderBy(s => s).ToList();
         }
 

@@ -48,12 +48,8 @@
         .page-a4 {
             width: 100%;
             max-width: 194mm;
-            min-height: 275mm;
             margin: 0 auto;
             padding: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
             page-break-inside: avoid !important;
             page-break-after: avoid !important;
         }
@@ -170,13 +166,13 @@
             font-size: 11.5px;
         }
 
-        /* Signatures Block: ปรับระยะห่างลงชื่อในวงเล็บและวันที่ */
+        /* Signatures Block: ปรับตำแหน่งไม่ให้ลงต่ำเกินไป และปรับระยะห่างแต่ละบรรทัดให้โปร่งสบาย */
         .signatures-box {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            margin-top: 10px;
-            padding-top: 10px;
+            gap: 20px;
+            margin-top: 24px;
+            padding-top: 16px;
             border-top: 1.5px dashed #cbd5e1;
         }
 
@@ -190,23 +186,23 @@
             font-weight: 700;
             color: #1e293b;
             font-size: 11px;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
 
         .sign-space {
-            height: 28px; /* พื้นที่เซ็นชื่อ ปรับระยะห่างให้สมดุล */
+            height: 36px; /* พื้นที่เซ็นชื่อ ปรับให้โปร่งสบายยิ่งขึ้น */
         }
 
         .sign-line {
             border-bottom: 1px dotted #64748b;
-            width: 82%;
-            margin: 0 auto 8px auto; /* ระยะห่างระหว่างเส้นจุดกับวงเล็บลงชื่อ */
+            width: 85%;
+            margin: 0 auto 12px auto; /* ระยะห่างระหว่างเส้นเซ็นกับวงเล็บลงชื่อ */
         }
 
         .sign-name {
             font-size: 10.5px;
             color: #334155;
-            margin-bottom: 8px; /* ปรับระยะห่างระหว่างวงเล็บลงชื่อกับวันที่ */
+            margin-bottom: 12px; /* ระยะห่างระหว่างวงเล็บลงชื่อกับวันที่ */
             letter-spacing: 0.3px;
         }
 
@@ -232,13 +228,8 @@
             .page-a4 {
                 width: 100% !important;
                 max-width: 100% !important;
-                height: 275mm !important;
-                max-height: 275mm !important;
                 margin: 0 !important;
                 padding: 0 !important;
-                display: flex !important;
-                flex-direction: column !important;
-                justify-content: space-between !important;
                 page-break-inside: avoid !important;
                 page-break-after: avoid !important;
             }
