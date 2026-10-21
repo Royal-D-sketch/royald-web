@@ -1108,7 +1108,7 @@ namespace RoyalD.Web.Controllers
         {
             if (User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin")) return false;
             var pos = User.FindFirst("Position")?.Value ?? "";
-            return pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย");
+            return pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย") || pos.Equals("sale", StringComparison.OrdinalIgnoreCase) || pos.Equals("Supervisor", StringComparison.OrdinalIgnoreCase);
         }
 
         [HttpPost, ValidateAntiForgeryToken]

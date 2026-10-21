@@ -40,7 +40,7 @@ namespace RoyalD.Web.Services
 
                 var pos = user.FindFirst("Position")?.Value ?? "";
                 var repCode = user.FindFirst("SalesRepCode")?.Value;
-                bool isSalesRepUser = pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย") || !string.IsNullOrWhiteSpace(repCode);
+                bool isSalesRepUser = pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย") || pos.Equals("sale", StringComparison.OrdinalIgnoreCase) || pos.Equals("Supervisor", StringComparison.OrdinalIgnoreCase) || !string.IsNullOrWhiteSpace(repCode);
 
                 if (isSalesRepUser && (action.StartsWith("export", StringComparison.OrdinalIgnoreCase) || action.Contains("export", StringComparison.OrdinalIgnoreCase)))
                 {

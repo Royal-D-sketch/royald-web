@@ -174,7 +174,7 @@ namespace RoyalD.Web.Controllers
 
             var pos = User.FindFirst("Position")?.Value ?? "";
 
-            bool isSalesRepRole = !isAdmin && (pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย"));
+            bool isSalesRepRole = !isAdmin && (pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย") || pos.Equals("sale", StringComparison.OrdinalIgnoreCase) || pos.Equals("Supervisor", StringComparison.OrdinalIgnoreCase));
 
             string? userRepCode = User.FindFirst("SalesRepCode")?.Value;
 
@@ -214,7 +214,7 @@ namespace RoyalD.Web.Controllers
 
             var pos = User.FindFirst("Position")?.Value ?? "";
 
-            bool isSalesRepRole = !isAdmin && (pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย"));
+            bool isSalesRepRole = !isAdmin && (pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย") || pos.Equals("sale", StringComparison.OrdinalIgnoreCase) || pos.Equals("Supervisor", StringComparison.OrdinalIgnoreCase));
 
             string? userRepCode = User.FindFirst("SalesRepCode")?.Value;
 
@@ -360,7 +360,7 @@ namespace RoyalD.Web.Controllers
 
             var pos = User.FindFirst("Position")?.Value ?? "";
 
-            bool isSalesRepRole = !isAdmin && (pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย"));
+            bool isSalesRepRole = !isAdmin && (pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย") || pos.Equals("sale", StringComparison.OrdinalIgnoreCase) || pos.Equals("Supervisor", StringComparison.OrdinalIgnoreCase));
 
 
 
@@ -935,7 +935,7 @@ namespace RoyalD.Web.Controllers
             var currentUser = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin") || (User.Identity?.Name?.ToLower() == "art");
             var pos = currentUser?.Position ?? User.FindFirst("Position")?.Value ?? "";
-            bool isSalesRepRole = !isAdmin && (pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย"));
+            bool isSalesRepRole = !isAdmin && (pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย") || pos.Equals("sale", StringComparison.OrdinalIgnoreCase) || pos.Equals("Supervisor", StringComparison.OrdinalIgnoreCase));
             string? userRepCode = currentUser?.SalesRepCode ?? User.FindFirst("SalesRepCode")?.Value;
             bool isRestricted = !isAdmin;
 
