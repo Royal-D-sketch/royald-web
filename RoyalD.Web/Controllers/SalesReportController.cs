@@ -1037,7 +1037,7 @@ namespace RoyalD.Web.Controllers
 
             var itemsList = await db.SalesBillItems.AsNoTracking()
                 .Where(i => billNos.Contains(i.BillNo))
-                .Select(i => new { i.BillNo, i.ProductCode, i.ProductName, i.Unit, i.Qty, i.Amount })
+                .Select(i => new { i.BillNo, i.ProductCode, i.ProductName, i.Unit, i.Qty, i.Price, i.Amount, i.Discount })
                 .ToListAsync();
 
             // 2. Query Credit Notes
@@ -1175,9 +1175,25 @@ namespace RoyalD.Web.Controllers
 
 
 
-                row.SalesQty += item.Qty;
+                // Tester ไม่ต้องใส่ราคา แต่ใส่แค่จำนวน, และหักส่วนลดการค้า (Discount %) ออกจากยอดเงิน
+                bool isTester = groupService.IsTester(item.ProductCode, item.ProductName);
+                decimal effectiveAmount = 0m;
+                if (!isTester)
+                {
+                    decimal baseAmt = item.Amount > 0 ? item.Amount : Math.Round(item.Qty * item.Price, 2);
+                    decimal discPct = item.Discount;
+                    if (discPct > 0)
+                    {
+                        effectiveAmount = Math.Round(baseAmt * (1m - (discPct / 100m)), 2);
+                    }
+                    else
+                    {
+                        effectiveAmount = baseAmt;
+                    }
+                }
 
-                row.SalesAmount += item.Amount;
+                row.SalesQty += item.Qty;
+                row.SalesAmount += effectiveAmount;
 
             }
 
@@ -1247,9 +1263,16 @@ namespace RoyalD.Web.Controllers
 
 
 
-                    row.ReturnQty += cnItem.TotalReturnQty;
+                    bool isCnTester = groupService.IsTester(cnItem.ProductCode, cnItem.ProductName);
+                    decimal cnEffectiveAmount = 0m;
+                    if (!isCnTester)
+                    {
+                        // รายงาน CD เป็นยอดก่อน VAT
+                        cnEffectiveAmount = cnItem.AmountBeforeVat > 0 ? cnItem.AmountBeforeVat : cnItem.TotalAmount;
+                    }
 
-                    row.CreditAmount += cnItem.TotalAmount;
+                    row.ReturnQty += cnItem.TotalReturnQty;
+                    row.CreditAmount += cnEffectiveAmount;
 
                     if (!string.IsNullOrEmpty(cn.CreditNoteNo) && !row.CreditNoteNos.Contains(cn.CreditNoteNo))
 
