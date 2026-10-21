@@ -166,7 +166,7 @@
             font-size: 11.5px;
         }
 
-        /* Signatures Block: ปรับตำแหน่งไม่ให้ลงต่ำเกินไป และปรับระยะห่างแต่ละบรรทัดให้โปร่งสบาย */
+        /* Signatures Block: ปรับตำแหน่งไม่ให้ลงต่ำเกินไป และปรับระยะห่างแต่ละบรรทัดให้โปร่งสบาย ชัดเจน */
         .signatures-box {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -178,38 +178,45 @@
 
         .sign-cell {
             text-align: center;
-            font-size: 10.5px;
+            font-size: 11px;
             color: #334155;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .sign-title {
             font-weight: 700;
             color: #1e293b;
-            font-size: 11px;
-            margin-bottom: 6px;
+            font-size: 11.5px;
+            margin-bottom: 8px;
         }
 
         .sign-space {
-            height: 36px; /* พื้นที่เซ็นชื่อ ปรับให้โปร่งสบายยิ่งขึ้น */
+            height: 48px; /* พื้นที่เซ็นชื่อ ปรับให้โปร่งกว้างสำหรับเซ็นจริง */
+            width: 100%;
         }
 
         .sign-line {
-            border-bottom: 1px dotted #64748b;
+            border-bottom: 1.5px dotted #64748b;
             width: 85%;
-            margin: 0 auto 12px auto; /* ระยะห่างระหว่างเส้นเซ็นกับวงเล็บลงชื่อ */
+            margin: 0 auto 18px auto; /* เพิ่มระยะห่างระหว่างเส้นประเซ็นชื่อกับชื่อพิมพ์ในวงเล็บ */
         }
 
         .sign-name {
-            font-size: 10.5px;
-            color: #334155;
-            margin-bottom: 12px; /* ระยะห่างระหว่างวงเล็บลงชื่อกับวันที่ */
+            font-size: 11px;
+            color: #1e293b;
+            margin: 0 auto 16px auto; /* เพิ่มระยะห่างระหว่างชื่อพิมพ์ในวงเล็บกับวันที่ */
             letter-spacing: 0.3px;
+            line-height: 1.4;
         }
 
         .sign-date {
-            font-size: 10px;
+            font-size: 10.5px;
             color: #475569;
             font-weight: 500;
+            line-height: 1.4;
+            margin: 0;
         }
 
         @@media print {
@@ -247,6 +254,47 @@
             .kpi-cell.kpi-gross { background: #f0f9ff !important; }
             .kpi-cell.kpi-credit { background: #fef2f2 !important; }
             .kpi-cell.kpi-net { background: #ecfdf5 !important; }
+
+            .signatures-box {
+                display: grid !important;
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 20px !important;
+                margin-top: 24px !important;
+                padding-top: 16px !important;
+                border-top: 1.5px dashed #cbd5e1 !important;
+            }
+
+            .sign-cell {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                text-align: center !important;
+            }
+
+            .sign-title {
+                font-weight: 700 !important;
+                font-size: 11.5px !important;
+                margin-bottom: 8px !important;
+            }
+
+            .sign-space {
+                height: 48px !important;
+            }
+
+            .sign-line {
+                border-bottom: 1.5px dotted #64748b !important;
+                width: 85% !important;
+                margin: 0 auto 18px auto !important;
+            }
+
+            .sign-name {
+                font-size: 11px !important;
+                margin: 0 auto 16px auto !important;
+            }
+
+            .sign-date {
+                font-size: 10.5px !important;
+            }
         }
     </style>
 </head>
@@ -375,27 +423,27 @@
         </div>
 
         <!-- Signatures Section: ปรับระยะห่างลงชื่อในวงเล็บและวันที่ตามคำขอ -->
-        <div class="signatures-box">
-            <div class="sign-cell">
-                <div class="sign-title">ผู้จัดทำรายงาน</div>
-                <div class="sign-space"></div>
-                <div class="sign-line"></div>
-                <div class="sign-name">( ................................................................ )</div>
-                <div class="sign-date">วันที่ .......... / .......... / ..............</div>
+        <div class="signatures-box" style="margin-top: 24px; padding-top: 16px; border-top: 1.5px dashed #cbd5e1;">
+            <div class="sign-cell" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                <div class="sign-title" style="font-weight: 700; font-size: 11.5px; margin-bottom: 8px;">ผู้จัดทำรายงาน</div>
+                <div class="sign-space" style="height: 48px;"></div>
+                <div class="sign-line" style="border-bottom: 1.5px dotted #64748b; width: 85%; margin: 0 auto 18px auto;"></div>
+                <div class="sign-name" style="font-size: 11px; margin-bottom: 16px;">( ................................................................ )</div>
+                <div class="sign-date" style="font-size: 10.5px;">วันที่ .......... / .......... / ..............</div>
             </div>
-            <div class="sign-cell">
-                <div class="sign-title">ผู้ตรวจสอบ (ฝ่ายบัญชี / การเงิน)</div>
-                <div class="sign-space"></div>
-                <div class="sign-line"></div>
-                <div class="sign-name">( ................................................................ )</div>
-                <div class="sign-date">วันที่ .......... / .......... / ..............</div>
+            <div class="sign-cell" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                <div class="sign-title" style="font-weight: 700; font-size: 11.5px; margin-bottom: 8px;">ผู้ตรวจสอบ (ฝ่ายบัญชี / การเงิน)</div>
+                <div class="sign-space" style="height: 48px;"></div>
+                <div class="sign-line" style="border-bottom: 1.5px dotted #64748b; width: 85%; margin: 0 auto 18px auto;"></div>
+                <div class="sign-name" style="font-size: 11px; margin-bottom: 16px;">( ................................................................ )</div>
+                <div class="sign-date" style="font-size: 10.5px;">วันที่ .......... / .......... / ..............</div>
             </div>
-            <div class="sign-cell">
-                <div class="sign-title">ผู้จัดการฝ่ายขาย / ผู้อนุมัติ</div>
-                <div class="sign-space"></div>
-                <div class="sign-line"></div>
-                <div class="sign-name">( ................................................................ )</div>
-                <div class="sign-date">วันที่ .......... / .......... / ..............</div>
+            <div class="sign-cell" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                <div class="sign-title" style="font-weight: 700; font-size: 11.5px; margin-bottom: 8px;">ผู้จัดการฝ่ายขาย / ผู้อนุมัติ</div>
+                <div class="sign-space" style="height: 48px;"></div>
+                <div class="sign-line" style="border-bottom: 1.5px dotted #64748b; width: 85%; margin: 0 auto 18px auto;"></div>
+                <div class="sign-name" style="font-size: 11px; margin-bottom: 16px;">( ................................................................ )</div>
+                <div class="sign-date" style="font-size: 10.5px;">วันที่ .......... / .......... / ..............</div>
             </div>
         </div>
     </div>
