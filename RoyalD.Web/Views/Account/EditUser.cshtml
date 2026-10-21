@@ -139,8 +139,7 @@
                             <label class="form-label fw-bold small text-muted">ตำแหน่งงาน (Position) <span class="text-danger">*</span></label>
                             <select name="position" class="form-select fw-bold" id="positionSelect" onchange="onRoleChange()">
                                 <option value="Supervisor" selected="@(Model.Position == "Supervisor")">🌟 Supervisor</option>
-                                <option value="sale" selected="@(Model.Position == "sale" || Model.Position == "Sale")">👔 sale</option>
-                                <option value="ผู้แทนขาย" selected="@(Model.Position == "ผู้แทนขาย")">👔 ผู้แทนขาย</option>
+                                <option value="ผู้แทนขาย" selected="@(Model.Position == "ผู้แทนขาย" || Model.Position == "sale" || Model.Position == "Sale")">👔 ผู้แทนขาย</option>
                                 <option value="พนักงาน" selected="@(Model.Position == "พนักงาน")">💼 พนักงาน</option>
                                 <option value="หัวหน้างาน" selected="@(Model.Position == "หัวหน้างาน")">🎖️ หัวหน้างาน</option>
                                 <option value="ผู้บริหาร" selected="@(Model.Position == "ผู้บริหาร")">👑 ผู้บริหาร</option>

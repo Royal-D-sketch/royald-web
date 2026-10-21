@@ -54,7 +54,6 @@
                            placeholder="-- เลือกหรือพิมพ์ --" value="@ViewBag.Position" />
                     <datalist id="positionOptions">
                         <option value="Supervisor">🌟 Supervisor</option>
-                        <option value="sale">👔 sale</option>
                         <option value="ผู้แทนขาย">👔 ผู้แทนขาย</option>
                         <option value="พนักงาน">💼 พนักงาน</option>
                         <option value="หัวหน้างาน">🎖️ หัวหน้างาน</option>
@@ -205,16 +204,16 @@
                                         🌟 Supervisor
                                     </span>
                                 }
-                                else if (u.Position == "sale" || u.Position == "Sale")
+                                else if (u.Position == "ผู้แทนขาย" || u.Position == "sale" || u.Position == "Sale")
                                 {
                                     <span class="badge bg-light text-dark border px-2 py-1 fw-bold">
-                                        👔 sale
+                                        👔 ผู้แทนขาย
                                     </span>
                                 }
                                 else
                                 {
                                     <span class="badge bg-light text-dark border px-2 py-1 fw-bold">
-                                        @(string.IsNullOrEmpty(u.Position) ? "sale" : u.Position)
+                                        @(string.IsNullOrEmpty(u.Position) ? "ผู้แทนขาย" : u.Position)
                                     </span>
                                 }
                             </td>
