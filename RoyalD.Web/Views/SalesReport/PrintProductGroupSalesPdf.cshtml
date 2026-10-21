@@ -359,7 +359,7 @@
                 <div class="kpi-cell kpi-gross">
                     <div class="kpi-label">ยอดขายรวม (Gross Sales)</div>
                     <div class="kpi-val" style="color: #0284c7;">
-                        @Model.TotalGrossSales.ToString("N2") <small style="font-size:9.5px; font-weight:normal; color:#475569;">บาท (@Model.TotalSalesQty.ToString("N0") ชิ้น)</small>
+                        @Model.TotalGrossSales.ToString("N2") <small style="font-size:9.5px; font-weight:normal; color:#475569;">บาท (@Model.TotalSalesQty.ToString("N0") ชิ้น@(Model.TotalFreeQty > 0 ? $" / แถม {Model.TotalFreeQty:N0}" : ""))</small>
                     </div>
                 </div>
                 <div class="kpi-cell kpi-credit">

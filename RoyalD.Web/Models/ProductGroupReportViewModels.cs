@@ -8,7 +8,8 @@ namespace RoyalD.Web.Models
         public string ProductCode { get; set; } = string.Empty;
         public string ProductName { get; set; } = string.Empty;
         public string Unit { get; set; } = string.Empty;
-        public decimal SalesQty { get; set; }
+        public decimal FreeQty { get; set; } // ยอดแถม / Tester
+        public decimal SalesQty { get; set; } // จำนวนสินค้าขาย
         public decimal SalesAmount { get; set; }
         
         // Credit Note Deduction
@@ -26,6 +27,7 @@ namespace RoyalD.Web.Models
     {
         public string GroupCode { get; set; } = string.Empty;
         public string GroupName { get; set; } = string.Empty;
+        public decimal GroupFreeQty { get; set; } // รวมยอดแถม
         public decimal GroupSalesQty { get; set; }
         public decimal GroupSalesAmount { get; set; }
         public decimal GroupReturnQty { get; set; }
@@ -68,6 +70,7 @@ namespace RoyalD.Web.Models
         public decimal TotalGrossSales { get; set; }
         public decimal TotalCreditNotes { get; set; }
         public decimal TotalNetSales => TotalGrossSales - TotalCreditNotes;
+        public decimal TotalFreeQty { get; set; }
         public decimal TotalSalesQty { get; set; }
         public decimal TotalReturnQty { get; set; }
         public decimal TotalNetQty => TotalSalesQty - TotalReturnQty;

@@ -1175,25 +1175,21 @@ namespace RoyalD.Web.Controllers
 
 
 
-                // Tester ไม่ต้องใส่ราคา แต่ใส่แค่จำนวน, และหักส่วนลดการค้า (Discount %) ออกจากยอดเงิน
-                bool isTester = groupService.IsTester(item.ProductCode, item.ProductName);
-                decimal effectiveAmount = 0m;
-                if (!isTester)
+                // รายงาน CD (sal-grpr ยอดขายพนักงานขาย วิเคราะห์ตามกลุ่มสินค้า)
+                // - ยอดเงินขาย (SalesAmount) คิดจากยอดก่อนหักส่วนลดการค้า (Gross Amount ก่อน VAT ตรงตาม CD)
+                // - สินค้าที่ขายจริง (Price > 0): บันทึกเข้าจำนวนขาย (SalesQty)
+                // - สินค้าของแถม / Tester (Price == 0 หรือเป็นกลุ่ม Tester): บันทึกเข้ายอดแถม (FreeQty) ยอดเงินเป็น 0.00 บาท
+                bool isFreeOrTester = item.Price == 0 || groupService.IsTester(item.ProductCode, item.ProductName);
+                if (isFreeOrTester || item.Price == 0)
+                {
+                    row.FreeQty += item.Qty;
+                }
+                else
                 {
                     decimal baseAmt = item.Amount > 0 ? item.Amount : Math.Round(item.Qty * item.Price, 2);
-                    decimal discPct = item.Discount;
-                    if (discPct > 0)
-                    {
-                        effectiveAmount = Math.Round(baseAmt * (1m - (discPct / 100m)), 2);
-                    }
-                    else
-                    {
-                        effectiveAmount = baseAmt;
-                    }
+                    row.SalesQty += item.Qty;
+                    row.SalesAmount += baseAmt;
                 }
-
-                row.SalesQty += item.Qty;
-                row.SalesAmount += effectiveAmount;
 
             }
 
@@ -1296,7 +1292,7 @@ namespace RoyalD.Web.Controllers
 
                 var gRows = itemMap[kvp.Key].Values
 
-                    .Where(r => r.SalesQty != 0 || r.SalesAmount != 0 || r.ReturnQty != 0 || r.CreditAmount != 0)
+                    .Where(r => r.SalesQty != 0 || r.FreeQty != 0 || r.SalesAmount != 0 || r.ReturnQty != 0 || r.CreditAmount != 0)
 
                     .OrderByDescending(r => r.SalesAmount)
 
@@ -1309,6 +1305,8 @@ namespace RoyalD.Web.Controllers
                 {
 
                     gItem.Items = gRows;
+
+                    gItem.GroupFreeQty = gRows.Sum(r => r.FreeQty);
 
                     gItem.GroupSalesQty = gRows.Sum(r => r.SalesQty);
 
@@ -1327,6 +1325,8 @@ namespace RoyalD.Web.Controllers
             }
 
 
+
+            vm.TotalFreeQty = vm.Groups.Sum(g => g.GroupFreeQty);
 
             vm.TotalGrossSales = vm.Groups.Sum(g => g.GroupSalesAmount);
 
