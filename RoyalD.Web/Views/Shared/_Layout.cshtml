@@ -38,7 +38,13 @@
     bool hasBadDebt = isAdmin || allowedPagesList.Contains("baddebt");
     bool hasReturnNotes = isAdmin || allowedPagesList.Contains("returnnotes");
     bool hasCreditNote = isAdmin || allowedPagesList.Contains("creditnote");
-    bool hasReturnedToAccount = isAdmin || allowedPagesList.Contains("returnedtoaccount") || allowedPagesList.Contains("report");
+    bool isSupervisorOrExecutive = positionClaim.Contains("หัวหน้า") || positionClaim.Contains("ผู้บริหาร");
+
+    bool isWanida = (User.Identity?.Name ?? "").Equals("nid", StringComparison.OrdinalIgnoreCase) || (User.FindFirst("FullName")?.Value ?? "").Contains("วนิดา");
+
+    bool canManageReturned = User.FindFirst("CanManageReturnedBills")?.Value == "true";
+
+    bool hasReturnedToAccount = isAdmin || isSupervisorOrExecutive || isWanida || canManageReturned || allowedPagesList.Contains("returnedtoaccount") || allowedPagesList.Contains("report");
     bool hasUpload = isAdmin || allowedPagesList.Contains("upload") || allowedPagesList.Contains("uploadsalesbill") || allowedPagesList.Contains("uploaddebtor") || allowedPagesList.Contains("uploadreceipt");
 }
 <!DOCTYPE html>
@@ -340,7 +346,7 @@
                     </a>
                 }
 
-                @if (hasBill || hasCustProd || hasGroupSales || hasCancel)
+                @if (hasBill || hasCustProd || hasGroupSales || hasCancel || hasReturnedToAccount)
                 {
                     <div class="nav-section">บิลขาย</div>
                     @if (hasBill) { <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SalesBill" ? "active" : "")"

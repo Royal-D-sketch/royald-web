@@ -114,7 +114,8 @@
                     <option value="restore" selected="@(ViewBag.Permission == "restore")">♻️ มีสิทธิ์กู้บิลยกเลิก</option>
                     <option value="cancel_view" selected="@(ViewBag.Permission == "cancel_view")">👁️ มีสิทธิ์ดูบิลยกเลิก</option>
                     <option value="salesrep" selected="@(ViewBag.Permission == "salesrep")">👔 เฉพาะผู้แทนขาย (ไม่มีสิทธิ์ดูบิล)</option>
-                    <option value="creditnote" selected="@(ViewBag.Permission == "creditnote")">📄 สิทธิ์คืนสินค้าและใบลดหนี้ (CN)</option>
+                    <option value="creditnote" selected="@(ViewBag.Permission == "creditnote")">📄 สิทธิ์คืนสินค้าและใบลดหนี้ (CN)</option>
+                    <option value="returned_to_account" selected="@(ViewBag.Permission == "returned_to_account")">📦 สิทธิ์บิลส่งคืนกลับมาบัญชี</option>
                 </select>
             </div>
 
@@ -175,7 +176,8 @@
                     {
                         var pages = u.AllowedPages?.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim()).ToList() ?? new();
                         bool isSR = !string.IsNullOrEmpty(u.Position) && (u.Position.Contains("ผู้แทน") || u.Position.Contains("พนักงานขาย"));
-                        bool canRestoreVal = u.Role == "admin" || u.CanRestoreCancelledBill || DebtStatusPermissionHelper.CanRestoreCancelledBill(u);
+                        bool canRestoreVal = u.Role == "admin" || u.CanRestoreCancelledBill || DebtStatusPermissionHelper.CanRestoreCancelledBill(u);
+                        bool canManageReturnedVal = u.Role == "admin" || u.CanManageReturnedBills || DebtStatusPermissionHelper.CanManageReturnedBills(u) || pages.Any(p => p.Equals("ReturnedToAccount", StringComparison.OrdinalIgnoreCase));
                         bool canViewCancelVal = u.Role == "admin" || pages.Any(p => p.Equals("Cancelled", StringComparison.OrdinalIgnoreCase) || p.Equals("DebtorCancelled", StringComparison.OrdinalIgnoreCase));
                         <tr class="user-row @(!u.IsActive ? "table-secondary" : "")"
                             data-username="@u.Username?.ToLower()"
@@ -187,7 +189,8 @@
                             data-status="@(u.IsActive ? "active" : "inactive")"
                             data-canrestore="@(canRestoreVal ? "true" : "false")"
                             data-canviewcancel="@(canViewCancelVal ? "true" : "false")"
-                            data-issalesrep="@(isSR ? "true" : "false")">
+                            data-issalesrep="@(isSR ? "true" : "false")"
+                            data-canreturned="@(canManageReturnedVal ? "true" : "false")">
                             <td>@idx++</td>
                             <td>
                                 <div class="fw-bold text-dark fs-6"><code>@u.Username</code></div>
@@ -256,7 +259,8 @@
                                                 "UploadDebtor" => "อัปโหลดการ์ดลูกหนี้",
                                                 "UploadReceipt" => "อัปโหลดสรุปรับเงิน",
                                                 "ProductGroupSales" => "กลุ่มสินค้า",
-                                                "CreditNote" => "คืนสินค้า/ใบลดหนี้ (CN)",
+                                                "CreditNote" => "คืนสินค้า/ใบลดหนี้ (CN)",
+                                                "ReturnedToAccount" => "บิลส่งคืนบัญชี",
                                                 _ => p
                                             };
                                             <span class="badge bg-light text-dark border" style="font-size:0.75rem;">@pTitle</span>
@@ -484,7 +488,8 @@ function applyClientUserFilter() {
         const role = row.getAttribute('data-role') || '';
         const reg = row.getAttribute('data-region') || '';
         const status = row.getAttribute('data-status') || '';
-        const canRestore = row.getAttribute('data-canrestore') === 'true';
+        const canRestore = row.getAttribute('data-canrestore') === 'true';
+        const canReturned = row.getAttribute('data-canreturned') === 'true';
         const canViewCancel = row.getAttribute('data-canviewcancel') === 'true';
         const isSR = row.getAttribute('data-issalesrep') === 'true';
 
@@ -510,7 +515,9 @@ function applyClientUserFilter() {
         if (match && qPerm) {
             if (qPerm === 'restore' && !canRestore) match = false;
             else if (qPerm === 'cancel_view' && !canViewCancel) match = false;
-            else if (qPerm === 'salesrep' && !isSR) match = false;
+            else if (qPerm === 'salesrep' && !isSR) match = false;
+            else if (qPerm === 'returned_to_account' && !canReturned) match = false;
+            else if (qPerm === 'creditnote' && !row.innerHTML.includes('CN') && !row.innerHTML.includes('คืนสินค้า')) match = false;
         }
 
         if (match) {

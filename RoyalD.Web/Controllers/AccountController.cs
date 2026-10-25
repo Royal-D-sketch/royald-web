@@ -261,7 +261,7 @@ namespace RoyalD.Web.Controllers
                 new Claim("SessionTimeout", (user.SessionTimeoutMinutes.HasValue && user.SessionTimeoutMinutes > 0 ? user.SessionTimeoutMinutes.Value : (isSalesRep ? 10 : 0)).ToString()),
                 new Claim("CanDownload", canDownloadFinal ? "true" : "false"),
                 new Claim("CanScreenCapture", canCaptureFinal ? "true" : "false"),
-                new Claim("AllowedPages", isMasterAdmin ? "Dashboard,SalesBill,Debtor,DebtorHistory,Cancelled,WaitingGoods,SalesReport,ProductGroupSales,Audit,Users,Upload,UploadSalesBill,UploadDebtor,UploadReceipt,PaymentDetails,CreditNote" : (isSalesRep ? string.Join(",", (user.AllowedPages ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).Where(p => !p.Trim().Equals("Cancelled", StringComparison.OrdinalIgnoreCase) && !p.Trim().Equals("DebtorCancelled", StringComparison.OrdinalIgnoreCase))) : (user.AllowedPages ?? ""))),
+                new Claim("AllowedPages", isMasterAdmin ? "Dashboard,SalesBill,Debtor,DebtorHistory,Cancelled,WaitingGoods,SalesReport,ProductGroupSales,Audit,Users,Upload,UploadSalesBill,UploadDebtor,UploadReceipt,PaymentDetails,CreditNote,ReturnedToAccount" : (isSalesRep ? string.Join(",", (user.AllowedPages ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).Where(p => !p.Trim().Equals("Cancelled", StringComparison.OrdinalIgnoreCase) && !p.Trim().Equals("DebtorCancelled", StringComparison.OrdinalIgnoreCase))) : (user.AllowedPages ?? ""))),
                 new Claim("AllowedRegion", user.AllowedRegion ?? ""),
                 new Claim("AllowedProvinces", user.AllowedProvinces ?? ""),
                 new Claim("AllowedDistricts", user.AllowedDistricts ?? "")
@@ -487,7 +487,8 @@ namespace RoyalD.Web.Controllers
                 if (permission == "restore") q = q.Where(u => u.CanRestoreCancelledBill || u.Role == "admin");
                 else if (permission == "cancel_view") q = q.Where(u => u.Role == "admin" || (u.AllowedPages != null && u.AllowedPages.Contains("Cancelled")));
                 else if (permission == "salesrep") q = q.Where(u => u.Position != null && (u.Position.Contains("ผู้แทน") || u.Position.Contains("พนักงานขาย")));
-                else if (permission == "creditnote") q = q.Where(u => u.Role == "admin" || (u.AllowedPages != null && u.AllowedPages.Contains("CreditNote")));
+                else if (permission == "creditnote") q = q.Where(u => u.Role == "admin" || (u.AllowedPages != null && u.AllowedPages.Contains("CreditNote")));
+                else if (permission == "returned_to_account") q = q.Where(u => u.Role == "admin" || u.CanManageReturnedBills || (u.Position != null && (u.Position.Contains("หัวหน้า") || u.Position.Contains("ผู้บริหาร"))) || (u.Username == "nid") || (u.FullName != null && u.FullName.Contains("วนิดา")) || (u.AllowedPages != null && u.AllowedPages.Contains("ReturnedToAccount")));
             }
 
             var allPositions = await _db.Users.AsNoTracking()

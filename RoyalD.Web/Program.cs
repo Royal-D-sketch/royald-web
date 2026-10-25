@@ -933,7 +933,7 @@ using (var scope = app.Services.CreateScope())
 
             CanDeleteDebtor = true,
 
-            AllowedPages = "Dashboard,SalesBill,Debtor,DebtorCancelled,DebtorHistory,SalesReport,Audit,Users,Upload"
+            AllowedPages = "Dashboard,SalesBill,Debtor,DebtorCancelled,DebtorHistory,SalesReport,Audit,Users,Upload,ReturnedToAccount"
 
         });
 
@@ -961,7 +961,7 @@ using (var scope = app.Services.CreateScope())
 
         admin.CanDeleteDebtor = true;
 
-        admin.AllowedPages = "Dashboard,SalesBill,Debtor,DebtorCancelled,DebtorHistory,SalesReport,Audit,Users,Upload";
+        admin.AllowedPages = "Dashboard,SalesBill,Debtor,DebtorCancelled,DebtorHistory,SalesReport,Audit,Users,Upload,ReturnedToAccount";
 
         admin.SessionTimeoutMinutes = null;
 

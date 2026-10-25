@@ -103,6 +103,19 @@ namespace RoyalD.Web.Services
                 {
                     if (action == "waitinggoods" && (allowedList.Contains("waitinggoods") || allowedList.Contains("waitinggoodsreport"))) isAllowed = true;
                     else if (action == "returnnotes" && allowedList.Contains("returnnotes")) isAllowed = true;
+                    else if (action == "returnedtoaccount" || action == "returntodelivery" || action == "exportreturnedtoaccountexcel" || action == "exportreturnedtoaccountpdf")
+                    {
+                        if (allowedList.Contains("returnedtoaccount") || 
+                            allowedList.Contains("report") || 
+                            pos.Contains("หัวหน้า") || 
+                            pos.Contains("ผู้บริหาร") || 
+                            username.Equals("nid", StringComparison.OrdinalIgnoreCase) || 
+                            (user.FindFirst("FullName")?.Value ?? "").Contains("วนิดา") ||
+                            user.FindFirst("CanManageReturnedBills")?.Value == "true")
+                        {
+                            isAllowed = true;
+                        }
+                    }
                     else if (allowedList.Contains("report") || allowedList.Contains("salesreport")) isAllowed = true;
                 }
                 else if (controller == "debtor")

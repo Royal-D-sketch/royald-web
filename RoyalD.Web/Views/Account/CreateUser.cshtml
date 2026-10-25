@@ -373,7 +373,19 @@
                                   </div>
                                   <small class="text-muted d-block ms-4" style="font-size:0.78rem;">สิทธิ์เข้าหน้าคืนสินค้า/ใบลดหนี้ CN</small>
                               </div>
-                          </div>
+                          </div>
+                          <div class="col-md-3">
+                              <div class="p-3 perm-card" style="border:1.5px solid #fed7aa; background:#fffbeb;">
+                                  <div class="form-check">
+                                      <input class="form-check-input page-check" type="checkbox" name="pages" value="ReturnedToAccount" id="p_returned_to_account">
+                                      <label class="form-check-label fw-bold" for="p_returned_to_account" style="color:#d97706;">
+                                          <i class="bi bi-arrow-return-right text-warning me-1"></i> บิลส่งคืนกลับมาบัญชี
+                                      </label>
+                                  </div>
+                                  <small class="text-muted d-block ms-4" style="font-size:0.78rem;">สิทธิ์ดูบิลส่งคืนกลับมาบัญชี / ส่งคืนไปจัดส่ง</small>
+                              </div>
+                          </div>
+
                     </div>
 
                     <!-- 3. ขอบเขตพื้นที่และข้อมูลที่รับผิดชอบ -->
@@ -751,11 +763,18 @@
         const pageChecks = document.querySelectorAll('.page-check');
         const pCancel = document.getElementById('p_cancel');
         const pRestore = document.getElementById('canRestoreCancelledBill');
-        const cancelWarns = document.querySelectorAll('.salesrep-cancel-warn');
+        const cancelWarns = document.querySelectorAll('.salesrep-cancel-warn');
+        const pReturned = document.getElementById('p_returned_to_account');
+        const canManageReturned = document.getElementById('canManageReturnedBills');
+        const username = (document.getElementById('usernameInput')?.value || '').trim().toLowerCase();
+        const fullName = (document.querySelector('input[name="fullName"]')?.value || '').trim().toLowerCase();
+        const isEligibleReturn = role === 'admin' || position.includes('หัวหน้า') || position.includes('ผู้บริหาร') || username === 'nid' || fullName.includes('วนิดา');
 
         if (role === 'admin') {
             pageChecks.forEach(c => { c.checked = true; c.disabled = true; });
-            if (pRestore) { pRestore.checked = true; pRestore.disabled = true; }
+            if (pRestore) { pRestore.checked = true; pRestore.disabled = true; }
+            if (pReturned) { pReturned.checked = true; }
+            if (canManageReturned) { canManageReturned.checked = true; }
             document.getElementById('canViewPaymentDetails').checked = true;
             document.getElementById('canDeleteSalesBill').checked = true;
             document.getElementById('canDeleteDebtor').checked = true;
@@ -764,7 +783,13 @@
             cancelWarns.forEach(w => w.classList.add('d-none'));
         } else {
             pageChecks.forEach(c => { c.disabled = false; });
-            if (pRestore) pRestore.disabled = false;
+            if (pRestore) pRestore.disabled = false;
+
+            // สิทธิ์บิลส่งคืนกลับมาบัญชี: admin, หัวหน้างาน, ผู้บริหาร, วนิดา ได้รับสิทธิ์อัตโนมัติ
+            if (isEligibleReturn) {
+                if (pReturned && !pReturned.checked) pReturned.checked = true;
+                if (canManageReturned && !canManageReturned.checked) canManageReturned.checked = true;
+            }
 
             // ตรวจสอบตำแหน่งผู้แทนขาย: ผู้แทนขายไม่มีสิทธิ์ดูหรือกู้บิลยกเลิก
             const isSalesRep = position === 'Supervisor' || position.toLowerCase() === 'supervisor' || position === 'sale' || position.toLowerCase() === 'sale' || position === 'ผู้แทนขาย' || position.includes('ผู้แทน') || position.includes('พนักงานขาย');
@@ -774,7 +799,13 @@
                 cancelWarns.forEach(w => w.classList.remove('d-none'));
             } else {
                 if (pCancel) pCancel.disabled = false;
-                if (pRestore) pRestore.disabled = false;
+                if (pRestore) pRestore.disabled = false;
+
+            // สิทธิ์บิลส่งคืนกลับมาบัญชี: admin, หัวหน้างาน, ผู้บริหาร, วนิดา ได้รับสิทธิ์อัตโนมัติ
+            if (isEligibleReturn) {
+                if (pReturned && !pReturned.checked) pReturned.checked = true;
+                if (canManageReturned && !canManageReturned.checked) canManageReturned.checked = true;
+            }
                 cancelWarns.forEach(w => w.classList.add('d-none'));
             }
         }
