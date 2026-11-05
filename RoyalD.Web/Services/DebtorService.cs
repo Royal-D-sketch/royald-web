@@ -158,10 +158,19 @@ namespace RoyalD.Web.Services
                     var matchProvs = RegionHelper.GetMatchingProvinces(region);
                     q = q.Where(d => matchProvs.Contains(d.Province) || d.Province.Contains("กรุงเทพ") || d.Province.Contains("กทม"));
                 }
+                else if (region == "ออนไลน์" || region == "บิลขายออนไลน์" || region.Equals("online", StringComparison.OrdinalIgnoreCase))
+                {
+                    q = q.Where(d => d.SalesRep != null && (d.SalesRep.StartsWith("บริษัท*") || d.SalesRep.StartsWith("บริษัทT")));
+                }
                 else if (region == "ต่างจังหวัด" || region.Equals("upcountry", StringComparison.OrdinalIgnoreCase))
                 {
-                    var bkkVariants = RegionHelper.GetMatchingProvinces("กรุงเทพฯ และปริมณฑล");
-                    q = q.Where(d => !bkkVariants.Contains(d.Province) && !d.Province.Contains("กรุงเทพ") && !d.Province.Contains("กทม") && !d.Province.ToLower().Contains("bangkok") && !d.Province.Contains("นนทบุรี") && !d.Province.Contains("ปทุมธานี") && !d.Province.Contains("สมุทรปราการ") && !d.Province.Contains("สมุทรสาคร") && !d.Province.Contains("นครปฐม"));
+                    var bkkVariants = RegionHelper.GetMatchingProvinces("กรุงเทพ, นนทบุรี, สมุทรปราการ");
+                    q = q.Where(d => !bkkVariants.Contains(d.Province) && !d.Province.Contains("กรุงเทพ") && !d.Province.Contains("กทม") && !d.Province.ToLower().Contains("bangkok") && !d.Province.Contains("นนทบุรี") && !d.Province.Contains("สมุทรปราการ"));
+                }
+                else if (region == "กรุงเทพ, นนทบุรี, สมุทรปราการ" || region == "กรุงเทพ,นนทบุรี,สมุทรปราการ" || region == "กรุงเทพฯ และปริมณฑล" || region == "กรุงเทพและปริมณฑล")
+                {
+                    var bkkVariants = RegionHelper.GetMatchingProvinces("กรุงเทพ, นนทบุรี, สมุทรปราการ");
+                    q = q.Where(d => bkkVariants.Contains(d.Province) || d.Province.Contains("กรุงเทพ") || d.Province.Contains("กทม") || d.Province.ToLower().Contains("bangkok") || d.Province.Contains("นนทบุรี") || d.Province.Contains("สมุทรปราการ"));
                 }
                 else
                 {
@@ -217,13 +226,17 @@ namespace RoyalD.Web.Services
             var resultList = await q.OrderBy(d => d.DueDate).ToListAsync();
             if (!string.IsNullOrEmpty(region))
             {
-                if (region == "โมเดิร์นเทรด" || region.Equals("moderntrade", StringComparison.OrdinalIgnoreCase))
+                if (region == "ออนไลน์" || region == "บิลขายออนไลน์" || region.Equals("online", StringComparison.OrdinalIgnoreCase))
                 {
-                    resultList = resultList.Where(d => DashboardService.IsModernTrade(d.CustomerCode, d.CustomerName)).ToList();
+                    resultList = resultList.Where(d => RegionHelper.IsOnlineSalesRep(d.SalesRep)).ToList();
                 }
-                else if (region == "กรุงเทพฯ และปริมณฑล" || region == "กรุงเทพและปริมณฑล" || region == "ต่างจังหวัด" || region.Equals("upcountry", StringComparison.OrdinalIgnoreCase) || region == "กรุงเทพฯ" || region == "กรุงเทพ")
+                else if (region == "โมเดิร์นเทรด" || region.Equals("moderntrade", StringComparison.OrdinalIgnoreCase))
                 {
-                    resultList = resultList.Where(d => !DashboardService.IsModernTrade(d.CustomerCode, d.CustomerName)).ToList();
+                    resultList = resultList.Where(d => !RegionHelper.IsOnlineSalesRep(d.SalesRep) && DashboardService.IsModernTrade(d.CustomerCode, d.CustomerName)).ToList();
+                }
+                else if (region == "กรุงเทพ, นนทบุรี, สมุทรปราการ" || region == "กรุงเทพ,นนทบุรี,สมุทรปราการ" || region == "กรุงเทพฯ และปริมณฑล" || region == "กรุงเทพและปริมณฑล" || region == "ต่างจังหวัด" || region.Equals("upcountry", StringComparison.OrdinalIgnoreCase) || region == "กรุงเทพฯ" || region == "กรุงเทพ")
+                {
+                    resultList = resultList.Where(d => !RegionHelper.IsOnlineSalesRep(d.SalesRep) && !DashboardService.IsModernTrade(d.CustomerCode, d.CustomerName)).ToList();
                 }
             }
             return resultList;

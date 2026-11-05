@@ -165,7 +165,7 @@
             <select name="region" id="region-select" class="form-select form-select-sm" onchange="onRegionChange()">
                 <option value="">@(ViewBag.HasRegionRestriction == true ? "-- ทุกภาคที่รับผิดชอบ --" : "-- ทุกภาค / ทุกพื้นที่ --")</option>
                 @foreach (var reg in regions) {
-                    var regLabel = reg == "กรุงเทพฯ และปริมณฑล" ? "🏙️ กรุงเทพฯ และปริมณฑล (ไม่รวม MT)" : (reg == "ต่างจังหวัด" ? "🚚 ต่างจังหวัด (ไม่รวม MT)" : (reg == "โมเดิร์นเทรด" ? "🏢 โมเดิร์นเทรด (Modern Trade)" : reg));
+                    var regLabel = reg == "ออนไลน์" ? "🛒 บิลขายออนไลน์ (บริษัท* และ บริษัทT)" : (reg == "กรุงเทพ, นนทบุรี, สมุทรปราการ" || reg == "กรุงเทพฯ และปริมณฑล" ? "🏙️ บิลขายกรุงเทพ,นนทบุรี,สมุทรปราการ" : (reg == "ต่างจังหวัด" ? "🚚 บิลขายต่างจังหวัด" : (reg == "โมเดิร์นเทรด" ? "🏢 บิลขายModern Trade" : reg)));
                     if (reg == (string)ViewBag.SelectedRegion) { <option value="@reg" selected>@regLabel</option> }
                     else { <option value="@reg">@regLabel</option> }
                 }
@@ -219,21 +219,25 @@
             @{
                 string curReg = (string)(ViewBag.SelectedRegion ?? "");
                 bool isAllArea = string.IsNullOrEmpty(curReg);
-                bool isBkkVicinity = curReg == "กรุงเทพฯ และปริมณฑล";
+                bool isOnline = curReg == "ออนไลน์" || curReg == "บิลขายออนไลน์";
+                bool isBkkVicinity = curReg == "กรุงเทพ, นนทบุรี, สมุทรปราการ" || curReg == "กรุงเทพ,นนทบุรี,สมุทรปราการ" || curReg == "กรุงเทพฯ และปริมณฑล";
                 bool isUpcountry = curReg == "ต่างจังหวัด";
                 bool isModernTrade = curReg == "โมเดิร์นเทรด";
             }
             <button type="button" onclick="filterByAreaGroup('')" class="btn btn-sm rounded-pill px-3 fw-bold @(isAllArea ? "btn-primary shadow-sm" : "btn-outline-secondary bg-white")">
                 🌐 บิลขายทั้งหมด
             </button>
-            <button type="button" onclick="filterByAreaGroup('กรุงเทพฯ และปริมณฑล')" class="btn btn-sm rounded-pill px-3 fw-bold @(isBkkVicinity ? "btn-info text-dark shadow-sm border-info" : "btn-outline-info text-dark bg-white")">
-                🏙️ บิลขายกรุงเทพฯ และปริมณฑล (ไม่รวม MT)
+            <button type="button" onclick="filterByAreaGroup('ออนไลน์')" class="btn btn-sm rounded-pill px-3 fw-bold @(isOnline ? "btn-dark shadow-sm border-dark" : "btn-outline-dark bg-white")">
+                🛒 บิลขายออนไลน์ (บริษัท* และ บริษัทT)
+            </button>
+            <button type="button" onclick="filterByAreaGroup('กรุงเทพ, นนทบุรี, สมุทรปราการ')" class="btn btn-sm rounded-pill px-3 fw-bold @(isBkkVicinity ? "btn-info text-dark shadow-sm border-info" : "btn-outline-info text-dark bg-white")">
+                🏙️ บิลขายกรุงเทพ,นนทบุรี,สมุทรปราการ
             </button>
             <button type="button" onclick="filterByAreaGroup('ต่างจังหวัด')" class="btn btn-sm rounded-pill px-3 fw-bold @(isUpcountry ? "btn-success shadow-sm" : "btn-outline-success bg-white")">
-                🚚 บิลขายต่างจังหวัด (ไม่รวม MT)
+                🚚 บิลขายต่างจังหวัด
             </button>
             <button type="button" onclick="filterByAreaGroup('โมเดิร์นเทรด')" class="btn btn-sm rounded-pill px-3 fw-bold @(isModernTrade ? "btn-warning text-dark shadow-sm border-warning" : "btn-outline-warning text-dark bg-white")">
-                🏢 บิลขายโมเดิร์นเทรด (Modern Trade)
+                🏢 บิลขายModern Trade
             </button>
         </div>
     </form>

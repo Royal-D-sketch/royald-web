@@ -87,7 +87,7 @@
                             <option value="">@(Model.HasRegionRestriction ? "-- ทุกภาคที่รับผิดชอบ --" : "-- ทุกภาค --")</option>
                             @foreach (var reg in Model.AvailableRegions)
                             {
-                                var regLabel = reg == "กรุงเทพฯ และปริมณฑล" ? "🏙️ กรุงเทพฯ และปริมณฑล (ไม่รวม MT)" : (reg == "ต่างจังหวัด" ? "🚚 ต่างจังหวัด (ไม่รวม MT)" : (reg == "โมเดิร์นเทรด" ? "🏢 โมเดิร์นเทรด (Modern Trade)" : reg));
+                                var regLabel = reg == "ออนไลน์" ? "🛒 บิลขายออนไลน์ (บริษัท* และ บริษัทT)" : (reg == "กรุงเทพ, นนทบุรี, สมุทรปราการ" || reg == "กรุงเทพฯ และปริมณฑล" ? "🏙️ บิลขายกรุงเทพ,นนทบุรี,สมุทรปราการ" : (reg == "ต่างจังหวัด" ? "🚚 บิลขายต่างจังหวัด" : (reg == "โมเดิร์นเทรด" ? "🏢 บิลขายModern Trade" : reg)));
                                 <option value="@reg" selected="@(reg == Model.SelectedRegion ? "selected" : null)">@regLabel</option>
                             }
                         </select>
