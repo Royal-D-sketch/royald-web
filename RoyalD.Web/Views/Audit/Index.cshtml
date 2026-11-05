@@ -190,7 +190,11 @@
                                     </div>
                                     @if (!string.IsNullOrEmpty(log.Latitude) && !string.IsNullOrEmpty(log.Longitude))
                                     {
-                                        <small class="text-muted" style="font-size:0.75rem;">GPS: @log.Latitude, @log.Longitude</small>
+                                        <div>
+                                            <a href="https://www.google.com/maps?q=@log.Latitude,@log.Longitude" target="_blank" class="text-decoration-none text-primary" style="font-size:0.75rem;" title="เปิดดูพิกัดจริงบนแผนที่ Google Maps">
+                                                <i class="bi bi-map-fill text-danger me-1"></i>พิกัด: @log.Latitude, @log.Longitude
+                                            </a>
+                                        </div>
                                     }
                                 }
                                 else if (!string.IsNullOrEmpty(log.Area))

@@ -57,7 +57,7 @@ namespace RoyalD.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Login(string username, string password, string? returnUrl = null, string? lat = null, string? lng = null, string? locationName = null)
+        public async Task<IActionResult> Login(string username, string password, string? returnUrl = null, string? lat = null, string? lng = null, string? locationName = null, string? accuracy = null)
         {
             ViewBag.ReturnUrl = returnUrl;
             ViewBag.Username = "";
@@ -192,7 +192,7 @@ namespace RoyalD.Web.Controllers
                     Action = "LOGIN_FAILED",
                     Detail = $"Attempted login with incorrect credentials (Input: '{cleanUsername}')",
                     Latitude = lat ?? "",
-                    Area = GeoLocationHelper.ReverseGeocode(lat, lng, locationName),
+                    Area = GeoLocationHelper.ReverseGeocode(lat, lng, locationName) + (!string.IsNullOrEmpty(accuracy) && accuracy != "0" ? $" (±{accuracy}ม.)" : ""),
                     IPAddress = GetRealIpAddress(),
                     CreatedAt = DateTime.UtcNow
                 });
@@ -278,6 +278,10 @@ namespace RoyalD.Web.Controllers
                 new AuthenticationProperties { IsPersistent = false, ExpiresUtc = DateTimeOffset.UtcNow.Add(expireSpan) });
 
             string resolvedArea = GeoLocationHelper.ReverseGeocode(lat, lng, locationName);
+            if (!string.IsNullOrEmpty(accuracy) && accuracy != "0")
+            {
+                resolvedArea += $" (±{accuracy}ม.)";
+            }
 
             _db.AuditLogs.Add(new AuditLog
             {
@@ -487,7 +491,8 @@ namespace RoyalD.Web.Controllers
                 if (permission == "restore") q = q.Where(u => u.CanRestoreCancelledBill || u.Role == "admin");
                 else if (permission == "cancel_view") q = q.Where(u => u.Role == "admin" || (u.AllowedPages != null && u.AllowedPages.Contains("Cancelled")));
                 else if (permission == "salesrep") q = q.Where(u => u.Position != null && (u.Position.Contains("ผู้แทน") || u.Position.Contains("พนักงานขาย")));
-                else if (permission == "creditnote") q = q.Where(u => u.Role == "admin" || (u.AllowedPages != null && u.AllowedPages.Contains("CreditNote")));
+                else if (permission == "creditnote") q = q.Where(u => u.Role == "admin" || (u.AllowedPages != null && u.AllowedPages.Contains("CreditNote")));
+
                 else if (permission == "returned_to_account") q = q.Where(u => u.Role == "admin" || u.CanManageReturnedBills || (u.Position != null && (u.Position.Contains("หัวหน้า") || u.Position.Contains("ผู้บริหาร"))) || (u.Username == "nid") || (u.FullName != null && u.FullName.Contains("วนิดา")) || (u.AllowedPages != null && u.AllowedPages.Contains("ReturnedToAccount")));
             }
 
