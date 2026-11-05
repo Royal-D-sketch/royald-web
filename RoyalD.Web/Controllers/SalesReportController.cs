@@ -666,7 +666,7 @@ namespace RoyalD.Web.Controllers
 
             int row1 = 4;
 
-            string[] headers1 = { "ลำดับ", "รหัสกลุ่ม", "ชื่อกลุ่มสินค้า", "จำนวนขาย", "ยอดเงินขาย (บาท)", "จำนวนคืน", "ยอดลดหนี้ (บาท)", "ยอดขายสุทธิ (บาท)" };
+            string[] headers1 = { "ลำดับ", "รหัสกลุ่ม", "ชื่อกลุ่มสินค้า", "ยอดแถม", "จำนวนขาย", "ยอดเงินขาย (บาท)", "จำนวนคืน", "ยอดลดหนี้ (บาท)", "ยอดขายสุทธิ (บาท)" };
 
             for (int col = 0; col < headers1.Length; col++)
 
@@ -710,7 +710,20 @@ namespace RoyalD.Web.Controllers
 
                 ws1.Cells[row1, 3].Value = g.GroupName;
 
-                ws1.Cells[row1, 4].Value = g.GroupSalesQty;
+                ws1.Cells[row1, 4].Value = g.GroupFreeQty;
+                ws1.Cells[row1, 4].Style.Numberformat.Format = "#,##0";
+                ws1.Cells[row1, 5].Value = g.GroupSalesQty;
+                ws1.Cells[row1, 5].Style.Numberformat.Format = "#,##0";
+                ws1.Cells[row1, 6].Value = g.GroupSalesAmount;
+                ws1.Cells[row1, 6].Style.Numberformat.Format = "#,##0.00";
+                ws1.Cells[row1, 7].Value = g.GroupReturnQty;
+                ws1.Cells[row1, 7].Style.Numberformat.Format = "#,##0";
+                ws1.Cells[row1, 8].Value = g.GroupCreditAmount;
+                ws1.Cells[row1, 8].Style.Numberformat.Format = "#,##0.00";
+                ws1.Cells[row1, 9].Value = g.GroupNetSalesAmount;
+                ws1.Cells[row1, 9].Style.Numberformat.Format = "#,##0.00";
+                ws1.Cells[row1, 9].Style.Font.Bold = true;
+                if (false) {
 
                 ws1.Cells[row1, 4].Style.Numberformat.Format = "#,##0.00";
 
@@ -730,7 +743,7 @@ namespace RoyalD.Web.Controllers
 
                 ws1.Cells[row1, 8].Style.Numberformat.Format = "#,##0.00";
 
-                ws1.Cells[row1, 8].Style.Font.Bold = true;
+                ws1.Cells[row1, 8].Style.Font.Bold = true; }
 
             }
 
@@ -748,7 +761,26 @@ namespace RoyalD.Web.Controllers
 
             ws1.Cells[row1, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-            ws1.Cells[row1, 4].Value = vm.TotalSalesQty;
+            ws1.Cells[row1, 4].Value = vm.TotalFreeQty;
+            ws1.Cells[row1, 4].Style.Numberformat.Format = "#,##0";
+            ws1.Cells[row1, 5].Value = vm.TotalSalesQty;
+            ws1.Cells[row1, 5].Style.Numberformat.Format = "#,##0";
+            ws1.Cells[row1, 6].Value = vm.TotalGrossSales;
+            ws1.Cells[row1, 6].Style.Numberformat.Format = "#,##0.00";
+            ws1.Cells[row1, 7].Value = vm.TotalReturnQty;
+            ws1.Cells[row1, 7].Style.Numberformat.Format = "#,##0";
+            ws1.Cells[row1, 8].Value = vm.TotalCreditNotes;
+            ws1.Cells[row1, 8].Style.Numberformat.Format = "#,##0.00";
+            ws1.Cells[row1, 9].Value = vm.TotalNetSales;
+            ws1.Cells[row1, 9].Style.Numberformat.Format = "#,##0.00";
+            ws1.Cells[row1, 1, row1, 9].Style.Font.Bold = true;
+            ws1.Cells[row1, 1, row1, 9].Style.Fill.PatternType = ExcelFillStyle.Solid;
+            ws1.Cells[row1, 1, row1, 9].Style.Fill.BackgroundColor.SetColor(Color.FromArgb(204, 251, 241));
+            ws1.Cells[4, 1, row1, 9].Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            ws1.Cells[4, 1, row1, 9].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            ws1.Cells[4, 1, row1, 9].Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            ws1.Cells[4, 1, row1, 9].Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            if (false) { ws1.Cells[row1, 4].Value = vm.TotalSalesQty;
 
             ws1.Cells[row1, 4].Style.Numberformat.Format = "#,##0.00";
 
@@ -782,7 +814,7 @@ namespace RoyalD.Web.Controllers
 
             ws1.Cells[4, 1, row1, 8].Style.Border.Left.Style = ExcelBorderStyle.Thin;
 
-            ws1.Cells[4, 1, row1, 8].Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            ws1.Cells[4, 1, row1, 8].Style.Border.Right.Style = ExcelBorderStyle.Thin; }
 
             ws1.Cells.AutoFitColumns();
 
@@ -812,7 +844,7 @@ namespace RoyalD.Web.Controllers
 
             int row2 = 3;
 
-            string[] headers2 = { "ลำดับ", "กลุ่มสินค้า", "รหัสสินค้า", "ชื่อสินค้า", "หน่วย", "จำนวนขาย", "ยอดเงินขาย (บาท)", "เลขที่ใบลดหนี้", "จำนวนคืน", "ยอดลดหนี้ (บาท)", "ยอดขายสุทธิ (บาท)" };
+            string[] headers2 = { "ลำดับ", "กลุ่มสินค้า", "รหัสสินค้า", "ชื่อสินค้า", "หน่วย", "ยอดแถม", "จำนวนขาย", "ยอดเงินขาย (บาท)", "เลขที่ใบลดหนี้", "จำนวนคืน", "ยอดลดหนี้ (บาท)", "ยอดขายสุทธิ (บาท)" };
 
             for (int col = 0; col < headers2.Length; col++)
 
@@ -864,7 +896,27 @@ namespace RoyalD.Web.Controllers
 
                     ws2.Cells[row2, 5].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-                    ws2.Cells[row2, 6].Value = item.SalesQty;
+                    ws2.Cells[row2, 6].Value = item.FreeQty;
+                    ws2.Cells[row2, 6].Style.Numberformat.Format = "#,##0";
+                    ws2.Cells[row2, 7].Value = item.SalesQty;
+                    ws2.Cells[row2, 7].Style.Numberformat.Format = "#,##0";
+                    ws2.Cells[row2, 8].Value = item.SalesAmount;
+                    ws2.Cells[row2, 8].Style.Numberformat.Format = "#,##0.00";
+                    ws2.Cells[row2, 9].Value = item.CreditNoteNos.Any() ? string.Join(", ", item.CreditNoteNos) : "-";
+                    ws2.Cells[row2, 9].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    ws2.Cells[row2, 10].Value = item.ReturnQty;
+                    ws2.Cells[row2, 10].Style.Numberformat.Format = "#,##0";
+                    ws2.Cells[row2, 11].Value = item.CreditAmount;
+                    ws2.Cells[row2, 11].Style.Numberformat.Format = "#,##0.00";
+                    ws2.Cells[row2, 12].Value = item.NetSalesAmount;
+                    ws2.Cells[row2, 12].Style.Numberformat.Format = "#,##0.00";
+                    ws2.Cells[row2, 12].Style.Font.Bold = true;
+                    if (item.HasCreditNote)
+                    {
+                        ws2.Cells[row2, 9, row2, 11].Style.Font.Color.SetColor(Color.FromArgb(185, 28, 28));
+                        ws2.Cells[row2, 9].Style.Font.Bold = true;
+                    }
+                    if (false) { ws2.Cells[row2, 6].Value = item.SalesQty;
 
                     ws2.Cells[row2, 6].Style.Numberformat.Format = "#,##0.00";
 
@@ -898,7 +950,7 @@ namespace RoyalD.Web.Controllers
 
                         ws2.Cells[row2, 8, row2, 10].Style.Font.Color.SetColor(Color.FromArgb(185, 28, 28));
 
-                        ws2.Cells[row2, 8].Style.Font.Bold = true;
+                        ws2.Cells[row2, 8].Style.Font.Bold = true; }
 
                     }
 
@@ -908,13 +960,17 @@ namespace RoyalD.Web.Controllers
 
 
 
-            ws2.Cells[3, 1, row2, 11].Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            ws2.Cells[3, 1, row2, 12].Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            ws2.Cells[3, 1, row2, 12].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            ws2.Cells[3, 1, row2, 12].Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            ws2.Cells[3, 1, row2, 12].Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            if (false) { ws2.Cells[3, 1, row2, 11].Style.Border.Top.Style = ExcelBorderStyle.Thin;
 
             ws2.Cells[3, 1, row2, 11].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
 
             ws2.Cells[3, 1, row2, 11].Style.Border.Left.Style = ExcelBorderStyle.Thin;
 
-            ws2.Cells[3, 1, row2, 11].Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            ws2.Cells[3, 1, row2, 11].Style.Border.Right.Style = ExcelBorderStyle.Thin; }
 
             ws2.Cells.AutoFitColumns();
 
@@ -1043,7 +1099,10 @@ namespace RoyalD.Web.Controllers
                 billsQuery = billsQuery.Where(b => filterReps.Contains(b.SalesRep));
             }
 
-            var billList = await billsQuery.Select(b => new { b.BillNo, b.SalesRep, b.BillDate }).ToListAsync();
+            var billList = await billsQuery.Select(b => new { b.BillNo, b.SalesRep, b.BillDate, b.TotalAmount }).ToListAsync();
+            var billTotalMap = billList
+                .GroupBy(b => b.BillNo, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First().TotalAmount, StringComparer.OrdinalIgnoreCase);
             var billNos = billList.Select(b => b.BillNo).ToList();
 
             var itemsList = await db.SalesBillItems.AsNoTracking()
@@ -1128,83 +1187,80 @@ namespace RoyalD.Web.Controllers
 
             // Sales items (ข้ามสินค้าที่เป็น Tester ไม่นำมาจัดกลุ่ม)
 
-            foreach (var item in itemsList)
-
+            // คำนวณยอดขายสุทธิรายรายการตามโปรแกรมบัญชี CD (sal3tr04 สรุปยอดขายพนักงาน วิเคราะห์ตามสินค้า)
+            // - สินค้าขายจริง (Price > 0): หักส่วนลดรายการ (ปัดเศษสตางค์แบบ AwayFromZero ตรงตาม CD) และหักส่วนลดท้ายบิล (ถ้ามี)
+            // - สินค้าของแถม / Tester (Price == 0 หรือเป็นกลุ่ม Tester): บันทึกเข้ายอดแถม (FreeQty) ยอดเงินเป็น 0.00 บาท
+            foreach (var billGroup in itemsList.Where(i => i.Qty > 0).GroupBy(i => i.BillNo, StringComparer.OrdinalIgnoreCase))
             {
-
-                
-
-
-
-                var gInfo = groupService.GetProductGroup(item.ProductCode, item.ProductName, item.Unit);
-
-                if (gInfo == null || string.IsNullOrWhiteSpace(gInfo.GroupCode) || !groupDict.ContainsKey(gInfo.GroupCode))
-
+                var billEntries = billGroup.Select(it =>
                 {
-
-                    // ข้ามสินค้าที่ไม่มีกลุ่มสินค้า เอาเฉพาะรายการที่มีกลุ่มสินค้าเท่านั้น
-
-                    continue;
-
-                }
-
-
-
-                
-
-
-
-                string gCode = gInfo.GroupCode;
-
-
-
-                var gItems = itemMap[gCode];
-
-                string pCode = string.IsNullOrWhiteSpace(item.ProductCode) ? "-" : item.ProductCode.Trim();
-
-
-
-                if (!gItems.TryGetValue(pCode, out var row))
-
-                {
-
-                    row = new ProductItemReconcileRow
-
+                    bool isFree = it.Price == 0 || groupService.IsTester(it.ProductCode, it.ProductName);
+                    decimal itemNet = 0m;
+                    if (!isFree)
                     {
+                        decimal gross = it.Amount > 0 ? it.Amount : Math.Round(it.Qty * it.Price, 2, MidpointRounding.AwayFromZero);
+                        decimal discAmt = (it.Discount > 0 && it.Discount <= 100)
+                            ? Math.Round(gross * it.Discount / 100m, 2, MidpointRounding.AwayFromZero)
+                            : 0m;
+                        itemNet = gross - discAmt;
+                    }
+                    return (Item: it, IsFree: isFree, ItemNet: itemNet);
+                }).ToList();
 
-                        ProductCode = pCode,
+                decimal sumBillItemNet = billEntries.Where(x => !x.IsFree).Sum(x => x.ItemNet);
+                bool hasBillDiscount = billTotalMap.TryGetValue(billGroup.Key, out decimal billTotal) && billTotal > 0 && billTotal < sumBillItemNet;
+                int lastPaidIdx = billEntries.FindLastIndex(x => !x.IsFree);
+                decimal allocatedBillNet = 0m;
 
-                        ProductName = !string.IsNullOrEmpty(gInfo.ProductName) ? gInfo.ProductName : item.ProductName,
-
-                        Unit = !string.IsNullOrEmpty(gInfo.Unit) ? gInfo.Unit : (!string.IsNullOrEmpty(item.Unit) ? item.Unit : "ชิ้น")
-
-                    };
-
-                    gItems[pCode] = row;
-
-                }
-
-
-
-                // รายงาน CD (sal-grpr ยอดขายพนักงานขาย วิเคราะห์ตามกลุ่มสินค้า)
-                // - ยอดเงินขาย (SalesAmount) คิดจากยอดก่อนหักส่วนลดการค้า (Gross Amount ก่อน VAT ตรงตาม CD)
-                // - สินค้าที่ขายจริง (Price > 0): บันทึกเข้าจำนวนขาย (SalesQty)
-                // - สินค้าของแถม / Tester (Price == 0 หรือเป็นกลุ่ม Tester): บันทึกเข้ายอดแถม (FreeQty) ยอดเงินเป็น 0.00 บาท
-                bool isFreeOrTester = item.Price == 0 || groupService.IsTester(item.ProductCode, item.ProductName);
-                if (isFreeOrTester || item.Price == 0)
+                for (int idx = 0; idx < billEntries.Count; idx++)
                 {
-                    row.FreeQty += item.Qty;
-                }
-                else
-                {
-                    decimal baseAmt = item.Amount > 0 ? item.Amount : Math.Round(item.Qty * item.Price, 2);
-                    row.SalesQty += item.Qty;
-                    row.SalesAmount += baseAmt;
-                }
+                    var (item, isFreeOrTester, itemNet) = billEntries[idx];
+                    decimal effectiveNet = itemNet;
+                    if (!isFreeOrTester && hasBillDiscount)
+                    {
+                        if (idx < lastPaidIdx)
+                        {
+                            effectiveNet = Math.Round(itemNet * billTotal / sumBillItemNet, 2, MidpointRounding.AwayFromZero);
+                            allocatedBillNet += effectiveNet;
+                        }
+                        else
+                        {
+                            effectiveNet = billTotal - allocatedBillNet;
+                        }
+                    }
 
+                    var gInfo = groupService.GetProductGroup(item.ProductCode, item.ProductName, item.Unit);
+                    if (gInfo == null || string.IsNullOrWhiteSpace(gInfo.GroupCode) || !groupDict.ContainsKey(gInfo.GroupCode))
+                    {
+                        continue;
+                    }
+
+                    string gCode = gInfo.GroupCode;
+                    var gItems = itemMap[gCode];
+                    string pCode = string.IsNullOrWhiteSpace(item.ProductCode) ? "-" : item.ProductCode.Trim();
+
+                    if (!gItems.TryGetValue(pCode, out var row))
+                    {
+                        row = new ProductItemReconcileRow
+                        {
+                            ProductCode = pCode,
+                            ProductName = !string.IsNullOrEmpty(gInfo.ProductName) ? gInfo.ProductName : item.ProductName,
+                            Unit = !string.IsNullOrEmpty(gInfo.Unit) ? gInfo.Unit : (!string.IsNullOrEmpty(item.Unit) ? item.Unit : "ชิ้น")
+                        };
+                        gItems[pCode] = row;
+                    }
+
+                    if (isFreeOrTester)
+                    {
+                        row.FreeQty += item.Qty;
+                    }
+                    else
+                    {
+                        row.SalesQty += item.Qty;
+                        row.SalesAmount += effectiveNet;
+                    }
+                }
             }
-
-
 
             // Credit Notes items (ข้ามสินค้าที่เป็น Tester ไม่นำมาจัดกลุ่ม)
 

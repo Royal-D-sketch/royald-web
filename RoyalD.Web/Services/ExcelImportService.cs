@@ -61,7 +61,7 @@ namespace RoyalD.Web.Services
                     if (fullRow.Contains(kw))
                     {
                         isSummary = true;
-                        if (kw.Contains("รวมทั้งสิ้น") && currentBill != null)
+                        if (kw.Contains("รวมทั้งสิ้น") && currentBill != null && currentBill.TotalAmount == 0 && !fullRow.Contains("*****") && !fullRow.Contains("รวมตาม"))
                         {
                             for (int c = tbl.Columns.Count - 1; c >= 0; c--)
                             {
@@ -206,7 +206,7 @@ namespace RoyalD.Web.Services
                     if (qty == 0 && price > 0 && amt > 0) qty = Math.Round(amt / price, 2);
                     if (amt == 0 && qty > 0 && price > 0) amt = Math.Round(qty * price, 2);
 
-                    if (qty > 0 || amt > 0)
+                    if (qty > 0 && !rawProd.Contains("0:00:00", StringComparison.OrdinalIgnoreCase) && !Regex.IsMatch(rawProd, @"^\d{1,2}/\d{1,2}/\d{2,4}(\s|$)"))
                     {
                         currentBill.Items.Add(new SalesBillItem
                         {

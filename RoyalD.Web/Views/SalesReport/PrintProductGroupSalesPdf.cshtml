@@ -357,7 +357,7 @@
             <!-- KPI Summary Strip -->
             <div class="kpi-strip">
                 <div class="kpi-cell kpi-gross">
-                    <div class="kpi-label">ยอดขายรวม (Gross Sales)</div>
+                    <div class="kpi-label">ยอดขายรวม (หลังหักส่วนลด ตรงตาม CD)</div>
                     <div class="kpi-val" style="color: #0284c7;">
                         @Model.TotalGrossSales.ToString("N2") <small style="font-size:9.5px; font-weight:normal; color:#475569;">บาท (@Model.TotalSalesQty.ToString("N0") ชิ้น@(Model.TotalFreeQty > 0 ? $" / แถม {Model.TotalFreeQty:N0}" : ""))</small>
                     </div>
@@ -383,6 +383,7 @@
                         <th style="width: 28px;">#</th>
                         <th style="width: 52px;">รหัสกลุ่ม</th>
                         <th style="text-align: left; padding-left: 8px;">ชื่อกลุ่มสินค้า (20 กลุ่ม Master)</th>
+                        <th style="width: 62px;" class="text-end">ยอดแถม</th>
                         <th style="width: 72px;" class="text-end">จำนวนขาย</th>
                         <th style="width: 102px;" class="text-end">ยอดขาย (บาท)</th>
                         <th style="width: 65px;" class="text-end">จำนวนคืน</th>
@@ -401,6 +402,7 @@
                                 @g.GroupName
                                 <span style="font-size:9px; color:#64748b; font-weight:normal;">(@g.Items.Count รายการ)</span>
                             </td>
+                            <td class="text-end text-secondary">@g.GroupFreeQty.ToString("N0")</td>
                             <td class="text-end">@g.GroupSalesQty.ToString("N0")</td>
                             <td class="text-end fw-bold" style="color: #0284c7;">@g.GroupSalesAmount.ToString("N2")</td>
                             <td class="text-end text-danger">@(g.GroupReturnQty > 0 ? $"-{g.GroupReturnQty:N0}" : "-")</td>
@@ -412,6 +414,7 @@
                 <tfoot>
                     <tr class="total-row">
                         <td colspan="3" class="text-center">รวมยอดทั้งสิ้น (Grand Total)</td>
+                        <td class="text-end">@Model.TotalFreeQty.ToString("N0")</td>
                         <td class="text-end">@Model.TotalSalesQty.ToString("N0")</td>
                         <td class="text-end">@Model.TotalGrossSales.ToString("N2")</td>
                         <td class="text-end text-danger">@(Model.TotalReturnQty > 0 ? $"-{Model.TotalReturnQty:N0}" : "-")</td>
