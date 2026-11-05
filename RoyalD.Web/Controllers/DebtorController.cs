@@ -123,6 +123,8 @@ namespace RoyalD.Web.Controllers
                 debts = debts.Where(d => !string.IsNullOrEmpty(d.District) && (distVariants.Contains(d.District) || d.District.Contains(district) || distVariants.Any(v => d.District.Contains(v)))).ToList();
             }
 
+            while (startDate.HasValue && startDate.Value.Year > 2400) startDate = startDate.Value.AddYears(-543);
+            while (endDate.HasValue && endDate.Value.Year > 2400) endDate = endDate.Value.AddYears(-543);
             if (startDate.HasValue)
             {
                 debts = debts.Where(d => d.BillDate >= startDate.Value.Date).ToList();
@@ -159,8 +161,8 @@ namespace RoyalD.Web.Controllers
             ViewBag.SelectedRegion = areaScope.SelectedRegion;
             ViewBag.SelectedProvince = areaScope.SelectedProvince;
             ViewBag.SelectedDistrict = district;
-            ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
-            ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
+            ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+            ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
             ViewBag.SelectedCredit = credit;
             ViewBag.IsRestricted = isRestricted;
             ViewBag.AssignedSalesRep = currentUser?.SalesRepCode;
@@ -298,6 +300,8 @@ namespace RoyalD.Web.Controllers
                 var distVariants = RegionHelper.ExpandDistrictVariants(new[] { district });
                 debts = debts.Where(d => !string.IsNullOrEmpty(d.District) && (distVariants.Contains(d.District) || d.District.Contains(district) || distVariants.Any(v => d.District.Contains(v)))).ToList();
             }
+            while (startDate.HasValue && startDate.Value.Year > 2400) startDate = startDate.Value.AddYears(-543);
+            while (endDate.HasValue && endDate.Value.Year > 2400) endDate = endDate.Value.AddYears(-543);
             if (startDate.HasValue)
                 debts = debts.Where(d => d.BillDate >= startDate.Value.Date).ToList();
             if (endDate.HasValue)
@@ -378,6 +382,8 @@ namespace RoyalD.Web.Controllers
                 var distVariants = RegionHelper.ExpandDistrictVariants(new[] { district });
                 debts = debts.Where(d => !string.IsNullOrEmpty(d.District) && (distVariants.Contains(d.District) || d.District.Contains(district) || distVariants.Any(v => d.District.Contains(v)))).ToList();
             }
+            while (startDate.HasValue && startDate.Value.Year > 2400) startDate = startDate.Value.AddYears(-543);
+            while (endDate.HasValue && endDate.Value.Year > 2400) endDate = endDate.Value.AddYears(-543);
             if (startDate.HasValue) debts = debts.Where(d => d.BillDate >= startDate.Value.Date).ToList();
             if (endDate.HasValue) debts = debts.Where(d => d.BillDate <= endDate.Value.Date.AddDays(1).AddTicks(-1)).ToList();
             if (!string.IsNullOrEmpty(poSearch)) debts = debts.Where(d => !string.IsNullOrEmpty(d.PoNumber) && d.PoNumber.Contains(poSearch)).ToList();
@@ -475,6 +481,8 @@ namespace RoyalD.Web.Controllers
                 var distVariants = RegionHelper.ExpandDistrictVariants(new[] { district });
                 debts = debts.Where(d => !string.IsNullOrEmpty(d.District) && (distVariants.Contains(d.District) || d.District.Contains(district) || distVariants.Any(v => d.District.Contains(v)))).ToList();
             }
+            while (startDate.HasValue && startDate.Value.Year > 2400) startDate = startDate.Value.AddYears(-543);
+            while (endDate.HasValue && endDate.Value.Year > 2400) endDate = endDate.Value.AddYears(-543);
             if (startDate.HasValue)
                 debts = debts.Where(d => d.BillDate >= startDate.Value.Date).ToList();
             if (endDate.HasValue)
@@ -593,9 +601,11 @@ namespace RoyalD.Web.Controllers
             var effectiveRepParam = filterReps != null && filterReps.Count > 0 ? string.Join(",", filterReps) : null;
 
             var debts = await _svc.GetPaidHistoryAsync(search, effectiveRepParam, userAllowedRegion, userAllowedProvinces, userAllowedDistricts);
+            while (fromDate.HasValue && fromDate.Value.Year > 2400) fromDate = fromDate.Value.AddYears(-543);
+            while (toDate.HasValue && toDate.Value.Year > 2400) toDate = toDate.Value.AddYears(-543);
             if (fromDate.HasValue) { if (dateType == "bill") debts = debts.Where(d => d.BillDate >= fromDate.Value.Date).ToList(); else debts = debts.Where(d => (d.ReceiptDate ?? d.FullyPaidDate ?? d.PaidDate) >= fromDate.Value.Date).ToList(); }
             if (toDate.HasValue) { if (dateType == "bill") debts = debts.Where(d => d.BillDate <= toDate.Value.Date.AddDays(1).AddTicks(-1)).ToList(); else debts = debts.Where(d => (d.ReceiptDate ?? d.FullyPaidDate ?? d.PaidDate) <= toDate.Value.Date.AddDays(1).AddTicks(-1)).ToList(); }
-            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd"); ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd"); ViewBag.DateType = dateType;
+            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture); ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture); ViewBag.DateType = dateType;
             
             // Backfill missing or invalid Customer Code/Name for the same ReceiptNo
             var receiptGroups = debts.Where(d => !string.IsNullOrEmpty(d.ReceiptNo)).GroupBy(d => d.ReceiptNo).ToList();

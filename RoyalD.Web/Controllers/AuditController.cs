@@ -57,6 +57,8 @@ namespace RoyalD.Web.Controllers
                 }
             }
 
+            while (startDate.HasValue && startDate.Value.Year > 2400) startDate = startDate.Value.AddYears(-543);
+            while (endDate.HasValue && endDate.Value.Year > 2400) endDate = endDate.Value.AddYears(-543);
             if (startDate.HasValue)
             {
                 var startUtc = startDate.Value.Date.AddHours(-7);
@@ -100,8 +102,8 @@ namespace RoyalD.Web.Controllers
             ViewBag.UsersList = allUsersList;
             ViewBag.SearchTerm = search;
             ViewBag.SelectedSalesRep = salesRep;
-            ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
-            ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
+            ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+            ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
             ViewBag.CurrentPage = page;
             ViewBag.PageSize = effectivePageSize;
             ViewBag.TotalPages = totalPages;
@@ -222,8 +224,8 @@ namespace RoyalD.Web.Controllers
             ViewBag.UserDict = users;
             ViewBag.SearchTerm = search;
             ViewBag.SelectedSalesRep = salesRep;
-            ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
-            ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
+            ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+            ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
             ViewBag.PrintedBy = User.Identity?.Name ?? "Admin";
 
             return View("PrintPdf", logs);

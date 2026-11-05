@@ -252,6 +252,7 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions { ForwardedHeaders = Microso
 // Force Thai locale dd/MM/yyyy globally
 
 var thCulture = new System.Globalization.CultureInfo("th-TH");
+thCulture.DateTimeFormat.Calendar = new System.Globalization.GregorianCalendar();
 
 thCulture.DateTimeFormat.ShortDatePattern = "dd/MM/yyyy";
 

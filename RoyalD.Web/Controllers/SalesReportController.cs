@@ -186,6 +186,8 @@ namespace RoyalD.Web.Controllers
 
 
 
+            while (startDate.HasValue && startDate.Value.Year > 2400) startDate = startDate.Value.AddYears(-543);
+            while (endDate.HasValue && endDate.Value.Year > 2400) endDate = endDate.Value.AddYears(-543);
             var cacheKey = $"prod_details_{salesRep}_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}_{credit}_{month}_{userRepCode}_{username}_{isRestricted}";
 
             var data = await _cache.GetOrCreateAsync(cacheKey, async entry =>
@@ -226,6 +228,8 @@ namespace RoyalD.Web.Controllers
 
 
 
+            while (startDate.HasValue && startDate.Value.Year > 2400) startDate = startDate.Value.AddYears(-543);
+            while (endDate.HasValue && endDate.Value.Year > 2400) endDate = endDate.Value.AddYears(-543);
             var cacheKey = $"prod_details_{salesRep}_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}_{credit}_{month}_{userRepCode}_{username}_{isRestricted}";
 
             var data = await _cache.GetOrCreateAsync(cacheKey, async entry =>
@@ -272,6 +276,9 @@ namespace RoyalD.Web.Controllers
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : (isRestricted ? User.FindFirst("AllowedProvinces")?.Value : null);
             string? userAllowedDistricts = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedDistricts) ? currentUser.AllowedDistricts : (isRestricted ? User.FindFirst("AllowedDistricts")?.Value : null);
 
+            while (startDate.HasValue && startDate.Value.Year > 2400) startDate = startDate.Value.AddYears(-543);
+            while (endDate.HasValue && endDate.Value.Year > 2400) endDate = endDate.Value.AddYears(-543);
+            while (date.HasValue && date.Value.Year > 2400) date = date.Value.AddYears(-543);
             var cacheKey = $"cust_prod_{rep}_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}_{credit}_{month}_{date:yyyyMMdd}_{q}_{userRepCode}_{username}_{region}_{province}_{district}_{userAllowedRegion}_{userAllowedProvinces}_{userAllowedDistricts}";
             var vm = await _cache.GetOrCreateAsync(cacheKey, async entry =>
             {
@@ -298,9 +305,9 @@ namespace RoyalD.Web.Controllers
 
             ViewBag.SelectedRep = vm.SelectedRep;
             ViewBag.SelectedMonth = month;
-            ViewBag.SelectedDate = date?.ToString("yyyy-MM-dd");
-            ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
-            ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
+            ViewBag.SelectedDate = date?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+            ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+            ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
             ViewBag.Credit = credit;
             ViewBag.SearchQ = q;
             ViewBag.SelectedRegion = vm.SelectedRegion;
@@ -384,6 +391,8 @@ namespace RoyalD.Web.Controllers
 
 
 
+            while (startDate.HasValue && startDate.Value.Year > 2400) startDate = startDate.Value.AddYears(-543);
+            while (endDate.HasValue && endDate.Value.Year > 2400) endDate = endDate.Value.AddYears(-543);
             var cacheKey = $"cust_purch_{salesRep}_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}_{credit}_{month}_{userRepCode}_{username}_{searchCustomerCode}_{searchCustomerName}_{searchProductCode}";
 
             var vm = await _cache.GetOrCreateAsync(cacheKey, async entry =>
@@ -430,9 +439,9 @@ namespace RoyalD.Web.Controllers
 
             ViewBag.SelectedMonth = month;
 
-            ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
+            ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
 
-            ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
+            ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
 
             ViewBag.Credit = credit;
 
@@ -991,6 +1000,8 @@ namespace RoyalD.Web.Controllers
             }
             else if (startDate.HasValue && endDate.HasValue)
             {
+                while (startDate.Value.Year > 2400) startDate = startDate.Value.AddYears(-543);
+                while (endDate.Value.Year > 2400) endDate = endDate.Value.AddYears(-543);
                 finalStart = startDate.Value.Date;
                 finalEnd = endDate.Value.Date.AddDays(1).AddTicks(-1);
             }

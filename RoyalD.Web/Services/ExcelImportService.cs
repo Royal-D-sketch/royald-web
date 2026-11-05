@@ -45,9 +45,11 @@ namespace RoyalD.Web.Services
 
                 if (string.IsNullOrWhiteSpace(fullRow)) continue;
 
-                // 1. Skip CD Page Header Rows
+                // 1. Skip CD Page Header & Report Footer Rows
                 if (fullRow.Contains("รายละเอียด บิลขาย") || fullRow.Contains("Royal-D (Thailand)") ||
-                    fullRow.Contains("รหัส-ชื่อสินค้า") || (fullRow.Contains("บิล") && fullRow.Contains("รหัสลูกค้า")))
+                    fullRow.Contains("รหัส-ชื่อสินค้า") || (fullRow.Contains("บิล") && fullRow.Contains("รหัสลูกค้า")) ||
+                    fullRow.Contains("<<end of report>>", StringComparison.OrdinalIgnoreCase) ||
+                    fullRow.Contains("page :", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
@@ -447,12 +449,15 @@ namespace RoyalD.Web.Services
 
                 // Discard page headers & subtotal summary lines
                 if (fullRow.Contains("สรุปการชำระเงิน") || fullRow.Contains("Royal-D") || fullRow.Contains("วันที่รับเงิน") ||
-                    fullRow.Contains("ยอดรวม") || fullRow.Contains("รวมทั้งหมด") || fullRow.Contains("รวมทั้งสิ้น"))
+                    fullRow.Contains("ยอดรวม") || fullRow.Contains("รวมทั้งหมด") || fullRow.Contains("รวมทั้งสิ้น") ||
+                    fullRow.Contains("Page :", StringComparison.OrdinalIgnoreCase) ||
+                    fullRow.Contains("<<end of report>>", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
 
                 string colDate = tbl.Columns.Count > 0 ? row[0]?.ToString()?.Trim() ?? "" : "";
+                if (string.Equals(colDate, "รวม", StringComparison.OrdinalIgnoreCase)) continue;
                 string colReceipt = tbl.Columns.Count > 1 ? row[1]?.ToString()?.Trim() ?? "" : "";
                 string colBill = tbl.Columns.Count > 2 ? row[2]?.ToString()?.Trim() ?? "" : "";
                 string colCust = tbl.Columns.Count > 3 ? row[3]?.ToString()?.Trim() ?? "" : "";

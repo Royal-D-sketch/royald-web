@@ -118,6 +118,8 @@ namespace RoyalD.Web.Controllers
 
 
 
+            while (fromDate.HasValue && fromDate.Value.Year > 2400) fromDate = fromDate.Value.AddYears(-543);
+            while (toDate.HasValue && toDate.Value.Year > 2400) toDate = toDate.Value.AddYears(-543);
             if (fromDate.HasValue)
 
             {
@@ -180,9 +182,9 @@ namespace RoyalD.Web.Controllers
 
             ViewBag.SalesRep = salesRep;
 
-            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
+            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
 
-            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
+            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
 
 
 
@@ -1536,6 +1538,8 @@ namespace RoyalD.Web.Controllers
 
 
 
+            while (fromDate.HasValue && fromDate.Value.Year > 2400) fromDate = fromDate.Value.AddYears(-543);
+            while (toDate.HasValue && toDate.Value.Year > 2400) toDate = toDate.Value.AddYears(-543);
             if (fromDate.HasValue)
 
             {
@@ -1640,9 +1644,9 @@ namespace RoyalD.Web.Controllers
 
 
 
-            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
+            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
 
-            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
+            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
 
             ViewBag.Customer = customer;
 
@@ -1690,6 +1694,8 @@ namespace RoyalD.Web.Controllers
 
 
 
+            while (fromDate.HasValue && fromDate.Value.Year > 2400) fromDate = fromDate.Value.AddYears(-543);
+            while (toDate.HasValue && toDate.Value.Year > 2400) toDate = toDate.Value.AddYears(-543);
             if (fromDate.HasValue) q = q.Where(c => c.CreditNoteDate >= fromDate.Value.Date);
 
             if (toDate.HasValue) q = q.Where(c => c.CreditNoteDate <= toDate.Value.Date.AddDays(1).AddTicks(-1));

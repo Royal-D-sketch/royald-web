@@ -374,13 +374,15 @@ namespace RoyalD.Web.Controllers
                 }
             }
 
+            while (startDate.HasValue && startDate.Value.Year > 2400) startDate = startDate.Value.AddYears(-543);
+            while (endDate.HasValue && endDate.Value.Year > 2400) endDate = endDate.Value.AddYears(-543);
             if (startDate.HasValue)
                 q = q.Where(b => b.BillDate >= startDate.Value.Date);
             if (endDate.HasValue)
                 q = q.Where(b => b.BillDate <= endDate.Value.Date.AddDays(1).AddTicks(-1));
 
-            ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
-            ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
+            ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+            ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
             if (!string.IsNullOrEmpty(poSearch))
                 q = q.Where(b => b.PoNumber.Contains(poSearch));
 
@@ -803,6 +805,8 @@ namespace RoyalD.Web.Controllers
                 }
             }
 
+            while (startDate.HasValue && startDate.Value.Year > 2400) startDate = startDate.Value.AddYears(-543);
+            while (endDate.HasValue && endDate.Value.Year > 2400) endDate = endDate.Value.AddYears(-543);
             if (startDate.HasValue)
                 q = q.Where(b => b.BillDate >= startDate.Value.Date);
             if (endDate.HasValue)
@@ -933,6 +937,8 @@ namespace RoyalD.Web.Controllers
 
             if (!string.IsNullOrEmpty(search)) q = ApplySearchFilter(q, search);
             if (!string.IsNullOrEmpty(month)) q = q.Where(b => b.SourceMonth == month);
+            while (startDate.HasValue && startDate.Value.Year > 2400) startDate = startDate.Value.AddYears(-543);
+            while (endDate.HasValue && endDate.Value.Year > 2400) endDate = endDate.Value.AddYears(-543);
             if (startDate.HasValue) q = q.Where(b => b.BillDate >= startDate.Value.Date);
             if (endDate.HasValue) q = q.Where(b => b.BillDate <= endDate.Value.Date.AddDays(1).AddTicks(-1));
             if (credit.HasValue) q = q.Where(b => b.Credit == credit.Value);

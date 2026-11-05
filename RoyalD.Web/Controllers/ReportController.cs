@@ -68,6 +68,8 @@ namespace RoyalD.Web.Controllers
             {
                 qPending = qPending.Where(p => filterReps.Contains(p.OutstandingDebt.SalesRep));
             }
+            while (fromDate.HasValue && fromDate.Value.Year > 2400) fromDate = fromDate.Value.AddYears(-543);
+            while (toDate.HasValue && toDate.Value.Year > 2400) toDate = toDate.Value.AddYears(-543);
             if (fromDate.HasValue)
             {
                 var fDate = fromDate.Value.Date;
@@ -110,6 +112,8 @@ namespace RoyalD.Web.Controllers
             {
                 qDebt = qDebt.Where(d => filterReps.Contains(d.SalesRep));
             }
+            while (fromDate.HasValue && fromDate.Value.Year > 2400) fromDate = fromDate.Value.AddYears(-543);
+            while (toDate.HasValue && toDate.Value.Year > 2400) toDate = toDate.Value.AddYears(-543);
             if (fromDate.HasValue)
             {
                 var fDate = fromDate.Value.Date;
@@ -148,8 +152,8 @@ namespace RoyalD.Web.Controllers
             ViewBag.SalesReps = (isRestricted && assignedReps.Count > 0) ? assignedReps : reps;
             ViewBag.Search = search;
             ViewBag.SalesRep = selectedRepForUi;
-            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
-            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
+            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
             ViewBag.Credit = credit;
             ViewBag.IsRestricted = isRestricted;
 
@@ -176,6 +180,8 @@ namespace RoyalD.Web.Controllers
             {
                 q = q.Where(b => b.ReceiptDate >= dateLimit);
             }
+            while (fromDate.HasValue && fromDate.Value.Year > 2400) fromDate = fromDate.Value.AddYears(-543);
+            while (toDate.HasValue && toDate.Value.Year > 2400) toDate = toDate.Value.AddYears(-543);
             if (fromDate.HasValue) q = q.Where(b => (b.ReceiptDate ?? b.BillDate) >= fromDate.Value.Date);
             if (toDate.HasValue) q = q.Where(b => (b.ReceiptDate ?? b.BillDate) <= toDate.Value.Date.AddDays(1).AddTicks(-1));
             if (credit.HasValue) q = q.Where(b => b.Credit == credit.Value);
@@ -190,8 +196,8 @@ namespace RoyalD.Web.Controllers
             
             var data = await q.OrderByDescending(b => b.ReceiptDate).ToListAsync();
             ViewBag.SearchTerm = search;
-            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
-            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
+            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
             ViewBag.Credit = credit;
             return View(data);
         }
@@ -203,6 +209,8 @@ namespace RoyalD.Web.Controllers
             {
                 q = q.Where(d => d.CustomerName.Contains(search) || d.BillNo.Contains(search) || d.CustomerCode.Contains(search));
             }
+            while (fromDate.HasValue && fromDate.Value.Year > 2400) fromDate = fromDate.Value.AddYears(-543);
+            while (toDate.HasValue && toDate.Value.Year > 2400) toDate = toDate.Value.AddYears(-543);
             if (fromDate.HasValue) q = q.Where(d => (d.CancelledDate ?? d.BillDate) >= fromDate.Value.Date);
             if (toDate.HasValue) q = q.Where(d => (d.CancelledDate ?? d.BillDate) <= toDate.Value.Date.AddDays(1).AddTicks(-1));
             if (credit.HasValue) q = q.Where(d => d.Credit == credit.Value);
@@ -213,8 +221,8 @@ namespace RoyalD.Web.Controllers
             }
             var data = await q.OrderByDescending(d => d.CancelledDate ?? d.BillDate).ToListAsync();
             ViewBag.Search = search;
-            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
-            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
+            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
             ViewBag.Credit = credit;
             return View(data);
         }
@@ -245,6 +253,8 @@ namespace RoyalD.Web.Controllers
             {
                 q = q.Where(d => filterReps.Contains(d.SalesRep));
             }
+            while (fromDate.HasValue && fromDate.Value.Year > 2400) fromDate = fromDate.Value.AddYears(-543);
+            while (toDate.HasValue && toDate.Value.Year > 2400) toDate = toDate.Value.AddYears(-543);
             if (fromDate.HasValue)
             {
                 q = q.Where(d => d.BillDate >= fromDate.Value.Date);
@@ -267,8 +277,8 @@ namespace RoyalD.Web.Controllers
             ViewBag.SalesReps = (isRestricted && assignedReps.Count > 0) ? assignedReps : reps;
             ViewBag.Search = search;
             ViewBag.SalesRep = selectedRepForUi;
-            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
-            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
+            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
             ViewBag.Credit = credit;
             ViewBag.IsRestricted = isRestricted;
 
@@ -284,14 +294,16 @@ namespace RoyalD.Web.Controllers
             {
                 q = q.Where(d => d.CustomerName.Contains(search) || d.BillNo.Contains(search) || d.CustomerCode.Contains(search));
             }
+            while (fromDate.HasValue && fromDate.Value.Year > 2400) fromDate = fromDate.Value.AddYears(-543);
+            while (toDate.HasValue && toDate.Value.Year > 2400) toDate = toDate.Value.AddYears(-543);
             if (fromDate.HasValue) q = q.Where(d => d.BillDate >= fromDate.Value.Date);
             if (toDate.HasValue) q = q.Where(d => d.BillDate <= toDate.Value.Date.AddDays(1).AddTicks(-1));
             if (credit.HasValue) q = q.Where(d => d.Credit == credit.Value);
 
             var data = await q.OrderBy(d => d.DueDate).ToListAsync();
             ViewBag.Search = search;
-            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
-            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
+            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
             ViewBag.Credit = credit;
             return View(data);
         }
@@ -348,6 +360,8 @@ namespace RoyalD.Web.Controllers
                 q = q.Where(d => filterReps.Contains(d.SalesRep));
             }
 
+            while (fromDate.HasValue && fromDate.Value.Year > 2400) fromDate = fromDate.Value.AddYears(-543);
+            while (toDate.HasValue && toDate.Value.Year > 2400) toDate = toDate.Value.AddYears(-543);
             if (fromDate.HasValue)
             {
                 q = q.Where(d => (d.ReturnedToAccountDate ?? d.BillDate) >= fromDate.Value.Date);
@@ -373,8 +387,8 @@ namespace RoyalD.Web.Controllers
             ViewBag.Search = search;
             ViewBag.SalesRep = selectedRepForUi;
             ViewBag.IsRestricted = isRestricted;
-            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
-            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
+            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
             ViewBag.Credit = credit;
             ViewBag.IsAuthorized = IsAuthorizedUserForReturn(User);
 
@@ -443,6 +457,8 @@ namespace RoyalD.Web.Controllers
             {
                 q = q.Where(d => d.SalesRep == salesRep);
             }
+            while (fromDate.HasValue && fromDate.Value.Year > 2400) fromDate = fromDate.Value.AddYears(-543);
+            while (toDate.HasValue && toDate.Value.Year > 2400) toDate = toDate.Value.AddYears(-543);
             if (fromDate.HasValue)
             {
                 q = q.Where(d => (d.ReturnedToAccountDate ?? d.BillDate) >= fromDate.Value.Date);
@@ -576,6 +592,8 @@ namespace RoyalD.Web.Controllers
             {
                 q = q.Where(d => d.SalesRep == salesRep);
             }
+            while (fromDate.HasValue && fromDate.Value.Year > 2400) fromDate = fromDate.Value.AddYears(-543);
+            while (toDate.HasValue && toDate.Value.Year > 2400) toDate = toDate.Value.AddYears(-543);
             if (fromDate.HasValue)
             {
                 q = q.Where(d => (d.ReturnedToAccountDate ?? d.BillDate) >= fromDate.Value.Date);
