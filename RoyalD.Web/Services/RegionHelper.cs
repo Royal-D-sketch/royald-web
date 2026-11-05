@@ -43,6 +43,25 @@ namespace RoyalD.Web.Services
                 "สงขลา", "สตูล", "สมุทรสงคราม", "สระแก้ว", "สระบุรี", "สิงห์บุรี", "สุโขทัย", "สุพรรณบุรี", "สุราษฎร์ธานี",
                 "สุรินทร์", "หนองคาย", "หนองบัวลำภู", "อ่างทอง", "อำนาจเจริญ", "อุดรธานี", "อุตรดิตถ์", "อุทัยธานี", "อุบลราชธานี"
             },
+            ["โมเดิร์นเทรด"] = new List<string>
+            {
+                "กรุงเทพมหานคร", "กระบี่", "กาญจนบุรี", "กาฬสินธุ์", "กำแพงเพชร", 
+                "ขอนแก่น", "จันทบุรี", "ฉะเชิงเทรา", "ชลบุรี", "ชัยนาท", 
+                "ชัยภูมิ", "ชุมพร", "เชียงราย", "เชียงใหม่", "ตรัง", 
+                "ตราด", "ตาก", "นครนายก", "นครปฐม", "นครพนม", 
+                "นครราชสีมา", "นครศรีธรรมราช", "นครสวรรค์", "นนทบุรี", "นราธิวาส", 
+                "น่าน", "บึงกาฬ", "บุรีรัมย์", "ปทุมธานี", "ประจวบคีรีขันธ์", 
+                "ปราจีนบุรี", "ปัตตานี", "พระนครศรีอยุธยา", "พะเยา", "พังงา", 
+                "พัทลุง", "พิจิตร", "พิษณุโลก", "เพชรบุรี", "เพชรบูรณ์", 
+                "แพร่", "ภูเก็ต", "มหาสารคาม", "มุกดาหาร", "แม่ฮ่องสอน", 
+                "ยโสธร", "ยะลา", "ร้อยเอ็ด", "ระนอง", "ระยอง", 
+                "ราชบุรี", "ลพบุรี", "ลำปาง", "ลำพูน", "เลย", 
+                "ศรีสะเกษ", "สกลนคร", "สงขลา", "สตูล", "สมุทรปราการ", 
+                "สมุทรสงคราม", "สมุทรสาคร", "สระแก้ว", "สระบุรี", "สิงห์บุรี", 
+                "สุโขทัย", "สุพรรณบุรี", "สุราษฎร์ธานี", "สุรินทร์", "หนองคาย", 
+                "หนองบัวลำภู", "อ่างทอง", "อำนาจเจริญ", "อุดรธานี", "อุตรดิตถ์", 
+                "อุทัยธานี", "อุบลราชธานี"
+            },
             ["ภาคกลาง"] = new List<string>
             {
                 "กรุงเทพมหานคร", "กรุงเทพฯ", "กรุงเทพ", "กทม", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "นครปฐม", 
@@ -91,6 +110,25 @@ namespace RoyalD.Web.Services
                 "ร้อยเอ็ด", "ระนอง", "ระยอง", "ราชบุรี", "ลพบุรี", "ลำปาง", "ลำพูน", "เลย", "ศรีสะเกษ", "สกลนคร",
                 "สงขลา", "สตูล", "สมุทรสงคราม", "สระแก้ว", "สระบุรี", "สิงห์บุรี", "สุโขทัย", "สุพรรณบุรี", "สุราษฎร์ธานี",
                 "สุรินทร์", "หนองคาย", "หนองบัวลำภู", "อ่างทอง", "อำนาจเจริญ", "อุดรธานี", "อุตรดิตถ์", "อุทัยธานี", "อุบลราชธานี"
+            },
+            ["โมเดิร์นเทรด"] = new List<string>
+            {
+                "กรุงเทพมหานคร", "กระบี่", "กาญจนบุรี", "กาฬสินธุ์", "กำแพงเพชร", 
+                "ขอนแก่น", "จันทบุรี", "ฉะเชิงเทรา", "ชลบุรี", "ชัยนาท", 
+                "ชัยภูมิ", "ชุมพร", "เชียงราย", "เชียงใหม่", "ตรัง", 
+                "ตราด", "ตาก", "นครนายก", "นครปฐม", "นครพนม", 
+                "นครราชสีมา", "นครศรีธรรมราช", "นครสวรรค์", "นนทบุรี", "นราธิวาส", 
+                "น่าน", "บึงกาฬ", "บุรีรัมย์", "ปทุมธานี", "ประจวบคีรีขันธ์", 
+                "ปราจีนบุรี", "ปัตตานี", "พระนครศรีอยุธยา", "พะเยา", "พังงา", 
+                "พัทลุง", "พิจิตร", "พิษณุโลก", "เพชรบุรี", "เพชรบูรณ์", 
+                "แพร่", "ภูเก็ต", "มหาสารคาม", "มุกดาหาร", "แม่ฮ่องสอน", 
+                "ยโสธร", "ยะลา", "ร้อยเอ็ด", "ระนอง", "ระยอง", 
+                "ราชบุรี", "ลพบุรี", "ลำปาง", "ลำพูน", "เลย", 
+                "ศรีสะเกษ", "สกลนคร", "สงขลา", "สตูล", "สมุทรปราการ", 
+                "สมุทรสงคราม", "สมุทรสาคร", "สระแก้ว", "สระบุรี", "สิงห์บุรี", 
+                "สุโขทัย", "สุพรรณบุรี", "สุราษฎร์ธานี", "สุรินทร์", "หนองคาย", 
+                "หนองบัวลำภู", "อ่างทอง", "อำนาจเจริญ", "อุดรธานี", "อุตรดิตถ์", 
+                "อุทัยธานี", "อุบลราชธานี"
             },
             ["ภาคกลาง"] = new List<string>
             {
@@ -455,12 +493,244 @@ namespace RoyalD.Web.Services
             return res;
         }
 
+        public static IQueryable<RoyalD.Web.Models.SalesBill> FilterModernTradeSalesBills(
+            IQueryable<RoyalD.Web.Models.SalesBill> q,
+            bool onlyModernTrade)
+        {
+            var mtCodes = DashboardService.ModernTradeCodes.ToList();
+            if (onlyModernTrade)
+            {
+                return q.Where(b => mtCodes.Contains(b.CustomerCode) || (
+                    b.CustomerName != null &&
+                    !b.CustomerName.Contains("สาลี่สุพรรณ") &&
+                    !b.CustomerName.Contains("คุณเอกชัย") &&
+                    !b.CustomerName.Contains("ยากาแร็ต") &&
+                    !b.CustomerName.Contains("คลองสี่วา") &&
+                    !b.CustomerName.Contains("เอกชัยกอล์ฟ") &&
+                    !b.CustomerName.Contains("เพียวเคมม์") &&
+                    !b.CustomerName.Contains("ปรีชา  วิลล่า") &&
+                    !b.CustomerName.Contains("มหาชัยวิลล่า") &&
+                    !b.CustomerName.Contains("ท็อป ไฮเทค") &&
+                    !b.CustomerName.Contains("ท็อป พาร์ทเนอร์") &&
+                    (
+                        b.CustomerName.Contains("ซีพี แอ็กซ์ตร้า") ||
+                        b.CustomerName.Contains("ซีพี แอ๊กซ์ตร้า") ||
+                        b.CustomerName.Contains("สยามแม็คโคร") ||
+                        b.CustomerName.Contains("สยาม แม็คโคร") ||
+                        b.CustomerName.Contains("แม็คโคร") ||
+                        b.CustomerName.Contains("ซีพี ออลล์") ||
+                        b.CustomerName.Contains("ซีพีออลล์") ||
+                        b.CustomerName.Contains("เซ็นทรัล ฟู้ด") ||
+                        b.CustomerName.Contains("บิ๊กซี") ||
+                        b.CustomerName.ToLower().Contains("big c") ||
+                        b.CustomerName.Contains("สุวรรณชาด") ||
+                        b.CustomerName.Contains("ปตท. บริหารธุรกิจค้าปลีก") ||
+                        b.CustomerName.Contains("ปิโตรเลียมไทยคอร์ปอเรชั่น") ||
+                        b.CustomerName.Contains("พี แอนด์ เอฟ อินทิเกรท") ||
+                        b.CustomerName.Contains("อิออน (ไทยแลนด์)") ||
+                        b.CustomerName.Contains("ซี.เจ.เอ็กซ์เพรส") ||
+                        b.CustomerName.Contains("ซี.เจ. เอ็กซ์เพรส") ||
+                        b.CustomerName.Contains("ฟู้ดแลนด์") ||
+                        b.CustomerName.Contains("ฮาร์เบอร์ แลนด์") ||
+                        b.CustomerName.Contains("ฮาร์เบอร์แลนด์") ||
+                        b.CustomerName.Contains("บู๊ทส์ รีเทล") ||
+                        b.CustomerName.Contains("เดอะมอลล์ กรุ๊ป") ||
+                        b.CustomerName.Contains("วิลล่า มาร์เก็ท") ||
+                        b.CustomerName.Contains("สห ลอว์สัน") ||
+                        b.CustomerName.Contains("เซ็นทรัล วัตสัน") ||
+                        b.CustomerName.Contains("ซูรูฮะ (ประเทศไทย)") ||
+                        b.CustomerName.Contains("ฟาร์มาฮอฟ") ||
+                        b.CustomerName.Contains("ฟาร์มมาฮอฟ") ||
+                        b.CustomerName.ToLower().Contains("pharmahof") ||
+                        b.CustomerName.Contains("ไทยฟู้ดส์") ||
+                        b.CustomerName.Contains("ฟาสซิโน") ||
+                        b.CustomerName.Contains("ใบเมี่ยง")
+                    )
+                ));
+            }
+            else
+            {
+                return q.Where(b => !mtCodes.Contains(b.CustomerCode) && !(
+                    b.CustomerName != null &&
+                    !b.CustomerName.Contains("สาลี่สุพรรณ") &&
+                    !b.CustomerName.Contains("คุณเอกชัย") &&
+                    !b.CustomerName.Contains("ยากาแร็ต") &&
+                    !b.CustomerName.Contains("คลองสี่วา") &&
+                    !b.CustomerName.Contains("เอกชัยกอล์ฟ") &&
+                    !b.CustomerName.Contains("เพียวเคมม์") &&
+                    !b.CustomerName.Contains("ปรีชา  วิลล่า") &&
+                    !b.CustomerName.Contains("มหาชัยวิลล่า") &&
+                    !b.CustomerName.Contains("ท็อป ไฮเทค") &&
+                    !b.CustomerName.Contains("ท็อป พาร์ทเนอร์") &&
+                    (
+                        b.CustomerName.Contains("ซีพี แอ็กซ์ตร้า") ||
+                        b.CustomerName.Contains("ซีพี แอ๊กซ์ตร้า") ||
+                        b.CustomerName.Contains("สยามแม็คโคร") ||
+                        b.CustomerName.Contains("สยาม แม็คโคร") ||
+                        b.CustomerName.Contains("แม็คโคร") ||
+                        b.CustomerName.Contains("ซีพี ออลล์") ||
+                        b.CustomerName.Contains("ซีพีออลล์") ||
+                        b.CustomerName.Contains("เซ็นทรัล ฟู้ด") ||
+                        b.CustomerName.Contains("บิ๊กซี") ||
+                        b.CustomerName.ToLower().Contains("big c") ||
+                        b.CustomerName.Contains("สุวรรณชาด") ||
+                        b.CustomerName.Contains("ปตท. บริหารธุรกิจค้าปลีก") ||
+                        b.CustomerName.Contains("ปิโตรเลียมไทยคอร์ปอเรชั่น") ||
+                        b.CustomerName.Contains("พี แอนด์ เอฟ อินทิเกรท") ||
+                        b.CustomerName.Contains("อิออน (ไทยแลนด์)") ||
+                        b.CustomerName.Contains("ซี.เจ.เอ็กซ์เพรส") ||
+                        b.CustomerName.Contains("ซี.เจ. เอ็กซ์เพรส") ||
+                        b.CustomerName.Contains("ฟู้ดแลนด์") ||
+                        b.CustomerName.Contains("ฮาร์เบอร์ แลนด์") ||
+                        b.CustomerName.Contains("ฮาร์เบอร์แลนด์") ||
+                        b.CustomerName.Contains("บู๊ทส์ รีเทล") ||
+                        b.CustomerName.Contains("เดอะมอลล์ กรุ๊ป") ||
+                        b.CustomerName.Contains("วิลล่า มาร์เก็ท") ||
+                        b.CustomerName.Contains("สห ลอว์สัน") ||
+                        b.CustomerName.Contains("เซ็นทรัล วัตสัน") ||
+                        b.CustomerName.Contains("ซูรูฮะ (ประเทศไทย)") ||
+                        b.CustomerName.Contains("ฟาร์มาฮอฟ") ||
+                        b.CustomerName.Contains("ฟาร์มมาฮอฟ") ||
+                        b.CustomerName.ToLower().Contains("pharmahof") ||
+                        b.CustomerName.Contains("ไทยฟู้ดส์") ||
+                        b.CustomerName.Contains("ฟาสซิโน") ||
+                        b.CustomerName.Contains("ใบเมี่ยง")
+                    )
+                ));
+            }
+        }
+
+        public static IQueryable<RoyalD.Web.Models.SalesBillItem> FilterModernTradeSalesBillItems(
+            IQueryable<RoyalD.Web.Models.SalesBillItem> q,
+            bool onlyModernTrade)
+        {
+            var mtCodes = DashboardService.ModernTradeCodes.ToList();
+            if (onlyModernTrade)
+            {
+                return q.Where(i => mtCodes.Contains(i.SalesBill.CustomerCode) || (
+                    i.SalesBill.CustomerName != null &&
+                    !i.SalesBill.CustomerName.Contains("สาลี่สุพรรณ") &&
+                    !i.SalesBill.CustomerName.Contains("คุณเอกชัย") &&
+                    !i.SalesBill.CustomerName.Contains("ยากาแร็ต") &&
+                    !i.SalesBill.CustomerName.Contains("คลองสี่วา") &&
+                    !i.SalesBill.CustomerName.Contains("เอกชัยกอล์ฟ") &&
+                    !i.SalesBill.CustomerName.Contains("เพียวเคมม์") &&
+                    !i.SalesBill.CustomerName.Contains("ปรีชา  วิลล่า") &&
+                    !i.SalesBill.CustomerName.Contains("มหาชัยวิลล่า") &&
+                    !i.SalesBill.CustomerName.Contains("ท็อป ไฮเทค") &&
+                    !i.SalesBill.CustomerName.Contains("ท็อป พาร์ทเนอร์") &&
+                    (
+                        i.SalesBill.CustomerName.Contains("ซีพี แอ็กซ์ตร้า") ||
+                        i.SalesBill.CustomerName.Contains("ซีพี แอ๊กซ์ตร้า") ||
+                        i.SalesBill.CustomerName.Contains("สยามแม็คโคร") ||
+                        i.SalesBill.CustomerName.Contains("สยาม แม็คโคร") ||
+                        i.SalesBill.CustomerName.Contains("แม็คโคร") ||
+                        i.SalesBill.CustomerName.Contains("ซีพี ออลล์") ||
+                        i.SalesBill.CustomerName.Contains("ซีพีออลล์") ||
+                        i.SalesBill.CustomerName.Contains("เซ็นทรัล ฟู้ด") ||
+                        i.SalesBill.CustomerName.Contains("บิ๊กซี") ||
+                        i.SalesBill.CustomerName.ToLower().Contains("big c") ||
+                        i.SalesBill.CustomerName.Contains("สุวรรณชาด") ||
+                        i.SalesBill.CustomerName.Contains("ปตท. บริหารธุรกิจค้าปลีก") ||
+                        i.SalesBill.CustomerName.Contains("ปิโตรเลียมไทยคอร์ปอเรชั่น") ||
+                        i.SalesBill.CustomerName.Contains("พี แอนด์ เอฟ อินทิเกรท") ||
+                        i.SalesBill.CustomerName.Contains("อิออน (ไทยแลนด์)") ||
+                        i.SalesBill.CustomerName.Contains("ซี.เจ.เอ็กซ์เพรส") ||
+                        i.SalesBill.CustomerName.Contains("ซี.เจ. เอ็กซ์เพรส") ||
+                        i.SalesBill.CustomerName.Contains("ฟู้ดแลนด์") ||
+                        i.SalesBill.CustomerName.Contains("ฮาร์เบอร์ แลนด์") ||
+                        i.SalesBill.CustomerName.Contains("ฮาร์เบอร์แลนด์") ||
+                        i.SalesBill.CustomerName.Contains("บู๊ทส์ รีเทล") ||
+                        i.SalesBill.CustomerName.Contains("เดอะมอลล์ กรุ๊ป") ||
+                        i.SalesBill.CustomerName.Contains("วิลล่า มาร์เก็ท") ||
+                        i.SalesBill.CustomerName.Contains("สห ลอว์สัน") ||
+                        i.SalesBill.CustomerName.Contains("เซ็นทรัล วัตสัน") ||
+                        i.SalesBill.CustomerName.Contains("ซูรูฮะ (ประเทศไทย)") ||
+                        i.SalesBill.CustomerName.Contains("ฟาร์มาฮอฟ") ||
+                        i.SalesBill.CustomerName.Contains("ฟาร์มมาฮอฟ") ||
+                        i.SalesBill.CustomerName.ToLower().Contains("pharmahof") ||
+                        i.SalesBill.CustomerName.Contains("ไทยฟู้ดส์") ||
+                        i.SalesBill.CustomerName.Contains("ฟาสซิโน") ||
+                        i.SalesBill.CustomerName.Contains("ใบเมี่ยง")
+                    )
+                ));
+            }
+            else
+            {
+                return q.Where(i => !mtCodes.Contains(i.SalesBill.CustomerCode) && !(
+                    i.SalesBill.CustomerName != null &&
+                    !i.SalesBill.CustomerName.Contains("สาลี่สุพรรณ") &&
+                    !i.SalesBill.CustomerName.Contains("คุณเอกชัย") &&
+                    !i.SalesBill.CustomerName.Contains("ยากาแร็ต") &&
+                    !i.SalesBill.CustomerName.Contains("คลองสี่วา") &&
+                    !i.SalesBill.CustomerName.Contains("เอกชัยกอล์ฟ") &&
+                    !i.SalesBill.CustomerName.Contains("เพียวเคมม์") &&
+                    !i.SalesBill.CustomerName.Contains("ปรีชา  วิลล่า") &&
+                    !i.SalesBill.CustomerName.Contains("มหาชัยวิลล่า") &&
+                    !i.SalesBill.CustomerName.Contains("ท็อป ไฮเทค") &&
+                    !i.SalesBill.CustomerName.Contains("ท็อป พาร์ทเนอร์") &&
+                    (
+                        i.SalesBill.CustomerName.Contains("ซีพี แอ็กซ์ตร้า") ||
+                        i.SalesBill.CustomerName.Contains("ซีพี แอ๊กซ์ตร้า") ||
+                        i.SalesBill.CustomerName.Contains("สยามแม็คโคร") ||
+                        i.SalesBill.CustomerName.Contains("สยาม แม็คโคร") ||
+                        i.SalesBill.CustomerName.Contains("แม็คโคร") ||
+                        i.SalesBill.CustomerName.Contains("ซีพี ออลล์") ||
+                        i.SalesBill.CustomerName.Contains("ซีพีออลล์") ||
+                        i.SalesBill.CustomerName.Contains("เซ็นทรัล ฟู้ด") ||
+                        i.SalesBill.CustomerName.Contains("บิ๊กซี") ||
+                        i.SalesBill.CustomerName.ToLower().Contains("big c") ||
+                        i.SalesBill.CustomerName.Contains("สุวรรณชาด") ||
+                        i.SalesBill.CustomerName.Contains("ปตท. บริหารธุรกิจค้าปลีก") ||
+                        i.SalesBill.CustomerName.Contains("ปิโตรเลียมไทยคอร์ปอเรชั่น") ||
+                        i.SalesBill.CustomerName.Contains("พี แอนด์ เอฟ อินทิเกรท") ||
+                        i.SalesBill.CustomerName.Contains("อิออน (ไทยแลนด์)") ||
+                        i.SalesBill.CustomerName.Contains("ซี.เจ.เอ็กซ์เพรส") ||
+                        i.SalesBill.CustomerName.Contains("ซี.เจ. เอ็กซ์เพรส") ||
+                        i.SalesBill.CustomerName.Contains("ฟู้ดแลนด์") ||
+                        i.SalesBill.CustomerName.Contains("ฮาร์เบอร์ แลนด์") ||
+                        i.SalesBill.CustomerName.Contains("ฮาร์เบอร์แลนด์") ||
+                        i.SalesBill.CustomerName.Contains("บู๊ทส์ รีเทล") ||
+                        i.SalesBill.CustomerName.Contains("เดอะมอลล์ กรุ๊ป") ||
+                        i.SalesBill.CustomerName.Contains("วิลล่า มาร์เก็ท") ||
+                        i.SalesBill.CustomerName.Contains("สห ลอว์สัน") ||
+                        i.SalesBill.CustomerName.Contains("เซ็นทรัล วัตสัน") ||
+                        i.SalesBill.CustomerName.Contains("ซูรูฮะ (ประเทศไทย)") ||
+                        i.SalesBill.CustomerName.Contains("ฟาร์มาฮอฟ") ||
+                        i.SalesBill.CustomerName.Contains("ฟาร์มมาฮอฟ") ||
+                        i.SalesBill.CustomerName.ToLower().Contains("pharmahof") ||
+                        i.SalesBill.CustomerName.Contains("ไทยฟู้ดส์") ||
+                        i.SalesBill.CustomerName.Contains("ฟาสซิโน") ||
+                        i.SalesBill.CustomerName.Contains("ใบเมี่ยง")
+                    )
+                ));
+            }
+        }
+
         public static IQueryable<RoyalD.Web.Models.SalesBill> ApplySalesBillAreaFilter(
             IQueryable<RoyalD.Web.Models.SalesBill> q,
             AreaFilterResult areaScope)
         {
-            if (string.IsNullOrEmpty(areaScope.SelectedProvince) && !areaScope.HasProvinceRestriction &&
-                (areaScope.SelectedRegion == "ต่างจังหวัด" || areaScope.SelectedRegion == "ต่างจังหวัด (ทุกภาค)" || string.Equals(areaScope.SelectedRegion, "upcountry", StringComparison.OrdinalIgnoreCase)))
+            bool isMtRegion = areaScope.SelectedRegion == "โมเดิร์นเทรด" || string.Equals(areaScope.SelectedRegion, "moderntrade", StringComparison.OrdinalIgnoreCase);
+            bool isUpcountryRegion = areaScope.SelectedRegion == "ต่างจังหวัด" || areaScope.SelectedRegion == "ต่างจังหวัด (ทุกภาค)" || string.Equals(areaScope.SelectedRegion, "upcountry", StringComparison.OrdinalIgnoreCase);
+            bool isBkkVicinityRegion = areaScope.SelectedRegion == "กรุงเทพฯ และปริมณฑล" || areaScope.SelectedRegion == "กรุงเทพและปริมณฑล" || areaScope.SelectedRegion == "กรุงเทพมหานครและปริมณฑล";
+
+            if (isMtRegion)
+            {
+                q = FilterModernTradeSalesBills(q, true);
+                if (!string.IsNullOrEmpty(areaScope.SelectedProvince) && areaScope.EffectiveProvinceVariants != null && areaScope.EffectiveProvinceVariants.Count > 0)
+                {
+                    q = q.Where(b => areaScope.EffectiveProvinceVariants.Contains(b.Province));
+                }
+                return q;
+            }
+
+            if (isUpcountryRegion || isBkkVicinityRegion)
+            {
+                q = FilterModernTradeSalesBills(q, false);
+            }
+
+            if (string.IsNullOrEmpty(areaScope.SelectedProvince) && !areaScope.HasProvinceRestriction && isUpcountryRegion)
             {
                 var bkkVariants = GetMatchingProvinces("กรุงเทพฯ และปริมณฑล");
                 return q.Where(b => !bkkVariants.Contains(b.Province)
@@ -470,8 +740,7 @@ namespace RoyalD.Web.Services
                                  && !b.Province.Contains("นครปฐม"));
             }
 
-            if (string.IsNullOrEmpty(areaScope.SelectedProvince) && !areaScope.HasProvinceRestriction &&
-                (areaScope.SelectedRegion == "กรุงเทพฯ และปริมณฑล" || areaScope.SelectedRegion == "กรุงเทพและปริมณฑล" || areaScope.SelectedRegion == "กรุงเทพมหานครและปริมณฑล"))
+            if (string.IsNullOrEmpty(areaScope.SelectedProvince) && !areaScope.HasProvinceRestriction && isBkkVicinityRegion)
             {
                 var bkkVariants = GetMatchingProvinces("กรุงเทพฯ และปริมณฑล");
                 return q.Where(b => bkkVariants.Contains(b.Province)
@@ -493,8 +762,26 @@ namespace RoyalD.Web.Services
             IQueryable<RoyalD.Web.Models.SalesBillItem> q,
             AreaFilterResult areaScope)
         {
-            if (string.IsNullOrEmpty(areaScope.SelectedProvince) && !areaScope.HasProvinceRestriction &&
-                (areaScope.SelectedRegion == "ต่างจังหวัด" || areaScope.SelectedRegion == "ต่างจังหวัด (ทุกภาค)" || string.Equals(areaScope.SelectedRegion, "upcountry", StringComparison.OrdinalIgnoreCase)))
+            bool isMtRegion = areaScope.SelectedRegion == "โมเดิร์นเทรด" || string.Equals(areaScope.SelectedRegion, "moderntrade", StringComparison.OrdinalIgnoreCase);
+            bool isUpcountryRegion = areaScope.SelectedRegion == "ต่างจังหวัด" || areaScope.SelectedRegion == "ต่างจังหวัด (ทุกภาค)" || string.Equals(areaScope.SelectedRegion, "upcountry", StringComparison.OrdinalIgnoreCase);
+            bool isBkkVicinityRegion = areaScope.SelectedRegion == "กรุงเทพฯ และปริมณฑล" || areaScope.SelectedRegion == "กรุงเทพและปริมณฑล" || areaScope.SelectedRegion == "กรุงเทพมหานครและปริมณฑล";
+
+            if (isMtRegion)
+            {
+                q = FilterModernTradeSalesBillItems(q, true);
+                if (!string.IsNullOrEmpty(areaScope.SelectedProvince) && areaScope.EffectiveProvinceVariants != null && areaScope.EffectiveProvinceVariants.Count > 0)
+                {
+                    q = q.Where(i => areaScope.EffectiveProvinceVariants.Contains(i.SalesBill.Province));
+                }
+                return q;
+            }
+
+            if (isUpcountryRegion || isBkkVicinityRegion)
+            {
+                q = FilterModernTradeSalesBillItems(q, false);
+            }
+
+            if (string.IsNullOrEmpty(areaScope.SelectedProvince) && !areaScope.HasProvinceRestriction && isUpcountryRegion)
             {
                 var bkkVariants = GetMatchingProvinces("กรุงเทพฯ และปริมณฑล");
                 return q.Where(i => !bkkVariants.Contains(i.SalesBill.Province)
@@ -504,8 +791,7 @@ namespace RoyalD.Web.Services
                                  && !i.SalesBill.Province.Contains("นครปฐม"));
             }
 
-            if (string.IsNullOrEmpty(areaScope.SelectedProvince) && !areaScope.HasProvinceRestriction &&
-                (areaScope.SelectedRegion == "กรุงเทพฯ และปริมณฑล" || areaScope.SelectedRegion == "กรุงเทพและปริมณฑล" || areaScope.SelectedRegion == "กรุงเทพมหานครและปริมณฑล"))
+            if (string.IsNullOrEmpty(areaScope.SelectedProvince) && !areaScope.HasProvinceRestriction && isBkkVicinityRegion)
             {
                 var bkkVariants = GetMatchingProvinces("กรุงเทพฯ และปริมณฑล");
                 return q.Where(i => bkkVariants.Contains(i.SalesBill.Province)

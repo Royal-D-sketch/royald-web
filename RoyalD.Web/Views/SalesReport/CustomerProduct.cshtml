@@ -137,7 +137,7 @@
                     <option value="">@(Model.HasRegionRestriction ? "-- ทุกภาคที่รับผิดชอบ --" : "-- ทุกภาค --")</option>
                     @foreach (var reg in Model.AvailableRegions)
                     {
-                        var regLabel = reg == "กรุงเทพฯ และปริมณฑล" ? "🏙️ กรุงเทพฯ และปริมณฑล" : (reg == "ต่างจังหวัด" ? "🚚 ต่างจังหวัด (ทุกภาค)" : reg);
+                        var regLabel = reg == "กรุงเทพฯ และปริมณฑล" ? "🏙️ กรุงเทพฯ และปริมณฑล (ไม่รวม MT)" : (reg == "ต่างจังหวัด" ? "🚚 ต่างจังหวัด (ไม่รวม MT)" : (reg == "โมเดิร์นเทรด" ? "🏢 โมเดิร์นเทรด (Modern Trade)" : reg));
                         <option value="@reg" selected="@(reg == Model.SelectedRegion ? "selected" : null)">@regLabel</option>
                     }
                 </select>
@@ -194,15 +194,19 @@
                     bool cpAll = string.IsNullOrEmpty(cpReg);
                     bool cpBkk = cpReg == "กรุงเทพฯ และปริมณฑล";
                     bool cpUpc = cpReg == "ต่างจังหวัด";
+                    bool cpMt = cpReg == "โมเดิร์นเทรด";
                 }
                 <button type="button" onclick="filterCustProdArea('')" class="btn btn-sm rounded-pill px-3 fw-bold @(cpAll ? "btn-success shadow-sm" : "btn-outline-secondary bg-white")">
                     🌐 รายการขายทั้งหมด
                 </button>
                 <button type="button" onclick="filterCustProdArea('กรุงเทพฯ และปริมณฑล')" class="btn btn-sm rounded-pill px-3 fw-bold @(cpBkk ? "btn-info text-dark shadow-sm border-info" : "btn-outline-info text-dark bg-white")">
-                    🏙️ บิลขายกรุงเทพฯ และปริมณฑล
+                    🏙️ บิลขายกรุงเทพฯ และปริมณฑล (ไม่รวม MT)
                 </button>
                 <button type="button" onclick="filterCustProdArea('ต่างจังหวัด')" class="btn btn-sm rounded-pill px-3 fw-bold @(cpUpc ? "btn-primary shadow-sm" : "btn-outline-primary bg-white")">
-                    🚚 บิลขายต่างจังหวัด (ทุกภาค)
+                    🚚 บิลขายต่างจังหวัด (ไม่รวม MT)
+                </button>
+                <button type="button" onclick="filterCustProdArea('โมเดิร์นเทรด')" class="btn btn-sm rounded-pill px-3 fw-bold @(cpMt ? "btn-warning text-dark shadow-sm border-warning" : "btn-outline-warning text-dark bg-white")">
+                    🏢 บิลขายโมเดิร์นเทรด (Modern Trade)
                 </button>
             </div>
         </form>

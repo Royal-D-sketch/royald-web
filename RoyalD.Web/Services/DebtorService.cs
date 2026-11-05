@@ -214,7 +214,19 @@ namespace RoyalD.Web.Services
                 }
             }
 
-            return await q.OrderBy(d => d.DueDate).ToListAsync();
+            var resultList = await q.OrderBy(d => d.DueDate).ToListAsync();
+            if (!string.IsNullOrEmpty(region))
+            {
+                if (region == "โมเดิร์นเทรด" || region.Equals("moderntrade", StringComparison.OrdinalIgnoreCase))
+                {
+                    resultList = resultList.Where(d => DashboardService.IsModernTrade(d.CustomerCode, d.CustomerName)).ToList();
+                }
+                else if (region == "กรุงเทพฯ และปริมณฑล" || region == "กรุงเทพและปริมณฑล" || region == "ต่างจังหวัด" || region.Equals("upcountry", StringComparison.OrdinalIgnoreCase) || region == "กรุงเทพฯ" || region == "กรุงเทพ")
+                {
+                    resultList = resultList.Where(d => !DashboardService.IsModernTrade(d.CustomerCode, d.CustomerName)).ToList();
+                }
+            }
+            return resultList;
         }
 
         public async Task<List<OutstandingDebt>> GetPaidHistoryAsync(string? search = null, string? salesRep = null, string? userAllowedRegion = null, string? userAllowedProvinces = null, string? userAllowedDistricts = null)
