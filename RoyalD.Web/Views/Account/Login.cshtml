@@ -237,63 +237,12 @@ function requestLocationPermission() {
         const accField = document.getElementById('accuracy-field');
         if (accField) accField.value = accuracy;
 
-        statusText.innerText = 'กำลังระบุชื่อตำบล อำเภอ และจังหวัด...';
+        statusText.innerText = 'กำลังระบุชื่อสถานที่ ถนน ตำบล อำเภอ และจังหวัด...';
         helpText.innerHTML = `<i class="bi bi-crosshair"></i> พิกัด: ${lat.toFixed(6)}, ${lng.toFixed(6)} (รัศมี ±${accuracy} ม.)`;
 
-        let detectedLocation = '';
+        let detectedLocation = await getDetailedThaiLocation(lat, lng);
 
-        // 1. ลองดึงจาก BigDataCloud Reverse Geocoding API (ความแม่นยำสูง รวดเร็ว และรองรับภาษาไทย)
-        try {
-            const bdcRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=th`, { signal: AbortSignal.timeout(3500) });
-            if (bdcRes.ok) {
-                const bdcData = await bdcRes.json();
-                let district = '';
-                let prov = bdcData.principalSubdivision || '';
-
-                if (bdcData.localityInfo && Array.isArray(bdcData.localityInfo.administrative)) {
-                    const adminList = bdcData.localityInfo.administrative;
-                    const amphoeItem = adminList.find(a => a.name && (a.name.startsWith('อำเภอ') || a.name.startsWith('เขต')));
-                    if (amphoeItem) {
-                        district = amphoeItem.name;
-                    } else {
-                        const dDesc = adminList.find(a => a.description && a.description.includes('อำเภอใน'));
-                        if (dDesc) district = dDesc.name;
-                    }
-
-                    if (!prov) {
-                        const pItem = adminList.find(a => a.adminLevel === 4 || (a.name && (a.name.startsWith('จังหวัด') || a.name.includes('กรุงเทพ'))));
-                        if (pItem) prov = pItem.name;
-                    }
-                }
-
-                if (!district) {
-                    district = bdcData.city || bdcData.locality || '';
-                }
-
-                if (prov || district) {
-                    detectedLocation = formatThaiLocation(district, prov, lat, lng);
-                }
-            }
-        } catch(e) {}
-
-        // 2. ถ้ายังไม่ได้ ลองดึงจาก OpenStreetMap Nominatim zoom=18 เพื่อความแม่นยำระดับพิกัดเฉพาะจุด
-        if (!detectedLocation) {
-            try {
-                const osmRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=th`, { signal: AbortSignal.timeout(3500) });
-                if (osmRes.ok) {
-                    const osmData = await osmRes.json();
-                    if (osmData && osmData.address) {
-                        const district = osmData.address.county || osmData.address.district || osmData.address.city_district || osmData.address.town || osmData.address.suburb || '';
-                        const prov = osmData.address.province || osmData.address.state || '';
-                        if (prov || district) {
-                            detectedLocation = formatThaiLocation(district, prov, lat, lng);
-                        }
-                    }
-                }
-            } catch(e) {}
-        }
-
-        // 3. Fallback ออฟไลน์จากระบบฐานข้อมูลพิกัด
+        // Fallback ออฟไลน์หากไม่สามารถติดต่อภายนอกได้
         if (!detectedLocation) {
             detectedLocation = resolveLocationName(lat, lng);
         }
@@ -372,53 +321,119 @@ function requestLocationPermission() {
     }, 5500);
 }
 
-function formatThaiLocation(district, prov, lat, lng) {
-    let cleanProv = (prov || '').trim();
-    if (cleanProv.startsWith('จังหวัด')) {
-        cleanProv = cleanProv.replace(/^จังหวัด\s*/, '');
-    } else if (cleanProv.startsWith('จ.')) {
-        cleanProv = cleanProv.replace(/^จ\.\s*/, '');
-    }
+async function getDetailedThaiLocation(lat, lng) {
+    let place = '';
+    let road = '';
+    let subdistrict = '';
+    let district = '';
+    let province = '';
+
+    // วิธีที่ 1: ดึงจาก OpenStreetMap Nominatim zoom=18 (ความแม่นยำระดับอาคาร ถนน ซอย และตำบล/แขวง)
+    try {
+        const osmRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=th`, { signal: AbortSignal.timeout(3500) });
+        if (osmRes.ok) {
+            const osmData = await osmRes.json();
+            if (osmData && osmData.address) {
+                const a = osmData.address;
+                place = a.building || a.amenity || a.shop || a.office || a.tourism || a.leisure || '';
+                road = a.road || a.street || a.soi || '';
+                subdistrict = a.suburb || a.subdistrict || a.quarter || a.village || a.neighbourhood || '';
+                district = a.county || a.district || a.city_district || a.town || '';
+                province = a.province || a.state || '';
+            }
+        }
+    } catch(e) {}
+
+    // วิธีที่ 2: เสริมข้อมูลจาก BigDataCloud หากข้อมูลระดับตำบลหรืออำเภอยังไม่สมบูรณ์
+    try {
+        const bdcRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=th`, { signal: AbortSignal.timeout(3500) });
+        if (bdcRes.ok) {
+            const bdcData = await bdcRes.json();
+            if (!province) province = bdcData.principalSubdivision || '';
+
+            if (bdcData.localityInfo && Array.isArray(bdcData.localityInfo.administrative)) {
+                const adminList = bdcData.localityInfo.administrative;
+                if (!subdistrict) {
+                    const subItem = adminList.find(x => x.adminLevel === 8 || (x.name && (x.name.startsWith('ตำบล') || x.name.startsWith('แขวง'))));
+                    if (subItem) subdistrict = subItem.name;
+                }
+                if (!district) {
+                    const amphoeItem = adminList.find(a => a.adminLevel === 6 || (a.name && (a.name.startsWith('อำเภอ') || a.name.startsWith('เขต'))));
+                    if (amphoeItem) district = amphoeItem.name;
+                }
+                if (!province) {
+                    const pItem = adminList.find(a => a.adminLevel === 4 || (a.name && (a.name.startsWith('จังหวัด') || a.name.includes('กรุงเทพ'))));
+                    if (pItem) province = pItem.name;
+                }
+            }
+            if (!subdistrict && bdcData.locality) subdistrict = bdcData.locality;
+            if (!district && bdcData.city) district = bdcData.city;
+        }
+    } catch(e) {}
+
+    return formatFullThaiAddress(place, road, subdistrict, district, province, lat, lng);
+}
+
+function formatFullThaiAddress(place, road, subdistrict, district, province, lat, lng) {
+    let cleanProv = (province || '').trim();
+    if (cleanProv.startsWith('จังหวัด')) cleanProv = cleanProv.replace(/^จังหวัด\s*/, '');
+    else if (cleanProv.startsWith('จ.')) cleanProv = cleanProv.replace(/^จ\.\s*/, '');
     cleanProv = cleanProv.trim();
 
     let cleanDist = (district || '').trim();
     cleanDist = cleanDist.replace(/^(อำเภอ|อ\.|เขต|แขวง|เทศบาลนคร|เทศบาลเมือง|เทศบาลตำบล)\s*/, '').trim();
 
-    // 1. ตรวจสอบพื้นที่กรุงเทพมหานคร (ป้องกันเขตแนวรอยต่อ เช่น เขตบางพลัด เขตบางซื่อ ไม่ให้หลุดไปเป็นนนทบุรี)
+    let cleanSub = (subdistrict || '').trim();
+    cleanSub = cleanSub.replace(/^(ตำบล|ต\.|แขวง|เทศบาลนคร|เทศบาลเมือง|เทศบาลตำบล)\s*/, '').trim();
+
+    let cleanRoad = (road || '').trim();
+    if (cleanRoad && !cleanRoad.startsWith('ถ.') && !cleanRoad.startsWith('ถนน') && !cleanRoad.startsWith('ซอย') && !cleanRoad.startsWith('ซ.')) {
+        cleanRoad = 'ถ.' + cleanRoad;
+    }
+
+    let cleanPlace = (place || '').trim();
+    if (cleanPlace === cleanRoad || cleanPlace === cleanSub || cleanPlace === cleanDist) {
+        cleanPlace = '';
+    }
+
+    // ตรวจสอบว่าเป็นพื้นที่ กรุงเทพมหานคร หรือไม่
     const isBkk = cleanProv.includes('กรุงเทพ') || cleanDist.includes('บางพลัด') || cleanDist.includes('บางอ้อ') || cleanDist.includes('บางซื่อ') || cleanDist.includes('ดุสิต') || cleanDist.includes('จตุจักร');
+    
+    let parts = [];
+    if (cleanPlace) parts.push(cleanPlace);
+    if (cleanRoad) parts.push(cleanRoad);
+
     if (isBkk) {
         if (cleanDist.includes('บางพลัด') || cleanDist.includes('บางอ้อ')) {
             cleanDist = 'บางพลัด';
+            if (!cleanSub) cleanSub = 'บางอ้อ';
         } else if (cleanDist.includes('บางซื่อ')) {
             cleanDist = 'บางซื่อ';
         }
-        return (cleanDist ? ('เขต' + cleanDist + ' ') : '') + 'กรุงเทพมหานคร';
-    }
 
-    // 2. ตรวจสอบพื้นที่ จ.นนทบุรี
-    const isNonthaburi = cleanProv.includes('นนทบุรี');
-    if (isNonthaburi) {
-        cleanProv = 'นนทบุรี';
-        if (cleanDist.includes('บางบัวทอง') || cleanDist.includes('พิมลราช') || cleanDist.includes('โสนลอย') || cleanDist.includes('บางคูรัด') || cleanDist.includes('ละหาร')) {
-            cleanDist = 'บางบัวทอง';
-        } else if (cleanDist.includes('บางใหญ่') || cleanDist.includes('เสาธงหิน') || cleanDist.includes('บางแม่นาง') || cleanDist.includes('บางเลน') || cleanDist.includes('บ้านใหม่') || cleanDist.includes('บางม่วง')) {
-            cleanDist = 'บางใหญ่';
-        } else if (cleanDist.includes('ปากเกร็ด')) {
-            cleanDist = 'ปากเกร็ด';
-        } else if (cleanDist.includes('บางกรวย')) {
-            cleanDist = 'บางกรวย';
-        } else if (cleanDist.includes('ไทรน้อย')) {
-            cleanDist = 'ไทรน้อย';
-        } else if (cleanDist.includes('เทศบาลนคร') || cleanDist === '' || cleanDist === 'เมือง') {
-            cleanDist = 'เมืองนนทบุรี';
+        if (cleanSub) parts.push('แขวง' + cleanSub);
+        if (cleanDist) parts.push('เขต' + cleanDist);
+        parts.push('กรุงเทพมหานคร');
+    } else {
+        if (cleanProv.includes('นนทบุรี')) {
+            cleanProv = 'นนทบุรี';
+            if (cleanDist.includes('บางบัวทอง') || cleanSub.includes('โสนลอย') || cleanSub.includes('พิมลราช')) {
+                cleanDist = 'บางบัวทอง';
+            } else if (cleanDist.includes('บางใหญ่') || cleanSub.includes('เสาธงหิน')) {
+                cleanDist = 'บางใหญ่';
+            }
         }
-        const dStr = cleanDist ? ('อ.' + cleanDist + ' ') : '';
-        return (dStr + 'จ.นนทบุรี').trim();
+
+        if (cleanSub) parts.push('ต.' + cleanSub);
+        if (cleanDist) parts.push('อ.' + cleanDist);
+        if (cleanProv) parts.push('จ.' + cleanProv);
     }
 
-    const dStr = cleanDist ? ('อ.' + cleanDist + ' ') : '';
-    const pStr = cleanProv ? ('จ.' + cleanProv) : '';
-    return (dStr + pStr).trim();
+    let result = parts.join(' ').trim();
+    if (!result) {
+        return resolveLocationName(lat, lng);
+    }
+    return result;
 }
 
 function resolveLocationName(lat, lng) {

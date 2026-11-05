@@ -135,7 +135,13 @@
                     <td class="text-center"><small>@pos</small></td>
                     <td class="text-center"><span class="badge bg-light text-dark border">@log.Action</span></td>
                     <td class="text-center">@(log.DurationMinutes.HasValue && log.DurationMinutes > 0 ? $"{log.DurationMinutes} น." : "-")</td>
-                    <td><small>@loc</small></td>
+                    <td>
+                        <div class="fw-bold" style="font-size:0.75rem;">@loc</div>
+                        @if (!string.IsNullOrEmpty(log.Latitude) && !string.IsNullOrEmpty(log.Longitude))
+                        {
+                            <div class="text-muted" style="font-size:0.65rem;">GPS: @log.Latitude, @log.Longitude</div>
+                        }
+                    </td>
                     <td><small>@log.Detail</small></td>
                     <td class="text-center"><small class="text-muted">@log.IPAddress</small></td>
                 </tr>
