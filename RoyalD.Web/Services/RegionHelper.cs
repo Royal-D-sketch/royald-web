@@ -32,6 +32,17 @@ namespace RoyalD.Web.Services
             {
                 "กรุงเทพมหานคร", "กรุงเทพฯ", "กรุงเทพ", "กทม", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสาคร", "นครปฐม"
             },
+            ["ต่างจังหวัด"] = new List<string>
+            {
+                "กระบี่", "กาญจนบุรี", "กาฬสินธุ์", "กำแพงเพชร", "ขอนแก่น", "จันทบุรี", "ฉะเชิงเทรา", "ชลบุรี", "ชัยนาท",
+                "ชัยภูมิ", "ชุมพร", "เชียงราย", "เชียงใหม่", "ตรัง", "ตราด", "ตาก", "นครนายก", "นครพนม", "นครราชสีมา",
+                "นครศรีธรรมราช", "นครสวรรค์", "นราธิวาส", "น่าน", "บึงกาฬ", "บุรีรัมย์", "บุรีย์รัมย์", "ประจวบคีรีขันธ์",
+                "ปราจีนบุรี", "ปัตตานี", "พระนครศรีอยุธยา", "อยุธยา", "พะเยา", "พังงา", "พัทลุง", "พิจิตร", "พิษณุโลก",
+                "เพชรบุรี", "เพชรบูรณ์", "แพร่", "ภูเก็ต", "มหาสารคาม", "มุกดาหาร", "แม่ฮ่องสอน", "ยโสธร", "ยะลา",
+                "ร้อยเอ็ด", "ระนอง", "ระยอง", "ราชบุรี", "ลพบุรี", "ลำปาง", "ลำพูน", "เลย", "ศรีสะเกษ", "สกลนคร",
+                "สงขลา", "สตูล", "สมุทรสงคราม", "สระแก้ว", "สระบุรี", "สิงห์บุรี", "สุโขทัย", "สุพรรณบุรี", "สุราษฎร์ธานี",
+                "สุรินทร์", "หนองคาย", "หนองบัวลำภู", "อ่างทอง", "อำนาจเจริญ", "อุดรธานี", "อุตรดิตถ์", "อุทัยธานี", "อุบลราชธานี"
+            },
             ["ภาคกลาง"] = new List<string>
             {
                 "กรุงเทพมหานคร", "กรุงเทพฯ", "กรุงเทพ", "กทม", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "นครปฐม", 
@@ -69,6 +80,17 @@ namespace RoyalD.Web.Services
             ["กรุงเทพฯ และปริมณฑล"] = new List<string>
             {
                 "กรุงเทพมหานคร", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสาคร", "นครปฐม"
+            },
+            ["ต่างจังหวัด"] = new List<string>
+            {
+                "กระบี่", "กาญจนบุรี", "กาฬสินธุ์", "กำแพงเพชร", "ขอนแก่น", "จันทบุรี", "ฉะเชิงเทรา", "ชลบุรี", "ชัยนาท",
+                "ชัยภูมิ", "ชุมพร", "เชียงราย", "เชียงใหม่", "ตรัง", "ตราด", "ตาก", "นครนายก", "นครพนม", "นครราชสีมา",
+                "นครศรีธรรมราช", "นครสวรรค์", "นราธิวาส", "น่าน", "บึงกาฬ", "บุรีรัมย์", "ประจวบคีรีขันธ์",
+                "ปราจีนบุรี", "ปัตตานี", "พระนครศรีอยุธยา", "พะเยา", "พังงา", "พัทลุง", "พิจิตร", "พิษณุโลก",
+                "เพชรบุรี", "เพชรบูรณ์", "แพร่", "ภูเก็ต", "มหาสารคาม", "มุกดาหาร", "แม่ฮ่องสอน", "ยโสธร", "ยะลา",
+                "ร้อยเอ็ด", "ระนอง", "ระยอง", "ราชบุรี", "ลพบุรี", "ลำปาง", "ลำพูน", "เลย", "ศรีสะเกษ", "สกลนคร",
+                "สงขลา", "สตูล", "สมุทรสงคราม", "สระแก้ว", "สระบุรี", "สิงห์บุรี", "สุโขทัย", "สุพรรณบุรี", "สุราษฎร์ธานี",
+                "สุรินทร์", "หนองคาย", "หนองบัวลำภู", "อ่างทอง", "อำนาจเจริญ", "อุดรธานี", "อุตรดิตถ์", "อุทัยธานี", "อุบลราชธานี"
             },
             ["ภาคกลาง"] = new List<string>
             {
@@ -139,9 +161,10 @@ namespace RoyalD.Web.Services
                     {
                         result.AddRange(new[] { "กรุงเทพมหานคร", "กรุงเทพฯ", "กรุงเทพ", "กทม", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสาคร", "นครปฐม" });
                     }
-                    else if (r == "ต่างจังหวัด" || r.Equals("upcountry", StringComparison.OrdinalIgnoreCase))
+                    else if (r == "ต่างจังหวัด" || r == "ต่างจังหวัด (ทุกภาค)" || r.Equals("upcountry", StringComparison.OrdinalIgnoreCase))
                     {
-                        var upcProvinces = AllThailandProvinces.Where(p => !p.Contains("กรุงเทพ") && !p.Contains("กทม")).ToList();
+                        var bkkVicinity = new HashSet<string>(new[] { "กรุงเทพมหานคร", "กรุงเทพฯ", "กรุงเทพ", "กทม", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสาคร", "นครปฐม" }, StringComparer.OrdinalIgnoreCase);
+                        var upcProvinces = AllThailandProvinces.Where(p => !bkkVicinity.Contains(p)).ToList();
                         result.AddRange(upcProvinces);
                     }
                     else if (Regions.ContainsKey(r))
@@ -430,6 +453,74 @@ namespace RoyalD.Web.Services
             }
 
             return res;
+        }
+
+        public static IQueryable<RoyalD.Web.Models.SalesBill> ApplySalesBillAreaFilter(
+            IQueryable<RoyalD.Web.Models.SalesBill> q,
+            AreaFilterResult areaScope)
+        {
+            if (string.IsNullOrEmpty(areaScope.SelectedProvince) && !areaScope.HasProvinceRestriction &&
+                (areaScope.SelectedRegion == "ต่างจังหวัด" || areaScope.SelectedRegion == "ต่างจังหวัด (ทุกภาค)" || string.Equals(areaScope.SelectedRegion, "upcountry", StringComparison.OrdinalIgnoreCase)))
+            {
+                var bkkVariants = GetMatchingProvinces("กรุงเทพฯ และปริมณฑล");
+                return q.Where(b => !bkkVariants.Contains(b.Province)
+                                 && !b.Province.Contains("กรุงเทพ") && !b.Province.Contains("กทม")
+                                 && !b.Province.Contains("นนทบุรี") && !b.Province.Contains("ปทุมธานี")
+                                 && !b.Province.Contains("สมุทรปราการ") && !b.Province.Contains("สมุทรสาคร")
+                                 && !b.Province.Contains("นครปฐม"));
+            }
+
+            if (string.IsNullOrEmpty(areaScope.SelectedProvince) && !areaScope.HasProvinceRestriction &&
+                (areaScope.SelectedRegion == "กรุงเทพฯ และปริมณฑล" || areaScope.SelectedRegion == "กรุงเทพและปริมณฑล" || areaScope.SelectedRegion == "กรุงเทพมหานครและปริมณฑล"))
+            {
+                var bkkVariants = GetMatchingProvinces("กรุงเทพฯ และปริมณฑล");
+                return q.Where(b => bkkVariants.Contains(b.Province)
+                                 || b.Province.Contains("กรุงเทพ") || b.Province.Contains("กทม")
+                                 || b.Province.Contains("นนทบุรี") || b.Province.Contains("ปทุมธานี")
+                                 || b.Province.Contains("สมุทรปราการ") || b.Province.Contains("สมุทรสาคร")
+                                 || b.Province.Contains("นครปฐม"));
+            }
+
+            if (areaScope.EffectiveProvinceVariants != null && areaScope.EffectiveProvinceVariants.Count > 0)
+            {
+                return q.Where(b => areaScope.EffectiveProvinceVariants.Contains(b.Province));
+            }
+
+            return q;
+        }
+
+        public static IQueryable<RoyalD.Web.Models.SalesBillItem> ApplySalesBillItemAreaFilter(
+            IQueryable<RoyalD.Web.Models.SalesBillItem> q,
+            AreaFilterResult areaScope)
+        {
+            if (string.IsNullOrEmpty(areaScope.SelectedProvince) && !areaScope.HasProvinceRestriction &&
+                (areaScope.SelectedRegion == "ต่างจังหวัด" || areaScope.SelectedRegion == "ต่างจังหวัด (ทุกภาค)" || string.Equals(areaScope.SelectedRegion, "upcountry", StringComparison.OrdinalIgnoreCase)))
+            {
+                var bkkVariants = GetMatchingProvinces("กรุงเทพฯ และปริมณฑล");
+                return q.Where(i => !bkkVariants.Contains(i.SalesBill.Province)
+                                 && !i.SalesBill.Province.Contains("กรุงเทพ") && !i.SalesBill.Province.Contains("กทม")
+                                 && !i.SalesBill.Province.Contains("นนทบุรี") && !i.SalesBill.Province.Contains("ปทุมธานี")
+                                 && !i.SalesBill.Province.Contains("สมุทรปราการ") && !i.SalesBill.Province.Contains("สมุทรสาคร")
+                                 && !i.SalesBill.Province.Contains("นครปฐม"));
+            }
+
+            if (string.IsNullOrEmpty(areaScope.SelectedProvince) && !areaScope.HasProvinceRestriction &&
+                (areaScope.SelectedRegion == "กรุงเทพฯ และปริมณฑล" || areaScope.SelectedRegion == "กรุงเทพและปริมณฑล" || areaScope.SelectedRegion == "กรุงเทพมหานครและปริมณฑล"))
+            {
+                var bkkVariants = GetMatchingProvinces("กรุงเทพฯ และปริมณฑล");
+                return q.Where(i => bkkVariants.Contains(i.SalesBill.Province)
+                                 || i.SalesBill.Province.Contains("กรุงเทพ") || i.SalesBill.Province.Contains("กทม")
+                                 || i.SalesBill.Province.Contains("นนทบุรี") || i.SalesBill.Province.Contains("ปทุมธานี")
+                                 || i.SalesBill.Province.Contains("สมุทรปราการ") || i.SalesBill.Province.Contains("สมุทรสาคร")
+                                 || i.SalesBill.Province.Contains("นครปฐม"));
+            }
+
+            if (areaScope.EffectiveProvinceVariants != null && areaScope.EffectiveProvinceVariants.Count > 0)
+            {
+                return q.Where(i => areaScope.EffectiveProvinceVariants.Contains(i.SalesBill.Province));
+            }
+
+            return q;
         }
     }
 

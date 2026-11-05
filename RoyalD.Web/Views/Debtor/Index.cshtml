@@ -278,11 +278,11 @@
                         <option value="">@(ViewBag.HasRegionRestriction == true ? "-- ทุกภาคที่รับผิดชอบ --" : "-- ทุกภาค / ทุกพื้นที่ --")</option>
                         @if (ViewBag.HasRegionRestriction != true) {
                             <option value="กรุงเทพฯ" selected="@(ViewBag.SelectedRegion == "กรุงเทพฯ" || ViewBag.SelectedRegion == "กรุงเทพ")">🏙️ กรุงเทพฯ</option>
-                            <option value="ต่างจังหวัด" selected="@(ViewBag.SelectedRegion == "ต่างจังหวัด")">🌾 ต่างจังหวัด (ทุกภาค)</option>
                         }
                         @foreach (var reg in regions) {
-                            if (reg == (string)ViewBag.SelectedRegion) { <option value="@reg" selected>@reg</option> }
-                            else { <option value="@reg">@reg</option> }
+                            var regLabel = reg == "กรุงเทพฯ และปริมณฑล" ? "🏙️ กรุงเทพฯ และปริมณฑล" : (reg == "ต่างจังหวัด" ? "🌾 ต่างจังหวัด (ทุกภาค)" : reg);
+                            if (reg == (string)ViewBag.SelectedRegion) { <option value="@reg" selected>@regLabel</option> }
+                            else { <option value="@reg">@regLabel</option> }
                         }
                     </select>
                 </div>

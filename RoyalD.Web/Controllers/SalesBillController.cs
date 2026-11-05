@@ -133,7 +133,7 @@ namespace RoyalD.Web.Controllers
 
             if (areaScope.EffectiveProvinceVariants != null && areaScope.EffectiveProvinceVariants.Count > 0)
             {
-                q = q.Where(b => areaScope.EffectiveProvinceVariants.Contains(b.Province));
+                q = RegionHelper.ApplySalesBillAreaFilter(q, areaScope);
             }
 
             if (!string.IsNullOrEmpty(userAllowedDistricts))
@@ -632,7 +632,7 @@ namespace RoyalD.Web.Controllers
 
             if (areaScope.EffectiveProvinceVariants != null && areaScope.EffectiveProvinceVariants.Count > 0)
             {
-                q = q.Where(b => areaScope.EffectiveProvinceVariants.Contains(b.Province));
+                q = RegionHelper.ApplySalesBillAreaFilter(q, areaScope);
             }
 
             if (!string.IsNullOrEmpty(userAllowedDistricts))
@@ -908,7 +908,7 @@ namespace RoyalD.Web.Controllers
 
             if (areaScope.EffectiveProvinceVariants != null && areaScope.EffectiveProvinceVariants.Count > 0)
             {
-                q = q.Where(b => areaScope.EffectiveProvinceVariants.Contains(b.Province));
+                q = RegionHelper.ApplySalesBillAreaFilter(q, areaScope);
             }
 
             if (!string.IsNullOrEmpty(userAllowedDistricts))

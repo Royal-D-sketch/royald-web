@@ -1239,7 +1239,7 @@ namespace RoyalD.Web.Services
             // 1. Area filtering
             if (areaScope.EffectiveProvinceVariants != null && areaScope.EffectiveProvinceVariants.Count > 0)
             {
-                query = query.Where(i => areaScope.EffectiveProvinceVariants.Contains(i.SalesBill.Province));
+                query = RegionHelper.ApplySalesBillItemAreaFilter(query, areaScope);
             }
 
             if (!string.IsNullOrEmpty(userAllowedDistricts))

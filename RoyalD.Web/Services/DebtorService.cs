@@ -160,7 +160,8 @@ namespace RoyalD.Web.Services
                 }
                 else if (region == "ต่างจังหวัด" || region.Equals("upcountry", StringComparison.OrdinalIgnoreCase))
                 {
-                    q = q.Where(d => !d.Province.Contains("กรุงเทพ") && !d.Province.Contains("กทม") && !d.Province.ToLower().Contains("bangkok"));
+                    var bkkVariants = RegionHelper.GetMatchingProvinces("กรุงเทพฯ และปริมณฑล");
+                    q = q.Where(d => !bkkVariants.Contains(d.Province) && !d.Province.Contains("กรุงเทพ") && !d.Province.Contains("กทม") && !d.Province.ToLower().Contains("bangkok") && !d.Province.Contains("นนทบุรี") && !d.Province.Contains("ปทุมธานี") && !d.Province.Contains("สมุทรปราการ") && !d.Province.Contains("สมุทรสาคร") && !d.Province.Contains("นครปฐม"));
                 }
                 else
                 {

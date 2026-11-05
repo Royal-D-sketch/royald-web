@@ -1019,7 +1019,7 @@ namespace RoyalD.Web.Controllers
 
             if (areaScope.EffectiveProvinceVariants != null && areaScope.EffectiveProvinceVariants.Count > 0)
             {
-                billsQuery = billsQuery.Where(b => areaScope.EffectiveProvinceVariants.Contains(b.Province));
+                billsQuery = RegionHelper.ApplySalesBillAreaFilter(billsQuery, areaScope);
             }
 
             if (!string.IsNullOrEmpty(userAllowedDistricts))

@@ -163,10 +163,11 @@
         <div class="col-md-2">
             <label class="form-label small fw-bold text-primary mb-1">🗺️ ภาค/ภูมิภาค</label>
             <select name="region" id="region-select" class="form-select form-select-sm" onchange="onRegionChange()">
-                <option value="">@(ViewBag.HasRegionRestriction == true ? "-- ทุกภาคที่รับผิดชอบ --" : "-- ทุกภาค --")</option>
+                <option value="">@(ViewBag.HasRegionRestriction == true ? "-- ทุกภาคที่รับผิดชอบ --" : "-- ทุกภาค / ทุกพื้นที่ --")</option>
                 @foreach (var reg in regions) {
-                    if (reg == (string)ViewBag.SelectedRegion) { <option value="@reg" selected>@reg</option> }
-                    else { <option value="@reg">@reg</option> }
+                    var regLabel = reg == "กรุงเทพฯ และปริมณฑล" ? "🏙️ กรุงเทพฯ และปริมณฑล" : (reg == "ต่างจังหวัด" ? "🚚 ต่างจังหวัด (ทุกภาค)" : reg);
+                    if (reg == (string)ViewBag.SelectedRegion) { <option value="@reg" selected>@regLabel</option> }
+                    else { <option value="@reg">@regLabel</option> }
                 }
             </select>
         </div>
@@ -212,6 +213,24 @@
             <a href="/SalesBill" class="btn btn-outline-secondary btn-sm" title="ล้างตัวกรอง">
                 <i class="bi bi-x-circle"></i>
             </a>
+        </div>
+        <div class="col-12 pt-2 mt-2 border-top border-info border-opacity-25 d-flex flex-wrap align-items-center gap-2">
+            <span class="small fw-bold text-secondary me-1"><i class="bi bi-funnel-fill text-primary"></i> กรองพื้นที่ด่วน:</span>
+            @{
+                string curReg = (string)(ViewBag.SelectedRegion ?? "");
+                bool isAllArea = string.IsNullOrEmpty(curReg);
+                bool isBkkVicinity = curReg == "กรุงเทพฯ และปริมณฑล";
+                bool isUpcountry = curReg == "ต่างจังหวัด";
+            }
+            <button type="button" onclick="filterByAreaGroup('')" class="btn btn-sm rounded-pill px-3 fw-bold @(isAllArea ? "btn-primary shadow-sm" : "btn-outline-secondary bg-white")">
+                🌐 บิลขายทั้งหมด
+            </button>
+            <button type="button" onclick="filterByAreaGroup('กรุงเทพฯ และปริมณฑล')" class="btn btn-sm rounded-pill px-3 fw-bold @(isBkkVicinity ? "btn-info text-dark shadow-sm border-info" : "btn-outline-info text-dark bg-white")">
+                🏙️ บิลขายกรุงเทพฯ และปริมณฑล
+            </button>
+            <button type="button" onclick="filterByAreaGroup('ต่างจังหวัด')" class="btn btn-sm rounded-pill px-3 fw-bold @(isUpcountry ? "btn-success shadow-sm" : "btn-outline-success bg-white")">
+                🚚 บิลขายต่างจังหวัด (ทุกภาค)
+            </button>
         </div>
     </form>
 </div>
@@ -516,6 +535,22 @@ function onProvinceChange() {
             }
         }
     }
+}
+
+function filterByAreaGroup(regVal) {
+    const regSel = document.getElementById('region-select');
+    const provSel = document.getElementById('province-select');
+    const distSel = document.getElementById('district-select');
+    if (regSel) regSel.value = regVal;
+    if (provSel) {
+        provSel.value = '';
+        if (window.jQuery && $(provSel).data('select2')) $(provSel).val('').trigger('change.select2');
+    }
+    if (distSel) {
+        distSel.value = '';
+        if (window.jQuery && $(distSel).data('select2')) $(distSel).val('').trigger('change.select2');
+    }
+    document.getElementById('filter-form').submit();
 }
 
 function onRegionChange() {

@@ -101,8 +101,8 @@
                 </button>
                 <ul class="dropdown-menu">
                     <li><a class="dropdown-item" href="#" onclick="window.print();"><i class="bi bi-file-pdf text-danger"></i> PDF / พิมพ์</a></li>
-                    <li><a class="dropdown-item" href="/SalesReport/ExportCustomerProductExcel?rep=@(Model.SelectedRep)&q=@(Model.SearchQuery)&startDate=@(Model.StartDate?.ToString("yyyy-MM-dd"))&endDate=@(Model.EndDate?.ToString("yyyy-MM-dd"))&credit=@(Model.Credit)"><i class="bi bi-file-earmark-excel text-success"></i> Excel</a></li>
-                    <li><a class="dropdown-item" href="/SalesReport/ExportCustomerProductCsv?rep=@(Model.SelectedRep)&q=@(Model.SearchQuery)&startDate=@(Model.StartDate?.ToString("yyyy-MM-dd"))&endDate=@(Model.EndDate?.ToString("yyyy-MM-dd"))&credit=@(Model.Credit)"><i class="bi bi-filetype-csv text-primary"></i> CSV</a></li>
+                    <li><a class="dropdown-item" href="/SalesReport/ExportCustomerProductExcel?rep=@(Model.SelectedRep)&q=@(Model.SearchQuery)&startDate=@(Model.StartDate?.ToString("yyyy-MM-dd"))&endDate=@(Model.EndDate?.ToString("yyyy-MM-dd"))&credit=@(Model.Credit)&region=@(Model.SelectedRegion)&province=@(Model.SelectedProvince)&district=@(Model.SelectedDistrict)"><i class="bi bi-file-earmark-excel text-success"></i> Excel</a></li>
+                    <li><a class="dropdown-item" href="/SalesReport/ExportCustomerProductCsv?rep=@(Model.SelectedRep)&q=@(Model.SearchQuery)&startDate=@(Model.StartDate?.ToString("yyyy-MM-dd"))&endDate=@(Model.EndDate?.ToString("yyyy-MM-dd"))&credit=@(Model.Credit)&region=@(Model.SelectedRegion)&province=@(Model.SelectedProvince)&district=@(Model.SelectedDistrict)"><i class="bi bi-filetype-csv text-primary"></i> CSV</a></li>
                 </ul>
             </div>
         </div>
@@ -111,7 +111,7 @@
 
 <div class="card shadow-sm border-0 mb-4 no-print" style="border: 1.5px solid #a7f3d0 !important; background:#f0fdf4; border-radius:14px;">
     <div class="card-body py-3 px-4">
-        <form method="get" class="row g-3 align-items-end">
+        <form method="get" class="row g-3 align-items-end" id="cust-prod-filter-form">
             <input type="hidden" name="pageSize" value="@(ViewBag.PageSize ?? 100)" />
             <div class="col-md-3">
                 <label class="form-label fw-bold text-success">
@@ -137,7 +137,8 @@
                     <option value="">@(Model.HasRegionRestriction ? "-- ทุกภาคที่รับผิดชอบ --" : "-- ทุกภาค --")</option>
                     @foreach (var reg in Model.AvailableRegions)
                     {
-                        <option value="@reg" selected="@(reg == Model.SelectedRegion ? "selected" : null)">@reg</option>
+                        var regLabel = reg == "กรุงเทพฯ และปริมณฑล" ? "🏙️ กรุงเทพฯ และปริมณฑล" : (reg == "ต่างจังหวัด" ? "🚚 ต่างจังหวัด (ทุกภาค)" : reg);
+                        <option value="@reg" selected="@(reg == Model.SelectedRegion ? "selected" : null)">@regLabel</option>
                     }
                 </select>
             </div>
@@ -185,6 +186,24 @@
                 <a href="/SalesReport/CustomerProduct" class="btn btn-outline-secondary">
                     <i class="bi bi-arrow-counterclockwise me-1"></i> ล้าง
                 </a>
+            </div>
+            <div class="col-12 pt-2 mt-2 border-top border-success border-opacity-25 d-flex flex-wrap align-items-center gap-2">
+                <span class="small fw-bold text-secondary me-1"><i class="bi bi-funnel-fill text-success"></i> กรองพื้นที่ด่วน:</span>
+                @{
+                    string cpReg = Model.SelectedRegion ?? "";
+                    bool cpAll = string.IsNullOrEmpty(cpReg);
+                    bool cpBkk = cpReg == "กรุงเทพฯ และปริมณฑล";
+                    bool cpUpc = cpReg == "ต่างจังหวัด";
+                }
+                <button type="button" onclick="filterCustProdArea('')" class="btn btn-sm rounded-pill px-3 fw-bold @(cpAll ? "btn-success shadow-sm" : "btn-outline-secondary bg-white")">
+                    🌐 รายการขายทั้งหมด
+                </button>
+                <button type="button" onclick="filterCustProdArea('กรุงเทพฯ และปริมณฑล')" class="btn btn-sm rounded-pill px-3 fw-bold @(cpBkk ? "btn-info text-dark shadow-sm border-info" : "btn-outline-info text-dark bg-white")">
+                    🏙️ บิลขายกรุงเทพฯ และปริมณฑล
+                </button>
+                <button type="button" onclick="filterCustProdArea('ต่างจังหวัด')" class="btn btn-sm rounded-pill px-3 fw-bold @(cpUpc ? "btn-primary shadow-sm" : "btn-outline-primary bg-white")">
+                    🚚 บิลขายต่างจังหวัด (ทุกภาค)
+                </button>
             </div>
         </form>
     </div>
@@ -351,6 +370,22 @@
                 });
             }
         }
+    }
+
+    function filterCustProdArea(regVal) {
+        const regSel = document.getElementById('region-select');
+        const provSel = document.getElementById('province-select');
+        const distSel = document.getElementById('district-select');
+        if (regSel) regSel.value = regVal;
+        if (provSel) {
+            provSel.value = '';
+            if (window.jQuery && $(provSel).data('select2')) $(provSel).val('').trigger('change.select2');
+        }
+        if (distSel) {
+            distSel.value = '';
+            if (window.jQuery && $(distSel).data('select2')) $(distSel).val('').trigger('change.select2');
+        }
+        document.getElementById('cust-prod-filter-form').submit();
     }
 
     function onRegionChange() {
