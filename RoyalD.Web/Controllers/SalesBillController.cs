@@ -476,7 +476,8 @@ namespace RoyalD.Web.Controllers
 
         [HttpGet]
         [Route("SalesBill/Detail")]
-        public async Task<IActionResult> Detail(string? id)
+        [Route("SalesBill/Detail/{id?}")]
+        public async Task<IActionResult> Detail(string? id, [FromQuery] string? returnUrl = null)
         {
             if (string.IsNullOrEmpty(id)) return RedirectToAction("Index");
             id = Uri.UnescapeDataString(id).Trim();
@@ -486,6 +487,12 @@ namespace RoyalD.Web.Controllers
                 bill = await _db.SalesBills.AsNoTracking().Include(b => b.Items).Include(b => b.Customer).FirstOrDefaultAsync(b => EF.Functions.ILike(b.BillNo, id + "%"));
             }
             if (bill == null) return NotFound();
+
+            if (string.IsNullOrWhiteSpace(returnUrl))
+            {
+                returnUrl = Request.Query["returnUrl"].FirstOrDefault();
+            }
+            ViewBag.ReturnUrl = returnUrl;
 
             var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
             ViewBag.CanDeleteSalesBill = currentUser != null && (currentUser.Role == "admin" || currentUser.CanDeleteSalesBill);

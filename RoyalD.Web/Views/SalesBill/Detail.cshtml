@@ -43,9 +43,17 @@
 }
 
 <div class="no-print">
+@{
+    string returnUrl = ViewBag.ReturnUrl as string ?? Context.Request.Query["returnUrl"].ToString();
+    bool hasExplicitReturnUrl = !string.IsNullOrWhiteSpace(returnUrl);
+    if (!hasExplicitReturnUrl)
+    {
+        returnUrl = "/SalesBill";
+    }
+}
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <a href="/SalesBill" class="btn btn-outline-secondary btn-sm me-2">
+            <a href="@returnUrl" class="btn btn-outline-secondary btn-sm me-2" id="btnBackToSalesList" data-has-return="@(hasExplicitReturnUrl ? "true" : "false")">
                 <i class="bi bi-arrow-left"></i> กลับหน้ารายการบิล
             </a>
             <span class="fw-bold fs-5" style="color:#0f766e;"><i class="bi bi-receipt text-primary"></i> รายละเอียดบิลขาย: <code>@Model.BillNo</code></span>
@@ -992,6 +1000,20 @@ function setQuickReturnReason(btn, text) {
         btn.classList.add('btn-warning', 'text-white', 'shadow-sm');
     }
 }
+    document.addEventListener("DOMContentLoaded", function () {
+        var backBtn = document.getElementById("btnBackToSalesList");
+        if (backBtn) {
+            var hasReturn = backBtn.getAttribute("data-has-return") === "true";
+            if (!hasReturn && document.referrer) {
+                try {
+                    var refUrl = new URL(document.referrer);
+                    if (refUrl.origin === window.location.origin && !refUrl.pathname.toLowerCase().includes("/salesbill/detail")) {
+                        backBtn.setAttribute("href", document.referrer);
+                    }
+                } catch (e) { }
+            }
+        }
+    });
 </script>
 }
 

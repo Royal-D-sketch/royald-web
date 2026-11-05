@@ -307,7 +307,9 @@
                     var rowClass = isCancelled ? "table-secondary text-muted" : (isPendingAudit ? "table-warning bg-opacity-25" : (isInstallment ? "table-warning" : (isPaid ? "table-success" : (debtStatus == DebtStatus.BadDebt || isOverdue120 ? "table-danger" : ""))));
                     <tr class="@rowClass">
                         <td class="fw-bold text-primary">
-                            @b.BillNo
+                            <a href="/SalesBill/Detail?id=@Uri.EscapeDataString(b.BillNo)&returnUrl=@Uri.EscapeDataString(Context.Request.Path + Context.Request.QueryString)" class="fw-bold text-primary text-decoration-none" title="ดูรายละเอียดบิล @b.BillNo">
+                                @b.BillNo
+                            </a>
                         </td>
                         <td>@b.BillDate.ToString("dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture)</td>
                         <td>@(!string.IsNullOrEmpty(b.PoNumber) ? b.PoNumber : "-")</td>
@@ -435,12 +437,12 @@
                         </td>
                         <td><span class="badge bg-light text-dark border">@b.SalesRep</span></td>
                         <td class="text-center actions-col">
-                             <a href="/SalesBill/Detail?id=@Uri.EscapeDataString(b.BillNo)" class="btn btn-sm btn-outline-primary shadow-sm" title="ดูรายละเอียดบิล">
+                             <a href="/SalesBill/Detail?id=@Uri.EscapeDataString(b.BillNo)&returnUrl=@Uri.EscapeDataString(Context.Request.Path + Context.Request.QueryString)" class="btn btn-sm btn-outline-primary shadow-sm" title="ดูรายละเอียดบิล">
                                  <i class="bi bi-eye"></i> ดูบิล
                              </a>
                             @if (isPendingAudit)
                             {
-                                <a href="/SalesBill/Detail?id=@Uri.EscapeDataString(b.BillNo)" class="btn btn-sm btn-outline-danger shadow-sm ms-1" title="บิลนี้ไม่อยู่ในลูกหนี้ กดเพื่อตรวจสอบหรือลงบิลยกเลิก">
+                                <a href="/SalesBill/Detail?id=@Uri.EscapeDataString(b.BillNo)&returnUrl=@Uri.EscapeDataString(Context.Request.Path + Context.Request.QueryString)" class="btn btn-sm btn-outline-danger shadow-sm ms-1" title="บิลนี้ไม่อยู่ในลูกหนี้ กดเพื่อตรวจสอบหรือลงบิลยกเลิก">
                                     <i class="bi bi-x-circle"></i> ยกเลิก
                                 </a>
                             }
