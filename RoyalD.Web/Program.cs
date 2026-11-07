@@ -354,6 +354,84 @@ builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
+if (args.Length > 0 && args[0] == "--import-batch")
+{
+    Console.WriteLine("=== Starting Batch Data Import ===");
+    string dataDir = args.Length > 1 ? args[1] : @"f:\อาร์ต\บิลขาย การ์ดลูกหนี้และการติดตามการชำระเงิน\ข้อมูล 1.9.69-6.11.69\ข้อมูลCSV 1.9.69-6.11.69";
+    Console.WriteLine($"Source Folder: {dataDir}");
+
+    using (var scope = app.Services.CreateScope())
+    {
+        var importer = scope.ServiceProvider.GetRequiredService<ExcelImportService>();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        // 1. Customers
+        var custFile = Directory.GetFiles(dataDir, "*ลูกค้า*").FirstOrDefault();
+        if (custFile != null)
+        {
+            Console.WriteLine($"[1/4] Importing Customers from: {Path.GetFileName(custFile)}");
+            using var fs = File.OpenRead(custFile);
+            var (ins, upd, tot) = await importer.ImportCustomersAsync(fs, Path.GetFileName(custFile));
+            Console.WriteLine($" -> Customers Done: Inserted={ins}, Updated={upd}, Total={tot}");
+        }
+        else
+        {
+            Console.WriteLine("[1/4] Customers file not found!");
+        }
+
+        // 2. Sales Bills
+        var billFile = Directory.GetFiles(dataDir, "*บิลขาย*").FirstOrDefault();
+        if (billFile != null)
+        {
+            Console.WriteLine($"[2/4] Importing Sales Bills from: {Path.GetFileName(billFile)}");
+            using var fs = File.OpenRead(billFile);
+            var preview = await importer.PreviewSalesBillAsync(fs, "1.9.69-6.11.69", isCurrentMonth: true, fileName: Path.GetFileName(billFile));
+            Console.WriteLine($" -> Preview: TotalRows={preview.TotalRows}, New={preview.NewCount}, Changed={preview.DuplicateChangedCount}, Same={preview.DuplicateSameCount}, MaxDate={preview.LatestDate:dd/MM/yyyy}");
+            var (ins, upd, skip, maxDate) = await importer.ConfirmImportSalesBillAsync(preview.PreviewId, updateDuplicates: true);
+            Console.WriteLine($" -> Sales Bills Done: Inserted={ins}, Updated={upd}, Skipped={skip}, LatestDate={maxDate:dd/MM/yyyy}");
+        }
+        else
+        {
+            Console.WriteLine("[2/4] Sales Bills file not found!");
+        }
+
+        // 3. Outstanding Debts
+        var debtFile = Directory.GetFiles(dataDir, "*ลูกหนี้*").FirstOrDefault();
+        if (debtFile != null)
+        {
+            Console.WriteLine($"[3/4] Importing Outstanding Debts from: {Path.GetFileName(debtFile)}");
+            using var fs = File.OpenRead(debtFile);
+            var (count, latestDate, previewRows) = await importer.ImportOutstandingDebtsAsync(fs, Path.GetFileName(debtFile));
+            Console.WriteLine($" -> Outstanding Debts Done: Count={count}, LatestDate={latestDate:dd/MM/yyyy}");
+        }
+        else
+        {
+            Console.WriteLine("[3/4] Outstanding Debts file not found!");
+        }
+
+        // 4. Receipts
+        var receiptFile = Directory.GetFiles(dataDir, "*รับเงิน*").FirstOrDefault();
+        if (receiptFile != null)
+        {
+            Console.WriteLine($"[4/4] Matching Receipts from: {Path.GetFileName(receiptFile)}");
+            using var fs = File.OpenRead(receiptFile);
+            var preview = await importer.PreviewReceiptMatchAsync(fs, Path.GetFileName(receiptFile));
+            Console.WriteLine($" -> Preview: TotalRows={preview.TotalRows}, NewMatch={preview.NewMatchCount}, Changed={preview.ReceiptChangedCount}, AlreadyMatched={preview.AlreadyMatchedCount}, NotFound={preview.NotFoundCount}");
+            var (matched, notFound, maxDate) = await importer.ConfirmReceiptMatchAsync(preview.PreviewId, updateDuplicates: true);
+            Console.WriteLine($" -> Receipts Done: Matched={matched}, NotFound={notFound}, LatestDate={maxDate:dd/MM/yyyy}");
+        }
+        else
+        {
+            Console.WriteLine("[4/4] Receipts file not found!");
+        }
+
+        ReportPrewarmBackgroundService.SignalRefresh();
+    }
+
+    Console.WriteLine("=== Batch Import Finished Successfully ===");
+    return;
+}
+
 
 
 // ========== Middleware ==========
