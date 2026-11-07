@@ -98,6 +98,8 @@ namespace RoyalD.Web.Models
             modelBuilder.Entity<OutstandingDebt>()
                 .HasIndex(d => d.BillNo);
             modelBuilder.Entity<OutstandingDebt>()
+                .HasIndex(d => new { d.BillNo, d.Status });
+            modelBuilder.Entity<OutstandingDebt>()
                 .HasIndex(d => d.CustomerCode);
             modelBuilder.Entity<OutstandingDebt>()
                 .HasIndex(d => d.DueDate);

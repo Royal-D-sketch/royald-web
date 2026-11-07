@@ -985,6 +985,70 @@ else
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // ตรวจสอบเซสชันเดี่ยว (Single Active Session: บังคับ 1 บัญชีใช้งานได้ทีละ 1 เครื่อง)
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <text>
+            (function() {
+                var isConcurrentKicked = false;
+                function checkSingleSession() {
+                    if (isConcurrentKicked) return;
+                    fetch('/Account/CheckSessionStatus', {
+                        method: 'GET',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        credentials: 'same-origin',
+                        cache: 'no-store'
+                    })
+                    .then(function(res) {
+                        if (res.status === 401) {
+                            kickOutForConcurrent();
+                            return null;
+                        }
+                        return res.json();
+                    })
+                    .then(function(data) {
+                        if (data && data.valid === false && data.reason === 'concurrent_login') {
+                            kickOutForConcurrent();
+                        }
+                    })
+                    .catch(function() {});
+                }
+
+                function kickOutForConcurrent() {
+                    if (isConcurrentKicked) return;
+                    isConcurrentKicked = true;
+
+                    // บล็อกหน้าจอทันทีเพื่อความปลอดภัยของข้อมูล
+                    var blocker = document.createElement('div');
+                    blocker.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);color:#fff;z-index:9999999;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;backdrop-filter:blur(5px);';
+                    blocker.innerHTML = '<div style="background:#fff;color:#333;padding:30px;border-radius:16px;max-width:460px;box-shadow:0 20px 40px rgba(0,0,0,0.4);text-align:center;">' +
+                        '<div style="width:70px;height:70px;line-height:70px;border-radius:50%;background:#fee2e2;color:#dc2626;font-size:36px;margin:0 auto 16px;"><i class="bi bi-shield-lock-fill"></i></div>' +
+                        '<h4 style="font-weight:bold;margin-bottom:10px;color:#991b1b;">ออกจากระบบอัตโนมัติ</h4>' +
+                        '<p style="color:#4b5563;font-size:15px;margin-bottom:20px;line-height:1.5;">รหัสผู้ใช้นี้ได้เข้าสู่ระบบจาก <b>เครื่องหรืออุปกรณ์อื่น</b> แล้ว<br><span style="font-size:13px;color:#6b7280;">(ระบบจำกัดการเข้าใช้งานได้ทีละ 1 เครื่อง เพื่อความปลอดภัย)</span></p>' +
+                        '<button id="btn-relogin-now" class="btn btn-danger px-4 py-2" style="font-weight:600;border-radius:8px;">ไปยังหน้าเข้าสู่ระบบ</button>' +
+                        '</div>';
+                    document.body.appendChild(blocker);
+                    document.body.style.pointerEvents = 'none';
+
+                    var btn = document.getElementById('btn-relogin-now');
+                    if (btn) {
+                        btn.style.pointerEvents = 'auto';
+                        btn.onclick = function() {
+                            window.location.replace('/Account/Login?blocked=concurrent');
+                        };
+                    }
+
+                    setTimeout(function() {
+                        window.location.replace('/Account/Login?blocked=concurrent');
+                    }, 4000);
+                }
+
+                // เช็คสถานะทุก 8 วินาที
+                setInterval(checkSingleSession, 20000);
+            })();
+            </text>
+        }
+
         // Auto-ping เพื่อรักษา session ไม่ให้หมดอายุ (เฉพาะ Admin และผู้ที่ไม่ใช่ผู้แทนขาย)
         (function(){
             if(!document.cookie.includes('.AspNetCore.Cookies')) return;

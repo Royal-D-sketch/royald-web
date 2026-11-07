@@ -1440,7 +1440,7 @@ namespace RoyalD.Web.Services
             string? selectedMonth = null)
         {
             var allDbReps = await _db.SalesBills
-                .Where(b => b.SalesRep != null && b.SalesRep != "")
+                .Where(b => !b.IsCancelled && b.SalesRep != null && b.SalesRep != "")
                 .Select(b => b.SalesRep)
                 .Distinct()
                 .OrderBy(x => x)
@@ -1457,10 +1457,10 @@ namespace RoyalD.Web.Services
                 Credit = credit
             };
 
-            // Query SalesBillItems directly (Price > 0 excludes free/bonus items)
+            // Query SalesBillItems directly (Price > 0 excludes free/bonus items, exclude cancelled bills)
             var itemQuery = _db.SalesBillItems
                 .Include(i => i.SalesBill)
-                .Where(i => i.Price > 0)
+                .Where(i => i.Price > 0 && !i.SalesBill.IsCancelled)
                 .AsQueryable();
 
             bool isRestrictedRep = !string.IsNullOrWhiteSpace(userSalesRepCode) || !string.IsNullOrWhiteSpace(userFullName);

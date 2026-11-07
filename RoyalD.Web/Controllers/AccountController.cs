@@ -233,6 +233,14 @@ namespace RoyalD.Web.Controllers
             bool isSalesRep = !isMasterAdmin && (user.Position == "ผู้แทนขาย" || user.Position == "พนักงานขาย" || user.Position.Contains("ผู้แทน") || user.Position.Contains("พนักงานขาย"));
             string roleNormalized = isMasterAdmin ? "admin" : (user.Role?.Trim().ToLower() ?? "user");
 
+            // บังคับใช้งานได้ทีละ 1 เครื่อง: สร้าง Session Token ใหม่สำหรับเครื่องนี้
+            string sessionToken = Guid.NewGuid().ToString("N");
+            user.CurrentSessionToken = sessionToken;
+            user.LastLoginAt = DateTime.UtcNow;
+
+            // อัปเดต Cache ทันที เพื่อตัดเซสชันเครื่องเดิมโดยพลัน
+            _cache.Set($"UserSession_{user.Id}", sessionToken, TimeSpan.FromHours(24));
+
             // สิทธิ์การดาวน์โหลดและแคปหน้าจอ:
             // 1. แอดมิน (Admin) -> ปลดล็อค 100%
             // 2. ผู้แทนขาย (Sales Rep) -> ถูกล็อกความปลอดภัยเสมอ (ห้ามดาวน์โหลด และห้ามแคปจอ)
@@ -245,6 +253,7 @@ namespace RoyalD.Web.Controllers
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Username),
+                new Claim("SessionToken", sessionToken),
                 new Claim("FullName", user.FullName),
                 new Claim(ClaimTypes.Role, roleNormalized),
                 new Claim("Role", roleNormalized),
@@ -315,10 +324,64 @@ namespace RoyalD.Web.Controllers
             return RedirectToAction("Index", "SalesBill");
         }
 
+        [HttpGet]
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+        public async Task<IActionResult> CheckSessionStatus()
+        {
+            if (User.Identity?.IsAuthenticated != true)
+            {
+                return Json(new { valid = false, reason = "unauthenticated" });
+            }
+
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var sessionTokenClaim = User.FindFirst("SessionToken")?.Value;
+
+            if (string.IsNullOrEmpty(userIdStr) || string.IsNullOrEmpty(sessionTokenClaim) || !int.TryParse(userIdStr, out int userId))
+            {
+                return Json(new { valid = false, reason = "invalid_token" });
+            }
+
+            var cacheKey = $"UserSession_{userId}";
+            if (!_cache.TryGetValue(cacheKey, out string? validToken))
+            {
+                validToken = await _db.Users
+                    .Where(u => u.Id == userId)
+                    .Select(u => u.CurrentSessionToken)
+                    .FirstOrDefaultAsync();
+
+                if (!string.IsNullOrEmpty(validToken))
+                {
+                    _cache.Set(cacheKey, validToken, TimeSpan.FromMinutes(30));
+                }
+            }
+
+            if (!string.IsNullOrEmpty(validToken) && !string.Equals(validToken, sessionTokenClaim, StringComparison.Ordinal))
+            {
+                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                return Json(new { valid = false, reason = "concurrent_login" });
+            }
+
+            return Json(new { valid = true });
+        }
+
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
             var username = User.Identity?.Name ?? "Unknown";
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var sessionTokenClaim = User.FindFirst("SessionToken")?.Value;
+
+            if (int.TryParse(userIdStr, out int userId))
+            {
+                var dbUser = await _db.Users.FindAsync(userId);
+                // ล้าง CurrentSessionToken เฉพาะเมื่อตรงกับเซสชันนี้เท่านั้น (เพื่อไม่ให้ไปตัดเซสชันของเครื่องใหม่)
+                if (dbUser != null && !string.IsNullOrEmpty(sessionTokenClaim) && dbUser.CurrentSessionToken == sessionTokenClaim)
+                {
+                    dbUser.CurrentSessionToken = "";
+                    _cache.Remove($"UserSession_{userId}");
+                }
+            }
+
             var lastLogin = await _db.AuditLogs
                 .Where(a => a.Username == username && a.Action == "LOGIN")
                 .OrderByDescending(a => a.CreatedAt)
@@ -689,7 +752,18 @@ namespace RoyalD.Web.Controllers
             user.CanScreenCapture = canScreenCapture;
 
             if (!string.IsNullOrWhiteSpace(newPassword))
+            {
                 user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword.Trim());
+            user.CurrentSessionToken = "";
+            _cache.Remove($"UserSession_{user.Id}");
+                user.CurrentSessionToken = "";
+                _cache.Remove($"UserSession_{user.Id}");
+            }
+            if (!isActive)
+            {
+                user.CurrentSessionToken = "";
+                _cache.Remove($"UserSession_{user.Id}");
+            }
 
             _db.AuditLogs.Add(new AuditLog
             {

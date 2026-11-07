@@ -10,13 +10,18 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 
 using Microsoft.EntityFrameworkCore.Storage;
 
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.Caching.Memory;
+using System.Security.Claims;
 
 using System.Text.Encodings.Web;
 
 using System.Text.Unicode;
 
 using Npgsql.EntityFrameworkCore.PostgreSQL;
+using Microsoft.AspNetCore.ResponseCompression;
+using System.IO.Compression;
 
 
 
@@ -65,6 +70,23 @@ builder.Services.AddSingleton(JavaScriptEncoder.Create(UnicodeRanges.All));
 builder.Services.AddSingleton(UrlEncoder.Create(UnicodeRanges.All));
 
 builder.Services.AddMemoryCache();
+
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+});
+
+builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest;
+});
+
+builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest;
+});
 
 
 
@@ -217,6 +239,99 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
         options.Cookie.SameSite = SameSiteMode.Lax;
 
+        options.Events = new CookieAuthenticationEvents
+        {
+            OnValidatePrincipal = async context =>
+            {
+                var principal = context.Principal;
+                if (principal == null || principal.Identity?.IsAuthenticated != true)
+                    return;
+
+                var userIdStr = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var sessionTokenClaim = principal.FindFirst("SessionToken")?.Value;
+
+                if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
+                {
+                    context.RejectPrincipal();
+                    await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                    return;
+                }
+
+                // If cookie does not have SessionToken (legacy session), force re-login
+                if (string.IsNullOrEmpty(sessionTokenClaim))
+                {
+                    context.RejectPrincipal();
+                    await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                    return;
+                }
+
+                var cache = context.HttpContext.RequestServices.GetRequiredService<IMemoryCache>();
+                var cacheKey = $"UserSession_{userId}";
+
+                if (!cache.TryGetValue(cacheKey, out string? validToken))
+                {
+                    var db = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+                    validToken = await db.Users
+                        .Where(u => u.Id == userId)
+                        .Select(u => u.CurrentSessionToken)
+                        .FirstOrDefaultAsync();
+
+                    if (!string.IsNullOrEmpty(validToken))
+                    {
+                        cache.Set(cacheKey, validToken, TimeSpan.FromMinutes(30));
+                    }
+                }
+
+                // Check if session token in DB/cache does not match the cookie token
+                if (!string.IsNullOrEmpty(validToken) && !string.Equals(validToken, sessionTokenClaim, StringComparison.Ordinal))
+                {
+                    context.RejectPrincipal();
+                    await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                    context.HttpContext.Items["ConcurrentLoginKicked"] = true;
+
+                    // Log the kicked event to AuditLog once per session
+                    var kickAuditKey = $"KickedAudit_{userId}_{sessionTokenClaim}";
+                    if (!cache.TryGetValue(kickAuditKey, out _))
+                    {
+                        cache.Set(kickAuditKey, true, TimeSpan.FromMinutes(5));
+                        try
+                        {
+                            var db = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+                            db.AuditLogs.Add(new AuditLog
+                            {
+                                UserId = userId,
+                                Username = principal.Identity.Name ?? "",
+                                Action = "CONCURRENT_LOGIN_KICKED",
+                                Detail = "บัญชีถูกออกจากระบบอัตโนมัติเนื่องจากมีการเข้าสู่ระบบจากเครื่องอื่น",
+                                IPAddress = context.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
+                                CreatedAt = DateTime.UtcNow
+                            });
+                            await db.SaveChangesAsync();
+                        }
+                        catch { }
+                    }
+                }
+            },
+            OnRedirectToLogin = context =>
+            {
+                if (context.HttpContext.Items.ContainsKey("ConcurrentLoginKicked"))
+                {
+                    context.Response.Redirect("/Account/Login?blocked=concurrent");
+                    return Task.CompletedTask;
+                }
+
+                if (context.Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
+                    context.Request.Path.StartsWithSegments("/Account/CheckSessionStatus"))
+                {
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    return Task.CompletedTask;
+                }
+
+                context.Response.Redirect(context.RedirectUri);
+                return Task.CompletedTask;
+            }
+        };
+
     });
 
 
@@ -264,7 +379,15 @@ System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = thCulture;
 
 
 
-app.UseStaticFiles();
+app.UseResponseCompression();
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=604800");
+    }
+});
 
 app.UseRouting();
 

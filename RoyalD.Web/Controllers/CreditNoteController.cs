@@ -82,11 +82,7 @@ namespace RoyalD.Web.Controllers
 
         {
 
-            var q = _db.CreditNotes.AsNoTracking()
-
-                .Include(c => c.Items)
-
-                .AsQueryable();
+            var q = _db.CreditNotes.AsNoTracking().AsQueryable();
 
 
 
@@ -144,39 +140,28 @@ namespace RoyalD.Web.Controllers
 
 
 
-            // Calculate KPI Totals
+            // Calculate KPI Totals directly via SQL
+            var totalCount = await q.CountAsync();
+            var totalBeforeVat = await q.SumAsync(c => (decimal?)c.TotalAmountBeforeVat) ?? 0m;
+            var totalVat = await q.SumAsync(c => (decimal?)c.VatAmount) ?? 0m;
+            var grandTotal = await q.SumAsync(c => (decimal?)c.GrandTotal) ?? 0m;
 
-            var allFiltered = await q.ToListAsync();
+            ViewBag.TotalCount = totalCount;
+            ViewBag.TotalBeforeVat = totalBeforeVat;
+            ViewBag.TotalVat = totalVat;
+            ViewBag.GrandTotal = grandTotal;
 
-            ViewBag.TotalCount = allFiltered.Count;
-
-            ViewBag.TotalBeforeVat = allFiltered.Sum(c => c.TotalAmountBeforeVat);
-
-            ViewBag.TotalVat = allFiltered.Sum(c => c.VatAmount);
-
-            ViewBag.GrandTotal = allFiltered.Sum(c => c.GrandTotal);
-
-
-
-            // Pagination
-
-            var pagedData = allFiltered
-
+            // Pagination directly in database query (only fetch items for current page)
+            var pagedData = await q
+                .Include(c => c.Items)
                 .OrderByDescending(c => c.CreditNoteDate)
-
                 .ThenByDescending(c => c.Id)
-
                 .Skip((page - 1) * pageSize)
-
                 .Take(pageSize)
-
-                .ToList();
-
-
+                .ToListAsync();
 
             ViewBag.CurrentPage = page;
-
-            ViewBag.TotalPages = (int)Math.Ceiling((double)allFiltered.Count / pageSize);
+            ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
             ViewBag.Search = search;
 
