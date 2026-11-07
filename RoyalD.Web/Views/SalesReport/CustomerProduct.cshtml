@@ -211,7 +211,7 @@
             </div>
             <div class="col-md-2">
                 <label class="form-label fw-bold text-success"><i class="bi bi-geo me-1"></i> ภาค / เขต</label>
-                <select name="region" id="region-select" class="form-select" onchange="onRegionChange()">
+                <select id="region-select" class="form-select" onchange="onRegionChange()">
                     <option value="">@(Model.HasRegionRestriction ? "-- ทุกภาคที่รับผิดชอบ --" : "-- ทุกภาค --")</option>
                     @foreach (var reg in Model.AvailableRegions)
                     {
@@ -265,31 +265,37 @@
                     <i class="bi bi-arrow-counterclockwise me-1"></i> ล้าง
                 </a>
             </div>
+            <input type="hidden" name="region" id="region-input" value="@Model.SelectedRegion" />
             <div class="col-12 pt-2 mt-2 border-top border-success border-opacity-25 d-flex flex-wrap align-items-center gap-2">
                 <span class="small fw-bold text-secondary me-1"><i class="bi bi-funnel-fill text-success"></i> กรองพื้นที่ด่วน:</span>
                 @{
-                    string cpReg = Model.SelectedRegion ?? "";
-                    bool cpAll = string.IsNullOrEmpty(cpReg);
-                    bool cpOnline = cpReg == "ออนไลน์" || cpReg == "บิลขายออนไลน์";
-                    bool cpBkk = cpReg == "กรุงเทพ, นนทบุรี, สมุทรปราการ" || cpReg == "กรุงเทพ,นนทบุรี,สมุทรปราการ" || cpReg == "กรุงเทพฯ และปริมณฑล";
-                    bool cpUpc = cpReg == "ต่างจังหวัด";
-                    bool cpMt = cpReg == "โมเดิร์นเทรด";
+                    var cpRegs = (Model.SelectedRegion ?? "")
+                        .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(r => r.Trim())
+                        .ToList();
+                    bool cpOnline = cpRegs.Any(r => r == "ออนไลน์" || r == "บิลขายออนไลน์" || string.Equals(r, "online", StringComparison.OrdinalIgnoreCase));
+                    bool cpBkk = cpRegs.Any(r => r == "กรุงเทพ, นนทบุรี, สมุทรปราการ" || r == "กรุงเทพ,นนทบุรี,สมุทรปราการ" || r == "กรุงเทพฯ และปริมณฑล" || r == "กรุงเทพและปริมณฑล" || string.Equals(r, "bkk", StringComparison.OrdinalIgnoreCase));
+                    bool cpUpc = cpRegs.Any(r => r == "ต่างจังหวัด" || r == "ต่างจังหวัด (ทุกภาค)" || string.Equals(r, "upcountry", StringComparison.OrdinalIgnoreCase));
+                    bool cpMt = cpRegs.Any(r => r == "โมเดิร์นเทรด" || string.Equals(r, "moderntrade", StringComparison.OrdinalIgnoreCase));
+                    int cpCount = (cpOnline ? 1 : 0) + (cpBkk ? 1 : 0) + (cpUpc ? 1 : 0) + (cpMt ? 1 : 0);
+                    bool cpAll = cpCount == 0 || cpCount == 4;
                 }
-                <button type="button" onclick="filterCustProdArea('')" class="btn btn-sm rounded-pill px-3 fw-bold @(cpAll ? "btn-success shadow-sm" : "btn-outline-secondary bg-white")">
+                <button type="button" onclick="toggleCustProdArea('')" class="btn btn-sm rounded-pill px-3 fw-bold @(cpAll ? "btn-success shadow-sm" : "btn-outline-secondary bg-white")">
                     🌐 รายการขายทั้งหมด
                 </button>
-                <button type="button" onclick="filterCustProdArea('ออนไลน์')" class="btn btn-sm rounded-pill px-3 fw-bold @(cpOnline ? "btn-dark shadow-sm border-dark" : "btn-outline-dark bg-white")">
-                    🛒 บิลขายออนไลน์ (บริษัท* และ บริษัทT)
+                <button type="button" onclick="toggleCustProdArea('ออนไลน์')" class="btn btn-sm rounded-pill px-3 fw-bold @(cpOnline ? "btn-dark shadow-sm border-2 border-dark" : "btn-outline-dark bg-white")">
+                    @(cpOnline ? "✓ " : "")🛒 บิลขายออนไลน์ (บริษัท* และ บริษัทT)
                 </button>
-                <button type="button" onclick="filterCustProdArea('กรุงเทพ, นนทบุรี, สมุทรปราการ')" class="btn btn-sm rounded-pill px-3 fw-bold @(cpBkk ? "btn-info text-dark shadow-sm border-info" : "btn-outline-info text-dark bg-white")">
-                    🏙️ บิลขายกรุงเทพ,นนทบุรี,สมุทรปราการ
+                <button type="button" onclick="toggleCustProdArea('กรุงเทพ, นนทบุรี, สมุทรปราการ')" class="btn btn-sm rounded-pill px-3 fw-bold @(cpBkk ? "btn-info text-dark shadow-sm border-2 border-primary" : "btn-outline-info text-dark bg-white")">
+                    @(cpBkk ? "✓ " : "")🏙️ บิลขายกรุงเทพ,นนทบุรี,สมุทรปราการ
                 </button>
-                <button type="button" onclick="filterCustProdArea('ต่างจังหวัด')" class="btn btn-sm rounded-pill px-3 fw-bold @(cpUpc ? "btn-primary shadow-sm" : "btn-outline-primary bg-white")">
-                    🚚 บิลขายต่างจังหวัด
+                <button type="button" onclick="toggleCustProdArea('ต่างจังหวัด')" class="btn btn-sm rounded-pill px-3 fw-bold @(cpUpc ? "btn-primary shadow-sm border-2 border-primary" : "btn-outline-primary bg-white")">
+                    @(cpUpc ? "✓ " : "")🚚 บิลขายต่างจังหวัด
                 </button>
-                <button type="button" onclick="filterCustProdArea('โมเดิร์นเทรด')" class="btn btn-sm rounded-pill px-3 fw-bold @(cpMt ? "btn-warning text-dark shadow-sm border-warning" : "btn-outline-warning text-dark bg-white")">
-                    🏢 บิลขายModern Trade
+                <button type="button" onclick="toggleCustProdArea('โมเดิร์นเทรด')" class="btn btn-sm rounded-pill px-3 fw-bold @(cpMt ? "btn-warning text-dark shadow-sm border-2 border-dark" : "btn-outline-warning text-dark bg-white")">
+                    @(cpMt ? "✓ " : "")🏢 บิลขายModern Trade
                 </button>
+                <small class="text-muted ms-auto d-none d-md-inline" style="font-size:0.8rem;"><i class="bi bi-info-circle me-1"></i>สามารถกดเลือกหลายปุ่มพร้อมกันได้</small>
             </div>
         </form>
     </div>
@@ -468,11 +474,10 @@
         }
     }
 
-    function filterCustProdArea(regVal) {
-        const regSel = document.getElementById('region-select');
+    function toggleCustProdArea(regVal) {
+        const regInput = document.getElementById('region-input');
         const provSel = document.getElementById('province-select');
         const distSel = document.getElementById('district-select');
-        if (regSel) regSel.value = regVal;
         if (provSel) {
             provSel.value = '';
             if (window.jQuery && $(provSel).data('select2')) $(provSel).val('').trigger('change.select2');
@@ -481,11 +486,43 @@
             distSel.value = '';
             if (window.jQuery && $(distSel).data('select2')) $(distSel).val('').trigger('change.select2');
         }
+
+        if (!regVal) {
+            regInput.value = '';
+            const rSel = document.getElementById('region-select');
+            if (rSel) rSel.value = '';
+            document.getElementById('cust-prod-filter-form').submit();
+            return;
+        }
+
+        let curVal = regInput.value ? regInput.value.trim() : '';
+        let selected = curVal ? curVal.split(',').map(s => s.trim()).filter(s => s) : [];
+
+        const idx = selected.indexOf(regVal);
+        if (idx >= 0) {
+            selected.splice(idx, 1);
+        } else {
+            selected.push(regVal);
+        }
+
+        if (selected.length === 0 || selected.length === 4) {
+            regInput.value = '';
+        } else {
+            regInput.value = selected.join(',');
+        }
+
+        const rSel = document.getElementById('region-select');
+        if (rSel) {
+            rSel.value = selected.length === 1 ? selected[0] : '';
+        }
+
         document.getElementById('cust-prod-filter-form').submit();
     }
 
     function onRegionChange() {
         const reg = document.getElementById('region-select').value;
+        const regInput = document.getElementById('region-input');
+        if (regInput) regInput.value = reg;
         const pSel = document.getElementById('province-select');
         pSel.innerHTML = '<option value="">' + (hasProvRestriction ? '-- ทุกจังหวัดที่รับผิดชอบ --' : '-- ทุกจังหวัด --') + '</option>';
         let provList = [];

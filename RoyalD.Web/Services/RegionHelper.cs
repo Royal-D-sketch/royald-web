@@ -716,59 +716,174 @@ namespace RoyalD.Web.Services
             IQueryable<RoyalD.Web.Models.SalesBill> q,
             AreaFilterResult areaScope)
         {
-            bool isOnlineRegion = areaScope.SelectedRegion == "ออนไลน์" || areaScope.SelectedRegion == "บิลขายออนไลน์" || string.Equals(areaScope.SelectedRegion, "online", StringComparison.OrdinalIgnoreCase);
-            bool isMtRegion = areaScope.SelectedRegion == "โมเดิร์นเทรด" || string.Equals(areaScope.SelectedRegion, "moderntrade", StringComparison.OrdinalIgnoreCase);
-            bool isUpcountryRegion = areaScope.SelectedRegion == "ต่างจังหวัด" || areaScope.SelectedRegion == "ต่างจังหวัด (ทุกภาค)" || string.Equals(areaScope.SelectedRegion, "upcountry", StringComparison.OrdinalIgnoreCase);
-            bool isBkkVicinityRegion = areaScope.SelectedRegion == "กรุงเทพ, นนทบุรี, สมุทรปราการ" || areaScope.SelectedRegion == "กรุงเทพ,นนทบุรี,สมุทรปราการ" || areaScope.SelectedRegion == "กรุงเทพฯ และปริมณฑล" || areaScope.SelectedRegion == "กรุงเทพและปริมณฑล" || areaScope.SelectedRegion == "กรุงเทพมหานครและปริมณฑล" || string.Equals(areaScope.SelectedRegion, "bkk", StringComparison.OrdinalIgnoreCase);
+            var parts = (areaScope.SelectedRegion ?? "")
+                .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(r => r.Trim())
+                .ToList();
 
-            if (isOnlineRegion)
+            bool isOnline = parts.Any(r => r == "ออนไลน์" || r == "บิลขายออนไลน์" || string.Equals(r, "online", StringComparison.OrdinalIgnoreCase));
+            bool isMt = parts.Any(r => r == "โมเดิร์นเทรด" || string.Equals(r, "moderntrade", StringComparison.OrdinalIgnoreCase));
+            bool isUpc = parts.Any(r => r == "ต่างจังหวัด" || r == "ต่างจังหวัด (ทุกภาค)" || string.Equals(r, "upcountry", StringComparison.OrdinalIgnoreCase));
+            bool isBkk = parts.Any(r => r == "กรุงเทพ, นนทบุรี, สมุทรปราการ" || r == "กรุงเทพ,นนทบุรี,สมุทรปราการ" || r == "กรุงเทพฯ และปริมณฑล" || r == "กรุงเทพและปริมณฑล" || r == "กรุงเทพมหานครและปริมณฑล" || string.Equals(r, "bkk", StringComparison.OrdinalIgnoreCase));
+
+            int count = (isOnline ? 1 : 0) + (isMt ? 1 : 0) + (isUpc ? 1 : 0) + (isBkk ? 1 : 0);
+
+            var bkkVariants = GetMatchingProvinces("กรุงเทพ, นนทบุรี, สมุทรปราการ");
+            var mtCodes = DashboardService.ModernTradeCodes.ToList();
+
+            if (count > 0 && count < 4)
             {
-                q = FilterOnlineSalesBills(q, true);
-                if (!string.IsNullOrEmpty(areaScope.SelectedProvince) && areaScope.EffectiveProvinceVariants != null && areaScope.EffectiveProvinceVariants.Count > 0)
+                if (!isOnline)
                 {
-                    q = q.Where(b => areaScope.EffectiveProvinceVariants.Contains(b.Province));
-                }
-                return q;
-            }
+                    q = FilterOnlineSalesBills(q, false);
 
-            if (isMtRegion)
-            {
-                q = FilterOnlineSalesBills(q, false);
-                q = FilterModernTradeSalesBills(q, true);
-                if (!string.IsNullOrEmpty(areaScope.SelectedProvince) && areaScope.EffectiveProvinceVariants != null && areaScope.EffectiveProvinceVariants.Count > 0)
+                    if (isMt && !isBkk && !isUpc)
+                    {
+                        // MT only
+                        q = FilterModernTradeSalesBills(q, true);
+                    }
+                    else if (!isMt && isBkk && !isUpc)
+                    {
+                        // BKK only
+                        q = FilterModernTradeSalesBills(q, false);
+                        q = q.Where(b => bkkVariants.Contains(b.Province)
+                                      || b.Province.Contains("กรุงเทพ") || b.Province.Contains("กทม")
+                                      || b.Province.Contains("นนทบุรี")
+                                      || b.Province.Contains("สมุทรปราการ"));
+                    }
+                    else if (!isMt && !isBkk && isUpc)
+                    {
+                        // UPC only
+                        q = FilterModernTradeSalesBills(q, false);
+                        q = q.Where(b => !bkkVariants.Contains(b.Province)
+                                      && !b.Province.Contains("กรุงเทพ") && !b.Province.Contains("กทม")
+                                      && !b.Province.Contains("นนทบุรี")
+                                      && !b.Province.Contains("สมุทรปราการ"));
+                    }
+                    else if (isMt && isUpc && !isBkk)
+                    {
+                        // MT + Upcountry (Exclude BKK regular shops)
+                        q = q.Where(b => (!bkkVariants.Contains(b.Province)
+                                      && !b.Province.Contains("กรุงเทพ") && !b.Province.Contains("กทม")
+                                      && !b.Province.Contains("นนทบุรี")
+                                      && !b.Province.Contains("สมุทรปราการ"))
+                                      || mtCodes.Contains(b.CustomerCode)
+                                      || (b.CustomerName != null && (
+                                          b.CustomerName.Contains("บิ๊กซี") || b.CustomerName.ToLower().Contains("big c") ||
+                                          b.CustomerName.Contains("แม็คโคร") || b.CustomerName.Contains("ซีพี ออลล์") ||
+                                          b.CustomerName.Contains("ซีพีออลล์") || b.CustomerName.Contains("ซีพี แอ็กซ์ตร้า") ||
+                                          b.CustomerName.Contains("เซ็นทรัล") || b.CustomerName.Contains("เดอะมอลล์") ||
+                                          b.CustomerName.Contains("ปตท. บริหารธุรกิจค้าปลีก") || b.CustomerName.Contains("ปิโตรเลียมไทยคอร์ปอเรชั่น") ||
+                                          b.CustomerName.Contains("โลตัส") || b.CustomerName.Contains("ซี.เจ") ||
+                                          b.CustomerName.Contains("ฟู้ดแลนด์") || b.CustomerName.Contains("วิลล่า มาร์เก็ท") ||
+                                          b.CustomerName.Contains("วัตสัน") || b.CustomerName.Contains("บู๊ทส์") ||
+                                          b.CustomerName.Contains("ซูรูฮะ") || b.CustomerName.Contains("ฟาร์มาฮอฟ")
+                                      )));
+                    }
+                    else if (isMt && isBkk && !isUpc)
+                    {
+                        // MT + BKK (Exclude Upcountry regular shops)
+                        q = q.Where(b => bkkVariants.Contains(b.Province)
+                                      || b.Province.Contains("กรุงเทพ") || b.Province.Contains("กทม")
+                                      || b.Province.Contains("นนทบุรี")
+                                      || b.Province.Contains("สมุทรปราการ")
+                                      || mtCodes.Contains(b.CustomerCode)
+                                      || (b.CustomerName != null && (
+                                          b.CustomerName.Contains("บิ๊กซี") || b.CustomerName.ToLower().Contains("big c") ||
+                                          b.CustomerName.Contains("แม็คโคร") || b.CustomerName.Contains("ซีพี ออลล์") ||
+                                          b.CustomerName.Contains("ซีพีออลล์") || b.CustomerName.Contains("ซีพี แอ็กซ์ตร้า") ||
+                                          b.CustomerName.Contains("เซ็นทรัล") || b.CustomerName.Contains("เดอะมอลล์") ||
+                                          b.CustomerName.Contains("ปตท. บริหารธุรกิจค้าปลีก") || b.CustomerName.Contains("ปิโตรเลียมไทยคอร์ปอเรชั่น") ||
+                                          b.CustomerName.Contains("โลตัส") || b.CustomerName.Contains("ซี.เจ") ||
+                                          b.CustomerName.Contains("ฟู้ดแลนด์") || b.CustomerName.Contains("วิลล่า มาร์เก็ท") ||
+                                          b.CustomerName.Contains("วัตสัน") || b.CustomerName.Contains("บู๊ทส์") ||
+                                          b.CustomerName.Contains("ซูรูฮะ") || b.CustomerName.Contains("ฟาร์มาฮอฟ")
+                                      )));
+                    }
+                    else if (!isMt && isBkk && isUpc)
+                    {
+                        // BKK + UPC (All regular offline, exclude MT)
+                        q = FilterModernTradeSalesBills(q, false);
+                    }
+                }
+                else
                 {
-                    q = q.Where(b => areaScope.EffectiveProvinceVariants.Contains(b.Province));
+                    // isOnline is true
+                    if (!isMt && !isBkk && !isUpc)
+                    {
+                        // Online only
+                        q = FilterOnlineSalesBills(q, true);
+                    }
+                    else if (!isMt && isBkk && isUpc)
+                    {
+                        // Online + BKK + UPC (Exclude MT)
+                        q = FilterModernTradeSalesBills(q, false);
+                    }
+                    else if (isMt && !isBkk && !isUpc)
+                    {
+                        // Online + MT
+                        q = q.Where(b => (b.SalesRep != null && (b.SalesRep.StartsWith("บริษัท*") || b.SalesRep.StartsWith("บริษัทT")))
+                                      || mtCodes.Contains(b.CustomerCode)
+                                      || (b.CustomerName != null && (
+                                          b.CustomerName.Contains("บิ๊กซี") || b.CustomerName.ToLower().Contains("big c") ||
+                                          b.CustomerName.Contains("แม็คโคร") || b.CustomerName.Contains("ซีพี ออลล์") ||
+                                          b.CustomerName.Contains("ซีพีออลล์") || b.CustomerName.Contains("ซีพี แอ็กซ์ตร้า") ||
+                                          b.CustomerName.Contains("เซ็นทรัล") || b.CustomerName.Contains("เดอะมอลล์") ||
+                                          b.CustomerName.Contains("ปตท. บริหารธุรกิจค้าปลีก") || b.CustomerName.Contains("ปิโตรเลียมไทยคอร์ปอเรชั่น") ||
+                                          b.CustomerName.Contains("โลตัส") || b.CustomerName.Contains("ซี.เจ") ||
+                                          b.CustomerName.Contains("ฟู้ดแลนด์") || b.CustomerName.Contains("วิลล่า มาร์เก็ท") ||
+                                          b.CustomerName.Contains("วัตสัน") || b.CustomerName.Contains("บู๊ทส์") ||
+                                          b.CustomerName.Contains("ซูรูฮะ") || b.CustomerName.Contains("ฟาร์มาฮอฟ")
+                                      )));
+                    }
+                    else if (isMt && isUpc && !isBkk)
+                    {
+                        // Online + MT + UPC (Exclude BKK regular shops)
+                        q = q.Where(b => (b.SalesRep != null && (b.SalesRep.StartsWith("บริษัท*") || b.SalesRep.StartsWith("บริษัทT")))
+                                      || (!bkkVariants.Contains(b.Province)
+                                          && !b.Province.Contains("กรุงเทพ") && !b.Province.Contains("กทม")
+                                          && !b.Province.Contains("นนทบุรี")
+                                          && !b.Province.Contains("สมุทรปราการ"))
+                                      || mtCodes.Contains(b.CustomerCode)
+                                      || (b.CustomerName != null && (
+                                          b.CustomerName.Contains("บิ๊กซี") || b.CustomerName.ToLower().Contains("big c") ||
+                                          b.CustomerName.Contains("แม็คโคร") || b.CustomerName.Contains("ซีพี ออลล์") ||
+                                          b.CustomerName.Contains("ซีพีออลล์") || b.CustomerName.Contains("ซีพี แอ็กซ์ตร้า") ||
+                                          b.CustomerName.Contains("เซ็นทรัล") || b.CustomerName.Contains("เดอะมอลล์") ||
+                                          b.CustomerName.Contains("ปตท. บริหารธุรกิจค้าปลีก") || b.CustomerName.Contains("ปิโตรเลียมไทยคอร์ปอเรชั่น") ||
+                                          b.CustomerName.Contains("โลตัส") || b.CustomerName.Contains("ซี.เจ") ||
+                                          b.CustomerName.Contains("ฟู้ดแลนด์") || b.CustomerName.Contains("วิลล่า มาร์เก็ท") ||
+                                          b.CustomerName.Contains("วัตสัน") || b.CustomerName.Contains("บู๊ทส์") ||
+                                          b.CustomerName.Contains("ซูรูฮะ") || b.CustomerName.Contains("ฟาร์มาฮอฟ")
+                                      )));
+                    }
+                    else if (isMt && isBkk && !isUpc)
+                    {
+                        // Online + MT + BKK (Exclude UPC regular shops)
+                        q = q.Where(b => (b.SalesRep != null && (b.SalesRep.StartsWith("บริษัท*") || b.SalesRep.StartsWith("บริษัทT")))
+                                      || bkkVariants.Contains(b.Province)
+                                      || b.Province.Contains("กรุงเทพ") || b.Province.Contains("กทม")
+                                      || b.Province.Contains("นนทบุรี")
+                                      || b.Province.Contains("สมุทรปราการ")
+                                      || mtCodes.Contains(b.CustomerCode)
+                                      || (b.CustomerName != null && (
+                                          b.CustomerName.Contains("บิ๊กซี") || b.CustomerName.ToLower().Contains("big c") ||
+                                          b.CustomerName.Contains("แม็คโคร") || b.CustomerName.Contains("ซีพี ออลล์") ||
+                                          b.CustomerName.Contains("ซีพีออลล์") || b.CustomerName.Contains("ซีพี แอ็กซ์ตร้า") ||
+                                          b.CustomerName.Contains("เซ็นทรัล") || b.CustomerName.Contains("เดอะมอลล์") ||
+                                          b.CustomerName.Contains("ปตท. บริหารธุรกิจค้าปลีก") || b.CustomerName.Contains("ปิโตรเลียมไทยคอร์ปอเรชั่น") ||
+                                          b.CustomerName.Contains("โลตัส") || b.CustomerName.Contains("ซี.เจ") ||
+                                          b.CustomerName.Contains("ฟู้ดแลนด์") || b.CustomerName.Contains("วิลล่า มาร์เก็ท") ||
+                                          b.CustomerName.Contains("วัตสัน") || b.CustomerName.Contains("บู๊ทส์") ||
+                                          b.CustomerName.Contains("ซูรูฮะ") || b.CustomerName.Contains("ฟาร์มาฮอฟ")
+                                      )));
+                    }
                 }
-                return q;
             }
 
-            if (isUpcountryRegion || isBkkVicinityRegion)
+            if (!string.IsNullOrEmpty(areaScope.SelectedProvince) && areaScope.EffectiveProvinceVariants != null && areaScope.EffectiveProvinceVariants.Count > 0)
             {
-                q = FilterOnlineSalesBills(q, false);
-                q = FilterModernTradeSalesBills(q, false);
-            }
-
-            if (string.IsNullOrEmpty(areaScope.SelectedProvince) && !areaScope.HasProvinceRestriction && isUpcountryRegion)
-            {
-                var bkkVariants = GetMatchingProvinces("กรุงเทพ, นนทบุรี, สมุทรปราการ");
-                return q.Where(b => !bkkVariants.Contains(b.Province)
-                                 && !b.Province.Contains("กรุงเทพ") && !b.Province.Contains("กทม")
-                                 && !b.Province.Contains("นนทบุรี")
-                                 && !b.Province.Contains("สมุทรปราการ"));
-            }
-
-            if (string.IsNullOrEmpty(areaScope.SelectedProvince) && !areaScope.HasProvinceRestriction && isBkkVicinityRegion)
-            {
-                var bkkVariants = GetMatchingProvinces("กรุงเทพ, นนทบุรี, สมุทรปราการ");
-                return q.Where(b => bkkVariants.Contains(b.Province)
-                                 || b.Province.Contains("กรุงเทพ") || b.Province.Contains("กทม")
-                                 || b.Province.Contains("นนทบุรี")
-                                 || b.Province.Contains("สมุทรปราการ"));
-            }
-
-            if (areaScope.EffectiveProvinceVariants != null && areaScope.EffectiveProvinceVariants.Count > 0)
-            {
-                return q.Where(b => areaScope.EffectiveProvinceVariants.Contains(b.Province));
+                q = q.Where(b => areaScope.EffectiveProvinceVariants.Contains(b.Province));
             }
 
             return q;
@@ -778,63 +893,179 @@ namespace RoyalD.Web.Services
             IQueryable<RoyalD.Web.Models.SalesBillItem> q,
             AreaFilterResult areaScope)
         {
-            bool isOnlineRegion = areaScope.SelectedRegion == "ออนไลน์" || areaScope.SelectedRegion == "บิลขายออนไลน์" || string.Equals(areaScope.SelectedRegion, "online", StringComparison.OrdinalIgnoreCase);
-            bool isMtRegion = areaScope.SelectedRegion == "โมเดิร์นเทรด" || string.Equals(areaScope.SelectedRegion, "moderntrade", StringComparison.OrdinalIgnoreCase);
-            bool isUpcountryRegion = areaScope.SelectedRegion == "ต่างจังหวัด" || areaScope.SelectedRegion == "ต่างจังหวัด (ทุกภาค)" || string.Equals(areaScope.SelectedRegion, "upcountry", StringComparison.OrdinalIgnoreCase);
-            bool isBkkVicinityRegion = areaScope.SelectedRegion == "กรุงเทพ, นนทบุรี, สมุทรปราการ" || areaScope.SelectedRegion == "กรุงเทพ,นนทบุรี,สมุทรปราการ" || areaScope.SelectedRegion == "กรุงเทพฯ และปริมณฑล" || areaScope.SelectedRegion == "กรุงเทพและปริมณฑล" || areaScope.SelectedRegion == "กรุงเทพมหานครและปริมณฑล" || string.Equals(areaScope.SelectedRegion, "bkk", StringComparison.OrdinalIgnoreCase);
+            var parts = (areaScope.SelectedRegion ?? "")
+                .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(r => r.Trim())
+                .ToList();
 
-            if (isOnlineRegion)
+            bool isOnline = parts.Any(r => r == "ออนไลน์" || r == "บิลขายออนไลน์" || string.Equals(r, "online", StringComparison.OrdinalIgnoreCase));
+            bool isMt = parts.Any(r => r == "โมเดิร์นเทรด" || string.Equals(r, "moderntrade", StringComparison.OrdinalIgnoreCase));
+            bool isUpc = parts.Any(r => r == "ต่างจังหวัด" || r == "ต่างจังหวัด (ทุกภาค)" || string.Equals(r, "upcountry", StringComparison.OrdinalIgnoreCase));
+            bool isBkk = parts.Any(r => r == "กรุงเทพ, นนทบุรี, สมุทรปราการ" || r == "กรุงเทพ,นนทบุรี,สมุทรปราการ" || r == "กรุงเทพฯ และปริมณฑล" || r == "กรุงเทพและปริมณฑล" || r == "กรุงเทพมหานครและปริมณฑล" || string.Equals(r, "bkk", StringComparison.OrdinalIgnoreCase));
+
+            int count = (isOnline ? 1 : 0) + (isMt ? 1 : 0) + (isUpc ? 1 : 0) + (isBkk ? 1 : 0);
+
+            var bkkVariants = GetMatchingProvinces("กรุงเทพ, นนทบุรี, สมุทรปราการ");
+            var mtCodes = DashboardService.ModernTradeCodes.ToList();
+
+            if (count > 0 && count < 4)
             {
-                q = FilterOnlineSalesBillItems(q, true);
-                if (!string.IsNullOrEmpty(areaScope.SelectedProvince) && areaScope.EffectiveProvinceVariants != null && areaScope.EffectiveProvinceVariants.Count > 0)
+                if (!isOnline)
                 {
-                    q = q.Where(i => areaScope.EffectiveProvinceVariants.Contains(i.SalesBill.Province));
-                }
-                return q;
-            }
+                    q = FilterOnlineSalesBillItems(q, false);
 
-            if (isMtRegion)
-            {
-                q = FilterOnlineSalesBillItems(q, false);
-                q = FilterModernTradeSalesBillItems(q, true);
-                if (!string.IsNullOrEmpty(areaScope.SelectedProvince) && areaScope.EffectiveProvinceVariants != null && areaScope.EffectiveProvinceVariants.Count > 0)
+                    if (isMt && !isBkk && !isUpc)
+                    {
+                        // MT only
+                        q = FilterModernTradeSalesBillItems(q, true);
+                    }
+                    else if (!isMt && isBkk && !isUpc)
+                    {
+                        // BKK only
+                        q = FilterModernTradeSalesBillItems(q, false);
+                        q = q.Where(i => bkkVariants.Contains(i.SalesBill.Province)
+                                      || i.SalesBill.Province.Contains("กรุงเทพ") || i.SalesBill.Province.Contains("กทม")
+                                      || i.SalesBill.Province.Contains("นนทบุรี")
+                                      || i.SalesBill.Province.Contains("สมุทรปราการ"));
+                    }
+                    else if (!isMt && !isBkk && isUpc)
+                    {
+                        // UPC only
+                        q = FilterModernTradeSalesBillItems(q, false);
+                        q = q.Where(i => !bkkVariants.Contains(i.SalesBill.Province)
+                                      && !i.SalesBill.Province.Contains("กรุงเทพ") && !i.SalesBill.Province.Contains("กทม")
+                                      && !i.SalesBill.Province.Contains("นนทบุรี")
+                                      && !i.SalesBill.Province.Contains("สมุทรปราการ"));
+                    }
+                    else if (isMt && isUpc && !isBkk)
+                    {
+                        // MT + Upcountry (Exclude BKK regular shops)
+                        q = q.Where(i => (!bkkVariants.Contains(i.SalesBill.Province)
+                                      && !i.SalesBill.Province.Contains("กรุงเทพ") && !i.SalesBill.Province.Contains("กทม")
+                                      && !i.SalesBill.Province.Contains("นนทบุรี")
+                                      && !i.SalesBill.Province.Contains("สมุทรปราการ"))
+                                      || mtCodes.Contains(i.SalesBill.CustomerCode)
+                                      || (i.SalesBill.CustomerName != null && (
+                                          i.SalesBill.CustomerName.Contains("บิ๊กซี") || i.SalesBill.CustomerName.ToLower().Contains("big c") ||
+                                          i.SalesBill.CustomerName.Contains("แม็คโคร") || i.SalesBill.CustomerName.Contains("ซีพี ออลล์") ||
+                                          i.SalesBill.CustomerName.Contains("ซีพีออลล์") || i.SalesBill.CustomerName.Contains("ซีพี แอ็กซ์ตร้า") ||
+                                          i.SalesBill.CustomerName.Contains("เซ็นทรัล") || i.SalesBill.CustomerName.Contains("เดอะมอลล์") ||
+                                          i.SalesBill.CustomerName.Contains("ปตท. บริหารธุรกิจค้าปลีก") || i.SalesBill.CustomerName.Contains("ปิโตรเลียมไทยคอร์ปอเรชั่น") ||
+                                          i.SalesBill.CustomerName.Contains("โลตัส") || i.SalesBill.CustomerName.Contains("ซี.เจ") ||
+                                          i.SalesBill.CustomerName.Contains("ฟู้ดแลนด์") || i.SalesBill.CustomerName.Contains("วิลล่า มาร์เก็ท") ||
+                                          i.SalesBill.CustomerName.Contains("วัตสัน") || i.SalesBill.CustomerName.Contains("บู๊ทส์") ||
+                                          i.SalesBill.CustomerName.Contains("ซูรูฮะ") || i.SalesBill.CustomerName.Contains("ฟาร์มาฮอฟ")
+                                      )));
+                    }
+                    else if (isMt && isBkk && !isUpc)
+                    {
+                        // MT + BKK (Exclude Upcountry regular shops)
+                        q = q.Where(i => bkkVariants.Contains(i.SalesBill.Province)
+                                      || i.SalesBill.Province.Contains("กรุงเทพ") || i.SalesBill.Province.Contains("กทม")
+                                      || i.SalesBill.Province.Contains("นนทบุรี")
+                                      || i.SalesBill.Province.Contains("สมุทรปราการ")
+                                      || mtCodes.Contains(i.SalesBill.CustomerCode)
+                                      || (i.SalesBill.CustomerName != null && (
+                                          i.SalesBill.CustomerName.Contains("บิ๊กซี") || i.SalesBill.CustomerName.ToLower().Contains("big c") ||
+                                          i.SalesBill.CustomerName.Contains("แม็คโคร") || i.SalesBill.CustomerName.Contains("ซีพี ออลล์") ||
+                                          i.SalesBill.CustomerName.Contains("ซีพีออลล์") || i.SalesBill.CustomerName.Contains("ซีพี แอ็กซ์ตร้า") ||
+                                          i.SalesBill.CustomerName.Contains("เซ็นทรัล") || i.SalesBill.CustomerName.Contains("เดอะมอลล์") ||
+                                          i.SalesBill.CustomerName.Contains("ปตท. บริหารธุรกิจค้าปลีก") || i.SalesBill.CustomerName.Contains("ปิโตรเลียมไทยคอร์ปอเรชั่น") ||
+                                          i.SalesBill.CustomerName.Contains("โลตัส") || i.SalesBill.CustomerName.Contains("ซี.เจ") ||
+                                          i.SalesBill.CustomerName.Contains("ฟู้ดแลนด์") || i.SalesBill.CustomerName.Contains("วิลล่า มาร์เก็ท") ||
+                                          i.SalesBill.CustomerName.Contains("วัตสัน") || i.SalesBill.CustomerName.Contains("บู๊ทส์") ||
+                                          i.SalesBill.CustomerName.Contains("ซูรูฮะ") || i.SalesBill.CustomerName.Contains("ฟาร์มาฮอฟ")
+                                      )));
+                    }
+                    else if (!isMt && isBkk && isUpc)
+                    {
+                        // BKK + UPC (All regular offline, exclude MT)
+                        q = FilterModernTradeSalesBillItems(q, false);
+                    }
+                }
+                else
                 {
-                    q = q.Where(i => areaScope.EffectiveProvinceVariants.Contains(i.SalesBill.Province));
+                    // isOnline is true
+                    if (!isMt && !isBkk && !isUpc)
+                    {
+                        // Online only
+                        q = FilterOnlineSalesBillItems(q, true);
+                    }
+                    else if (!isMt && isBkk && isUpc)
+                    {
+                        // Online + BKK + UPC (Exclude MT)
+                        q = FilterModernTradeSalesBillItems(q, false);
+                    }
+                    else if (isMt && !isBkk && !isUpc)
+                    {
+                        // Online + MT
+                        q = q.Where(i => (i.SalesBill.SalesRep != null && (i.SalesBill.SalesRep.StartsWith("บริษัท*") || i.SalesBill.SalesRep.StartsWith("บริษัทT")))
+                                      || mtCodes.Contains(i.SalesBill.CustomerCode)
+                                      || (i.SalesBill.CustomerName != null && (
+                                          i.SalesBill.CustomerName.Contains("บิ๊กซี") || i.SalesBill.CustomerName.ToLower().Contains("big c") ||
+                                          i.SalesBill.CustomerName.Contains("แม็คโคร") || i.SalesBill.CustomerName.Contains("ซีพี ออลล์") ||
+                                          i.SalesBill.CustomerName.Contains("ซีพีออลล์") || i.SalesBill.CustomerName.Contains("ซีพี แอ็กซ์ตร้า") ||
+                                          i.SalesBill.CustomerName.Contains("เซ็นทรัล") || i.SalesBill.CustomerName.Contains("เดอะมอลล์") ||
+                                          i.SalesBill.CustomerName.Contains("ปตท. บริหารธุรกิจค้าปลีก") || i.SalesBill.CustomerName.Contains("ปิโตรเลียมไทยคอร์ปอเรชั่น") ||
+                                          i.SalesBill.CustomerName.Contains("โลตัส") || i.SalesBill.CustomerName.Contains("ซี.เจ") ||
+                                          i.SalesBill.CustomerName.Contains("ฟู้ดแลนด์") || i.SalesBill.CustomerName.Contains("วิลล่า มาร์เก็ท") ||
+                                          i.SalesBill.CustomerName.Contains("วัตสัน") || i.SalesBill.CustomerName.Contains("บู๊ทส์") ||
+                                          i.SalesBill.CustomerName.Contains("ซูรูฮะ") || i.SalesBill.CustomerName.Contains("ฟาร์มาฮอฟ")
+                                      )));
+                    }
+                    else if (isMt && isUpc && !isBkk)
+                    {
+                        // Online + MT + UPC (Exclude BKK regular shops)
+                        q = q.Where(i => (i.SalesBill.SalesRep != null && (i.SalesBill.SalesRep.StartsWith("บริษัท*") || i.SalesBill.SalesRep.StartsWith("บริษัทT")))
+                                      || (!bkkVariants.Contains(i.SalesBill.Province)
+                                          && !i.SalesBill.Province.Contains("กรุงเทพ") && !i.SalesBill.Province.Contains("กทม")
+                                          && !i.SalesBill.Province.Contains("นนทบุรี")
+                                          && !i.SalesBill.Province.Contains("สมุทรปราการ"))
+                                      || mtCodes.Contains(i.SalesBill.CustomerCode)
+                                      || (i.SalesBill.CustomerName != null && (
+                                          i.SalesBill.CustomerName.Contains("บิ๊กซี") || i.SalesBill.CustomerName.ToLower().Contains("big c") ||
+                                          i.SalesBill.CustomerName.Contains("แม็คโคร") || i.SalesBill.CustomerName.Contains("ซีพี ออลล์") ||
+                                          i.SalesBill.CustomerName.Contains("ซีพีออลล์") || i.SalesBill.CustomerName.Contains("ซีพี แอ็กซ์ตร้า") ||
+                                          i.SalesBill.CustomerName.Contains("เซ็นทรัล") || i.SalesBill.CustomerName.Contains("เดอะมอลล์") ||
+                                          i.SalesBill.CustomerName.Contains("ปตท. บริหารธุรกิจค้าปลีก") || i.SalesBill.CustomerName.Contains("ปิโตรเลียมไทยคอร์ปอเรชั่น") ||
+                                          i.SalesBill.CustomerName.Contains("โลตัส") || i.SalesBill.CustomerName.Contains("ซี.เจ") ||
+                                          i.SalesBill.CustomerName.Contains("ฟู้ดแลนด์") || i.SalesBill.CustomerName.Contains("วิลล่า มาร์เก็ท") ||
+                                          i.SalesBill.CustomerName.Contains("วัตสัน") || i.SalesBill.CustomerName.Contains("บู๊ทส์") ||
+                                          i.SalesBill.CustomerName.Contains("ซูรูฮะ") || i.SalesBill.CustomerName.Contains("ฟาร์มาฮอฟ")
+                                      )));
+                    }
+                    else if (isMt && isBkk && !isUpc)
+                    {
+                        // Online + MT + BKK (Exclude UPC regular shops)
+                        q = q.Where(i => (i.SalesBill.SalesRep != null && (i.SalesBill.SalesRep.StartsWith("บริษัท*") || i.SalesBill.SalesRep.StartsWith("บริษัทT")))
+                                      || bkkVariants.Contains(i.SalesBill.Province)
+                                      || i.SalesBill.Province.Contains("กรุงเทพ") || i.SalesBill.Province.Contains("กทม")
+                                      || i.SalesBill.Province.Contains("นนทบุรี")
+                                      || i.SalesBill.Province.Contains("สมุทรปราการ")
+                                      || mtCodes.Contains(i.SalesBill.CustomerCode)
+                                      || (i.SalesBill.CustomerName != null && (
+                                          i.SalesBill.CustomerName.Contains("บิ๊กซี") || i.SalesBill.CustomerName.ToLower().Contains("big c") ||
+                                          i.SalesBill.CustomerName.Contains("แม็คโคร") || i.SalesBill.CustomerName.Contains("ซีพี ออลล์") ||
+                                          i.SalesBill.CustomerName.Contains("ซีพีออลล์") || i.SalesBill.CustomerName.Contains("ซีพี แอ็กซ์ตร้า") ||
+                                          i.SalesBill.CustomerName.Contains("เซ็นทรัล") || i.SalesBill.CustomerName.Contains("เดอะมอลล์") ||
+                                          i.SalesBill.CustomerName.Contains("ปตท. บริหารธุรกิจค้าปลีก") || i.SalesBill.CustomerName.Contains("ปิโตรเลียมไทยคอร์ปอเรชั่น") ||
+                                          i.SalesBill.CustomerName.Contains("โลตัส") || i.SalesBill.CustomerName.Contains("ซี.เจ") ||
+                                          i.SalesBill.CustomerName.Contains("ฟู้ดแลนด์") || i.SalesBill.CustomerName.Contains("วิลล่า มาร์เก็ท") ||
+                                          i.SalesBill.CustomerName.Contains("วัตสัน") || i.SalesBill.CustomerName.Contains("บู๊ทส์") ||
+                                          i.SalesBill.CustomerName.Contains("ซูรูฮะ") || i.SalesBill.CustomerName.Contains("ฟาร์มาฮอฟ")
+                                      )));
+                    }
                 }
-                return q;
             }
 
-            if (isUpcountryRegion || isBkkVicinityRegion)
+            if (!string.IsNullOrEmpty(areaScope.SelectedProvince) && areaScope.EffectiveProvinceVariants != null && areaScope.EffectiveProvinceVariants.Count > 0)
             {
-                q = FilterOnlineSalesBillItems(q, false);
-                q = FilterModernTradeSalesBillItems(q, false);
-            }
-
-            if (string.IsNullOrEmpty(areaScope.SelectedProvince) && !areaScope.HasProvinceRestriction && isUpcountryRegion)
-            {
-                var bkkVariants = GetMatchingProvinces("กรุงเทพ, นนทบุรี, สมุทรปราการ");
-                return q.Where(i => !bkkVariants.Contains(i.SalesBill.Province)
-                                 && !i.SalesBill.Province.Contains("กรุงเทพ") && !i.SalesBill.Province.Contains("กทม")
-                                 && !i.SalesBill.Province.Contains("นนทบุรี")
-                                 && !i.SalesBill.Province.Contains("สมุทรปราการ"));
-            }
-
-            if (string.IsNullOrEmpty(areaScope.SelectedProvince) && !areaScope.HasProvinceRestriction && isBkkVicinityRegion)
-            {
-                var bkkVariants = GetMatchingProvinces("กรุงเทพ, นนทบุรี, สมุทรปราการ");
-                return q.Where(i => bkkVariants.Contains(i.SalesBill.Province)
-                                 || i.SalesBill.Province.Contains("กรุงเทพ") || i.SalesBill.Province.Contains("กทม")
-                                 || i.SalesBill.Province.Contains("นนทบุรี")
-                                 || i.SalesBill.Province.Contains("สมุทรปราการ"));
-            }
-
-            if (areaScope.EffectiveProvinceVariants != null && areaScope.EffectiveProvinceVariants.Count > 0)
-            {
-                return q.Where(i => areaScope.EffectiveProvinceVariants.Contains(i.SalesBill.Province));
+                q = q.Where(i => areaScope.EffectiveProvinceVariants.Contains(i.SalesBill.Province));
             }
 
             return q;
         }
+
     }
 
     public class AreaFilterResult
