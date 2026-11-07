@@ -1395,34 +1395,138 @@ namespace RoyalD.Web.Services
 
         public async Task<byte[]> ExportCustomerProductExcelAsync(CustomerProductViewModel data)
         {
+            OfficeOpenXml.ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             using var pkg = new OfficeOpenXml.ExcelPackage();
-            var ws = pkg.Workbook.Worksheets.Add("CustomerSales");
+            var ws = pkg.Workbook.Worksheets.Add("รายการขายรายลูกค้า");
+
+            // Page & Print Setup (A4 Landscape, Fit to Width)
+            ws.PrinterSettings.PaperSize = OfficeOpenXml.ePaperSize.A4;
+            ws.PrinterSettings.Orientation = OfficeOpenXml.eOrientation.Landscape;
+            ws.PrinterSettings.FitToPage = true;
+            ws.PrinterSettings.FitToWidth = 1;
+            ws.PrinterSettings.FitToHeight = 0;
+            ws.PrinterSettings.LeftMargin = 0.4M;
+            ws.PrinterSettings.RightMargin = 0.4M;
+            ws.PrinterSettings.TopMargin = 0.5M;
+            ws.PrinterSettings.BottomMargin = 0.5M;
+            ws.PrinterSettings.RepeatRows = new OfficeOpenXml.ExcelAddress("$4:$4");
+
+            // Title
+            ws.Cells["A1:I1"].Merge = true;
+            ws.Cells["A1"].Value = "บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด (สำนักงานใหญ่)";
+            ws.Cells["A1"].Style.Font.Bold = true;
+            ws.Cells["A1"].Style.Font.Size = 14;
+            ws.Cells["A1"].Style.Font.Name = "Tahoma";
+            ws.Cells["A1"].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+
+            ws.Cells["A2:I2"].Merge = true;
+            ws.Cells["A2"].Value = "รายงานรายการขายสินค้าของลูกค้าแต่ละราย";
+            ws.Cells["A2"].Style.Font.Bold = true;
+            ws.Cells["A2"].Style.Font.Size = 12;
+            ws.Cells["A2"].Style.Font.Name = "Tahoma";
+            ws.Cells["A2"].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+
+            var filterParts = new List<string>();
+            if (data.StartDate.HasValue || data.EndDate.HasValue)
+            {
+                filterParts.Add($"ช่วงวันที่: {(data.StartDate.HasValue ? data.StartDate.Value.ToString("dd/MM/yyyy") : "-")} ถึง {(data.EndDate.HasValue ? data.EndDate.Value.ToString("dd/MM/yyyy") : "-")}");
+            }
+            if (!string.IsNullOrEmpty(data.SelectedRep)) filterParts.Add($"ผู้แทนขาย: {data.SelectedRep}");
+            if (!string.IsNullOrEmpty(data.SelectedRegion)) filterParts.Add($"ภาค: {data.SelectedRegion}");
+            if (!string.IsNullOrEmpty(data.SelectedProvince)) filterParts.Add($"จังหวัด: {data.SelectedProvince}");
+            if (data.Credit.HasValue) filterParts.Add($"เครดิต: {data.Credit} วัน");
+
+            ws.Cells["A3:I3"].Merge = true;
+            ws.Cells["A3"].Value = filterParts.Count > 0 ? string.Join(" | ", filterParts) : "เงื่อนไข: ทั้งหมด";
+            ws.Cells["A3"].Style.Font.Size = 9;
+            ws.Cells["A3"].Style.Font.Name = "Tahoma";
+            ws.Cells["A3"].Style.Font.Color.SetColor(System.Drawing.Color.DimGray);
+            ws.Cells["A3"].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
 
             // Headers
             var headers = new[] { "ลำดับ", "เดือน", "รหัสลูกค้า", "ชื่อลูกค้า", "รหัสสินค้า : ชื่อสินค้า", "หน่วยสินค้า", "ราคาต่อหน่วย", "เครดิต(วัน)", "ชื่อผู้แทนขาย" };
             for (int i = 0; i < headers.Length; i++)
             {
-                ws.Cells[1, i + 1].Value = headers[i];
-                ws.Cells[1, i + 1].Style.Font.Bold = true;
+                var cell = ws.Cells[4, i + 1];
+                cell.Value = headers[i];
+                cell.Style.Font.Bold = true;
+                cell.Style.Font.Size = 10;
+                cell.Style.Font.Name = "Tahoma";
+                cell.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(5, 150, 105)); // #059669
+                cell.Style.Font.Color.SetColor(System.Drawing.Color.White);
+                cell.Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+                cell.Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Center;
+                cell.Style.WrapText = true;
             }
+            ws.Row(4).Height = 26;
 
-            int row = 2;
+            int row = 5;
             int idx = 1;
             foreach (var item in data.Items)
             {
                 ws.Cells[row, 1].Value = idx++;
+                ws.Cells[row, 1].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+
                 ws.Cells[row, 2].Value = item.Month;
+                ws.Cells[row, 2].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+
                 ws.Cells[row, 3].Value = item.CustomerCode;
+                ws.Cells[row, 3].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+
                 ws.Cells[row, 4].Value = item.CustomerName;
+                ws.Cells[row, 4].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Left;
+
                 ws.Cells[row, 5].Value = $"{item.ProductCode} : {item.ProductName}";
+                ws.Cells[row, 5].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Left;
+
                 ws.Cells[row, 6].Value = item.Unit;
+                ws.Cells[row, 6].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+
                 ws.Cells[row, 7].Value = item.Price;
-                ws.Cells[row, 8].Value = (item.Credit == 0 || item.Credit == 7) ? "เงินสด" : item.Credit.ToString();
+                ws.Cells[row, 7].Style.Numberformat.Format = "#,##0.00";
+                ws.Cells[row, 7].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Right;
+
+                ws.Cells[row, 8].Value = (item.Credit == 0 || item.Credit == 7) ? "เงินสด" : $"{item.Credit} วัน";
+                ws.Cells[row, 8].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+
                 ws.Cells[row, 9].Value = item.SalesRep;
+                ws.Cells[row, 9].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Left;
+
                 row++;
             }
 
-            ws.Cells[ws.Dimension.Address].AutoFitColumns();
+            int totalRows = row - 1;
+            if (totalRows >= 4)
+            {
+                var tableRange = ws.Cells[4, 1, totalRows, 9];
+                tableRange.Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                tableRange.Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                tableRange.Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                tableRange.Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                tableRange.Style.Border.Top.Color.SetColor(System.Drawing.Color.FromArgb(51, 65, 85));
+                tableRange.Style.Border.Bottom.Color.SetColor(System.Drawing.Color.FromArgb(51, 65, 85));
+                tableRange.Style.Border.Left.Color.SetColor(System.Drawing.Color.FromArgb(51, 65, 85));
+                tableRange.Style.Border.Right.Color.SetColor(System.Drawing.Color.FromArgb(51, 65, 85));
+                tableRange.Style.WrapText = true;
+                tableRange.Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Center;
+                tableRange.Style.Font.Name = "Tahoma";
+                tableRange.Style.Font.Size = 9.5f;
+                ws.Cells[4, 1, 4, 9].Style.Font.Size = 10;
+                ws.Cells[4, 1, 4, 9].Style.Font.Bold = true;
+            }
+
+            // Column Widths tailored for A4 Landscape
+            ws.Column(1).Width = 6;   // ลำดับ
+            ws.Column(2).Width = 10;  // เดือน
+            ws.Column(3).Width = 13;  // รหัสลูกค้า
+            ws.Column(4).Width = 28;  // ชื่อลูกค้า (Wrap)
+            ws.Column(5).Width = 34;  // สินค้า (Wrap)
+            ws.Column(6).Width = 9;   // หน่วย
+            ws.Column(7).Width = 12;  // ราคา
+            ws.Column(8).Width = 11;  // เครดิต
+            ws.Column(9).Width = 18;  // ผู้แทนขาย (Wrap)
+
             return await pkg.GetAsByteArrayAsync();
         }
 
@@ -1440,8 +1544,8 @@ namespace RoyalD.Web.Services
             ws.PrinterSettings.FitToHeight = 0;
             ws.PrinterSettings.LeftMargin = 0.4M;
             ws.PrinterSettings.RightMargin = 0.4M;
-            ws.PrinterSettings.TopMargin = 0.6M;
-            ws.PrinterSettings.BottomMargin = 0.6M;
+            ws.PrinterSettings.TopMargin = 0.5M;
+            ws.PrinterSettings.BottomMargin = 0.5M;
             ws.PrinterSettings.HeaderMargin = 0.3M;
             ws.PrinterSettings.FooterMargin = 0.3M;
             ws.PrinterSettings.RepeatRows = new OfficeOpenXml.ExcelAddress("$4:$4");
@@ -1474,6 +1578,8 @@ namespace RoyalD.Web.Services
                 filterParts.Add($"ประจำเดือน: {vm.SelectedMonth}");
             }
             if (!string.IsNullOrEmpty(vm.SelectedSalesRep)) filterParts.Add($"ผู้แทนขาย: {vm.SelectedSalesRep}");
+            if (!string.IsNullOrEmpty(vm.SelectedRegion)) filterParts.Add($"ภาค: {vm.SelectedRegion}");
+            if (!string.IsNullOrEmpty(vm.SelectedProvince)) filterParts.Add($"จังหวัด: {vm.SelectedProvince}");
             if (vm.Credit.HasValue) filterParts.Add($"เครดิต: {vm.Credit} วัน");
             if (!string.IsNullOrEmpty(vm.SearchCustomerCode)) filterParts.Add($"รหัสลูกค้า: {vm.SearchCustomerCode}");
             if (!string.IsNullOrEmpty(vm.SearchCustomerName)) filterParts.Add($"ชื่อลูกค้า: {vm.SearchCustomerName}");
@@ -1559,7 +1665,7 @@ namespace RoyalD.Web.Services
                 ws.Cells[row, 10].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Right;
                 totalAmount += item.Amount;
 
-                ws.Row(row).Height = 22;
+                // Let row height auto-adjust naturally for wrapped text
                 row++;
             }
 
@@ -1591,16 +1697,16 @@ namespace RoyalD.Web.Services
 
             int totalRows = row;
 
-            // 6. Borders and Text Wrapping for ALL table cells (Thin borders on all 4 sides)
+            // 6. Borders and Text Wrapping for ALL table cells (Crisp thin dark borders)
             var tableRange = ws.Cells[4, 1, totalRows, 10];
             tableRange.Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
             tableRange.Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
             tableRange.Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
             tableRange.Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-            tableRange.Style.Border.Top.Color.SetColor(System.Drawing.Color.FromArgb(209, 213, 219));
-            tableRange.Style.Border.Bottom.Color.SetColor(System.Drawing.Color.FromArgb(209, 213, 219));
-            tableRange.Style.Border.Left.Color.SetColor(System.Drawing.Color.FromArgb(209, 213, 219));
-            tableRange.Style.Border.Right.Color.SetColor(System.Drawing.Color.FromArgb(209, 213, 219));
+            tableRange.Style.Border.Top.Color.SetColor(System.Drawing.Color.FromArgb(51, 65, 85)); // Crisp dark slate border
+            tableRange.Style.Border.Bottom.Color.SetColor(System.Drawing.Color.FromArgb(51, 65, 85));
+            tableRange.Style.Border.Left.Color.SetColor(System.Drawing.Color.FromArgb(51, 65, 85));
+            tableRange.Style.Border.Right.Color.SetColor(System.Drawing.Color.FromArgb(51, 65, 85));
 
             // Wrap text & vertical center
             tableRange.Style.WrapText = true;
@@ -1612,16 +1718,16 @@ namespace RoyalD.Web.Services
             ws.Cells[row, 1, row, 10].Style.Font.Bold = true;
 
             // 7. Column Widths tailored for A4 Landscape with neat text wrapping
-            ws.Column(1).Width = 7;   // ลำดับ
-            ws.Column(2).Width = 14;  // รหัสลูกค้า
-            ws.Column(3).Width = 34;  // ชื่อลูกค้า
+            ws.Column(1).Width = 6;   // ลำดับ
+            ws.Column(2).Width = 13;  // รหัสลูกค้า
+            ws.Column(3).Width = 28;  // ชื่อลูกค้า (Wrap)
             ws.Column(4).Width = 13;  // รหัสสินค้า
-            ws.Column(5).Width = 38;  // ชื่อสินค้า
-            ws.Column(6).Width = 11;  // หน่วยสินค้า
-            ws.Column(7).Width = 13;  // เครดิต
-            ws.Column(8).Width = 15;  // จำนวนที่ซื้อ
-            ws.Column(9).Width = 14;  // ราคา/หน่วย
-            ws.Column(10).Width = 18; // จำนวนเงินรวม
+            ws.Column(5).Width = 32;  // ชื่อสินค้า (Wrap)
+            ws.Column(6).Width = 10;  // หน่วยสินค้า
+            ws.Column(7).Width = 10;  // เครดิต
+            ws.Column(8).Width = 13;  // จำนวนที่ซื้อ
+            ws.Column(9).Width = 13;  // ราคา/หน่วย
+            ws.Column(10).Width = 16; // จำนวนเงินรวม
 
             return await pkg.GetAsByteArrayAsync();
         }

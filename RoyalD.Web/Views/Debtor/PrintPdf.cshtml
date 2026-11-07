@@ -18,17 +18,28 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" />
     <style>
+        @@page {
+            size: A4 landscape;
+            margin: 7mm 6mm 7mm 6mm;
+        }
         body {
             font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', 'Leelawadee', Tahoma, Arial, sans-serif;
             background: #ffffff;
             color: #0f172a;
-            font-size: 0.82rem;
-            padding: 20px;
+            font-size: 8pt;
+            padding: 12px;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
         .header-box {
             border-bottom: 2px solid #0f766e;
-            padding-bottom: 12px;
-            margin-bottom: 16px;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+        .table-pdf {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            table-layout: fixed !important;
         }
         .table-pdf th {
             background-color: #0f766e !important;
@@ -36,26 +47,34 @@
             font-weight: 700;
             text-align: center;
             vertical-align: middle;
-            font-size: 0.80rem;
-            padding: 6px 4px;
+            font-size: 8pt;
+            padding: 4px 3px;
+            border: 1px solid #111827 !important;
         }
         .table-pdf td {
             vertical-align: middle;
-            padding: 5px 4px;
-            border-bottom: 1px solid #e2e8f0;
+            padding: 3.5px 4px;
+            border: 1px solid #111827 !important; /* เส้นตารางคมชัด */
+            font-size: 7.8pt;
+            line-height: 1.25;
+            white-space: normal !important;
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
         }
         .row-overdue-120 {
             background-color: #fff1f2 !important;
             font-weight: bold;
         }
         @@media print {
-            body { padding: 0; }
+            body { padding: 0 !important; font-size: 7.8pt !important; }
             .no-print { display: none !important; }
             .table-pdf th { background-color: #0f766e !important; -webkit-print-color-adjust: exact; }
             .row-overdue-120 { background-color: #fff1f2 !important; -webkit-print-color-adjust: exact; }
+            tr { page-break-inside: avoid !important; }
+            thead { display: table-header-group !important; }
         }
-            /* PDF Table Word Wrapping */
-        .table-pdf td, .table-pdf th, table td, table th { white-space: normal !important; word-break: break-word !important; }
+        /* PDF Table Word Wrapping */
+        .table-pdf td, .table-pdf th, table td, table th { white-space: normal !important; word-break: break-word !important; overflow-wrap: break-word !important; }
     </style>
 </head>
 <body>

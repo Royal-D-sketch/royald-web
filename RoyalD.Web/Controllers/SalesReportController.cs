@@ -625,9 +625,18 @@ namespace RoyalD.Web.Controllers
 
             var ws1 = package.Workbook.Worksheets.Add("สรุปกลุ่มสินค้า");
 
-            ws1.Cells.Style.Font.Name = "Sarabun";
+            ws1.PrinterSettings.PaperSize = ePaperSize.A4;
+            ws1.PrinterSettings.Orientation = eOrientation.Landscape;
+            ws1.PrinterSettings.FitToPage = true;
+            ws1.PrinterSettings.FitToWidth = 1;
+            ws1.PrinterSettings.FitToHeight = 0;
+            ws1.PrinterSettings.LeftMargin = 0.4M;
+            ws1.PrinterSettings.RightMargin = 0.4M;
+            ws1.PrinterSettings.TopMargin = 0.5M;
+            ws1.PrinterSettings.BottomMargin = 0.5M;
 
-            ws1.Cells.Style.Font.Size = 11;
+            ws1.Cells.Style.Font.Name = "Tahoma";
+            ws1.Cells.Style.Font.Size = 10;
 
 
 
@@ -763,10 +772,27 @@ namespace RoyalD.Web.Controllers
             ws1.Cells[row1, 1, row1, 9].Style.Font.Bold = true;
             ws1.Cells[row1, 1, row1, 9].Style.Fill.PatternType = ExcelFillStyle.Solid;
             ws1.Cells[row1, 1, row1, 9].Style.Fill.BackgroundColor.SetColor(Color.FromArgb(204, 251, 241));
-            ws1.Cells[4, 1, row1, 9].Style.Border.Top.Style = ExcelBorderStyle.Thin;
-            ws1.Cells[4, 1, row1, 9].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-            ws1.Cells[4, 1, row1, 9].Style.Border.Left.Style = ExcelBorderStyle.Thin;
-            ws1.Cells[4, 1, row1, 9].Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            var range1 = ws1.Cells[4, 1, row1, 9];
+            range1.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            range1.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            range1.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            range1.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            range1.Style.Border.Top.Color.SetColor(Color.FromArgb(51, 65, 85));
+            range1.Style.Border.Bottom.Color.SetColor(Color.FromArgb(51, 65, 85));
+            range1.Style.Border.Left.Color.SetColor(Color.FromArgb(51, 65, 85));
+            range1.Style.Border.Right.Color.SetColor(Color.FromArgb(51, 65, 85));
+            range1.Style.WrapText = true;
+            range1.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+            
+            ws1.Column(1).Width = 6;
+            ws1.Column(2).Width = 12;
+            ws1.Column(3).Width = 30; // ชื่อกลุ่มสินค้า (Wrap)
+            ws1.Column(4).Width = 12;
+            ws1.Column(5).Width = 14;
+            ws1.Column(6).Width = 16;
+            ws1.Column(7).Width = 12;
+            ws1.Column(8).Width = 16;
+            ws1.Column(9).Width = 18;
             if (false) { ws1.Cells[row1, 4].Value = vm.TotalSalesQty;
 
             ws1.Cells[row1, 4].Style.Numberformat.Format = "#,##0.00";
@@ -815,9 +841,18 @@ namespace RoyalD.Web.Controllers
 
             var ws2 = package.Workbook.Worksheets.Add("รายละเอียดสินค้า");
 
-            ws2.Cells.Style.Font.Name = "Sarabun";
+            ws2.PrinterSettings.PaperSize = ePaperSize.A4;
+            ws2.PrinterSettings.Orientation = eOrientation.Landscape;
+            ws2.PrinterSettings.FitToPage = true;
+            ws2.PrinterSettings.FitToWidth = 1;
+            ws2.PrinterSettings.FitToHeight = 0;
+            ws2.PrinterSettings.LeftMargin = 0.4M;
+            ws2.PrinterSettings.RightMargin = 0.4M;
+            ws2.PrinterSettings.TopMargin = 0.5M;
+            ws2.PrinterSettings.BottomMargin = 0.5M;
 
-            ws2.Cells.Style.Font.Size = 10;
+            ws2.Cells.Style.Font.Name = "Tahoma";
+            ws2.Cells.Style.Font.Size = 9.5f;
 
 
 
@@ -947,10 +982,30 @@ namespace RoyalD.Web.Controllers
 
 
 
-            ws2.Cells[3, 1, row2, 12].Style.Border.Top.Style = ExcelBorderStyle.Thin;
-            ws2.Cells[3, 1, row2, 12].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-            ws2.Cells[3, 1, row2, 12].Style.Border.Left.Style = ExcelBorderStyle.Thin;
-            ws2.Cells[3, 1, row2, 12].Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            var range2 = ws2.Cells[3, 1, row2, 12];
+            range2.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            range2.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            range2.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            range2.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            range2.Style.Border.Top.Color.SetColor(Color.FromArgb(51, 65, 85));
+            range2.Style.Border.Bottom.Color.SetColor(Color.FromArgb(51, 65, 85));
+            range2.Style.Border.Left.Color.SetColor(Color.FromArgb(51, 65, 85));
+            range2.Style.Border.Right.Color.SetColor(Color.FromArgb(51, 65, 85));
+            range2.Style.WrapText = true;
+            range2.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+
+            ws2.Column(1).Width = 6;
+            ws2.Column(2).Width = 20; // กลุ่มสินค้า
+            ws2.Column(3).Width = 12; // รหัสสินค้า
+            ws2.Column(4).Width = 28; // ชื่อสินค้า (Wrap)
+            ws2.Column(5).Width = 8;  // หน่วย
+            ws2.Column(6).Width = 10; // แถม
+            ws2.Column(7).Width = 12; // ขาย
+            ws2.Column(8).Width = 14; // เงินขาย
+            ws2.Column(9).Width = 14; // ใบลดหนี้
+            ws2.Column(10).Width = 10; // คืน
+            ws2.Column(11).Width = 14; // เงินลดหนี้
+            ws2.Column(12).Width = 16; // ยอดขายสุทธิ
             if (false) { ws2.Cells[3, 1, row2, 11].Style.Border.Top.Style = ExcelBorderStyle.Thin;
 
             ws2.Cells[3, 1, row2, 11].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;

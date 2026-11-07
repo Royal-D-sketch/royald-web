@@ -548,7 +548,48 @@ namespace RoyalD.Web.Services
             ws.Cells[row, 1, row, 13].Style.Fill.PatternType = ExcelFillStyle.Solid;
             ws.Cells[row, 1, row, 13].Style.Fill.BackgroundColor.SetColor(Color.FromArgb(241, 245, 249));
 
-            ws.Cells.AutoFitColumns();
+            // A4 Landscape Print Setup
+            ws.PrinterSettings.PaperSize = ePaperSize.A4;
+            ws.PrinterSettings.Orientation = eOrientation.Landscape;
+            ws.PrinterSettings.FitToPage = true;
+            ws.PrinterSettings.FitToWidth = 1;
+            ws.PrinterSettings.FitToHeight = 0;
+            ws.PrinterSettings.LeftMargin = 0.4M;
+            ws.PrinterSettings.RightMargin = 0.4M;
+            ws.PrinterSettings.TopMargin = 0.5M;
+            ws.PrinterSettings.BottomMargin = 0.5M;
+            ws.PrinterSettings.RepeatRows = new ExcelAddress("$5:$5");
+
+            var tableRange = ws.Cells[5, 1, row, 13];
+            tableRange.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            tableRange.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            tableRange.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            tableRange.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            tableRange.Style.Border.Top.Color.SetColor(Color.FromArgb(51, 65, 85));
+            tableRange.Style.Border.Bottom.Color.SetColor(Color.FromArgb(51, 65, 85));
+            tableRange.Style.Border.Left.Color.SetColor(Color.FromArgb(51, 65, 85));
+            tableRange.Style.Border.Right.Color.SetColor(Color.FromArgb(51, 65, 85));
+            tableRange.Style.WrapText = true;
+            tableRange.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+            tableRange.Style.Font.Name = "Tahoma";
+            tableRange.Style.Font.Size = 9.5f;
+            ws.Cells[5, 1, 5, 13].Style.Font.Size = 10;
+            ws.Cells[5, 1, 5, 13].Style.Font.Bold = true;
+
+            ws.Column(1).Width = 5;  // #
+            ws.Column(2).Width = 12; // เลขที่บิล
+            ws.Column(3).Width = 11; // วันที่บิล
+            ws.Column(4).Width = 14; // PO Number
+            ws.Column(5).Width = 11; // ครบกำหนด
+            ws.Column(6).Width = 9;  // เครดิต
+            ws.Column(7).Width = 11; // รหัสลูกค้า
+            ws.Column(8).Width = 26; // ชื่อลูกค้า (Wrap)
+            ws.Column(9).Width = 12; // จังหวัด
+            ws.Column(10).Width = 14; // ผู้แทนขาย
+            ws.Column(11).Width = 13; // ยอดบิลรวม
+            ws.Column(12).Width = 13; // ยอดค้างชำระ
+            ws.Column(13).Width = 13; // สถานะ
+
             return await pkg.GetAsByteArrayAsync();
         }
     }

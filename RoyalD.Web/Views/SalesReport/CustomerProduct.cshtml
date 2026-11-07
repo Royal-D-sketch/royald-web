@@ -50,6 +50,84 @@
     box-shadow: 0 0 0 3px rgba(5,150,105,0.2);
     outline: none;
 }
+
+@@page {
+    size: A4 landscape;
+    margin: 8mm 6mm 8mm 6mm;
+}
+@@media print {
+    html, body {
+        background: #fff !important;
+        color: #000 !important;
+        font-family: 'Sarabun', 'Tahoma', 'Noto Sans Thai', sans-serif !important;
+        font-size: 8pt !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    .no-print, .sales-subnav, nav, .btn, .filter-card, .export-bar, header, footer, .sidebar, #sidebar {
+        display: none !important;
+    }
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    .card-header {
+        display: none !important;
+    }
+    .card-body {
+        padding: 0 !important;
+    }
+    .table-responsive {
+        overflow: visible !important;
+        max-height: none !important;
+    }
+    .report-table {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        border-collapse: collapse !important;
+        table-layout: fixed !important;
+    }
+    .report-table th, .report-table td {
+        border: 1px solid #111827 !important; /* เส้นตารางคมชัด */
+        padding: 4px 5px !important;
+        font-size: 8pt !important;
+        line-height: 1.25 !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        color: #000 !important;
+        vertical-align: middle !important;
+    }
+    .report-table th {
+        background-color: #f1f5f9 !important;
+        color: #000 !important;
+        font-weight: 700 !important;
+        text-align: center !important;
+        position: static !important;
+    }
+    /* สัดส่วนคอลัมน์ A4 แนวนอน */
+    .report-table th:nth-child(1), .report-table td:nth-child(1) { width: 4% !important; text-align: center !important; }
+    .report-table th:nth-child(2), .report-table td:nth-child(2) { width: 6% !important; text-align: center !important; }
+    .report-table th:nth-child(3), .report-table td:nth-child(3) { width: 8% !important; text-align: center !important; }
+    .report-table th:nth-child(4), .report-table td:nth-child(4) { width: 20% !important; text-align: left !important; }
+    .report-table th:nth-child(5), .report-table td:nth-child(5) { width: 9% !important; text-align: left !important; }
+    .report-table th:nth-child(6), .report-table td:nth-child(6) { width: 25% !important; text-align: left !important; }
+    .report-table th:nth-child(7), .report-table td:nth-child(7) { width: 6% !important; text-align: center !important; }
+    .report-table th:nth-child(8), .report-table td:nth-child(8) { width: 7% !important; text-align: right !important; }
+    .report-table th:nth-child(9), .report-table td:nth-child(9) { width: 6% !important; text-align: center !important; }
+    .report-table th:nth-child(10), .report-table td:nth-child(10) { width: 9% !important; text-align: left !important; }
+
+    tr {
+        page-break-inside: avoid !important;
+    }
+    thead {
+        display: table-header-group !important;
+    }
+}
 </style>
 
 @if (hasSalesReport || hasCustPurchaseSum)
@@ -227,6 +305,16 @@
     int endItem = Math.Min(curPage * pSize, totRecords);
     int idx = startItem;
 }
+
+<!-- Print Only Header -->
+<div class="d-none d-print-block mb-2 text-center print-header">
+    <h5 class="fw-bold mb-1" style="color:#065f46;">บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด (สำนักงานใหญ่)</h5>
+    <h6 class="fw-bold mb-1">รายงานรายการขายสินค้าของลูกค้าแต่ละราย</h6>
+    <div class="small text-dark">
+        <span>พิมพ์เมื่อ: @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</span> | 
+        <span>ทั้งหมด @totRecords.ToString("N0") รายการ</span>
+    </div>
+</div>
 
 <div class="card shadow-sm border-0">
     <div class="card-header d-flex justify-content-between align-items-center py-2 flex-wrap gap-2" style="background:#f8fafc;">

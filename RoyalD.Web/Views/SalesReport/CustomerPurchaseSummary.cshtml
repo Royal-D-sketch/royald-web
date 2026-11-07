@@ -33,10 +33,74 @@
 .insight-card { background:linear-gradient(135deg,#f0fdfa 0%,#f8fafc 100%); border:1px solid #ccfbf1; border-left:5px solid #0d9488; border-radius:12px; padding:18px; box-shadow:0 2px 10px rgba(15,118,110,0.06); line-height:1.65; }
 .autocomplete-item { padding: 8px 14px; cursor: pointer; font-size: 0.93rem; }
 .autocomplete-item:hover { background: #f0fdfa; color: #059669; }
+@@page {
+    size: A4 landscape;
+    margin: 8mm 6mm 8mm 6mm;
+}
 @@media print {
-    .no-print, .sales-subnav, nav, .btn, .filter-card, .export-bar { display: none !important; }
-    body { font-size: 9pt; background: #fff !important; }
-    .prod-table-wrap { box-shadow: none !important; }
+    html, body {
+        background: #fff !important;
+        color: #000 !important;
+        font-family: 'Sarabun', 'Tahoma', 'Noto Sans Thai', sans-serif !important;
+        font-size: 8pt !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    .no-print, .sales-subnav, nav, .btn, .filter-card, .export-bar, header, footer, .sidebar, #sidebar {
+        display: none !important;
+    }
+    .prod-table-wrap {
+        overflow: visible !important;
+        box-shadow: none !important;
+        border: none !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .prod-table {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        border-collapse: collapse !important;
+        table-layout: fixed !important;
+    }
+    .prod-table th, .prod-table td {
+        border: 1px solid #111827 !important; /* เส้นตารางคมชัด ดำ/เข้มชัดเจน */
+        padding: 4px 5px !important;
+        font-size: 8pt !important;
+        line-height: 1.25 !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        color: #000 !important;
+        vertical-align: middle !important;
+    }
+    .prod-table th {
+        background-color: #f1f5f9 !important;
+        color: #000 !important;
+        font-weight: 700 !important;
+        text-align: center !important;
+    }
+    /* สัดส่วนคอลัมน์พอดีหน้ากระดาษ A4 แนวนอน พร้อมตัดข้อความลงบรรทัด */
+    .prod-table th:nth-child(1), .prod-table td:nth-child(1) { width: 9% !important; text-align: center !important; }
+    .prod-table th:nth-child(2), .prod-table td:nth-child(2) { width: 24% !important; text-align: left !important; }
+    .prod-table th:nth-child(3), .prod-table td:nth-child(3) { width: 9% !important; text-align: center !important; }
+    .prod-table th:nth-child(4), .prod-table td:nth-child(4) { width: 25% !important; text-align: left !important; }
+    .prod-table th:nth-child(5), .prod-table td:nth-child(5) { width: 6% !important; text-align: center !important; }
+    .prod-table th:nth-child(6), .prod-table td:nth-child(6) { width: 6% !important; text-align: center !important; }
+    .prod-table th:nth-child(7), .prod-table td:nth-child(7) { width: 7% !important; text-align: right !important; }
+    .prod-table th:nth-child(8), .prod-table td:nth-child(8) { width: 6% !important; text-align: right !important; }
+    .prod-table th:nth-child(9), .prod-table td:nth-child(9) { width: 8% !important; text-align: right !important; }
+
+    tr {
+        page-break-inside: avoid !important;
+    }
+    thead {
+        display: table-header-group !important;
+    }
 }
 </style>
 
@@ -196,6 +260,16 @@
 
 <div class="d-flex justify-content-between align-items-center mb-2 px-1 text-muted small">
     <span><i class="bi bi-table me-1"></i> แสดง <strong>@startItem - @endItem</strong> จากทั้งหมด <strong>@totRecords.ToString("N0")</strong> รายการ (หน้า <strong>@curPage / @totPages</strong>)</span>
+</div>
+
+<!-- Print Only Header -->
+<div class="d-none d-print-block mb-2 text-center print-header">
+    <h5 class="fw-bold mb-1" style="color:#065f46;">บริษัท รอแยล-ดี (ไทยแลนด์) จำกัด (สำนักงานใหญ่)</h5>
+    <h6 class="fw-bold mb-1">รายงานสรุปการซื้อสินค้าของลูกค้าแต่ละราย</h6>
+    <div class="small text-dark">
+        <span>พิมพ์เมื่อ: @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</span> | 
+        <span>ทั้งหมด @totRecords.ToString("N0") รายการ</span>
+    </div>
 </div>
 
 <div class="prod-table-wrap">

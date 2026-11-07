@@ -663,7 +663,49 @@ namespace RoyalD.Web.Controllers
                 row++;
             }
 
-            sheet.Cells[sheet.Dimension.Address].AutoFitColumns();
+            // A4 Landscape Print Setup
+            sheet.PrinterSettings.PaperSize = OfficeOpenXml.ePaperSize.A4;
+            sheet.PrinterSettings.Orientation = OfficeOpenXml.eOrientation.Landscape;
+            sheet.PrinterSettings.FitToPage = true;
+            sheet.PrinterSettings.FitToWidth = 1;
+            sheet.PrinterSettings.FitToHeight = 0;
+            sheet.PrinterSettings.LeftMargin = 0.4M;
+            sheet.PrinterSettings.RightMargin = 0.4M;
+            sheet.PrinterSettings.TopMargin = 0.5M;
+            sheet.PrinterSettings.BottomMargin = 0.5M;
+            sheet.PrinterSettings.RepeatRows = new OfficeOpenXml.ExcelAddress("$1:$1");
+
+            int totalRows = row - 1;
+            if (totalRows >= 1)
+            {
+                var tableRange = sheet.Cells[1, 1, totalRows, 10];
+                tableRange.Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                tableRange.Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                tableRange.Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                tableRange.Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                tableRange.Style.Border.Top.Color.SetColor(System.Drawing.Color.FromArgb(51, 65, 85));
+                tableRange.Style.Border.Bottom.Color.SetColor(System.Drawing.Color.FromArgb(51, 65, 85));
+                tableRange.Style.Border.Left.Color.SetColor(System.Drawing.Color.FromArgb(51, 65, 85));
+                tableRange.Style.Border.Right.Color.SetColor(System.Drawing.Color.FromArgb(51, 65, 85));
+                tableRange.Style.WrapText = true;
+                tableRange.Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Center;
+                tableRange.Style.Font.Name = "Tahoma";
+                tableRange.Style.Font.Size = 9.5f;
+                sheet.Cells[1, 1, 1, 10].Style.Font.Size = 10;
+                sheet.Cells[1, 1, 1, 10].Style.Font.Bold = true;
+            }
+
+            sheet.Column(1).Width = 12; // เลขที่บิล
+            sheet.Column(2).Width = 11; // วันที่บิล
+            sheet.Column(3).Width = 11; // รหัสลูกค้า
+            sheet.Column(4).Width = 26; // ชื่อลูกค้า (Wrap)
+            sheet.Column(5).Width = 13; // จังหวัด
+            sheet.Column(6).Width = 14; // ผู้แทนขาย
+            sheet.Column(7).Width = 13; // ยอดรวม
+            sheet.Column(8).Width = 13; // ยอดคงเหลือ
+            sheet.Column(9).Width = 13; // สถานะ
+            sheet.Column(10).Width = 14; // PO Number
+
             var content = package.GetAsByteArray();
             return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"SalesBills_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
         }
