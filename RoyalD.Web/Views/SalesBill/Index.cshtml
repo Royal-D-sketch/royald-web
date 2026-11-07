@@ -200,7 +200,8 @@
         </div>
         <div class="col-md-2">
             <label class="form-label small fw-bold text-primary mb-1">🗺️ ภาค/ภูมิภาค</label>
-            <select name="region" id="region-select" class="form-select form-select-sm" onchange="onRegionChange()">
+            <input type="hidden" name="region" id="region-input" value="@(ViewBag.SelectedRegion)" />
+            <select id="region-select" class="form-select form-select-sm" onchange="onRegionChange()">
                 <option value="">@(ViewBag.HasRegionRestriction == true ? "-- ทุกภาคที่รับผิดชอบ --" : "-- ทุกภาค / ทุกพื้นที่ --")</option>
                 @foreach (var reg in regions) {
                     var regLabel = reg == "ออนไลน์" ? "🛒 บิลขายออนไลน์ (บริษัท* และ บริษัทT)" : (reg == "กรุงเทพ, นนทบุรี, สมุทรปราการ" || reg == "กรุงเทพฯ และปริมณฑล" ? "🏙️ บิลขายกรุงเทพ,นนทบุรี,สมุทรปราการ" : (reg == "ต่างจังหวัด" ? "🚚 บิลขายต่างจังหวัด" : (reg == "โมเดิร์นเทรด" ? "🏢 บิลขายModern Trade" : reg)));
@@ -255,28 +256,30 @@
         <div class="col-12 pt-2 mt-2 border-top border-info border-opacity-25 d-flex flex-wrap align-items-center gap-2">
             <span class="small fw-bold text-secondary me-1"><i class="bi bi-funnel-fill text-primary"></i> กรองพื้นที่ด่วน:</span>
             @{
-                string curReg = (string)(ViewBag.SelectedRegion ?? "");
-                bool isAllArea = string.IsNullOrEmpty(curReg);
-                bool isOnline = curReg == "ออนไลน์" || curReg == "บิลขายออนไลน์";
-                bool isBkkVicinity = curReg == "กรุงเทพ, นนทบุรี, สมุทรปราการ" || curReg == "กรุงเทพ,นนทบุรี,สมุทรปราการ" || curReg == "กรุงเทพฯ และปริมณฑล";
-                bool isUpcountry = curReg == "ต่างจังหวัด";
-                bool isModernTrade = curReg == "โมเดิร์นเทรด";
+                string rawReg = (string)(ViewBag.SelectedRegion ?? "");
+                var curRegs = rawReg.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList();
+                bool isAllArea = curRegs.Count == 0;
+                bool isOnline = curRegs.Any(r => r == "ออนไลน์" || r == "บิลขายออนไลน์");
+                bool isBkkVicinity = curRegs.Any(r => r == "กรุงเทพ, นนทบุรี, สมุทรปราการ" || r == "กรุงเทพ,นนทบุรี,สมุทรปราการ" || r == "กรุงเทพฯ และปริมณฑล");
+                bool isUpcountry = curRegs.Any(r => r == "ต่างจังหวัด");
+                bool isModernTrade = curRegs.Any(r => r == "โมเดิร์นเทรด");
             }
-            <button type="button" onclick="filterByAreaGroup('')" class="btn btn-sm rounded-pill px-3 fw-bold @(isAllArea ? "btn-primary shadow-sm" : "btn-outline-secondary bg-white")">
+            <button type="button" onclick="toggleAreaGroup('')" class="btn btn-sm rounded-pill px-3 fw-bold @(isAllArea ? "btn-primary shadow-sm" : "btn-outline-secondary bg-white")" title="แสดงบิลทุกพื้นที่">
                 🌐 บิลขายทั้งหมด
             </button>
-            <button type="button" onclick="filterByAreaGroup('ออนไลน์')" class="btn btn-sm rounded-pill px-3 fw-bold @(isOnline ? "btn-dark shadow-sm border-dark" : "btn-outline-dark bg-white")">
-                🛒 บิลขายออนไลน์ (บริษัท* และ บริษัทT)
+            <button type="button" onclick="toggleAreaGroup('ออนไลน์')" class="btn btn-sm rounded-pill px-3 fw-bold @(isOnline ? "btn-dark shadow-sm border-2 border-dark" : "btn-outline-dark bg-white")" title="คลิกเพื่อเลือก/ยกเลิก (เลือกหลายอันได้)">
+                @(isOnline ? "✓ " : "")🛒 บิลขายออนไลน์ (บริษัท* และ บริษัทT)
             </button>
-            <button type="button" onclick="filterByAreaGroup('กรุงเทพ, นนทบุรี, สมุทรปราการ')" class="btn btn-sm rounded-pill px-3 fw-bold @(isBkkVicinity ? "btn-info text-dark shadow-sm border-info" : "btn-outline-info text-dark bg-white")">
-                🏙️ บิลขายกรุงเทพ,นนทบุรี,สมุทรปราการ
+            <button type="button" onclick="toggleAreaGroup('กรุงเทพ, นนทบุรี, สมุทรปราการ')" class="btn btn-sm rounded-pill px-3 fw-bold @(isBkkVicinity ? "btn-info text-dark shadow-sm border-2 border-info" : "btn-outline-info text-dark bg-white")" title="คลิกเพื่อเลือก/ยกเลิก (เลือกหลายอันได้)">
+                @(isBkkVicinity ? "✓ " : "")🏙️ บิลขายกรุงเทพ,นนทบุรี,สมุทรปราการ
             </button>
-            <button type="button" onclick="filterByAreaGroup('ต่างจังหวัด')" class="btn btn-sm rounded-pill px-3 fw-bold @(isUpcountry ? "btn-success shadow-sm" : "btn-outline-success bg-white")">
-                🚚 บิลขายต่างจังหวัด
+            <button type="button" onclick="toggleAreaGroup('ต่างจังหวัด')" class="btn btn-sm rounded-pill px-3 fw-bold @(isUpcountry ? "btn-success shadow-sm border-2 border-success" : "btn-outline-success bg-white")" title="คลิกเพื่อเลือก/ยกเลิก (เลือกหลายอันได้)">
+                @(isUpcountry ? "✓ " : "")🚚 บิลขายต่างจังหวัด
             </button>
-            <button type="button" onclick="filterByAreaGroup('โมเดิร์นเทรด')" class="btn btn-sm rounded-pill px-3 fw-bold @(isModernTrade ? "btn-warning text-dark shadow-sm border-warning" : "btn-outline-warning text-dark bg-white")">
-                🏢 บิลขายModern Trade
+            <button type="button" onclick="toggleAreaGroup('โมเดิร์นเทรด')" class="btn btn-sm rounded-pill px-3 fw-bold @(isModernTrade ? "btn-warning text-dark shadow-sm border-2 border-dark" : "btn-outline-warning text-dark bg-white")" title="คลิกเพื่อเลือก/ยกเลิก (เลือกหลายอันได้)">
+                @(isModernTrade ? "✓ " : "")🏢 บิลขายModern Trade
             </button>
+            <small class="text-muted ms-auto d-none d-md-inline" style="font-size:0.8rem;"><i class="bi bi-info-circle me-1"></i>สามารถกดเลือกหลายพื้นที่พร้อมกันได้ เช่น โมเดิร์นเทรด + ต่างจังหวัด</small>
         </div>
     </form>
 </div>
@@ -585,11 +588,10 @@ function onProvinceChange() {
     }
 }
 
-function filterByAreaGroup(regVal) {
-    const regSel = document.getElementById('region-select');
+function toggleAreaGroup(regVal) {
+    const regInput = document.getElementById('region-input');
     const provSel = document.getElementById('province-select');
     const distSel = document.getElementById('district-select');
-    if (regSel) regSel.value = regVal;
     if (provSel) {
         provSel.value = '';
         if (window.jQuery && $(provSel).data('select2')) $(provSel).val('').trigger('change.select2');
@@ -598,11 +600,47 @@ function filterByAreaGroup(regVal) {
         distSel.value = '';
         if (window.jQuery && $(distSel).data('select2')) $(distSel).val('').trigger('change.select2');
     }
+
+    if (!regVal) {
+        if (regInput) regInput.value = '';
+        const regSel = document.getElementById('region-select');
+        if (regSel) regSel.value = '';
+        document.getElementById('filter-form').submit();
+        return;
+    }
+
+    let curVal = regInput && regInput.value ? regInput.value.trim() : '';
+    let selected = curVal ? curVal.split(',').map(s => s.trim()).filter(s => s) : [];
+
+    const idx = selected.indexOf(regVal);
+    if (idx >= 0) {
+        selected.splice(idx, 1);
+    } else {
+        selected.push(regVal);
+    }
+
+    if (selected.length === 0 || selected.length === 4) {
+        if (regInput) regInput.value = '';
+    } else {
+        if (regInput) regInput.value = selected.join(',');
+    }
+
+    const regSel = document.getElementById('region-select');
+    if (regSel) {
+        regSel.value = selected.length === 1 ? selected[0] : '';
+    }
+
     document.getElementById('filter-form').submit();
+}
+
+function filterByAreaGroup(regVal) {
+    toggleAreaGroup(regVal);
 }
 
 function onRegionChange() {
     const reg = document.getElementById('region-select').value;
+    const regInput = document.getElementById('region-input');
+    if (regInput) regInput.value = reg;
     const pSel = document.getElementById('province-select');
     pSel.innerHTML = '<option value="">' + (hasProvRestriction ? '-- ทุกจังหวัดที่รับผิดชอบ --' : '-- ทุกจังหวัด --') + '</option>';
     let provList = [];

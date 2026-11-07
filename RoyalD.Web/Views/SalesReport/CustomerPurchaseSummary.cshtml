@@ -316,7 +316,7 @@
                         <td class="fw-semibold text-dark">@row.ProductName</td>
                         <td class="text-center"><span class="badge bg-secondary bg-opacity-10 text-dark border px-2 py-1">@(string.IsNullOrWhiteSpace(row.Unit) ? "-" : row.Unit)</span></td>
                         <td class="text-center">@(row.Credit == 0 ? "เงินสด" : $"{row.Credit} วัน")</td>
-                        <td class="text-end fw-bold text-info">@row.Quantity.ToString("N0")</td>
+                        <td class="text-end fw-bold text-primary" style="color: #0b5ed7 !important;">@row.Quantity.ToString("N0")</td>
                         <td class="text-end">@row.UnitPrice.ToString("N2")</td>
                         <td class="text-end fw-bold text-success">@row.Amount.ToString("N2")</td>
                     </tr>
@@ -324,7 +324,7 @@
                 }
                 <tr class="table-light fw-bold" style="border-top:2px solid #334155;">
                     <td colspan="6" class="text-end fs-6">รวมจำนวนเงินดิบทั้งสิ้น (ก่อนหักลด/ไม่รวม VAT - ทั้งหมด @totRecords.ToString("N0") รายการ):</td>
-                    <td class="text-end text-info fs-6">@totalGrandQty.ToString("N0")</td>
+                    <td class="text-end fw-bold fs-6 text-primary" style="color: #0b5ed7 !important;">@totalGrandQty.ToString("N0")</td>
                     <td class="text-center text-muted">-</td>
                     <td class="text-end text-success fs-5">@totalGrandAmount.ToString("N2")</td>
                 </tr>
@@ -403,7 +403,7 @@
             <span class="fw-bold" style="color:#065f46; font-size:1.1rem;">สรุปข้อมูลอัตโนมัติ</span>
         </div>
         <p class="mb-0 text-dark">
-            พบลูกค้าทั้งหมด <b>@custCount.ToString("N0")</b> ราย | จำนวนซื้อรวม <b class="text-info fs-6">@totalGrandQty.ToString("N0")</b> ชิ้น/หน่วย | ยอดเงินรวม (ดิบ) <b class="text-success fs-5">@grandTotal.ToString("N2")</b> บาท
+            พบลูกค้าทั้งหมด <b>@custCount.ToString("N0")</b> ราย | จำนวนซื้อรวม <b class="fs-6 text-primary fw-bold" style="color: #0b5ed7 !important;">@totalGrandQty.ToString("N0")</b> ชิ้น/หน่วย | ยอดเงินรวม (ดิบ) <b class="text-success fs-5">@grandTotal.ToString("N2")</b> บาท
             @if (topCust != null) {
                 <text> โดยลูกค้ารายใหญ่สุดคือ <b>@topCust.Name</b> ยอด <b>@topCust.Total.ToString("N2")</b> บาท</text>
             }
