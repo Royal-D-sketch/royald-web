@@ -470,21 +470,27 @@ namespace RoyalD.Web.Services
             var mtCodes = DashboardService.ModernTradeCodes.ToList();
             if (onlyModernTrade)
             {
-                return q.Where(b => (b.SalesRep != null && (b.SalesRep.Contains("วันวิสา") || b.SalesRep.Contains("ตันหยง") || b.SalesRep.Contains("ณัฐกุล") || b.SalesRep.Contains("อิทธิพัท") || b.SalesRep.Contains("ธนดล")))
-                    || mtCodes.Contains(b.CustomerCode) || (
-                    b.CustomerName != null &&
-                    !b.CustomerName.Contains("สาลี่สุพรรณ") &&
-                    !b.CustomerName.Contains("คุณเอกชัย") &&
-                    !b.CustomerName.Contains("ยากาแร็ต") &&
-                    !b.CustomerName.Contains("คลองสี่วา") &&
-                    !b.CustomerName.Contains("เอกชัยกอล์ฟ") &&
-                    !b.CustomerName.Contains("เพียวเคมม์") &&
-                    !b.CustomerName.Contains("ปรีชา  วิลล่า") &&
-                    !b.CustomerName.Contains("มหาชัยวิลล่า") &&
-                    !b.CustomerName.Contains("ท็อป ไฮเทค") &&
-                    !b.CustomerName.Contains("ท็อป พาร์ทเนอร์") && !b.CustomerName.Contains("วินนิ่ง") && b.CustomerCode != "103166" &&
+                return q.Where(b => 
+                    b.CustomerCode != "103166" &&
+                    (b.CustomerName == null || (
+                        !b.CustomerName.Contains("สาลี่สุพรรณ") &&
+                        !b.CustomerName.Contains("คุณเอกชัย") &&
+                        !b.CustomerName.Contains("ยากาแร็ต") &&
+                        !b.CustomerName.Contains("คลองสี่วา") &&
+                        !b.CustomerName.Contains("เอกชัยกอล์ฟ") &&
+                        !b.CustomerName.Contains("เพียวเคมม์") &&
+                        !b.CustomerName.Contains("ปรีชา  วิลล่า") &&
+                        !b.CustomerName.Contains("มหาชัยวิลล่า") &&
+                        !b.CustomerName.Contains("ท็อป ไฮเทค") &&
+                        !b.CustomerName.Contains("ท็อป พาร์ทเนอร์") &&
+                        !b.CustomerName.Contains("วินนิ่ง")
+                    )) &&
                     (
-                        b.CustomerName.Contains("แมสมาร์เกตติ้ง") ||
+                        (b.SalesRep != null && (b.SalesRep.Contains("วันวิสา") || b.SalesRep.Contains("ตันหยง") || b.SalesRep.Contains("ณัฐกุล") || b.SalesRep.Contains("อิทธิพัท") || b.SalesRep.Contains("ธนดล")))
+                        || mtCodes.Contains(b.CustomerCode) || (
+                        b.CustomerName != null &&
+                        (
+                            b.CustomerName.Contains("แมสมาร์เกตติ้ง") ||
                         b.CustomerName.Contains("แมสมาร์เก็ตติ้ง") ||
                         b.CustomerName.Contains("แมสมาร์ติ้ง") ||
                         b.CustomerName.ToLower().Contains("mass marketing") ||
@@ -520,26 +526,33 @@ namespace RoyalD.Web.Services
                         b.CustomerName.Contains("ไทยฟู้ดส์") || b.CustomerName.Contains("ไทย ฟู้ดส์") ||
                         b.CustomerName.Contains("ฟาสซิโน") ||
                         b.CustomerName.Contains("ใบเมี่ยง")
-                    )
-                ));
+                        )
+                    ))
+                );
             }
             else
             {
-                return q.Where(b => !(b.SalesRep != null && (b.SalesRep.Contains("วันวิสา") || b.SalesRep.Contains("ตันหยง") || b.SalesRep.Contains("ณัฐกุล") || b.SalesRep.Contains("อิทธิพัท") || b.SalesRep.Contains("ธนดล")))
-                    && !mtCodes.Contains(b.CustomerCode) && !(
-                    b.CustomerName != null &&
-                    !b.CustomerName.Contains("สาลี่สุพรรณ") &&
-                    !b.CustomerName.Contains("คุณเอกชัย") &&
-                    !b.CustomerName.Contains("ยากาแร็ต") &&
-                    !b.CustomerName.Contains("คลองสี่วา") &&
-                    !b.CustomerName.Contains("เอกชัยกอล์ฟ") &&
-                    !b.CustomerName.Contains("เพียวเคมม์") &&
-                    !b.CustomerName.Contains("ปรีชา  วิลล่า") &&
-                    !b.CustomerName.Contains("มหาชัยวิลล่า") &&
-                    !b.CustomerName.Contains("ท็อป ไฮเทค") &&
-                    !b.CustomerName.Contains("ท็อป พาร์ทเนอร์") && !b.CustomerName.Contains("วินนิ่ง") && b.CustomerCode != "103166" &&
+                return q.Where(b => 
+                    b.CustomerCode == "103166" ||
+                    (b.CustomerName != null && (
+                        b.CustomerName.Contains("สาลี่สุพรรณ") ||
+                        b.CustomerName.Contains("คุณเอกชัย") ||
+                        b.CustomerName.Contains("ยากาแร็ต") ||
+                        b.CustomerName.Contains("คลองสี่วา") ||
+                        b.CustomerName.Contains("เอกชัยกอล์ฟ") ||
+                        b.CustomerName.Contains("เพียวเคมม์") ||
+                        b.CustomerName.Contains("ปรีชา  วิลล่า") ||
+                        b.CustomerName.Contains("มหาชัยวิลล่า") ||
+                        b.CustomerName.Contains("ท็อป ไฮเทค") ||
+                        b.CustomerName.Contains("ท็อป พาร์ทเนอร์") ||
+                        b.CustomerName.Contains("วินนิ่ง")
+                    )) ||
                     (
-                        b.CustomerName.Contains("แมสมาร์เกตติ้ง") ||
+                        !(b.SalesRep != null && (b.SalesRep.Contains("วันวิสา") || b.SalesRep.Contains("ตันหยง") || b.SalesRep.Contains("ณัฐกุล") || b.SalesRep.Contains("อิทธิพัท") || b.SalesRep.Contains("ธนดล")))
+                        && !mtCodes.Contains(b.CustomerCode) && !(
+                        b.CustomerName != null &&
+                        (
+                            b.CustomerName.Contains("แมสมาร์เกตติ้ง") ||
                         b.CustomerName.Contains("แมสมาร์เก็ตติ้ง") ||
                         b.CustomerName.Contains("แมสมาร์ติ้ง") ||
                         b.CustomerName.ToLower().Contains("mass marketing") ||
@@ -575,10 +588,13 @@ namespace RoyalD.Web.Services
                         b.CustomerName.Contains("ไทยฟู้ดส์") || b.CustomerName.Contains("ไทย ฟู้ดส์") ||
                         b.CustomerName.Contains("ฟาสซิโน") ||
                         b.CustomerName.Contains("ใบเมี่ยง")
-                    )
-                ));
+                        )
+                    ))
+                );
             }
         }
+
+        
 
         public static IQueryable<RoyalD.Web.Models.SalesBillItem> FilterModernTradeSalesBillItems(
             IQueryable<RoyalD.Web.Models.SalesBillItem> q,
@@ -587,21 +603,27 @@ namespace RoyalD.Web.Services
             var mtCodes = DashboardService.ModernTradeCodes.ToList();
             if (onlyModernTrade)
             {
-                return q.Where(i => (i.SalesBill.SalesRep != null && (i.SalesBill.SalesRep.Contains("วันวิสา") || i.SalesBill.SalesRep.Contains("ตันหยง") || i.SalesBill.SalesRep.Contains("ณัฐกุล") || i.SalesBill.SalesRep.Contains("อิทธิพัท") || i.SalesBill.SalesRep.Contains("ธนดล")))
-                    || mtCodes.Contains(i.SalesBill.CustomerCode) || (
-                    i.SalesBill.CustomerName != null &&
-                    !i.SalesBill.CustomerName.Contains("สาลี่สุพรรณ") &&
-                    !i.SalesBill.CustomerName.Contains("คุณเอกชัย") &&
-                    !i.SalesBill.CustomerName.Contains("ยากาแร็ต") &&
-                    !i.SalesBill.CustomerName.Contains("คลองสี่วา") &&
-                    !i.SalesBill.CustomerName.Contains("เอกชัยกอล์ฟ") &&
-                    !i.SalesBill.CustomerName.Contains("เพียวเคมม์") &&
-                    !i.SalesBill.CustomerName.Contains("ปรีชา  วิลล่า") &&
-                    !i.SalesBill.CustomerName.Contains("มหาชัยวิลล่า") &&
-                    !i.SalesBill.CustomerName.Contains("ท็อป ไฮเทค") &&
-                    !i.SalesBill.CustomerName.Contains("ท็อป พาร์ทเนอร์") && !i.SalesBill.CustomerName.Contains("วินนิ่ง") && i.SalesBill.CustomerCode != "103166" &&
+                return q.Where(i => 
+                    i.SalesBill.CustomerCode != "103166" &&
+                    (i.SalesBill.CustomerName == null || (
+                        !i.SalesBill.CustomerName.Contains("สาลี่สุพรรณ") &&
+                        !i.SalesBill.CustomerName.Contains("คุณเอกชัย") &&
+                        !i.SalesBill.CustomerName.Contains("ยากาแร็ต") &&
+                        !i.SalesBill.CustomerName.Contains("คลองสี่วา") &&
+                        !i.SalesBill.CustomerName.Contains("เอกชัยกอล์ฟ") &&
+                        !i.SalesBill.CustomerName.Contains("เพียวเคมม์") &&
+                        !i.SalesBill.CustomerName.Contains("ปรีชา  วิลล่า") &&
+                        !i.SalesBill.CustomerName.Contains("มหาชัยวิลล่า") &&
+                        !i.SalesBill.CustomerName.Contains("ท็อป ไฮเทค") &&
+                        !i.SalesBill.CustomerName.Contains("ท็อป พาร์ทเนอร์") &&
+                        !i.SalesBill.CustomerName.Contains("วินนิ่ง")
+                    )) &&
                     (
-                        i.SalesBill.CustomerName.Contains("แมสมาร์เกตติ้ง") ||
+                        (i.SalesBill.SalesRep != null && (i.SalesBill.SalesRep.Contains("วันวิสา") || i.SalesBill.SalesRep.Contains("ตันหยง") || i.SalesBill.SalesRep.Contains("ณัฐกุล") || i.SalesBill.SalesRep.Contains("อิทธิพัท") || i.SalesBill.SalesRep.Contains("ธนดล")))
+                        || mtCodes.Contains(i.SalesBill.CustomerCode) || (
+                        i.SalesBill.CustomerName != null &&
+                        (
+                            i.SalesBill.CustomerName.Contains("แมสมาร์เกตติ้ง") ||
                         i.SalesBill.CustomerName.Contains("แมสมาร์เก็ตติ้ง") ||
                         i.SalesBill.CustomerName.Contains("แมสมาร์ติ้ง") ||
                         i.SalesBill.CustomerName.ToLower().Contains("mass marketing") ||
@@ -637,26 +659,33 @@ namespace RoyalD.Web.Services
                         i.SalesBill.CustomerName.Contains("ไทยฟู้ดส์") || i.SalesBill.CustomerName.Contains("ไทย ฟู้ดส์") ||
                         i.SalesBill.CustomerName.Contains("ฟาสซิโน") ||
                         i.SalesBill.CustomerName.Contains("ใบเมี่ยง")
-                    )
-                ));
+                        )
+                    ))
+                );
             }
             else
             {
-                return q.Where(i => !(i.SalesBill.SalesRep != null && (i.SalesBill.SalesRep.Contains("วันวิสา") || i.SalesBill.SalesRep.Contains("ตันหยง") || i.SalesBill.SalesRep.Contains("ณัฐกุล") || i.SalesBill.SalesRep.Contains("อิทธิพัท") || i.SalesBill.SalesRep.Contains("ธนดล")))
-                    && !mtCodes.Contains(i.SalesBill.CustomerCode) && !(
-                    i.SalesBill.CustomerName != null &&
-                    !i.SalesBill.CustomerName.Contains("สาลี่สุพรรณ") &&
-                    !i.SalesBill.CustomerName.Contains("คุณเอกชัย") &&
-                    !i.SalesBill.CustomerName.Contains("ยากาแร็ต") &&
-                    !i.SalesBill.CustomerName.Contains("คลองสี่วา") &&
-                    !i.SalesBill.CustomerName.Contains("เอกชัยกอล์ฟ") &&
-                    !i.SalesBill.CustomerName.Contains("เพียวเคมม์") &&
-                    !i.SalesBill.CustomerName.Contains("ปรีชา  วิลล่า") &&
-                    !i.SalesBill.CustomerName.Contains("มหาชัยวิลล่า") &&
-                    !i.SalesBill.CustomerName.Contains("ท็อป ไฮเทค") &&
-                    !i.SalesBill.CustomerName.Contains("ท็อป พาร์ทเนอร์") && !i.SalesBill.CustomerName.Contains("วินนิ่ง") && i.SalesBill.CustomerCode != "103166" &&
+                return q.Where(i => 
+                    i.SalesBill.CustomerCode == "103166" ||
+                    (i.SalesBill.CustomerName != null && (
+                        i.SalesBill.CustomerName.Contains("สาลี่สุพรรณ") ||
+                        i.SalesBill.CustomerName.Contains("คุณเอกชัย") ||
+                        i.SalesBill.CustomerName.Contains("ยากาแร็ต") ||
+                        i.SalesBill.CustomerName.Contains("คลองสี่วา") ||
+                        i.SalesBill.CustomerName.Contains("เอกชัยกอล์ฟ") ||
+                        i.SalesBill.CustomerName.Contains("เพียวเคมม์") ||
+                        i.SalesBill.CustomerName.Contains("ปรีชา  วิลล่า") ||
+                        i.SalesBill.CustomerName.Contains("มหาชัยวิลล่า") ||
+                        i.SalesBill.CustomerName.Contains("ท็อป ไฮเทค") ||
+                        i.SalesBill.CustomerName.Contains("ท็อป พาร์ทเนอร์") ||
+                        i.SalesBill.CustomerName.Contains("วินนิ่ง")
+                    )) ||
                     (
-                        i.SalesBill.CustomerName.Contains("แมสมาร์เกตติ้ง") ||
+                        !(i.SalesBill.SalesRep != null && (i.SalesBill.SalesRep.Contains("วันวิสา") || i.SalesBill.SalesRep.Contains("ตันหยง") || i.SalesBill.SalesRep.Contains("ณัฐกุล") || i.SalesBill.SalesRep.Contains("อิทธิพัท") || i.SalesBill.SalesRep.Contains("ธนดล")))
+                        && !mtCodes.Contains(i.SalesBill.CustomerCode) && !(
+                        i.SalesBill.CustomerName != null &&
+                        (
+                            i.SalesBill.CustomerName.Contains("แมสมาร์เกตติ้ง") ||
                         i.SalesBill.CustomerName.Contains("แมสมาร์เก็ตติ้ง") ||
                         i.SalesBill.CustomerName.Contains("แมสมาร์ติ้ง") ||
                         i.SalesBill.CustomerName.ToLower().Contains("mass marketing") ||
@@ -692,10 +721,13 @@ namespace RoyalD.Web.Services
                         i.SalesBill.CustomerName.Contains("ไทยฟู้ดส์") || i.SalesBill.CustomerName.Contains("ไทย ฟู้ดส์") ||
                         i.SalesBill.CustomerName.Contains("ฟาสซิโน") ||
                         i.SalesBill.CustomerName.Contains("ใบเมี่ยง")
-                    )
-                ));
+                        )
+                    ))
+                );
             }
         }
+
+        
 
         public static bool IsOnlineSalesRep(string? rep)
         {

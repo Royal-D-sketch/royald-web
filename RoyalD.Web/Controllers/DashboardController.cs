@@ -132,6 +132,22 @@ namespace RoyalD.Web.Controllers
         /// <summary>คืนค่า true ถ้ารหัสลูกค้าหรือชื่อบริษัทเป็นกลุ่ม Modern Trade ที่ต้องกรองออกจาก Over120</summary>
         public static bool IsModernTrade(string? customerCode, string? customerName = null, string? salesRep = null)
         {
+            if (!string.IsNullOrEmpty(customerCode) && customerCode.Trim() == "103166")
+                return false;
+
+            if (!string.IsNullOrEmpty(customerName))
+            {
+                var name = customerName.Trim();
+                // ข้อยกเว้น: บุคคลหรือร้านท้องถิ่นที่มีคำคล้ายแต่ไม่ใช่ห้าง Modern Trade
+                if (name.Contains("สาลี่สุพรรณ") || name.Contains("คุณเอกชัย") || name.Contains("ยากาแร็ต") ||
+                    name.Contains("คลองสี่วา") || name.Contains("เอกชัยกอล์ฟ") || name.Contains("เพียวเคมม์") ||
+                    name.Contains("ปรีชา  วิลล่า") || name.Contains("มหาชัยวิลล่า") || name.Contains("ท็อป ไฮเทค") ||
+                    name.Contains("ท็อป พาร์ทเนอร์") || name.Contains("วินนิ่ง"))
+                {
+                    return false;
+                }
+            }
+
             if (!string.IsNullOrEmpty(salesRep) && (
                 salesRep.Contains("วันวิสา") || salesRep.Contains("ตันหยง") ||
                 salesRep.Contains("ณัฐกุล") || salesRep.Contains("อิทธิพัท") ||
@@ -146,15 +162,6 @@ namespace RoyalD.Web.Controllers
             if (!string.IsNullOrEmpty(customerName))
             {
                 var name = customerName.Trim();
-                // ข้อยกเว้น: บุคคลหรือร้านท้องถิ่นที่มีคำคล้ายแต่ไม่ใช่ห้าง Modern Trade
-                if (name.Contains("สาลี่สุพรรณ") || name.Contains("คุณเอกชัย") || name.Contains("ยากาแร็ต") ||
-                    name.Contains("คลองสี่วา") || name.Contains("เอกชัยกอล์ฟ") || name.Contains("เพียวเคมม์") ||
-                    name.Contains("ปรีชา  วิลล่า") || name.Contains("มหาชัยวิลล่า") || name.Contains("ท็อป ไฮเทค") ||
-                    name.Contains("ท็อป พาร์ทเนอร์") || name.Contains("วินนิ่ง") || customerCode == "103166")
-                {
-                    return false;
-                }
-
                 foreach (var kw in ModernTradeNameKeywords)
                 {
                     if (name.IndexOf(kw, StringComparison.OrdinalIgnoreCase) >= 0)
@@ -232,9 +239,13 @@ namespace RoyalD.Web.Controllers
                     {
                         groupCode = "1";
                     }
-                    else
+                    else if (d.Credit == 10)
                     {
                         groupCode = "2";
+                    }
+                    else
+                    {
+                        groupCode = "bkk_credit";
                     }
                 }
                 else
@@ -263,23 +274,28 @@ namespace RoyalD.Web.Controllers
                     if (groupCode == "1")
                     {
                         cat = "cash7";
-                        catName = "เก็บสด 7 วัน (กทม.&ปริมณฑล)";
+                        catName = "บิลเงินสด 7 วัน (เริ่ม 14/09/69) กทม., ปริมณฑล";
                         summary.Cash7Days.BillCount++;
                         summary.Cash7Days.TotalAmount += d.RemainingAmount;
                     }
                     else if (groupCode == "2")
                     {
                         cat = "cash10";
-                        catName = "เงินสดรวมสายเวลา (กทม.&ปริมณฑล)";
+                        catName = "บิลเงินสด 10 วัน กทม., ปริมณฑล";
                         summary.Cash10Days.BillCount++;
                         summary.Cash10Days.TotalAmount += d.RemainingAmount;
                     }
-                    else
+                    else if (groupCode == "3")
                     {
                         cat = "upcountry";
                         catName = "ต่างจังหวัดทั้งหมด";
                         summary.UpcountryDebts.BillCount++;
                         summary.UpcountryDebts.TotalAmount += d.RemainingAmount;
+                    }
+                    else
+                    {
+                        cat = "bkk_credit";
+                        catName = "บิลเครดิต กทม.และปริมณฑล";
                     }
 
                     if (aging > 120 && !IsModernTrade(d.CustomerCode, d.CustomerName))
@@ -360,7 +376,8 @@ namespace RoyalD.Web.Controllers
                     if (isBkkArea)
                     {
                         if (sbDateNorm.Date >= cutoffDate.Date && sb.Credit <= 7) groupCode = "1";
-                        else groupCode = "2";
+                        else if (sb.Credit == 10) groupCode = "2";
+                        else groupCode = "bkk_credit";
                     }
 
                     summary.Collected.BillCount++;
@@ -967,7 +984,7 @@ namespace RoyalD.Web.Controllers
             string groupTitle = category?.ToLower() switch
             {
                 "cash7" => "เก็บสด 7 วัน (กทม.&ปริมณฑล)",
-                "cash10" => "เงินสดรวมสายเวลา (กทม.&ปริมณฑล)",
+                "cash10" => "บิลเงินสด 10 วัน กทม., ปริมณฑล",
                 "upcountry" => "บิลค้างชำระต่างจังหวัดทั้งหมด",
                 "over120" => "ค้างชำระ > 120 วัน",
                 "collected" => "ยอดเก็บเงินสำเร็จ",
@@ -1123,7 +1140,7 @@ namespace RoyalD.Web.Controllers
             ViewBag.CategoryTitle = category?.ToLower() switch
             {
                 "cash7" => "เก็บสด 7 วัน (กทม.&ปริมณฑล)",
-                "cash10" => "เงินสดรวมสายเวลา (กทม.&ปริมณฑล)",
+                "cash10" => "บิลเงินสด 10 วัน กทม., ปริมณฑล",
                 "upcountry" => "บิลค้างชำระต่างจังหวัดทั้งหมด",
                 "over120" => "ค้างชำระ > 120 วัน",
                 "collected" => "ยอดเก็บเงินสำเร็จ",

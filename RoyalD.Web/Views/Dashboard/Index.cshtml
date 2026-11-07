@@ -258,14 +258,14 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
 
     <!-- Card 2: บิลเงินสด 10 วัน (ไม่จ่ายสด) กทม.ปริมณฑล ธีมสีชาไทยพาสเทล / ครีมอุ่น (Warm Sand) -->
     <div class="col-6 col-lg-3">
-        <div class="exec-card theme-warmsand" id="card-cash10" onclick="selectCategory('cash10')" title="คลิกเพื่อดูรายละเอียดบิลเงินสด 10 วัน (ไม่จ่ายสด) กทม., ปริมณฑล">
+        <div class="exec-card theme-warmsand" id="card-cash10" onclick="selectCategory('cash10')" title="คลิกเพื่อดูรายละเอียดบิลเงินสด 10 วัน กทม., ปริมณฑล">
             <div class="exec-card-label">
-                <span><i class="bi bi-hourglass-split me-1"></i> บิลเงินสด 10 วัน (ไม่จ่ายสด) กทม.</span>
+                <span><i class="bi bi-hourglass-split me-1"></i> บิลเงินสด 10 วัน กทม., ปริมณฑล</span>
                 <span class="badge bg-white fw-bold" style="color:#b45309;" id="badgeCount-cash10">@summary.Cash10Days.BillCount.ToString("N0") บิล</span>
             </div>
             <div class="exec-card-value" id="cardAmount-cash10">@summary.Cash10Days.TotalAmount.ToString("N0")</div>
             <div class="exec-card-sub">
-                ก่อน 14/09 (7 วัน) + หลัง 14/09 (10 วัน) <i class="bi bi-arrow-down-circle ms-1"></i>
+                เครดิต 10 วัน กทม.&ปริมณฑล <i class="bi bi-arrow-down-circle ms-1"></i>
             </div>
             <div class="collection-rate-tag">
                 สัดส่วนหนี้: <strong id="tagPct-cash10">@pctCashTimeline.ToString("0.0")%</strong>
@@ -355,7 +355,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
             <div class="p-3 mb-2 rounded-3 border" style="background:#fffbeb; border-color:#fde68a !important;">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <span class="fw-bold" style="color:#b45309;">
-                        <i class="bi bi-square-fill me-1" style="color:#d97706;"></i> 2. บิลเงินสด 10 วัน (ไม่จ่ายสด) กทม., ปริมณฑล
+                        <i class="bi bi-square-fill me-1" style="color:#d97706;"></i> 2. บิลเงินสด 10 วัน กทม., ปริมณฑล
                     </span>
                     <span class="badge px-2 py-1" style="background:#d97706; color:#fff;" id="pctText-cash10">@pctCashTimeline.ToString("0.0")%</span>
                 </div>
@@ -429,7 +429,7 @@ body { font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-s
             🏢 บิลเงินสด 7 วัน กทม., ปริมณฑล (เริ่ม 14/09/69) (@summary.Cash7Days.BillCount.ToString("N0"))
         </button>
         <button type="button" class="btn category-btn" style="color:#b45309; border-color:#d97706;" id="pill-cash10" onclick="selectCategory('cash10')">
-            ⏳ บิลเงินสด 10 วัน (ไม่จ่ายสด) กทม., ปริมณฑล (@summary.Cash10Days.BillCount.ToString("N0"))
+            ⏳ บิลเงินสด 10 วัน กทม., ปริมณฑล (@summary.Cash10Days.BillCount.ToString("N0"))
         </button>
         <button type="button" class="btn category-btn" style="color:#7c3aed; border-color:#7c3aed;" id="pill-upcountry" onclick="selectCategory('upcountry')">
             🚚 ต่างจังหวัดทั้งหมด (@summary.UpcountryDebts.BillCount.ToString("N0"))
@@ -608,7 +608,7 @@ let searchDebounceTimer = null;
 const categoryTitles = {
     'all': 'ภาพรวมทั้งหมด',
     'cash7': 'บิลเงินสด 7 วัน กทม., ปริมณฑล (เริ่ม 14/09/69)',
-    'cash10': 'บิลเงินสด 10 วัน (ไม่จ่ายสด) กทม., ปริมณฑล',
+    'cash10': 'บิลเงินสด 10 วัน กทม., ปริมณฑล',
     'upcountry': 'บิลค้างชำระต่างจังหวัดทั้งหมด',
     'over120': 'ค้างชำระ > 120 วัน',
     'collected': 'ยอดเก็บสำเร็จ'
@@ -626,7 +626,7 @@ function initPieChart() {
         data: {
             labels: [
                 '1. บิลเงินสด 7 วัน กทม., ปริมณฑล (เริ่ม 14/09/69)',
-                '2. บิลเงินสด 10 วัน (ไม่จ่ายสด) กทม., ปริมณฑล',
+                '2. บิลเงินสด 10 วัน กทม., ปริมณฑล',
                 '3. ค้างชำระต่างจังหวัดทั้งหมด'
             ],
             datasets: [{

@@ -71,6 +71,21 @@ namespace RoyalD.Web.Services
 
         public static bool IsModernTrade(string? customerCode, string? customerName = null, string? salesRep = null)
         {
+            if (!string.IsNullOrEmpty(customerCode) && customerCode.Trim() == "103166")
+                return false;
+
+            if (!string.IsNullOrEmpty(customerName))
+            {
+                var name = customerName.Trim();
+                if (name.Contains("สาลี่สุพรรณ") || name.Contains("คุณเอกชัย") || name.Contains("ยากาแร็ต") ||
+                    name.Contains("คลองสี่วา") || name.Contains("เอกชัยกอล์ฟ") || name.Contains("เพียวเคมม์") ||
+                    name.Contains("ปรีชา  วิลล่า") || name.Contains("มหาชัยวิลล่า") || name.Contains("ท็อป ไฮเทค") ||
+                    name.Contains("ท็อป พาร์ทเนอร์") || name.Contains("วินนิ่ง"))
+                {
+                    return false;
+                }
+            }
+
             if (!string.IsNullOrEmpty(salesRep) && (
                 salesRep.Contains("วันวิสา") || salesRep.Contains("ตันหยง") ||
                 salesRep.Contains("ณัฐกุล") || salesRep.Contains("อิทธิพัท") ||
@@ -85,14 +100,6 @@ namespace RoyalD.Web.Services
             if (!string.IsNullOrEmpty(customerName))
             {
                 var name = customerName.Trim();
-                if (name.Contains("สาลี่สุพรรณ") || name.Contains("คุณเอกชัย") || name.Contains("ยากาแร็ต") ||
-                    name.Contains("คลองสี่วา") || name.Contains("เอกชัยกอล์ฟ") || name.Contains("เพียวเคมม์") ||
-                    name.Contains("ปรีชา  วิลล่า") || name.Contains("มหาชัยวิลล่า") || name.Contains("ท็อป ไฮเทค") ||
-                    name.Contains("ท็อป พาร์ทเนอร์") || name.Contains("วินนิ่ง") || customerCode == "103166")
-                {
-                    return false;
-                }
-
                 foreach (var kw in ModernTradeNameKeywords)
                 {
                     if (name.IndexOf(kw, StringComparison.OrdinalIgnoreCase) >= 0)
@@ -167,9 +174,13 @@ namespace RoyalD.Web.Services
                     {
                         groupCode = "1";
                     }
-                    else
+                    else if (d.Credit == 10)
                     {
                         groupCode = "2";
+                    }
+                    else
+                    {
+                        groupCode = "bkk_credit";
                     }
                 }
                 else
@@ -199,23 +210,28 @@ namespace RoyalD.Web.Services
                     if (groupCode == "1")
                     {
                         cat = "cash7";
-                        catName = "เก็บสด 7 วัน (กทม.&ปริมณฑล)";
+                        catName = "บิลเงินสด 7 วัน (เริ่ม 14/09/69) กทม., ปริมณฑล";
                         summary.Cash7Days.BillCount++;
                         summary.Cash7Days.TotalAmount += d.RemainingAmount;
                     }
                     else if (groupCode == "2")
                     {
                         cat = "cash10";
-                        catName = "เงินสดรวมสายเวลา (กทม.&ปริมณฑล)";
+                        catName = "บิลเงินสด 10 วัน กทม., ปริมณฑล";
                         summary.Cash10Days.BillCount++;
                         summary.Cash10Days.TotalAmount += d.RemainingAmount;
                     }
-                    else
+                    else if (groupCode == "3")
                     {
                         cat = "upcountry";
                         catName = "ต่างจังหวัดทั้งหมด";
                         summary.UpcountryDebts.BillCount++;
                         summary.UpcountryDebts.TotalAmount += d.RemainingAmount;
+                    }
+                    else
+                    {
+                        cat = "bkk_credit";
+                        catName = "บิลเครดิต กทม.และปริมณฑล";
                     }
 
                     if (aging > 120 && !IsModernTrade(d.CustomerCode, d.CustomerName))
@@ -282,7 +298,14 @@ namespace RoyalD.Web.Services
                 if (!seenPaidBillNos.Contains(sb.BillNo))
                 {
                     bool isBkkArea = RegionHelper.IsBkkAndVicinity(sb.Province, sb.District);
-                    string groupCode = isBkkArea ? ((sb.BillDate.Date >= cutoffDate.Date && sb.Credit <= 7) ? "1" : "2") : "3";
+                    string groupCode = "3";
+                    if (isBkkArea)
+                    {
+                        var sbDateNorm = sb.BillDate.Year > 2500 ? sb.BillDate.AddYears(-543) : sb.BillDate;
+                        if (sbDateNorm.Date >= cutoffDate.Date && sb.Credit <= 7) groupCode = "1";
+                        else if (sb.Credit == 10) groupCode = "2";
+                        else groupCode = "bkk_credit";
+                    }
 
                     summary.Collected.BillCount++;
                     summary.Collected.TotalAmount += sb.TotalAmount;
