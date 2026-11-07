@@ -100,7 +100,7 @@ namespace RoyalD.Web.Controllers
             "103456",
 
             // 21. Fascino (บริษัท ฟาร์มาฮอฟ จำกัด)
-            "102244", "200305", "730045", "103427"
+            "102244", "200305", "730045", "103427", "730104", "730180", "730187", "103113"
         };
 
         // คีย์เวิร์ดชื่อนิติบุคคล / บริษัทที่เปิดบิลจริง สำหรับตรวจสอบแบบ dynamic ป้องกันชื่อร้านไม่ตรง
@@ -125,12 +125,21 @@ namespace RoyalD.Web.Controllers
             "เซ็นทรัล วัตสัน",
             "ซูรูฮะ (ประเทศไทย)",
             "ฟาร์มาฮอฟ", "ฟาร์มมาฮอฟ", "pharmahof",
-            "ไทยฟู้ดส์", "ไทย ฟู้ดส์", "ฟาสซิโน", "ใบเมี่ยง"
+            "ไทยฟู้ดส์", "ไทย ฟู้ดส์", "ฟาสซิโน", "ใบเมี่ยง",
+            "แมสมาร์เกตติ้ง", "แมสมาร์เก็ตติ้ง", "แมสมาร์ติ้ง", "mass marketing"
         };
 
         /// <summary>คืนค่า true ถ้ารหัสลูกค้าหรือชื่อบริษัทเป็นกลุ่ม Modern Trade ที่ต้องกรองออกจาก Over120</summary>
-        public static bool IsModernTrade(string? customerCode, string? customerName = null)
+        public static bool IsModernTrade(string? customerCode, string? customerName = null, string? salesRep = null)
         {
+            if (!string.IsNullOrEmpty(salesRep) && (
+                salesRep.Contains("วันวิสา") || salesRep.Contains("ตันหยง") ||
+                salesRep.Contains("ณัฐกุล") || salesRep.Contains("อิทธิพัท") ||
+                salesRep.Contains("ธนดล")))
+            {
+                return true;
+            }
+
             if (!string.IsNullOrEmpty(customerCode) && ModernTradeCodes.Contains(customerCode.Trim()))
                 return true;
 

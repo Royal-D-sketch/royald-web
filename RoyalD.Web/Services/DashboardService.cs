@@ -36,7 +36,7 @@ namespace RoyalD.Web.Services
             "102666", "102667", "102668", "102669", "102670", "102671", "102672", "102673",
             "102674", "102740", "103058", "103073", "200263", "200265", "300320", "730168", "740156",
             "102955", "102956", "103065", "103205", "103290", "110463", "110499", "110540", "730185",
-            "102677", "1020327", "102410", "103456", "102244", "200305", "730045", "103427"
+            "102677", "1020327", "102410", "103456", "102244", "200305", "730045", "103427", "730104", "730180", "730187", "103113"
         };
 
         public static readonly string[] ModernTradeNameKeywords = new[]
@@ -60,11 +60,25 @@ namespace RoyalD.Web.Services
             "เซ็นทรัล วัตสัน",
             "ซูรูฮะ (ประเทศไทย)",
             "ฟาร์มาฮอฟ", "ฟาร์มมาฮอฟ", "pharmahof",
-            "ไทยฟู้ดส์", "ไทย ฟู้ดส์", "ฟาสซิโน", "ใบเมี่ยง"
+            "ไทยฟู้ดส์", "ไทย ฟู้ดส์", "ฟาสซิโน", "ใบเมี่ยง",
+            "แมสมาร์เกตติ้ง", "แมสมาร์เก็ตติ้ง", "แมสมาร์ติ้ง", "mass marketing"
         };
 
-        public static bool IsModernTrade(string? customerCode, string? customerName = null)
+        public static readonly string[] ModernTradeSalesReps = new[]
         {
+            "วันวิสา", "ตันหยง", "ณัฐกุล", "อิทธิพัทธ์", "อิทธิพัทธ", "ธนดล"
+        };
+
+        public static bool IsModernTrade(string? customerCode, string? customerName = null, string? salesRep = null)
+        {
+            if (!string.IsNullOrEmpty(salesRep) && (
+                salesRep.Contains("วันวิสา") || salesRep.Contains("ตันหยง") ||
+                salesRep.Contains("ณัฐกุล") || salesRep.Contains("อิทธิพัท") ||
+                salesRep.Contains("ธนดล")))
+            {
+                return true;
+            }
+
             if (!string.IsNullOrEmpty(customerCode) && ModernTradeCodes.Contains(customerCode.Trim()))
                 return true;
 

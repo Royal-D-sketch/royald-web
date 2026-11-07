@@ -470,7 +470,8 @@ namespace RoyalD.Web.Services
             var mtCodes = DashboardService.ModernTradeCodes.ToList();
             if (onlyModernTrade)
             {
-                return q.Where(b => mtCodes.Contains(b.CustomerCode) || (
+                return q.Where(b => (b.SalesRep != null && (b.SalesRep.Contains("วันวิสา") || b.SalesRep.Contains("ตันหยง") || b.SalesRep.Contains("ณัฐกุล") || b.SalesRep.Contains("อิทธิพัท") || b.SalesRep.Contains("ธนดล")))
+                    || mtCodes.Contains(b.CustomerCode) || (
                     b.CustomerName != null &&
                     !b.CustomerName.Contains("สาลี่สุพรรณ") &&
                     !b.CustomerName.Contains("คุณเอกชัย") &&
@@ -483,6 +484,10 @@ namespace RoyalD.Web.Services
                     !b.CustomerName.Contains("ท็อป ไฮเทค") &&
                     !b.CustomerName.Contains("ท็อป พาร์ทเนอร์") && !b.CustomerName.Contains("วินนิ่ง") && b.CustomerCode != "103166" &&
                     (
+                        b.CustomerName.Contains("แมสมาร์เกตติ้ง") ||
+                        b.CustomerName.Contains("แมสมาร์เก็ตติ้ง") ||
+                        b.CustomerName.Contains("แมสมาร์ติ้ง") ||
+                        b.CustomerName.ToLower().Contains("mass marketing") ||
                         b.CustomerName.Contains("ซีพี แอ็กซ์ตร้า") ||
                         b.CustomerName.Contains("ซีพี แอ๊กซ์ตร้า") ||
                         b.CustomerName.Contains("สยามแม็คโคร") ||
@@ -520,7 +525,8 @@ namespace RoyalD.Web.Services
             }
             else
             {
-                return q.Where(b => !mtCodes.Contains(b.CustomerCode) && !(
+                return q.Where(b => !(b.SalesRep != null && (b.SalesRep.Contains("วันวิสา") || b.SalesRep.Contains("ตันหยง") || b.SalesRep.Contains("ณัฐกุล") || b.SalesRep.Contains("อิทธิพัท") || b.SalesRep.Contains("ธนดล")))
+                    && !mtCodes.Contains(b.CustomerCode) && !(
                     b.CustomerName != null &&
                     !b.CustomerName.Contains("สาลี่สุพรรณ") &&
                     !b.CustomerName.Contains("คุณเอกชัย") &&
@@ -533,6 +539,10 @@ namespace RoyalD.Web.Services
                     !b.CustomerName.Contains("ท็อป ไฮเทค") &&
                     !b.CustomerName.Contains("ท็อป พาร์ทเนอร์") && !b.CustomerName.Contains("วินนิ่ง") && b.CustomerCode != "103166" &&
                     (
+                        b.CustomerName.Contains("แมสมาร์เกตติ้ง") ||
+                        b.CustomerName.Contains("แมสมาร์เก็ตติ้ง") ||
+                        b.CustomerName.Contains("แมสมาร์ติ้ง") ||
+                        b.CustomerName.ToLower().Contains("mass marketing") ||
                         b.CustomerName.Contains("ซีพี แอ็กซ์ตร้า") ||
                         b.CustomerName.Contains("ซีพี แอ๊กซ์ตร้า") ||
                         b.CustomerName.Contains("สยามแม็คโคร") ||
@@ -577,7 +587,8 @@ namespace RoyalD.Web.Services
             var mtCodes = DashboardService.ModernTradeCodes.ToList();
             if (onlyModernTrade)
             {
-                return q.Where(i => mtCodes.Contains(i.SalesBill.CustomerCode) || (
+                return q.Where(i => (i.SalesBill.SalesRep != null && (i.SalesBill.SalesRep.Contains("วันวิสา") || i.SalesBill.SalesRep.Contains("ตันหยง") || i.SalesBill.SalesRep.Contains("ณัฐกุล") || i.SalesBill.SalesRep.Contains("อิทธิพัท") || i.SalesBill.SalesRep.Contains("ธนดล")))
+                    || mtCodes.Contains(i.SalesBill.CustomerCode) || (
                     i.SalesBill.CustomerName != null &&
                     !i.SalesBill.CustomerName.Contains("สาลี่สุพรรณ") &&
                     !i.SalesBill.CustomerName.Contains("คุณเอกชัย") &&
@@ -590,6 +601,10 @@ namespace RoyalD.Web.Services
                     !i.SalesBill.CustomerName.Contains("ท็อป ไฮเทค") &&
                     !i.SalesBill.CustomerName.Contains("ท็อป พาร์ทเนอร์") && !i.SalesBill.CustomerName.Contains("วินนิ่ง") && i.SalesBill.CustomerCode != "103166" &&
                     (
+                        i.SalesBill.CustomerName.Contains("แมสมาร์เกตติ้ง") ||
+                        i.SalesBill.CustomerName.Contains("แมสมาร์เก็ตติ้ง") ||
+                        i.SalesBill.CustomerName.Contains("แมสมาร์ติ้ง") ||
+                        i.SalesBill.CustomerName.ToLower().Contains("mass marketing") ||
                         i.SalesBill.CustomerName.Contains("ซีพี แอ็กซ์ตร้า") ||
                         i.SalesBill.CustomerName.Contains("ซีพี แอ๊กซ์ตร้า") ||
                         i.SalesBill.CustomerName.Contains("สยามแม็คโคร") ||
@@ -627,7 +642,8 @@ namespace RoyalD.Web.Services
             }
             else
             {
-                return q.Where(i => !mtCodes.Contains(i.SalesBill.CustomerCode) && !(
+                return q.Where(i => !(i.SalesBill.SalesRep != null && (i.SalesBill.SalesRep.Contains("วันวิสา") || i.SalesBill.SalesRep.Contains("ตันหยง") || i.SalesBill.SalesRep.Contains("ณัฐกุล") || i.SalesBill.SalesRep.Contains("อิทธิพัท") || i.SalesBill.SalesRep.Contains("ธนดล")))
+                    && !mtCodes.Contains(i.SalesBill.CustomerCode) && !(
                     i.SalesBill.CustomerName != null &&
                     !i.SalesBill.CustomerName.Contains("สาลี่สุพรรณ") &&
                     !i.SalesBill.CustomerName.Contains("คุณเอกชัย") &&
@@ -640,6 +656,10 @@ namespace RoyalD.Web.Services
                     !i.SalesBill.CustomerName.Contains("ท็อป ไฮเทค") &&
                     !i.SalesBill.CustomerName.Contains("ท็อป พาร์ทเนอร์") && !i.SalesBill.CustomerName.Contains("วินนิ่ง") && i.SalesBill.CustomerCode != "103166" &&
                     (
+                        i.SalesBill.CustomerName.Contains("แมสมาร์เกตติ้ง") ||
+                        i.SalesBill.CustomerName.Contains("แมสมาร์เก็ตติ้ง") ||
+                        i.SalesBill.CustomerName.Contains("แมสมาร์ติ้ง") ||
+                        i.SalesBill.CustomerName.ToLower().Contains("mass marketing") ||
                         i.SalesBill.CustomerName.Contains("ซีพี แอ็กซ์ตร้า") ||
                         i.SalesBill.CustomerName.Contains("ซีพี แอ๊กซ์ตร้า") ||
                         i.SalesBill.CustomerName.Contains("สยามแม็คโคร") ||
