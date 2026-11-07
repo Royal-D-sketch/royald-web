@@ -512,7 +512,7 @@ namespace RoyalD.Web.Services
                         b.CustomerName.Contains("ฟาร์มาฮอฟ") ||
                         b.CustomerName.Contains("ฟาร์มมาฮอฟ") ||
                         b.CustomerName.ToLower().Contains("pharmahof") ||
-                        b.CustomerName.Contains("ไทยฟู้ดส์") ||
+                        b.CustomerName.Contains("ไทยฟู้ดส์") || b.CustomerName.Contains("ไทย ฟู้ดส์") ||
                         b.CustomerName.Contains("ฟาสซิโน") ||
                         b.CustomerName.Contains("ใบเมี่ยง")
                     )
@@ -562,7 +562,7 @@ namespace RoyalD.Web.Services
                         b.CustomerName.Contains("ฟาร์มาฮอฟ") ||
                         b.CustomerName.Contains("ฟาร์มมาฮอฟ") ||
                         b.CustomerName.ToLower().Contains("pharmahof") ||
-                        b.CustomerName.Contains("ไทยฟู้ดส์") ||
+                        b.CustomerName.Contains("ไทยฟู้ดส์") || b.CustomerName.Contains("ไทย ฟู้ดส์") ||
                         b.CustomerName.Contains("ฟาสซิโน") ||
                         b.CustomerName.Contains("ใบเมี่ยง")
                     )
@@ -619,7 +619,7 @@ namespace RoyalD.Web.Services
                         i.SalesBill.CustomerName.Contains("ฟาร์มาฮอฟ") ||
                         i.SalesBill.CustomerName.Contains("ฟาร์มมาฮอฟ") ||
                         i.SalesBill.CustomerName.ToLower().Contains("pharmahof") ||
-                        i.SalesBill.CustomerName.Contains("ไทยฟู้ดส์") ||
+                        i.SalesBill.CustomerName.Contains("ไทยฟู้ดส์") || i.SalesBill.CustomerName.Contains("ไทย ฟู้ดส์") ||
                         i.SalesBill.CustomerName.Contains("ฟาสซิโน") ||
                         i.SalesBill.CustomerName.Contains("ใบเมี่ยง")
                     )
@@ -669,7 +669,7 @@ namespace RoyalD.Web.Services
                         i.SalesBill.CustomerName.Contains("ฟาร์มาฮอฟ") ||
                         i.SalesBill.CustomerName.Contains("ฟาร์มมาฮอฟ") ||
                         i.SalesBill.CustomerName.ToLower().Contains("pharmahof") ||
-                        i.SalesBill.CustomerName.Contains("ไทยฟู้ดส์") ||
+                        i.SalesBill.CustomerName.Contains("ไทยฟู้ดส์") || i.SalesBill.CustomerName.Contains("ไทย ฟู้ดส์") ||
                         i.SalesBill.CustomerName.Contains("ฟาสซิโน") ||
                         i.SalesBill.CustomerName.Contains("ใบเมี่ยง")
                     )
