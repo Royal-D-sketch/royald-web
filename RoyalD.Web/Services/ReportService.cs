@@ -1637,8 +1637,15 @@ namespace RoyalD.Web.Services
             string? searchCustomerCode = null,
             string? searchCustomerName = null,
             string? searchProductCode = null,
-            string? selectedMonth = null)
+            string? selectedMonth = null,
+            string? region = null,
+            string? province = null,
+            string? userAllowedRegion = null,
+            string? userAllowedProvinces = null,
+            bool isRestricted = false)
         {
+            var areaScope = RegionHelper.ResolveAreaFilter(isRestricted, userAllowedRegion, userAllowedProvinces, region, province);
+
             var allDbReps = await _db.SalesBills
                 .Where(b => !b.IsCancelled && b.SalesRep != null && b.SalesRep != "")
                 .Select(b => b.SalesRep)
@@ -1654,7 +1661,15 @@ namespace RoyalD.Web.Services
                 SelectedMonth = selectedMonth ?? "",
                 StartDate = startDate,
                 EndDate = endDate,
-                Credit = credit
+                Credit = credit,
+                SelectedRegion = areaScope.SelectedRegion,
+                SelectedProvince = areaScope.SelectedProvince,
+                AvailableRegions = areaScope.AvailableRegions,
+                AvailableProvinces = areaScope.AvailableProvinces,
+                HasRegionRestriction = areaScope.HasRegionRestriction,
+                HasProvinceRestriction = areaScope.HasProvinceRestriction,
+                RegionProvincesMap = areaScope.RegionProvincesMap,
+                IsRestricted = isRestricted
             };
 
             // Query SalesBillItems directly (Price > 0 excludes free/bonus items, exclude cancelled bills)
@@ -1662,6 +1677,9 @@ namespace RoyalD.Web.Services
                 .Include(i => i.SalesBill)
                 .Where(i => i.Price > 0 && !i.SalesBill.IsCancelled)
                 .AsQueryable();
+
+            // Apply area filter
+            itemQuery = RegionHelper.ApplySalesBillItemAreaFilter(itemQuery, areaScope);
 
             bool isRestrictedRep = !string.IsNullOrWhiteSpace(userSalesRepCode) || !string.IsNullOrWhiteSpace(userFullName);
             var (filterReps, selectedRepForUi, _) = SalesRepHelper.ResolveFilter(
@@ -1853,6 +1871,16 @@ namespace RoyalD.Web.Services
         
         // For autocomplete
         public List<(string Code, string Name)> AllCustomers { get; set; } = new();
+
+        // Area Filter Properties
+        public string? SelectedRegion { get; set; }
+        public string? SelectedProvince { get; set; }
+        public List<string> AvailableRegions { get; set; } = new();
+        public List<string> AvailableProvinces { get; set; } = new();
+        public bool HasRegionRestriction { get; set; }
+        public bool HasProvinceRestriction { get; set; }
+        public Dictionary<string, List<string>> RegionProvincesMap { get; set; } = new();
+        public bool IsRestricted { get; set; }
     }
 }
 

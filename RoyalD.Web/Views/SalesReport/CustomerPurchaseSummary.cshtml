@@ -101,6 +101,37 @@
                 <input type="text" name="searchProductCode" class="form-control form-control-sm" placeholder="เช่น 308534" value="@Model.SearchProductCode" />
             </div>
             <div class="col-md-2">
+                <label class="form-label small fw-bold text-primary mb-1">👤 ผู้แทนขาย</label>
+                <select name="salesRep" class="form-select form-select-sm">
+                    <option value="">-- ผู้แทนขายทั้งหมด --</option>
+                    @foreach (var rep in Model.SalesReps)
+                    {
+                        <option value="@rep" selected="@(rep == Model.SelectedSalesRep ? "selected" : null)">@rep</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-primary mb-1">🗺️ ภาค/ภูมิภาค</label>
+                <select name="region" id="region-select" class="form-select form-select-sm" onchange="onRegionChange()">
+                    <option value="">@(Model.HasRegionRestriction ? "-- ทุกภาคที่รับผิดชอบ --" : "-- ทุกภาค / ทุกพื้นที่ --")</option>
+                    @foreach (var reg in Model.AvailableRegions)
+                    {
+                        var regLabel = reg == "ออนไลน์" ? "🛒 บิลขายออนไลน์ (บริษัท* และ บริษัทT)" : (reg == "กรุงเทพ, นนทบุรี, สมุทรปราการ" || reg == "กรุงเทพฯ และปริมณฑล" ? "🏙️ บิลขายกรุงเทพ,นนทบุรี,สมุทรปราการ" : (reg == "ต่างจังหวัด" ? "🚚 บิลขายต่างจังหวัด" : (reg == "โมเดิร์นเทรด" ? "🏢 บิลขายModern Trade" : reg)));
+                        <option value="@reg" selected="@(reg == Model.SelectedRegion ? "selected" : null)">@regLabel</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-primary mb-1">📍 จังหวัด</label>
+                <select name="province" id="province-select" class="form-select form-select-sm">
+                    <option value="">@(Model.HasProvinceRestriction ? "-- ทุกจังหวัดที่รับผิดชอบ --" : "-- ทุกจังหวัด --")</option>
+                    @foreach (var p in Model.AvailableProvinces)
+                    {
+                        <option value="@p" selected="@(p == Model.SelectedProvince ? "selected" : null)">@p</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
                 <label class="form-label small fw-bold text-primary mb-1">📅 ตั้งแต่วันที่</label>
                 <input type="date" name="startDate" class="form-control form-control-sm" value="@(Model.StartDate?.ToString("yyyy-MM-dd"))" />
             </div>
@@ -112,9 +143,37 @@
                 <label class="form-label small fw-bold text-primary mb-1">💳 เครดิต</label>
                 <input type="number" name="credit" class="form-control form-control-sm" placeholder="วัน" value="@Model.Credit" min="0" />
             </div>
-            <div class="col-12 d-flex justify-content-end gap-2 mt-2">
+            <div class="col-md-5 d-flex justify-content-end gap-2">
                 <button type="submit" class="btn btn-primary btn-sm fw-bold px-3"><i class="bi bi-search me-1"></i> ค้นหา</button>
                 <a href="/SalesReport/CustomerPurchaseSummary" class="btn btn-outline-secondary btn-sm px-3" title="ล้างตัวกรอง"><i class="bi bi-arrow-counterclockwise me-1"></i> ล้าง</a>
+            </div>
+
+            <!-- 5 Quick Filter Buttons -->
+            <div class="col-12 pt-2 mt-2 border-top border-primary border-opacity-25 d-flex flex-wrap align-items-center gap-2">
+                <span class="small fw-bold text-secondary me-1"><i class="bi bi-funnel-fill text-primary"></i> กรองพื้นที่ด่วน:</span>
+                @{
+                    string curReg = Model.SelectedRegion ?? "";
+                    bool isAllArea = string.IsNullOrEmpty(curReg);
+                    bool isOnline = curReg == "ออนไลน์" || curReg == "บิลขายออนไลน์";
+                    bool isBkkVicinity = curReg == "กรุงเทพ, นนทบุรี, สมุทรปราการ" || curReg == "กรุงเทพ,นนทบุรี,สมุทรปราการ" || curReg == "กรุงเทพฯ และปริมณฑล";
+                    bool isUpcountry = curReg == "ต่างจังหวัด";
+                    bool isModernTrade = curReg == "โมเดิร์นเทรด";
+                }
+                <button type="button" onclick="filterByAreaGroup('')" class="btn btn-sm rounded-pill px-3 fw-bold @(isAllArea ? "btn-primary shadow-sm" : "btn-outline-secondary bg-white")">
+                    🌐 บิลขายทั้งหมด
+                </button>
+                <button type="button" onclick="filterByAreaGroup('ออนไลน์')" class="btn btn-sm rounded-pill px-3 fw-bold @(isOnline ? "btn-dark shadow-sm border-dark" : "btn-outline-dark bg-white")">
+                    🛒 บิลขายออนไลน์ (บริษัท* และ บริษัทT)
+                </button>
+                <button type="button" onclick="filterByAreaGroup('กรุงเทพ, นนทบุรี, สมุทรปราการ')" class="btn btn-sm rounded-pill px-3 fw-bold @(isBkkVicinity ? "btn-info text-dark shadow-sm border-info" : "btn-outline-info text-dark bg-white")">
+                    🏙️ บิลขายกรุงเทพ,นนทบุรี,สมุทรปราการ
+                </button>
+                <button type="button" onclick="filterByAreaGroup('ต่างจังหวัด')" class="btn btn-sm rounded-pill px-3 fw-bold @(isUpcountry ? "btn-success shadow-sm" : "btn-outline-success bg-white")">
+                    🚚 บิลขายต่างจังหวัด
+                </button>
+                <button type="button" onclick="filterByAreaGroup('โมเดิร์นเทรด')" class="btn btn-sm rounded-pill px-3 fw-bold @(isModernTrade ? "btn-warning text-dark shadow-sm border-warning" : "btn-outline-warning text-dark bg-white")">
+                    🏢 บิลขายModern Trade
+                </button>
             </div>
         </form>
     </div>
@@ -272,6 +331,36 @@
 
 @section Scripts {
 <script>
+const allProvincesMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RegionProvincesMap));
+const allAvailableProvinces = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AvailableProvinces));
+const hasProvRestriction = @(Model.HasProvinceRestriction ? "true" : "false");
+
+function onRegionChange() {
+    const reg = document.getElementById('region-select').value;
+    const pSel = document.getElementById('province-select');
+    if (!pSel) return;
+    pSel.innerHTML = '<option value="">' + (hasProvRestriction ? '-- ทุกจังหวัดที่รับผิดชอบ --' : '-- ทุกจังหวัด --') + '</option>';
+    let provList = [];
+    if (!reg) {
+        provList = allAvailableProvinces;
+    } else if (allProvincesMap[reg]) {
+        provList = allProvincesMap[reg];
+    }
+    provList.sort().forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p;
+        opt.textContent = p;
+        pSel.appendChild(opt);
+    });
+}
+
+function filterByAreaGroup(reg) {
+    const rSelect = document.getElementById('region-select');
+    const pSelect = document.getElementById('province-select');
+    if (rSelect) rSelect.value = reg;
+    if (pSelect) pSelect.value = '';
+    document.getElementById('searchForm').submit();
+}
 (function() {
     var input = document.getElementById('customerNameInput');
     var dropdown = document.getElementById('customerNameDropdown');

@@ -336,125 +336,76 @@ namespace RoyalD.Web.Controllers
 
 
         public async Task<IActionResult> CustomerPurchaseSummary(
-
             string? salesRep = null, 
-
             DateTime? startDate = null,
-
             DateTime? endDate = null,
-
             int? credit = null,
-
             string? searchCustomerCode = null,
-
             string? searchCustomerName = null,
-
             string? searchProductCode = null,
-
             string? month = null,
-
+            string? region = null,
+            string? province = null,
             int page = 1,
-
             int pageSize = 100) 
-
         { 
-
             if (!CheckPerm("customerpurchasesummary")) return RedirectToAction("Index", "SalesBill");
 
-
-
-            bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
-
+            var currentUser = await _svc.Db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin") || (User.Identity?.Name?.ToLower() == "art");
+            bool isRestricted = !isAdmin;
             var pos = User.FindFirst("Position")?.Value ?? "";
-
             bool isSalesRepRole = !isAdmin && (pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย") || pos.Equals("sale", StringComparison.OrdinalIgnoreCase) || pos.Equals("Supervisor", StringComparison.OrdinalIgnoreCase));
 
-
-
             string? userRepCode = null;
-
             string? userFullName = null;
-
             string? username = null;
-
             if (isSalesRepRole)
-
             {
-
-                userRepCode = User.FindFirst("SalesRepCode")?.Value;
-
-                userFullName = User.FindFirst("FullName")?.Value;
-
+                userRepCode = currentUser?.SalesRepCode ?? User.FindFirst("SalesRepCode")?.Value;
+                userFullName = currentUser?.FullName ?? User.FindFirst("FullName")?.Value;
                 username = User.Identity?.Name;
-
             }
 
-
+            string? userAllowedRegion = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedRegion) ? currentUser.AllowedRegion : (isRestricted ? User.FindFirst("AllowedRegion")?.Value : null);
+            string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : (isRestricted ? User.FindFirst("AllowedProvinces")?.Value : null);
 
             while (startDate.HasValue && startDate.Value.Year > 2400) startDate = startDate.Value.AddYears(-543);
             while (endDate.HasValue && endDate.Value.Year > 2400) endDate = endDate.Value.AddYears(-543);
-            var cacheKey = $"cust_purch_{salesRep}_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}_{credit}_{month}_{userRepCode}_{username}_{searchCustomerCode}_{searchCustomerName}_{searchProductCode}";
+            var cacheKey = $"cust_purch_{salesRep}_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}_{credit}_{month}_{userRepCode}_{username}_{searchCustomerCode}_{searchCustomerName}_{searchProductCode}_{region}_{province}_{userAllowedRegion}_{userAllowedProvinces}";
 
             var vm = await _cache.GetOrCreateAsync(cacheKey, async entry =>
-
             {
-
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
-
-                return await _svc.GetCustomerPurchaseSummaryAsync(salesRep, startDate, endDate, credit, userRepCode, userFullName, username, searchCustomerCode, searchCustomerName, searchProductCode, month);
-
+                return await _svc.GetCustomerPurchaseSummaryAsync(salesRep, startDate, endDate, credit, userRepCode, userFullName, username, searchCustomerCode, searchCustomerName, searchProductCode, month, region, province, userAllowedRegion, userAllowedProvinces, isRestricted);
             }) ?? new CustomerPurchaseSummaryViewModel();
 
-
-
             int totalRecords = vm.Rows?.Count ?? 0;
-
             int effectivePageSize = pageSize > 0 ? pageSize : 100;
-
             int totalPages = (int)Math.Ceiling((double)totalRecords / effectivePageSize);
-
             page = Math.Max(1, Math.Min(page, totalPages > 0 ? totalPages : 1));
 
-
-
             var pagedRows = vm.Rows != null
-
                 ? vm.Rows.Skip((page - 1) * effectivePageSize).Take(effectivePageSize).ToList()
-
                 : new List<CustomerPurchaseSummaryRow>();
 
-
-
             ViewBag.Page = page;
-
             ViewBag.PageSize = effectivePageSize;
-
             ViewBag.TotalRecords = totalRecords;
-
             ViewBag.TotalPages = totalPages;
-
             ViewBag.PagedRows = pagedRows;
-
             ViewBag.SelectedSalesRep = salesRep;
-
             ViewBag.SelectedMonth = month;
-
             ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
-
             ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
-
             ViewBag.Credit = credit;
-
             ViewBag.SearchCustomerCode = searchCustomerCode;
-
             ViewBag.SearchCustomerName = searchCustomerName;
-
             ViewBag.SearchProductCode = searchProductCode;
-
-
+            ViewBag.SelectedRegion = vm.SelectedRegion;
+            ViewBag.SelectedProvince = vm.SelectedProvince;
 
             return View(vm);
-
         }
 
 
@@ -468,22 +419,28 @@ namespace RoyalD.Web.Controllers
             string? searchCustomerCode = null,
             string? searchCustomerName = null,
             string? searchProductCode = null,
-            string? month = null)
+            string? month = null,
+            string? region = null,
+            string? province = null)
         {
-            if (!CheckPerm("customerpurchasesummary")) return Forbid();
             if (!CanDownload()) return Forbid();
 
-            bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
+            var currentUser = await _svc.Db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin") || (User.Identity?.Name?.ToLower() == "art");
+            bool isRestricted = !isAdmin;
             var pos = User.FindFirst("Position")?.Value ?? "";
             bool isSalesRepRole = !isAdmin && (pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย") || pos.Equals("sale", StringComparison.OrdinalIgnoreCase) || pos.Equals("Supervisor", StringComparison.OrdinalIgnoreCase));
-            var userRepCode = isSalesRepRole ? User.FindFirst("SalesRepCode")?.Value : null;
-            var userFullName = isSalesRepRole ? (User.FindFirst("FullName")?.Value ?? User.Identity?.Name) : null;
+            var userRepCode = isSalesRepRole ? (currentUser?.SalesRepCode ?? User.FindFirst("SalesRepCode")?.Value) : null;
+            var userFullName = isSalesRepRole ? (currentUser?.FullName ?? User.FindFirst("FullName")?.Value ?? User.Identity?.Name) : null;
             var username = User.Identity?.Name;
+
+            string? userAllowedRegion = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedRegion) ? currentUser.AllowedRegion : (isRestricted ? User.FindFirst("AllowedRegion")?.Value : null);
+            string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : (isRestricted ? User.FindFirst("AllowedProvinces")?.Value : null);
 
             while (startDate.HasValue && startDate.Value.Year > 2400) startDate = startDate.Value.AddYears(-543);
             while (endDate.HasValue && endDate.Value.Year > 2400) endDate = endDate.Value.AddYears(-543);
 
-            var vm = await _svc.GetCustomerPurchaseSummaryAsync(salesRep, startDate, endDate, credit, userRepCode, userFullName, username, searchCustomerCode, searchCustomerName, searchProductCode, month);
+            var vm = await _svc.GetCustomerPurchaseSummaryAsync(salesRep, startDate, endDate, credit, userRepCode, userFullName, username, searchCustomerCode, searchCustomerName, searchProductCode, month, region, province, userAllowedRegion, userAllowedProvinces, isRestricted);
 
             var bytes = await _svc.ExportCustomerPurchaseSummaryExcelAsync(vm);
             return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"CustomerPurchaseSummary_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
