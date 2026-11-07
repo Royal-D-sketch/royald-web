@@ -25,8 +25,22 @@ namespace RoyalD.Web.Controllers
     [Authorize]
 
     public class SalesReportController : Controller
-
     {
+        public static string BuildCustomerPurchaseSummaryCacheKey(
+            string? salesRep, DateTime? startDate, DateTime? endDate, int? credit, string? month,
+            string? userRepCode, string? username, string? searchCustomerCode, string? searchCustomerName,
+            string? searchProductCode, string? region, string? province, string? userAllowedRegion, string? userAllowedProvinces)
+        {
+            return $"cust_purch_{salesRep}_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}_{credit}_{month}_{userRepCode}_{username}_{searchCustomerCode}_{searchCustomerName}_{searchProductCode}_{region}_{province}_{userAllowedRegion}_{userAllowedProvinces}";
+        }
+
+        public static string BuildCustomerProductCacheKey(
+            string? rep, DateTime? startDate, DateTime? endDate, int? credit, string? month,
+            DateTime? date, string? q, string? userRepCode, string? username, string? region,
+            string? province, string? district, string? userAllowedRegion, string? userAllowedProvinces, string? userAllowedDistricts)
+        {
+            return $"cust_prod_{rep}_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}_{credit}_{month}_{date:yyyyMMdd}_{q}_{userRepCode}_{username}_{region}_{province}_{district}_{userAllowedRegion}_{userAllowedProvinces}_{userAllowedDistricts}";
+        }
 
         private readonly ReportService _svc;
 
@@ -265,7 +279,7 @@ namespace RoyalD.Web.Controllers
         { 
             if (!CheckPerm("customerproduct")) return RedirectToAction("Index", "SalesBill");
 
-            var currentUser = await _svc.Db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_svc.Db, _cache, User.Identity?.Name);
             bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin") || (User.Identity?.Name?.ToLower() == "art");
             bool isRestricted = !isAdmin;
             string? userRepCode = isRestricted ? (currentUser?.SalesRepCode ?? User.FindFirst("SalesRepCode")?.Value) : null;
@@ -279,7 +293,7 @@ namespace RoyalD.Web.Controllers
             while (startDate.HasValue && startDate.Value.Year > 2400) startDate = startDate.Value.AddYears(-543);
             while (endDate.HasValue && endDate.Value.Year > 2400) endDate = endDate.Value.AddYears(-543);
             while (date.HasValue && date.Value.Year > 2400) date = date.Value.AddYears(-543);
-            var cacheKey = $"cust_prod_{rep}_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}_{credit}_{month}_{date:yyyyMMdd}_{q}_{userRepCode}_{username}_{region}_{province}_{district}_{userAllowedRegion}_{userAllowedProvinces}_{userAllowedDistricts}";
+            var cacheKey = BuildCustomerProductCacheKey(rep, startDate, endDate, credit, month, date, q, userRepCode, username, region, province, district, userAllowedRegion, userAllowedProvinces, userAllowedDistricts);
             var vm = await _cache.GetOrCreateAsync(cacheKey, async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45);
@@ -351,7 +365,7 @@ namespace RoyalD.Web.Controllers
         { 
             if (!CheckPerm("customerpurchasesummary")) return RedirectToAction("Index", "SalesBill");
 
-            var currentUser = await _svc.Db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_svc.Db, _cache, User.Identity?.Name);
             bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin") || (User.Identity?.Name?.ToLower() == "art");
             bool isRestricted = !isAdmin;
             var pos = User.FindFirst("Position")?.Value ?? "";
@@ -372,7 +386,7 @@ namespace RoyalD.Web.Controllers
 
             while (startDate.HasValue && startDate.Value.Year > 2400) startDate = startDate.Value.AddYears(-543);
             while (endDate.HasValue && endDate.Value.Year > 2400) endDate = endDate.Value.AddYears(-543);
-            var cacheKey = $"cust_purch_{salesRep}_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}_{credit}_{month}_{userRepCode}_{username}_{searchCustomerCode}_{searchCustomerName}_{searchProductCode}_{region}_{province}_{userAllowedRegion}_{userAllowedProvinces}";
+            var cacheKey = BuildCustomerPurchaseSummaryCacheKey(salesRep, startDate, endDate, credit, month, userRepCode, username, searchCustomerCode, searchCustomerName, searchProductCode, region, province, userAllowedRegion, userAllowedProvinces);
 
             var vm = await _cache.GetOrCreateAsync(cacheKey, async entry =>
             {
@@ -425,7 +439,7 @@ namespace RoyalD.Web.Controllers
         {
             if (!CanDownload()) return Forbid();
 
-            var currentUser = await _svc.Db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_svc.Db, _cache, User.Identity?.Name);
             bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin") || (User.Identity?.Name?.ToLower() == "art");
             bool isRestricted = !isAdmin;
             var pos = User.FindFirst("Position")?.Value ?? "";
@@ -494,7 +508,7 @@ namespace RoyalD.Web.Controllers
             if (!CheckPerm("customerproduct")) return Forbid();
             if (!CanDownload()) return Forbid();
 
-            var currentUser = await _svc.Db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_svc.Db, _cache, User.Identity?.Name);
             bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin") || (User.Identity?.Name?.ToLower() == "art");
             bool isRestricted = !isAdmin;
             string? userRepCode = isRestricted ? (currentUser?.SalesRepCode ?? User.FindFirst("SalesRepCode")?.Value) : null;
@@ -529,7 +543,7 @@ namespace RoyalD.Web.Controllers
             if (!CheckPerm("customerproduct")) return Forbid();
             if (!CanDownload()) return Forbid();
 
-            var currentUser = await _svc.Db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_svc.Db, _cache, User.Identity?.Name);
             bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin") || (User.Identity?.Name?.ToLower() == "art");
             bool isRestricted = !isAdmin;
             string? userRepCode = isRestricted ? (currentUser?.SalesRepCode ?? User.FindFirst("SalesRepCode")?.Value) : null;
@@ -574,7 +588,12 @@ namespace RoyalD.Web.Controllers
             string? province = null,
             string? district = null)
         {
-            var vm = await BuildProductGroupSalesVmAsync(db, groupService, salesRep, month25, startDate, endDate, region, province, district);
+            var cacheKey = $"pg_sales_{salesRep}_{month25}_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}_{region}_{province}_{district}_{User.Identity?.Name}";
+            var vm = await _cache.GetOrCreateAsync(cacheKey, async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30);
+                return await BuildProductGroupSalesVmAsync(db, groupService, salesRep, month25, startDate, endDate, region, province, district);
+            });
             return View(vm);
         }
 
@@ -1148,7 +1167,7 @@ namespace RoyalD.Web.Controllers
             var billNos = billList.Select(b => b.BillNo).ToList();
 
             var itemsList = await db.SalesBillItems.AsNoTracking()
-                .Where(i => billNos.Contains(i.BillNo))
+                .Where(i => billsQuery.Select(b => b.BillNo).Contains(i.BillNo))
                 .Select(i => new { i.BillNo, i.ProductCode, i.ProductName, i.Unit, i.Qty, i.Price, i.Amount, i.Discount })
                 .ToListAsync();
 

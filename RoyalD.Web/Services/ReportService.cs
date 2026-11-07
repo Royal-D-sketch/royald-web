@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Caching.Memory;
 using RoyalD.Web.Models;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
@@ -155,7 +156,13 @@ namespace RoyalD.Web.Services
     {
         private readonly AppDbContext _db;
 
-        public ReportService(AppDbContext db) => _db = db;
+        private readonly Microsoft.Extensions.Caching.Memory.IMemoryCache? _cache;
+
+        public ReportService(AppDbContext db, Microsoft.Extensions.Caching.Memory.IMemoryCache? cache = null)
+        {
+            _db = db;
+            _cache = cache;
+        }
         public AppDbContext Db => _db;
 
         private static readonly Dictionary<string, string> StandardMonthsMap = new()
@@ -1752,12 +1759,9 @@ namespace RoyalD.Web.Services
         {
             var areaScope = RegionHelper.ResolveAreaFilter(isRestricted, userAllowedRegion, userAllowedProvinces, region, province);
 
-            var allDbReps = await _db.SalesBills
-                .Where(b => !b.IsCancelled && b.SalesRep != null && b.SalesRep != "")
-                .Select(b => b.SalesRep)
-                .Distinct()
-                .OrderBy(x => x)
-                .ToListAsync();
+            var allDbReps = _cache != null
+                ? await SalesRepHelper.GetAllKnownSalesRepsAsync(_db, _cache)
+                : await _db.SalesBills.Where(b => !b.IsCancelled && b.SalesRep != null && b.SalesRep != "").Select(b => b.SalesRep).Distinct().OrderBy(x => x).ToListAsync();
             allDbReps = allDbReps.Where(r => !SalesRepHelper.IsCode(r)).ToList();
 
             var vm = new CustomerPurchaseSummaryViewModel
@@ -1861,13 +1865,29 @@ namespace RoyalD.Web.Services
                 Amount = i.Amount
             }).ToListAsync();
             
-            // All customers for autocomplete (from Customers table)
-            vm.AllCustomers = await _db.Customers.AsNoTracking()
-                .Where(c => !string.IsNullOrEmpty(c.CustomerCode) && !string.IsNullOrEmpty(c.Name))
-                .OrderBy(c => c.Name)
-                .Select(c => new { c.CustomerCode, c.Name })
-                .ToListAsync()
-                .ContinueWith(t => t.Result.Select(x => (x.CustomerCode ?? "", x.Name ?? "")).ToList());
+            // All customers for autocomplete (cached in memory)
+            if (_cache != null)
+            {
+                vm.AllCustomers = await _cache.GetOrCreateAsync("all_customers_dropdown_cache", async entry =>
+                {
+                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(2);
+                    var custs = await _db.Customers.AsNoTracking()
+                        .Where(c => !string.IsNullOrEmpty(c.CustomerCode) && !string.IsNullOrEmpty(c.Name))
+                        .OrderBy(c => c.Name)
+                        .Select(c => new { c.CustomerCode, c.Name })
+                        .ToListAsync();
+                    return custs.Select(x => (x.CustomerCode ?? "", x.Name ?? "")).ToList();
+                }) ?? new List<(string, string)>();
+            }
+            else
+            {
+                var custs = await _db.Customers.AsNoTracking()
+                    .Where(c => !string.IsNullOrEmpty(c.CustomerCode) && !string.IsNullOrEmpty(c.Name))
+                    .OrderBy(c => c.Name)
+                    .Select(c => new { c.CustomerCode, c.Name })
+                    .ToListAsync();
+                vm.AllCustomers = custs.Select(x => (x.CustomerCode ?? "", x.Name ?? "")).ToList();
+            }
 
             // Set search fields in VM
             vm.SearchCustomerCode = searchCustomerCode ?? "";

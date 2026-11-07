@@ -37,7 +37,7 @@ namespace RoyalD.Web.Controllers
             int page = 1,
             int pageSize = 50)
         {
-            var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_db, _cache, User.Identity?.Name);
             bool isRestricted = currentUser != null && currentUser.Role != "admin";
             string? userAllowedRegion = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedRegion) ? currentUser.AllowedRegion : null;
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
@@ -239,7 +239,7 @@ namespace RoyalD.Web.Controllers
             DateTime? startDate = null,
             DateTime? endDate = null)
         {
-            var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_db, _cache, User.Identity?.Name);
             string pos = (currentUser?.Position ?? "").Trim();
             bool isSalesRepPos = pos == "เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธโ€”เน€เธยเน€เธยเน€เธเธ’เน€เธเธ" || pos == "เน€เธยเน€เธยเน€เธเธ‘เน€เธยเน€เธยเน€เธเธ’เน€เธยเน€เธยเน€เธเธ’เน€เธเธ" || pos.Contains("เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธโ€”เน€เธย") || pos.Contains("เน€เธยเน€เธยเน€เธเธ‘เน€เธยเน€เธยเน€เธเธ’เน€เธยเน€เธยเน€เธเธ’เน€เธเธ");
             bool canDownload = !isSalesRepPos && (currentUser?.Role == "admin" || currentUser?.CanDownload == true);
@@ -341,7 +341,7 @@ namespace RoyalD.Web.Controllers
             DateTime? startDate = null,
             DateTime? endDate = null)
         {
-            var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_db, _cache, User.Identity?.Name);
             string pos = (currentUser?.Position ?? "").Trim();
             bool isSalesRepPos = pos == "เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธโ€”เน€เธยเน€เธยเน€เธเธ’เน€เธเธ" || pos == "เน€เธยเน€เธยเน€เธเธ‘เน€เธยเน€เธยเน€เธเธ’เน€เธยเน€เธยเน€เธเธ’เน€เธเธ" || pos.Contains("เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธโ€”เน€เธย") || pos.Contains("เน€เธยเน€เธยเน€เธเธ‘เน€เธยเน€เธยเน€เธเธ’เน€เธยเน€เธยเน€เธเธ’เน€เธเธ");
             bool canDownload = !isSalesRepPos && (currentUser?.Role == "admin" || currentUser?.CanDownload == true);
@@ -413,7 +413,7 @@ namespace RoyalD.Web.Controllers
             DateTime? startDate = null,
             DateTime? endDate = null)
         {
-            var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_db, _cache, User.Identity?.Name);
             string pos = (currentUser?.Position ?? "").Trim();
             bool isSalesRepPos = pos == "เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธโ€”เน€เธยเน€เธยเน€เธเธ’เน€เธเธ" || pos == "เน€เธยเน€เธยเน€เธเธ‘เน€เธยเน€เธยเน€เธเธ’เน€เธยเน€เธยเน€เธเธ’เน€เธเธ" || pos.Contains("เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธโ€”เน€เธย") || pos.Contains("เน€เธยเน€เธยเน€เธเธ‘เน€เธยเน€เธยเน€เธเธ’เน€เธยเน€เธยเน€เธเธ’เน€เธเธ");
             bool canDownload = !isSalesRepPos && (currentUser?.Role == "admin" || currentUser?.CanDownload == true);
@@ -513,7 +513,7 @@ namespace RoyalD.Web.Controllers
 
             if (debt == null) return NotFound();
 
-            var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_db, _cache, User.Identity?.Name);
             ViewBag.CanViewPaymentDetails = currentUser != null && (currentUser.Role == "admin" || currentUser.CanViewPaymentDetails);
             ViewBag.CanChangeDebtStatus = DebtStatusPermissionHelper.CanChangeDebtStatus(currentUser, User);
             ViewBag.CanChangePaidBillStatus = DebtStatusPermissionHelper.CanChangePaidBillStatus(currentUser, User);
@@ -585,7 +585,7 @@ namespace RoyalD.Web.Controllers
 
         public async Task<IActionResult> History(string? search, string? salesRep, DateTime? fromDate = null, DateTime? toDate = null, string? dateType = null, int page = 1, int pageSize = 50)
         {
-            var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_db, _cache, User.Identity?.Name);
             bool isRestricted = currentUser != null && currentUser.Role != "admin";
             string? userAllowedRegion = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedRegion) ? currentUser.AllowedRegion : null;
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
@@ -694,7 +694,7 @@ namespace RoyalD.Web.Controllers
                 return RedirectToAction("Index");
             }
 
-            var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_db, _cache, User.Identity?.Name);
             bool isRestricted = currentUser != null && currentUser.Role != "admin";
 
             if (isRestricted)
@@ -869,7 +869,7 @@ namespace RoyalD.Web.Controllers
                 status = formStatus;
             }
 
-            var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_db, _cache, User.Identity?.Name);
             var debt = await _db.OutstandingDebts.FirstOrDefaultAsync(d => d.BillNo == billNo);
             if (debt == null) return NotFound();
 
@@ -1246,7 +1246,7 @@ namespace RoyalD.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Installment(string? search, string? salesRep)
         {
-            var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_db, _cache, User.Identity?.Name);
             bool isRestricted = currentUser != null && currentUser.Role != "admin";
             string? userAllowedRegion = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedRegion) ? currentUser.AllowedRegion : null;
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
@@ -1282,7 +1282,7 @@ namespace RoyalD.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> BadDebt(string? search, string? salesRep)
         {
-            var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_db, _cache, User.Identity?.Name);
             bool isRestricted = currentUser != null && currentUser.Role != "admin";
             string? userAllowedRegion = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedRegion) ? currentUser.AllowedRegion : null;
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
@@ -1310,7 +1310,7 @@ namespace RoyalD.Web.Controllers
         public async Task<IActionResult> ExportCancelledExcel(string? search, string? salesRep)
         {
             if (IsSalesRepUser()) return Forbid();
-            var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_db, _cache, User.Identity?.Name);
             bool canDownload = currentUser?.Role == "admin" || currentUser?.CanDownload == true;
             if (!canDownload) return Forbid();
 
@@ -1337,7 +1337,7 @@ namespace RoyalD.Web.Controllers
         public async Task<IActionResult> ExportCancelledPdf(string? search, string? salesRep)
         {
             if (IsSalesRepUser()) return Forbid();
-            var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_db, _cache, User.Identity?.Name);
             bool canDownload = currentUser?.Role == "admin" || currentUser?.CanDownload == true;
             if (!canDownload) return Forbid();
 
@@ -1370,7 +1370,7 @@ namespace RoyalD.Web.Controllers
                 TempData["Error"] = "ผู้แทนขายไม่มีสิทธิ์ในการกู้คืนบิลยกเลิก";
                 return RedirectToAction("Index");
             }
-            var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_db, _cache, User.Identity?.Name);
             if (!DebtStatusPermissionHelper.CanRestoreCancelledBill(currentUser, User))
             {
                 TempData["Error"] = "ท่านไม่มีสิทธิ์ในการกู้คืนบิลยกเลิกกลับเป็นบิลค้างชำระปกติ";

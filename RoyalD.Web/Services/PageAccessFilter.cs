@@ -48,12 +48,12 @@ namespace RoyalD.Web.Services
                     return;
                 }
 
-                // Cache lookup for 30 seconds to make page clicks blazing fast while reflecting changes quickly
+                // Cache lookup for 5 minutes to make page clicks blazing fast while reflecting changes quickly
                 var username = user.Identity.Name ?? "";
                 var (role, allowedPages) = await _cache.GetOrCreateAsync($"user_perm_{username}", async entry =>
                 {
-                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30);
-                    var dbUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => EF.Functions.ILike(u.Username, username));
+                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+                    var dbUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username.ToLower() == username.ToLower());
                     return (dbUser?.Role ?? "user", dbUser?.AllowedPages ?? "");
                 });
 

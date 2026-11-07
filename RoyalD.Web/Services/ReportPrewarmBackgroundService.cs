@@ -51,10 +51,20 @@ namespace RoyalD.Web.Services
                     _logger.LogError(ex, "⚠️ [ReportPrewarm] Error during background pre-warming");
                 }
 
-                // Wait 15 minutes OR until SignalRefresh() is triggered
+                // Ping Render health check every 10 minutes to prevent cold-start spin-down
                 try
                 {
-                    await Task.Run(() => _refreshSignal.WaitOne(TimeSpan.FromMinutes(15)), stoppingToken);
+                    using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+                    var appUrl = Environment.GetEnvironmentVariable("RENDER_EXTERNAL_URL") ?? "https://royald-web-1.onrender.com";
+                    await http.GetAsync($"{appUrl.TrimEnd('/')}/healthz", stoppingToken);
+                    _logger.LogInformation("💓 [KeepAlive] Pinged {Url}/healthz successfully", appUrl);
+                }
+                catch {}
+
+                // Wait 10 minutes OR until SignalRefresh() is triggered
+                try
+                {
+                    await Task.Run(() => _refreshSignal.WaitOne(TimeSpan.FromMinutes(10)), stoppingToken);
                 }
                 catch (OperationCanceledException)
                 {
@@ -108,24 +118,32 @@ namespace RoyalD.Web.Services
                 _logger.LogWarning("Prewarm ProductDetails: {Msg}", ex.Message);
             }
 
-            // 4. Customer Product (Default admin view)
+            // 4. Customer Product (Default views)
             try
             {
                 var custProd = await reportSvc.GetCustomerProductReportAsync(null, null, null, null, null, null, null);
-                cache.Set("cust_prod______", custProd, cacheDuration);
-                cache.Set("cust_prod______admin", custProd, cacheDuration);
+                var keyAdmin = RoyalD.Web.Controllers.SalesReportController.BuildCustomerProductCacheKey(null, null, null, null, null, null, null, null, "admin", null, null, null, null, null, null);
+                var keyArt = RoyalD.Web.Controllers.SalesReportController.BuildCustomerProductCacheKey(null, null, null, null, null, null, null, null, "art", null, null, null, null, null, null);
+                var keyUser = RoyalD.Web.Controllers.SalesReportController.BuildCustomerProductCacheKey(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                cache.Set(keyAdmin, custProd, cacheDuration);
+                cache.Set(keyArt, custProd, cacheDuration);
+                cache.Set(keyUser, custProd, cacheDuration);
             }
             catch (Exception ex)
             {
                 _logger.LogWarning("Prewarm CustomerProduct: {Msg}", ex.Message);
             }
 
-            // 5. Customer Purchase Summary (Default admin view)
+            // 5. Customer Purchase Summary (Default views)
             try
             {
                 var custPurch = await reportSvc.GetCustomerPurchaseSummaryAsync(null, null, null, null, null, null, null, null);
-                cache.Set("cust_purch_______", custPurch, cacheDuration);
-                cache.Set("cust_purch___admin____", custPurch, cacheDuration);
+                var keyAdmin = RoyalD.Web.Controllers.SalesReportController.BuildCustomerPurchaseSummaryCacheKey(null, null, null, null, null, null, "admin", null, null, null, null, null, null, null);
+                var keyArt = RoyalD.Web.Controllers.SalesReportController.BuildCustomerPurchaseSummaryCacheKey(null, null, null, null, null, null, "art", null, null, null, null, null, null, null);
+                var keyUser = RoyalD.Web.Controllers.SalesReportController.BuildCustomerPurchaseSummaryCacheKey(null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                cache.Set(keyAdmin, custPurch, cacheDuration);
+                cache.Set(keyArt, custPurch, cacheDuration);
+                cache.Set(keyUser, custPurch, cacheDuration);
             }
             catch (Exception ex)
             {

@@ -109,7 +109,7 @@ namespace RoyalD.Web.Controllers
         {
             if (status != "cancelled")
             {
-                q = q.Where(b => !b.IsCancelled && !_db.OutstandingDebts.Any(d => d.BillNo == b.BillNo && d.Status == DebtStatus.Cancelled));
+                q = q.Where(b => !b.IsCancelled);
             }
 
             if (!string.IsNullOrEmpty(status))
@@ -244,7 +244,7 @@ namespace RoyalD.Web.Controllers
             int page = 1, 
             int pageSize = 50)
         {
-            var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_db, _cache, User.Identity?.Name);
             bool isRestricted = currentUser != null && currentUser.Role != "admin";
             string? userAllowedRegion = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedRegion) ? currentUser.AllowedRegion : null;
             string? userAllowedProvinces = isRestricted && !string.IsNullOrEmpty(currentUser?.AllowedProvinces) ? currentUser.AllowedProvinces : null;
@@ -307,11 +307,12 @@ namespace RoyalD.Web.Controllers
             if (!string.IsNullOrEmpty(poSearch))
                 q = q.Where(b => b.PoNumber.Contains(poSearch));
 
-            var total = await q.CountAsync();
             bool isDebtStatus = !string.IsNullOrEmpty(status) && status != "paid" && status != "cancelled";
+            int total = 0;
             decimal totalAmount = 0m;
             if (isDebtStatus)
             {
+                total = await q.CountAsync();
                 totalAmount = await q
                     .Join(_db.OutstandingDebts.Where(d => d.RemainingAmount > 0),
                           b => b.BillNo,
@@ -321,7 +322,12 @@ namespace RoyalD.Web.Controllers
             }
             else
             {
-                totalAmount = await q.SumAsync(b => (decimal?)b.TotalAmount) ?? 0m;
+                var agg = await q.GroupBy(b => 1).Select(g => new {
+                    Count = g.Count(),
+                    Total = g.Sum(x => (decimal?)x.TotalAmount)
+                }).FirstOrDefaultAsync();
+                total = agg?.Count ?? 0;
+                totalAmount = agg?.Total ?? 0m;
             }
 
             var bills = await q
@@ -416,7 +422,7 @@ namespace RoyalD.Web.Controllers
             }
             ViewBag.ReturnUrl = returnUrl;
 
-            var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_db, _cache, User.Identity?.Name);
             ViewBag.CanDeleteSalesBill = currentUser != null && (currentUser.Role == "admin" || currentUser.CanDeleteSalesBill);
             ViewBag.CanChangeDebtStatus = DebtStatusPermissionHelper.CanChangeDebtStatus(currentUser, User);
             ViewBag.CanChangePaidBillStatus = DebtStatusPermissionHelper.CanChangePaidBillStatus(currentUser, User);
@@ -542,7 +548,7 @@ namespace RoyalD.Web.Controllers
             DateTime? endDate,
             int? credit = null)
         {
-            var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_db, _cache, User.Identity?.Name);
             bool isRestricted = currentUser != null && currentUser.Role != "admin";
             
             if (isRestricted && currentUser != null && !currentUser.CanDownload)
@@ -724,7 +730,7 @@ namespace RoyalD.Web.Controllers
             DateTime? endDate,
             int? credit = null)
         {
-            var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_db, _cache, User.Identity?.Name);
             if (currentUser != null && currentUser.Role != "admin" && !currentUser.CanDownload)
             {
                 return Forbid();
@@ -876,7 +882,7 @@ namespace RoyalD.Web.Controllers
             bool isPaid = DebtStatusPermissionHelper.IsBillPaid(bill, existingDebt);
             if (isPaid)
             {
-                var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+                var currentUser = await UserCacheHelper.GetCurrentUserAsync(_db, _cache, User.Identity?.Name);
                 if (!DebtStatusPermissionHelper.CanChangePaidBillStatus(currentUser, User))
                 {
                     TempData["Error"] = "คุณไม่มีสิทธิ์แก้ไขการรับเงินของบิลที่ชำระเงินครบถ้วนแล้ว";
@@ -954,7 +960,7 @@ namespace RoyalD.Web.Controllers
             [FromServices] IWebHostEnvironment env,
             string? adminPassword = null)
         {
-            var currentUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var currentUser = await UserCacheHelper.GetCurrentUserAsync(_db, _cache, User.Identity?.Name);
             var bill = await _db.SalesBills.FirstOrDefaultAsync(b => b.BillNo == billNo);
             var existingDebt = await _db.OutstandingDebts.Include(d => d.PaymentRecords).FirstOrDefaultAsync(d => d.BillNo == billNo);
             if (bill == null && existingDebt == null) return NotFound();
