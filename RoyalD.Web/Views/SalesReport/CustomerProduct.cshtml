@@ -215,7 +215,7 @@
                     <option value="">@(Model.HasRegionRestriction ? "-- ทุกภาคที่รับผิดชอบ --" : "-- ทุกภาค --")</option>
                     @foreach (var reg in Model.AvailableRegions)
                     {
-                        var regLabel = reg == "ออนไลน์" ? "🛒 บิลขายออนไลน์ (บริษัท* และ บริษัทT)" : (reg == "กรุงเทพ, นนทบุรี, สมุทรปราการ" || reg == "กรุงเทพฯ และปริมณฑล" ? "🏙️ บิลขายกรุงเทพ,นนทบุรี,สมุทรปราการ" : (reg == "ต่างจังหวัด" ? "🚚 บิลขายต่างจังหวัด" : (reg == "โมเดิร์นเทรด" ? "🏢 บิลขายModern Trade" : reg)));
+                        var regLabel = reg == "ออนไลน์" ? "🛒 ออนไลน์ (บริษัท* และ บริษัทT)" : (reg == "กรุงเทพ, นนทบุรี, สมุทรปราการ" || reg == "กรุงเทพฯ และปริมณฑล" ? "🏙️ กรุงเทพ,นนทบุรี,สมุทรปราการ" : (reg == "ต่างจังหวัด" ? "🚚 ต่างจังหวัด" : (reg == "โมเดิร์นเทรด" ? "🏢 Modern Trade" : reg)));
                         <option value="@reg" selected="@(reg == Model.SelectedRegion ? "selected" : null)">@regLabel</option>
                     }
                 </select>
@@ -281,19 +281,19 @@
                     bool cpAll = cpCount == 0 || cpCount == 4;
                 }
                 <button type="button" onclick="toggleCustProdArea('')" class="btn btn-sm rounded-pill px-3 fw-bold @(cpAll ? "btn-success shadow-sm" : "btn-outline-secondary bg-white")">
-                    🌐 รายการขายทั้งหมด
+                    🌐 ทั้งหมด
                 </button>
                 <button type="button" onclick="toggleCustProdArea('ออนไลน์')" class="btn btn-sm rounded-pill px-3 fw-bold @(cpOnline ? "btn-dark shadow-sm border-2 border-dark" : "btn-outline-dark bg-white")">
-                    @(cpOnline ? "✓ " : "")🛒 บิลขายออนไลน์ (บริษัท* และ บริษัทT)
+                    @(cpOnline ? "✓ " : "")🛒 ออนไลน์ (บริษัท* และ บริษัทT)
                 </button>
                 <button type="button" onclick="toggleCustProdArea('กรุงเทพ, นนทบุรี, สมุทรปราการ')" class="btn btn-sm rounded-pill px-3 fw-bold @(cpBkk ? "btn-info text-dark shadow-sm border-2 border-primary" : "btn-outline-info text-dark bg-white")">
-                    @(cpBkk ? "✓ " : "")🏙️ บิลขายกรุงเทพ,นนทบุรี,สมุทรปราการ
+                    @(cpBkk ? "✓ " : "")🏙️ กรุงเทพ,นนทบุรี,สมุทรปราการ
                 </button>
                 <button type="button" onclick="toggleCustProdArea('ต่างจังหวัด')" class="btn btn-sm rounded-pill px-3 fw-bold @(cpUpc ? "btn-primary shadow-sm border-2 border-primary" : "btn-outline-primary bg-white")">
-                    @(cpUpc ? "✓ " : "")🚚 บิลขายต่างจังหวัด
+                    @(cpUpc ? "✓ " : "")🚚 ต่างจังหวัด
                 </button>
                 <button type="button" onclick="toggleCustProdArea('โมเดิร์นเทรด')" class="btn btn-sm rounded-pill px-3 fw-bold @(cpMt ? "btn-warning text-dark shadow-sm border-2 border-dark" : "btn-outline-warning text-dark bg-white")">
-                    @(cpMt ? "✓ " : "")🏢 บิลขายModern Trade
+                    @(cpMt ? "✓ " : "")🏢 Modern Trade
                 </button>
                 <small class="text-muted ms-auto d-none d-md-inline" style="font-size:0.8rem;"><i class="bi bi-info-circle me-1"></i>สามารถกดเลือกหลายปุ่มพร้อมกันได้</small>
             </div>

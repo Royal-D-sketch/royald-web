@@ -280,7 +280,7 @@
                             <option value="กรุงเทพฯ" selected="@(ViewBag.SelectedRegion == "กรุงเทพฯ" || ViewBag.SelectedRegion == "กรุงเทพ")">🏙️ กรุงเทพฯ</option>
                         }
                         @foreach (var reg in regions) {
-                            var regLabel = reg == "ออนไลน์" ? "🛒 บิลขายออนไลน์ (บริษัท* และ บริษัทT)" : (reg == "กรุงเทพ, นนทบุรี, สมุทรปราการ" || reg == "กรุงเทพฯ และปริมณฑล" ? "🏙️ บิลขายกรุงเทพ,นนทบุรี,สมุทรปราการ" : (reg == "ต่างจังหวัด" ? "🚚 บิลขายต่างจังหวัด" : (reg == "โมเดิร์นเทรด" ? "🏢 บิลขายModern Trade" : reg)));
+                            var regLabel = reg == "ออนไลน์" ? "🛒 ออนไลน์ (บริษัท* และ บริษัทT)" : (reg == "กรุงเทพ, นนทบุรี, สมุทรปราการ" || reg == "กรุงเทพฯ และปริมณฑล" ? "🏙️ กรุงเทพ,นนทบุรี,สมุทรปราการ" : (reg == "ต่างจังหวัด" ? "🚚 ต่างจังหวัด" : (reg == "โมเดิร์นเทรด" ? "🏢 Modern Trade" : reg)));
                             if (reg == (string)ViewBag.SelectedRegion) { <option value="@reg" selected>@regLabel</option> }
                             else { <option value="@reg">@regLabel</option> }
                         }

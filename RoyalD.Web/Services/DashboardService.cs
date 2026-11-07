@@ -22,7 +22,7 @@ namespace RoyalD.Web.Services
         // ==========================================
         public static readonly HashSet<string> ModernTradeCodes = new(StringComparer.OrdinalIgnoreCase)
         {
-            "101901", "10501", "103166", "110472", "110473",
+            "101901", "10501", "110472", "110473",
             "102003", "102719",
             "1020379", "103373", "103374", "103375", "103376", "110239", "110547", "110571",
             "102445", "103468",
@@ -74,7 +74,7 @@ namespace RoyalD.Web.Services
                 if (name.Contains("สาลี่สุพรรณ") || name.Contains("คุณเอกชัย") || name.Contains("ยากาแร็ต") ||
                     name.Contains("คลองสี่วา") || name.Contains("เอกชัยกอล์ฟ") || name.Contains("เพียวเคมม์") ||
                     name.Contains("ปรีชา  วิลล่า") || name.Contains("มหาชัยวิลล่า") || name.Contains("ท็อป ไฮเทค") ||
-                    name.Contains("ท็อป พาร์ทเนอร์"))
+                    name.Contains("ท็อป พาร์ทเนอร์") || name.Contains("วินนิ่ง") || customerCode == "103166")
                 {
                     return false;
                 }

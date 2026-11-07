@@ -180,7 +180,7 @@
                     <option value="">@(Model.HasRegionRestriction ? "-- ทุกภาคที่รับผิดชอบ --" : "-- ทุกภาค / ทุกพื้นที่ --")</option>
                     @foreach (var reg in Model.AvailableRegions)
                     {
-                        var regLabel = reg == "ออนไลน์" ? "🛒 บิลขายออนไลน์ (บริษัท* และ บริษัทT)" : (reg == "กรุงเทพ, นนทบุรี, สมุทรปราการ" || reg == "กรุงเทพฯ และปริมณฑล" ? "🏙️ บิลขายกรุงเทพ,นนทบุรี,สมุทรปราการ" : (reg == "ต่างจังหวัด" ? "🚚 บิลขายต่างจังหวัด" : (reg == "โมเดิร์นเทรด" ? "🏢 บิลขายModern Trade" : reg)));
+                        var regLabel = reg == "ออนไลน์" ? "🛒 ออนไลน์ (บริษัท* และ บริษัทT)" : (reg == "กรุงเทพ, นนทบุรี, สมุทรปราการ" || reg == "กรุงเทพฯ และปริมณฑล" ? "🏙️ กรุงเทพ,นนทบุรี,สมุทรปราการ" : (reg == "ต่างจังหวัด" ? "🚚 ต่างจังหวัด" : (reg == "โมเดิร์นเทรด" ? "🏢 Modern Trade" : reg)));
                         <option value="@reg" selected="@(reg == Model.SelectedRegion ? "selected" : null)">@regLabel</option>
                     }
                 </select>
@@ -229,19 +229,19 @@
                     bool isAllArea = activeCount == 0 || activeCount == 4;
                 }
                 <button type="button" onclick="toggleAreaGroup('')" class="btn btn-sm rounded-pill px-3 fw-bold @(isAllArea ? "btn-primary shadow-sm" : "btn-outline-secondary bg-white")" title="แสดงข้อมูลทั้งหมด">
-                    🌐 บิลขายทั้งหมด
+                    🌐 ทั้งหมด
                 </button>
                 <button type="button" onclick="toggleAreaGroup('ออนไลน์')" class="btn btn-sm rounded-pill px-3 fw-bold @(isOnline ? "btn-dark shadow-sm border-2 border-dark" : "btn-outline-dark bg-white")" title="คลิกเพื่อเลือก/ยกเลิก (เลือกหลายอันได้)">
-                    @(isOnline ? "✓ " : "")🛒 บิลขายออนไลน์ (บริษัท* และ บริษัทT)
+                    @(isOnline ? "✓ " : "")🛒 ออนไลน์ (บริษัท* และ บริษัทT)
                 </button>
                 <button type="button" onclick="toggleAreaGroup('กรุงเทพ, นนทบุรี, สมุทรปราการ')" class="btn btn-sm rounded-pill px-3 fw-bold @(isBkkVicinity ? "btn-info text-dark shadow-sm border-2 border-primary" : "btn-outline-info text-dark bg-white")" title="คลิกเพื่อเลือก/ยกเลิก (เลือกหลายอันได้)">
-                    @(isBkkVicinity ? "✓ " : "")🏙️ บิลขายกรุงเทพ,นนทบุรี,สมุทรปราการ
+                    @(isBkkVicinity ? "✓ " : "")🏙️ กรุงเทพ,นนทบุรี,สมุทรปราการ
                 </button>
                 <button type="button" onclick="toggleAreaGroup('ต่างจังหวัด')" class="btn btn-sm rounded-pill px-3 fw-bold @(isUpcountry ? "btn-success shadow-sm border-2 border-success" : "btn-outline-success bg-white")" title="คลิกเพื่อเลือก/ยกเลิก (เลือกหลายอันได้)">
-                    @(isUpcountry ? "✓ " : "")🚚 บิลขายต่างจังหวัด
+                    @(isUpcountry ? "✓ " : "")🚚 ต่างจังหวัด
                 </button>
                 <button type="button" onclick="toggleAreaGroup('โมเดิร์นเทรด')" class="btn btn-sm rounded-pill px-3 fw-bold @(isModernTrade ? "btn-warning text-dark shadow-sm border-2 border-dark" : "btn-outline-warning text-dark bg-white")" title="คลิกเพื่อเลือก/ยกเลิก (เลือกหลายอันได้)">
-                    @(isModernTrade ? "✓ " : "")🏢 บิลขายModern Trade
+                    @(isModernTrade ? "✓ " : "")🏢 Modern Trade
                 </button>
                 <small class="text-muted ms-auto d-none d-md-inline" style="font-size:0.8rem;"><i class="bi bi-info-circle me-1"></i>สามารถกดเลือกหลายปุ่มพร้อมกันได้ เช่น โมเดิร์นเทรด + ต่างจังหวัด</small>
             </div>

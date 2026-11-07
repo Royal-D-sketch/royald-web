@@ -481,7 +481,7 @@ namespace RoyalD.Web.Services
                     !b.CustomerName.Contains("ปรีชา  วิลล่า") &&
                     !b.CustomerName.Contains("มหาชัยวิลล่า") &&
                     !b.CustomerName.Contains("ท็อป ไฮเทค") &&
-                    !b.CustomerName.Contains("ท็อป พาร์ทเนอร์") &&
+                    !b.CustomerName.Contains("ท็อป พาร์ทเนอร์") && !b.CustomerName.Contains("วินนิ่ง") && b.CustomerCode != "103166" &&
                     (
                         b.CustomerName.Contains("ซีพี แอ็กซ์ตร้า") ||
                         b.CustomerName.Contains("ซีพี แอ๊กซ์ตร้า") ||
@@ -531,7 +531,7 @@ namespace RoyalD.Web.Services
                     !b.CustomerName.Contains("ปรีชา  วิลล่า") &&
                     !b.CustomerName.Contains("มหาชัยวิลล่า") &&
                     !b.CustomerName.Contains("ท็อป ไฮเทค") &&
-                    !b.CustomerName.Contains("ท็อป พาร์ทเนอร์") &&
+                    !b.CustomerName.Contains("ท็อป พาร์ทเนอร์") && !b.CustomerName.Contains("วินนิ่ง") && b.CustomerCode != "103166" &&
                     (
                         b.CustomerName.Contains("ซีพี แอ็กซ์ตร้า") ||
                         b.CustomerName.Contains("ซีพี แอ๊กซ์ตร้า") ||
@@ -588,7 +588,7 @@ namespace RoyalD.Web.Services
                     !i.SalesBill.CustomerName.Contains("ปรีชา  วิลล่า") &&
                     !i.SalesBill.CustomerName.Contains("มหาชัยวิลล่า") &&
                     !i.SalesBill.CustomerName.Contains("ท็อป ไฮเทค") &&
-                    !i.SalesBill.CustomerName.Contains("ท็อป พาร์ทเนอร์") &&
+                    !i.SalesBill.CustomerName.Contains("ท็อป พาร์ทเนอร์") && !i.SalesBill.CustomerName.Contains("วินนิ่ง") && i.SalesBill.CustomerCode != "103166" &&
                     (
                         i.SalesBill.CustomerName.Contains("ซีพี แอ็กซ์ตร้า") ||
                         i.SalesBill.CustomerName.Contains("ซีพี แอ๊กซ์ตร้า") ||
@@ -638,7 +638,7 @@ namespace RoyalD.Web.Services
                     !i.SalesBill.CustomerName.Contains("ปรีชา  วิลล่า") &&
                     !i.SalesBill.CustomerName.Contains("มหาชัยวิลล่า") &&
                     !i.SalesBill.CustomerName.Contains("ท็อป ไฮเทค") &&
-                    !i.SalesBill.CustomerName.Contains("ท็อป พาร์ทเนอร์") &&
+                    !i.SalesBill.CustomerName.Contains("ท็อป พาร์ทเนอร์") && !i.SalesBill.CustomerName.Contains("วินนิ่ง") && i.SalesBill.CustomerCode != "103166" &&
                     (
                         i.SalesBill.CustomerName.Contains("ซีพี แอ็กซ์ตร้า") ||
                         i.SalesBill.CustomerName.Contains("ซีพี แอ๊กซ์ตร้า") ||
