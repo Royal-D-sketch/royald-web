@@ -459,6 +459,36 @@ namespace RoyalD.Web.Controllers
 
 
 
+                [HttpGet]
+        public async Task<IActionResult> ExportCustomerPurchaseSummaryExcel(
+            string? salesRep = null,
+            DateTime? startDate = null,
+            DateTime? endDate = null,
+            int? credit = null,
+            string? searchCustomerCode = null,
+            string? searchCustomerName = null,
+            string? searchProductCode = null,
+            string? month = null)
+        {
+            if (!CheckPerm("customerpurchasesummary")) return Forbid();
+            if (!CanDownload()) return Forbid();
+
+            bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin");
+            var pos = User.FindFirst("Position")?.Value ?? "";
+            bool isSalesRepRole = !isAdmin && (pos == "ผู้แทนขาย" || pos == "พนักงานขาย" || pos.Contains("ผู้แทน") || pos.Contains("พนักงานขาย") || pos.Equals("sale", StringComparison.OrdinalIgnoreCase) || pos.Equals("Supervisor", StringComparison.OrdinalIgnoreCase));
+            var userRepCode = isSalesRepRole ? User.FindFirst("SalesRepCode")?.Value : null;
+            var userFullName = isSalesRepRole ? (User.FindFirst("FullName")?.Value ?? User.Identity?.Name) : null;
+            var username = User.Identity?.Name;
+
+            while (startDate.HasValue && startDate.Value.Year > 2400) startDate = startDate.Value.AddYears(-543);
+            while (endDate.HasValue && endDate.Value.Year > 2400) endDate = endDate.Value.AddYears(-543);
+
+            var vm = await _svc.GetCustomerPurchaseSummaryAsync(salesRep, startDate, endDate, credit, userRepCode, userFullName, username, searchCustomerCode, searchCustomerName, searchProductCode, month);
+
+            var bytes = await _svc.ExportCustomerPurchaseSummaryExcelAsync(vm);
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"CustomerPurchaseSummary_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
+        }
+
         private bool CanDownload()
         {
             bool isAdmin = User.IsInRole("admin") || (User.Identity?.Name?.ToLower() == "admin") || (User.Identity?.Name?.ToLower() == "art");

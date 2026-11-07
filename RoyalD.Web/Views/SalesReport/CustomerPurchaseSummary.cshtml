@@ -76,9 +76,9 @@
             <button onclick="window.print()" class="btn btn-outline-danger btn-sm fw-bold px-3 py-2 shadow-sm">
                 <i class="bi bi-file-earmark-pdf me-1"></i> Export PDF
             </button>
-            <button onclick="exportTableToExcel('purchase-table', 'CustomerPurchaseSummary')" class="btn btn-sm fw-bold px-3 py-2 shadow-sm text-white" style="background:#059669; border-color:#059669;">
+            <a href="/SalesReport/ExportCustomerPurchaseSummaryExcel@(Context.Request.QueryString)" class="btn btn-sm fw-bold px-3 py-2 shadow-sm text-white" style="background:#059669; border-color:#059669;" title="ดาวน์โหลดไฟล์ Excel (.xlsx)">
                 <i class="bi bi-file-earmark-excel me-1"></i> Export Excel
-            </button>
+            </a>
         </div>
     }
 </div>
